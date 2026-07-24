@@ -23,8 +23,8 @@ Sebelum mengunggah ke aaPanel, jalankan perintah pembuatan bundle produksi di ko
 # 1. Pastikan seluruh dependensi terinstall
 npm install
 
-# 2. Jalankan perintah kompilasi produksi
-npx vite build
+# 2. Jalankan perintah kompilasi produksi standar
+npm run build   # (atau npx vite build)
 ```
 
 Setelah kompilasi selesai, direktori `.output/` akan terbentuk dengan struktur:
@@ -47,16 +47,26 @@ Setelah kompilasi selesai, direktori `.output/` akan terbentuk dengan struktur:
 ## 🚀 Langkah 3: Konfigurasi Node.js Project di aaPanel
 
 1. Buka Dashboard **aaPanel** ➔ Masuk ke menu **Website**.
-2. Pilih tab **Node project** ➔ Klik tombol **Add Node project**.
-3. Isi formulir konfigurasi proyek Node.js sebagai berikut:
-   - **Path:** `/www/wwwroot/lms.mtsn2cilacap.sch.id`
-   - **Node version:** Pilih **v18.x** atau **v20.x** (LTS).
-   - **Run option:** Pilih `node` atau `pm2`.
+### Metode A: Via aaPanel Form (NPM Start)
+1. Di form **Add Node project** aaPanel:
+   - **Path:** `/www/wwwroot/lmscilacap`
+   - **Node version:** Pilih **v22.x** atau **v20.x** (LTS).
+   - **Run opt:** Pilih **`npm`** (atau `node`).
    - **User:** `www`
-   - **Project name:** `lms-mtsn2-cilacap`
-   - **Run script / Entry point:** `.output/server/index.mjs`
-   - **Port:** `3000` (atau port kosong yang tersedia).
-4. Klik **Submit**. aaPanel secara otomatis akan menjalankan server Node.js menggunakan PM2 pada port `3000`.
+   - **Project name:** `lmscilacap`
+   - **Run script / Command:** `start` *(aaPanel akan otomatis menjalankan `npm start` yang mengeksekusi `node .output/server/index.mjs`)*
+   - **Port:** **`3001`** (atau port lain yang masih kosong).
+
+### Metode B: Via Terminal aaPanel / PM2 CLI (Paling Stabil & Anti-Fail 💯)
+Jika via form aaPanel terus mengalami *Failed to start*, jalankan 2 perintah ini langsung di **Terminal aaPanel**:
+
+```bash
+# 1. Masuk ke folder aplikasi
+cd /www/wwwroot/lmscilacap
+
+# 2. Jalankan aplikasi menggunakan PM2
+PORT=3001 pm2 start .output/server/index.mjs --name lmscilacap
+```
 
 ---
 
@@ -69,11 +79,11 @@ Setelah kompilasi selesai, direktori `.output/` akan terbentuk dengan struktur:
      2. Centang nama domain Anda ➔ Klik **Apply**.
      3. Setelah sertifikat terbit, aktifkan sakelar **Force HTTPS**.
    - **Konfigurasi Nginx Reverse Proxy:**
-     aaPanel secara otomatis membuatkan reverse proxy mengarah ke `http://127.0.0.1:3000`. Pastikan aturan berikut terpasang di Nginx configuration:
+     aaPanel akan membuatkan reverse proxy mengarah ke port aplikasi Anda. Sesuaikan port di Nginx (`3001`):
 
 ```nginx
 location / {
-    proxy_pass http://127.0.0.1:3000;
+    proxy_pass http://127.0.0.1:3001;  # Sesuaikan dengan Port yang Anda pilih
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection 'upgrade';
@@ -105,6 +115,21 @@ Untuk memastikan aplikasi LMS selalu berjalan otomatis ketika server melakukan r
      # Lihat log aktivitas real-time
      pm2 logs lms-mtsn2-cilacap
      ```
+
+---
+
+## 🗄️ Pengelolaan Database di aaPanel
+
+Aplikasi LMS MTsN 2 Cilacap menggunakan arsitektur **Supabase Cloud Database**.
+
+### 1. Default Option: Supabase Cloud Database (Rekomendasi Utama)
+- **Dimana lokasi Databasenya?** Databasenya berada secara terpusat di Cloud Server Supabase (`https://zfmttodctylwjrtqkcud.supabase.co`).
+- **Apakah perlu pasang MySQL/PostgreSQL di aaPanel?** **TIDAK PERLU.** Server aaPanel hanya bertindak sebagai aplikasi web runner yang terhubung secara otomatis ke database cloud melalui berkas `.env`.
+- **Pengaturan `.env` di aaPanel:** Pastikan berkas `.env` di direktori `/www/wwwroot/lms.mtsn2cilacap.sch.id/` berisi kredensial berikut:
+  ```env
+  VITE_SUPABASE_URL="https://zfmttodctylwjrtqkcud.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_rKnGWDYjb21HAK01k3EGrA_lqFWMOID"
+  ```
 
 ---
 

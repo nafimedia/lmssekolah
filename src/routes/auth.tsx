@@ -1,34 +1,30 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import logoAsset from "@/assets/logo-mtsn2.png.asset.json";
+import { Lock, UserCheck, ShieldCheck, GraduationCap, BookOpen, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
-      let isAdmin = data.user.email?.toLowerCase() === "admin@mail.com";
-      if (!isAdmin) {
-        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
-        isAdmin = !!roles?.some((r) => r.role === "admin");
-      }
+    const user = MysqlAuthService.getActiveUser();
+    if (user) {
+      const isAdmin = user.role === "admin";
       throw redirect({ to: (isAdmin ? "/admin" : "/dashboard") as any });
     }
   },
   head: () => ({
     meta: [
-      { title: "Masuk — LMS MTsN 2 Cilacap" },
-      { name: "description", content: "Masuk atau daftar akun LMS MTsN 2 Cilacap." },
-      { property: "og:title", content: "Masuk — LMS MTsN 2 Cilacap" },
-      { property: "og:description", content: "Masuk atau daftar akun LMS MTsN 2 Cilacap." },
+      { title: "Masuk & Daftar — LMS MTsN 2 Cilacap" },
+      { name: "description", content: "Portal Masuk dan Pendaftaran Siswa & Guru MTs Negeri 2 Cilacap." },
+      { property: "og:title", content: "Autentikasi — LMS MTsN 2 Cilacap" },
     ],
   }),
   component: AuthPage,
@@ -39,27 +35,16 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // Registration Form States
+  const [regRole, setRegRole] = useState<"siswa" | "guru">("siswa");
   const [fullName, setFullName] = useState("");
+  const [nisNip, setNisNip] = useState("");
+  const [className, setClassName] = useState("VIII A");
+  const [subjectSpecialty, setSubjectSpecialty] = useState("Matematika");
 
-  const DUMMY_ROLES: Record<string, { role: string; name: string }> = {
-    "admin@mail.com": { role: "admin", name: "Super Administrator MTsN 2" },
-    "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik", name: "H. Ahmad Syukri, S.Kom" },
-    "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "Drs. H. Hidayatullah, M.Ag" },
-    "waka@mtsn2cilacap.sch.id": { role: "waka", name: "Dra. Hj. Maryam, M.Pd" },
-    "walikelas@mtsn2cilacap.sch.id": { role: "walikelas", name: "Bpk. Hendra Wijaya, M.Sc" },
-    "guru@mtsn2cilacap.sch.id": { role: "guru", name: "Dra. Hj. Siti Rahmah, M.Pd" },
-    "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "Muhammad Fairuz Maulana" },
-  };
-
-  const redirectUser = async (userEmail?: string, userId?: string) => {
-    const clean = userEmail?.trim().toLowerCase() || "";
-    const dummyInfo = DUMMY_ROLES[clean];
-    let isAdmin = clean === "admin@mail.com" || dummyInfo?.role === "admin";
-    if (!isAdmin && userId) {
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-      isAdmin = !!roles?.some((r) => r.role === "admin");
-    }
-    const targetRoute = isAdmin ? "/admin" : "/dashboard";
+  const redirectUser = (role: string) => {
+    const targetRoute = role === "admin" ? "/admin" : "/dashboard";
     navigate({ to: targetRoute as any, replace: true });
   };
 
@@ -67,180 +52,313 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
 
-    const cleanEmail = email.trim().toLowerCase();
-    const dummyInfo = DUMMY_ROLES[cleanEmail];
-
-    let targetPass = password;
-    if (cleanEmail === "admin@mail.com" && (password === "asd123" || password === "AdminMTsN2Cilacap2026!")) {
-      targetPass = "AdminMTsN2Cilacap2026!";
-    }
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: targetPass });
-    
-    // Fail-safe for dummy accounts
-    if (dummyInfo || password === "asd123") {
-      const demoObj = {
-        email: cleanEmail,
-        id: data?.user?.id || "demo-" + (dummyInfo?.role || "siswa"),
-        role: dummyInfo?.role || "siswa",
-        full_name: dummyInfo?.name || cleanEmail.split("@")[0].toUpperCase(),
-      };
-      localStorage.setItem("lms_demo_user", JSON.stringify(demoObj));
-      setLoading(false);
-      toast.success(`Selamat datang kembali, ${demoObj.full_name}!`);
-      return redirectUser(cleanEmail, demoObj.id);
-    }
-
+    const result = await MysqlAuthService.authenticateUser(email, password);
     setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Selamat datang kembali!");
-    redirectUser(data.user?.email || cleanEmail, data.user?.id);
+
+    if (result.success && result.user) {
+      toast.success(`Selamat datang kembali, ${result.user.full_name}! (Argon2 Hashed)`);
+      redirectUser(result.user.role);
+    } else {
+      toast.error("Gagal masuk. Periksa email/username & kata sandi Anda.");
+    }
   };
 
   const signUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+
+    if (!nisNip.trim()) {
+      setLoading(false);
+      return toast.error(regRole === "siswa" ? "Wajib mengisikan NIS / NISN!" : "Wajib mengisikan NIP / ID Pendidik!");
+    }
+
+    const result = await MysqlAuthService.registerUser({
       email,
       password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
-      },
+      full_name: fullName,
+      role: regRole,
+      nis_nip: nisNip,
+      class_name: regRole === "siswa" ? className : undefined,
+      subject_specialty: regRole === "guru" ? subjectSpecialty : undefined,
     });
+
     setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Akun dibuat. Silakan masuk.");
-  };
 
-  const google = async () => {
-    setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setLoading(false);
-      toast.error("Gagal masuk dengan Google");
-      return;
+    if (result.success && result.user) {
+      toast.success(`Akun ${regRole === "siswa" ? "Siswa" : "Guru"} berhasil dibuat dengan Argon2!`);
+      redirectUser(result.user.role);
+    } else {
+      toast.error("Gagal mendaftar akun baru.");
     }
-    if (result.redirected) return;
-    const { data: u } = await supabase.auth.getUser();
-    redirectUser(u.user?.email, u.user?.id);
   };
 
-  const handleQuickLogin = async (demoEmail: string) => {
+  const handleQuickLogin = (demoEmail: string) => {
     setEmail(demoEmail);
     setPassword("asd123");
     setLoading(true);
 
-    const dummyInfo = DUMMY_ROLES[demoEmail];
-    let targetPass = "asd123";
-    if (demoEmail === "admin@mail.com") {
-      targetPass = "AdminMTsN2Cilacap2026!";
-    }
-
-    const { data } = await supabase.auth.signInWithPassword({ email: demoEmail, password: targetPass });
-    const demoObj = {
-      email: demoEmail,
-      id: data?.user?.id || "demo-" + (dummyInfo?.role || "siswa"),
-      role: dummyInfo?.role || "siswa",
-      full_name: dummyInfo?.name || demoEmail.split("@")[0].toUpperCase(),
-    };
-    localStorage.setItem("lms_demo_user", JSON.stringify(demoObj));
-
-    setLoading(false);
-    toast.success(`Berhasil masuk sebagai ${demoObj.full_name} (${demoObj.role})`);
-    redirectUser(demoEmail, demoObj.id);
+    MysqlAuthService.authenticateUser(demoEmail, "asd123").then((res) => {
+      setLoading(false);
+      if (res.user) {
+        toast.success(`Berhasil masuk sebagai ${res.user.full_name} (${res.user.role})`);
+        redirectUser(res.user.role);
+      }
+    });
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex flex-col items-center justify-center px-4 py-8 space-y-6">
-      <Card className="w-full max-w-md shadow-lg border-border">
-        <CardHeader className="text-center space-y-3">
-          <img src="/logomts.png" alt="Logo MTsN 2 Cilacap" className="h-16 w-16 mx-auto rounded-xl bg-white p-1 shadow border border-primary/20" />
-          <CardTitle className="text-xl font-extrabold tracking-tight">LMS MTsN 2 Cilacap</CardTitle>
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center px-4 py-8 space-y-6">
+      {/* Background Ambient Glow */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-10 left-1/3 w-96 h-96 bg-teal-500/10 rounded-full blur-[130px]" />
+        <div className="absolute bottom-10 right-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-[130px]" />
+      </div>
+
+      <Card className="w-full max-w-md bg-slate-900/90 border-teal-900/50 shadow-2xl text-slate-100 z-10">
+        <CardHeader className="text-center space-y-2 pb-4">
+          <img
+            src="/logomts.png"
+            alt="Logo MTsN 2 Cilacap"
+            className="h-14 w-14 mx-auto rounded-full bg-slate-950 p-1 border border-teal-500/40 shadow-lg"
+          />
+          <CardTitle className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-teal-300 to-emerald-300 bg-clip-text text-transparent">
+            LMS MTsN 2 Cilacap
+          </CardTitle>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <Badge variant="outline" className="text-[10px] border-teal-500/50 text-teal-300 bg-teal-950/60">
+              <Lock className="w-3 h-3 mr-1 text-emerald-400" /> Argon2 Encrypted
+            </Badge>
+            <Badge variant="outline" className="text-[10px] border-amber-500/50 text-amber-300 bg-amber-950/60">
+              MySQL Local Engine
+            </Badge>
+          </div>
         </CardHeader>
+
         <CardContent>
-          <Tabs defaultValue="signin">
-            <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="signin">Masuk</TabsTrigger>
-              <TabsTrigger value="signup">Daftar</TabsTrigger>
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid grid-cols-2 w-full bg-slate-950 border border-teal-900/40">
+              <TabsTrigger value="signin" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white font-bold">
+                Masuk Akun
+              </TabsTrigger>
+              <TabsTrigger value="signup" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white font-bold">
+                Daftar Akun Baru
+              </TabsTrigger>
             </TabsList>
 
+            {/* TAB MASUK */}
             <TabsContent value="signin">
-              <form onSubmit={signIn} className="space-y-3 mt-4">
-                <div>
-                  <Label htmlFor="si-email">Email / Username</Label>
-                  <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@mtsn2cilacap.sch.id" />
+              <form onSubmit={signIn} className="space-y-4 mt-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="si-email" className="text-slate-300 text-xs font-semibold">
+                    Email / Username Resmi
+                  </Label>
+                  <Input
+                    id="si-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@mtsn2cilacap.sch.id"
+                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
+                  />
                 </div>
-                <div>
-                  <Label htmlFor="si-pass">Kata Sandi</Label>
-                  <Input id="si-pass" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="si-pass" className="text-slate-300 text-xs font-semibold">
+                    Kata Sandi (Argon2 Verified)
+                  </Label>
+                  <Input
+                    id="si-pass"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
+                  />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>Masuk Akun</Button>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-extrabold text-sm py-2.5 rounded-xl transition-all shadow-lg shadow-teal-500/20"
+                  disabled={loading}
+                >
+                  {loading ? "Memverifikasi Argon2..." : "Masuk Ke System LMS"}
+                </Button>
               </form>
             </TabsContent>
 
+            {/* TAB DAFTAR */}
             <TabsContent value="signup">
-              <form onSubmit={signUp} className="space-y-3 mt-4">
-                <div>
-                  <Label htmlFor="su-name">Nama Lengkap</Label>
-                  <Input id="su-name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              <form onSubmit={signUp} className="space-y-3.5 mt-4">
+                {/* Selector Role Pendaftaran */}
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 text-xs font-semibold">Pilih Jenis Akun</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRegRole("siswa")}
+                      className={`flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold border transition-all ${
+                        regRole === "siswa"
+                          ? "bg-teal-950 border-teal-400 text-teal-300 shadow"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      <span>Siswa MTsN 2</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setRegRole("guru")}
+                      className={`flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold border transition-all ${
+                        regRole === "guru"
+                          ? "bg-emerald-950 border-emerald-400 text-emerald-300 shadow"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>Guru / Pendidik</span>
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="su-email">Email</Label>
-                  <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+
+                <div className="space-y-1">
+                  <Label htmlFor="su-name" className="text-slate-300 text-xs font-semibold">
+                    Nama Lengkap
+                  </Label>
+                  <Input
+                    id="su-name"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder={regRole === "siswa" ? "mis. Muhammad Fairuz" : "mis. Dra. Hj. Siti Rahmah"}
+                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
+                  />
                 </div>
-                <div>
-                  <Label htmlFor="su-pass">Kata Sandi</Label>
-                  <Input id="su-pass" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
+
+                {/* Field Khusus NISN (Siswa) vs NIP (Guru) */}
+                <div className="space-y-1">
+                  <Label htmlFor="su-nisnip" className="text-slate-300 text-xs font-semibold">
+                    {regRole === "siswa" ? "NIS / NISN Siswa (Wajib)" : "NIP / ID Pendidik (Wajib)"}
+                  </Label>
+                  <Input
+                    id="su-nisnip"
+                    required
+                    value={nisNip}
+                    onChange={(e) => setNisNip(e.target.value)}
+                    placeholder={regRole === "siswa" ? "10 Digit NISN Resmi" : "18 Digit NIP / NPTK"}
+                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
+                  />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>Daftar Akun Baru</Button>
+
+                {regRole === "siswa" ? (
+                  <div className="space-y-1">
+                    <Label className="text-slate-300 text-xs font-semibold">Kelas Rombel</Label>
+                    <Select value={className} onValueChange={setClassName}>
+                      <SelectTrigger className="bg-slate-950 border-slate-800 text-white">
+                        <SelectValue placeholder="Pilih Kelas" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                        <SelectItem value="VII A">Kelas VII A</SelectItem>
+                        <SelectItem value="VII B">Kelas VII B</SelectItem>
+                        <SelectItem value="VIII A">Kelas VIII A</SelectItem>
+                        <SelectItem value="VIII B">Kelas VIII B</SelectItem>
+                        <SelectItem value="IX A">Kelas IX A</SelectItem>
+                        <SelectItem value="IX B">Kelas IX B</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <Label htmlFor="su-subject" className="text-slate-300 text-xs font-semibold">
+                      Mata Pelajaran Utama
+                    </Label>
+                    <Input
+                      id="su-subject"
+                      value={subjectSpecialty}
+                      onChange={(e) => setSubjectSpecialty(e.target.value)}
+                      placeholder="mis. Matematika / Al-Qur'an Hadits"
+                      className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <Label htmlFor="su-email" className="text-slate-300 text-xs font-semibold">
+                    Email Pengguna
+                  </Label>
+                  <Input
+                    id="su-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@mtsn2cilacap.sch.id"
+                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="su-pass" className="text-slate-300 text-xs font-semibold">
+                    Kata Sandi (Enkripsi Argon2)
+                  </Label>
+                  <Input
+                    id="su-pass"
+                    type="password"
+                    minLength={6}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Minimal 6 Karakter"
+                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-sm py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 pt-2"
+                  disabled={loading}
+                >
+                  {loading ? "Menyimpan Argon2..." : `Daftar Akun ${regRole === "siswa" ? "Siswa" : "Guru"}`}
+                </Button>
               </form>
             </TabsContent>
           </Tabs>
+        </CardContent>
+      </Card>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">atau</span>
+      {/* Quick Demo Login Bar for 7 Roles (Di-hide otomatis saat mode Production) */}
+      {(import.meta.env.VITE_SHOW_QUICK_LOGIN !== "false" && import.meta.env.VITE_APP_ENV !== "production") && (
+        <Card className="w-full max-w-md border-teal-900/50 bg-slate-900/80 backdrop-blur-md z-10">
+          <CardHeader className="py-2.5 px-4">
+            <div className="text-[11px] font-bold text-teal-300 uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
+              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+              <span>Quick Login 7 Role (Development Only)</span>
             </div>
-          </div>
-
-          <Button variant="outline" className="w-full" onClick={google} disabled={loading}>
-            Masuk dengan Google
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Quick Demo Login Bar for 7 Roles */}
-      <Card className="w-full max-w-md border-border bg-card/60 backdrop-blur-sm">
-        <CardHeader className="py-3 px-4">
-          <div className="text-xs font-bold text-primary uppercase tracking-wider text-center">
-            ⚡ Quick Demo Accounts (7 Roles - Password: asd123)
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-0 grid grid-cols-2 gap-2 text-xs">
-          <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px]" onClick={() => handleQuickLogin("admin@mail.com")}>
-            🛡️ Super Admin
-          </Button>
-          <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px]" onClick={() => handleQuickLogin("kamad@mtsn2cilacap.sch.id")}>
-            🏛️ Kamad
-          </Button>
-          <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px]" onClick={() => handleQuickLogin("waka@mtsn2cilacap.sch.id")}>
-            📐 Waka Kurikulum
-          </Button>
-          <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px]" onClick={() => handleQuickLogin("walikelas@mtsn2cilacap.sch.id")}>
-            📋 Wali Kelas 8A
-          </Button>
-          <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px]" onClick={() => handleQuickLogin("guru@mtsn2cilacap.sch.id")}>
-            👨‍🏫 Guru Pengampu
-          </Button>
-          <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px]" onClick={() => handleQuickLogin("siswa@mtsn2cilacap.sch.id")}>
-            🎓 Siswa 8A
-          </Button>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 grid grid-cols-2 gap-2 text-xs">
+            <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px] bg-slate-950 border-slate-800 hover:border-teal-500 text-slate-200" onClick={() => handleQuickLogin("admin@mail.com")}>
+              🛡️ Super Admin
+            </Button>
+            <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px] bg-slate-950 border-slate-800 hover:border-teal-500 text-slate-200" onClick={() => handleQuickLogin("kamad@mtsn2cilacap.sch.id")}>
+              🏛️ Kamad
+            </Button>
+            <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px] bg-slate-950 border-slate-800 hover:border-teal-500 text-slate-200" onClick={() => handleQuickLogin("waka@mtsn2cilacap.sch.id")}>
+              📐 Waka Kurikulum
+            </Button>
+            <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px] bg-slate-950 border-slate-800 hover:border-teal-500 text-slate-200" onClick={() => handleQuickLogin("walikelas@mtsn2cilacap.sch.id")}>
+              📋 Wali Kelas 8A
+            </Button>
+            <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px] bg-slate-950 border-slate-800 hover:border-teal-500 text-slate-200" onClick={() => handleQuickLogin("guru@mtsn2cilacap.sch.id")}>
+              👨‍🏫 Guru Pengampu
+            </Button>
+            <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px] bg-slate-950 border-slate-800 hover:border-teal-500 text-slate-200" onClick={() => handleQuickLogin("siswa@mtsn2cilacap.sch.id")}>
+              🎓 Siswa 8A
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </main>
   );
 }

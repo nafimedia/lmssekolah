@@ -1,0 +1,17 @@
+{
+  "short_name": "LMS MTsN 2",
+  "name": "LMS MTs Negeri 2 Cilacap",
+  "description": "Learning Management System Kurikulum Merdeka MTs Negeri 2 Cilacap",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#059669",
+  "display": "standalone",
+  "orientation": "portrait"
+}

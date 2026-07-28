@@ -1,16 +1,22 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { useIdleTimer } from "@/hooks/useIdleTimer";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    const demoUserStr = typeof window !== "undefined" ? localStorage.getItem("lms_demo_user") : null;
-    if (!data.user && !demoUserStr) {
+    const user = MysqlAuthService.getActiveUser();
+    if (!user) {
       throw redirect({ to: "/auth" });
     }
-    const demoUser = demoUserStr ? JSON.parse(demoUserStr) : null;
-    return { user: data.user || demoUser };
+    return { user };
   },
-  component: () => <Outlet />,
+  component: AuthenticatedLayout,
 });
+
+function AuthenticatedLayout() {
+  // Activate Auto-Logout Idle Timer (120 Menit / 2 Jam)
+  useIdleTimer(120 * 60 * 1000);
+
+  return <Outlet />;
+}

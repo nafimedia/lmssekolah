@@ -154,7 +154,9 @@ function AuthPage() {
                   </Label>
                   <Input
                     id="si-email"
+                    name="email"
                     type="email"
+                    autoComplete="username"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -169,7 +171,9 @@ function AuthPage() {
                   </Label>
                   <Input
                     id="si-pass"
+                    name="password"
                     type="password"
+                    autoComplete="current-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -229,6 +233,8 @@ function AuthPage() {
                   </Label>
                   <Input
                     id="su-name"
+                    name="fullName"
+                    autoComplete="name"
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -244,6 +250,7 @@ function AuthPage() {
                   </Label>
                   <Input
                     id="su-nisnip"
+                    name="nisNip"
                     required
                     value={nisNip}
                     onChange={(e) => setNisNip(e.target.value)}
@@ -276,6 +283,7 @@ function AuthPage() {
                     </Label>
                     <Input
                       id="su-subject"
+                      name="subject"
                       value={subjectSpecialty}
                       onChange={(e) => setSubjectSpecialty(e.target.value)}
                       placeholder="mis. Matematika / Al-Qur'an Hadits"
@@ -290,7 +298,9 @@ function AuthPage() {
                   </Label>
                   <Input
                     id="su-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -305,7 +315,9 @@ function AuthPage() {
                   </Label>
                   <Input
                     id="su-pass"
+                    name="password"
                     type="password"
+                    autoComplete="new-password"
                     minLength={6}
                     required
                     value={password}

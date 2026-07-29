@@ -64,23 +64,23 @@ export function WAGatewayLogModal({ isOpen, onClose }: { isOpen: boolean; onClos
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[11px] font-semibold">Nama Wali Murid</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required className="h-8 text-xs mt-1" />
+                <Label htmlFor="wa-parent-name" className="text-[11px] font-semibold">Nama Wali Murid</Label>
+                <Input id="wa-parent-name" name="parentName" value={name} onChange={(e) => setName(e.target.value)} required className="h-8 text-xs mt-1" />
               </div>
               <div>
-                <Label className="text-[11px] font-semibold">No. HP WhatsApp Wali</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} required className="h-8 text-xs mt-1" />
+                <Label htmlFor="wa-phone" className="text-[11px] font-semibold">No. HP WhatsApp Wali</Label>
+                <Input id="wa-phone" name="phone" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="h-8 text-xs mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[11px] font-semibold">Nama Siswa</Label>
-                <Input value={student} onChange={(e) => setStudent(e.target.value)} required className="h-8 text-xs mt-1" />
+                <Label htmlFor="wa-student-name" className="text-[11px] font-semibold">Nama Siswa</Label>
+                <Input id="wa-student-name" name="studentName" value={student} onChange={(e) => setStudent(e.target.value)} required className="h-8 text-xs mt-1" />
               </div>
               <div>
-                <Label className="text-[11px] font-semibold">Kategori Pesan WA</Label>
-                <select className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs mt-1" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
+                <Label htmlFor="wa-category" className="text-[11px] font-semibold">Kategori Pesan WA</Label>
+                <select id="wa-category" name="category" className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs mt-1" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
                   <option value="ABSENSI_ALPHA">🚨 Alert Absensi Alpha / Izin</option>
                   <option value="WARNING_PEMBINAAN">⚠️ Catatan Warning Pembinaan</option>
                   <option value="AWARD_APRESIASI">🎉 Lencana Badge Apresiasi</option>
@@ -90,8 +90,8 @@ export function WAGatewayLogModal({ isOpen, onClose }: { isOpen: boolean; onClos
             </div>
 
             <div>
-              <Label className="text-[11px] font-semibold">Isi Pesan WhatsApp</Label>
-              <textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full h-24 rounded-md border border-border bg-background p-2.5 text-xs mt-1" required />
+              <Label htmlFor="wa-message" className="text-[11px] font-semibold">Isi Pesan WhatsApp</Label>
+              <textarea id="wa-message" name="message" value={message} onChange={(e) => setMessage(e.target.value)} className="w-full h-24 rounded-md border border-border bg-background p-2.5 text-xs mt-1" required />
             </div>
 
             <Button type="submit" size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-2">

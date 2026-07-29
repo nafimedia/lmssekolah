@@ -23,7 +23,6 @@ export type MenuKey =
   | "tahfidz_report"
   | "kokurikuler"
   | "kokurikuler_report"
-  | "erapor"
   | "perpustakaan"
   | "profil"
   | "pengaturan";

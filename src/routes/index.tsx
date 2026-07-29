@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,13 +48,9 @@ import {
 export const Route = createFileRoute("/")({
   ssr: false,
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
-      let isAdmin = data.user.email?.toLowerCase() === "admin@mail.com";
-      if (!isAdmin) {
-        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
-        isAdmin = !!roles?.some((r) => r.role === "admin");
-      }
+    const user = MysqlAuthService.getActiveUser();
+    if (user) {
+      const isAdmin = user.role === "admin" || user.email?.toLowerCase() === "admin@mail.com";
       throw redirect({ to: (isAdmin ? "/admin" : "/dashboard") as any });
     }
   },

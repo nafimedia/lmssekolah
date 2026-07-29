@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` VARCHAR(191) NOT NULL UNIQUE,
   `password_hash` VARCHAR(255) NOT NULL,
   `full_name` VARCHAR(191) NOT NULL,
-  `identity_type` VARCHAR(16) NOT NULL DEFAULT 'NISN', -- 'NISN' atau 'NIP'
+  `identity_type` VARCHAR(16) NOT NULL DEFAULT 'NISN',
   `nis_nip` VARCHAR(64) DEFAULT NULL,
   `class_name` VARCHAR(64) DEFAULT NULL,
   `subject_specialty` VARCHAR(191) DEFAULT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Tabel User Roles (Support Multiple Roles per User if needed)
+-- 2. Tabel User Roles
 CREATE TABLE IF NOT EXISTS `user_roles` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `user_id` VARCHAR(64) NOT NULL,
@@ -31,13 +31,16 @@ CREATE TABLE IF NOT EXISTS `user_roles` (
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Tabel Profiles (Academic Profiles)
+-- 3. Tabel Profiles
 CREATE TABLE IF NOT EXISTS `profiles` (
   `id` VARCHAR(64) NOT NULL PRIMARY KEY,
   `user_id` VARCHAR(64) NOT NULL UNIQUE,
   `full_name` VARCHAR(191) NOT NULL,
   `nis` VARCHAR(64) DEFAULT NULL,
   `class_name` VARCHAR(64) DEFAULT NULL,
+  `tagline` TEXT DEFAULT NULL,
+  `address` TEXT DEFAULT NULL,
+  `phone` VARCHAR(32) DEFAULT NULL,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
@@ -48,8 +51,13 @@ CREATE TABLE IF NOT EXISTS `subjects` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `code` VARCHAR(32) NOT NULL UNIQUE,
   `name` VARCHAR(191) NOT NULL,
+  `category` VARCHAR(64) NOT NULL DEFAULT 'Keagamaan',
   `teacher_name` VARCHAR(191) NOT NULL,
   `grade_level` VARCHAR(32) NOT NULL DEFAULT 'Kelas 8',
+  `jp` INT NOT NULL DEFAULT 2,
+  `kkm` INT NOT NULL DEFAULT 75,
+  `status` VARCHAR(32) NOT NULL DEFAULT 'Aktif',
+  `icon` VARCHAR(16) DEFAULT '📖',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -124,7 +132,62 @@ CREATE TABLE IF NOT EXISTS `rapor_records` (
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 10. Tabel Audit Logs
+-- 10. Tabel Announcements (Pengumuman)
+CREATE TABLE IF NOT EXISTS `announcements` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(191) NOT NULL,
+  `content` TEXT NOT NULL,
+  `tag` VARCHAR(64) NOT NULL DEFAULT 'Pengumuman Resmi',
+  `date_str` VARCHAR(64) NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. Tabel Agendas (Agenda & Kalender Akademik)
+CREATE TABLE IF NOT EXISTS `agendas` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(191) NOT NULL,
+  `description` TEXT DEFAULT NULL,
+  `category` VARCHAR(64) NOT NULL DEFAULT 'Akademik',
+  `date_str` VARCHAR(64) NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 12. Tabel Attendances (Presensi Siswa)
+CREATE TABLE IF NOT EXISTS `attendances` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` VARCHAR(64) NOT NULL,
+  `student_name` VARCHAR(191) NOT NULL,
+  `class_name` VARCHAR(64) NOT NULL,
+  `status` VARCHAR(32) NOT NULL DEFAULT 'HADIR',
+  `keterangan` TEXT DEFAULT NULL,
+  `date_str` VARCHAR(32) NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. Tabel Student Awards (Badge & Warning Pembinaan)
+CREATE TABLE IF NOT EXISTS `student_awards` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_name` VARCHAR(191) NOT NULL,
+  `badge_category` VARCHAR(128) DEFAULT NULL,
+  `warning_category` VARCHAR(128) DEFAULT NULL,
+  `comment_text` TEXT DEFAULT NULL,
+  `awarded_by` VARCHAR(191) NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 14. Tabel WA Gateway Logs
+CREATE TABLE IF NOT EXISTS `wa_gateway_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `parent_name` VARCHAR(191) NOT NULL,
+  `phone` VARCHAR(32) NOT NULL,
+  `student_name` VARCHAR(191) NOT NULL,
+  `category` VARCHAR(64) NOT NULL,
+  `message` TEXT NOT NULL,
+  `status` VARCHAR(32) NOT NULL DEFAULT 'GATEWAY SENT 🟢',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 15. Tabel Audit Logs
 CREATE TABLE IF NOT EXISTS `audit_logs` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `user_id` VARCHAR(64) DEFAULT NULL,
@@ -158,10 +221,15 @@ INSERT INTO `user_roles` (`user_id`, `role`) VALUES
 ON DUPLICATE KEY UPDATE `role` = VALUES(`role`);
 
 -- Seed Initial Subjects
-INSERT INTO `subjects` (`id`, `code`, `name`, `teacher_name`, `grade_level`) VALUES
-(1, 'MAPEL-MAT', 'Matematika Kurikulum Merdeka', 'Dra. Hj. Siti Rahmah, M.Pd', 'Kelas VIII'),
-(2, 'MAPEL-IPA', 'Ilmu Pengetahuan Alam (IPA)', 'Bpk. Hendra Wijaya, M.Sc', 'Kelas VIII'),
-(3, 'MAPEL-PAI', 'Al-Qur\'an Hadits & Aqidah', 'Drs. H. Hidayatullah, M.Ag', 'Kelas VIII')
+INSERT INTO `subjects` (`id`, `code`, `name`, `category`, `teacher_name`, `grade_level`, `jp`, `kkm`, `status`, `icon`) VALUES
+(1, 'AGM-01', 'Al-Quran Hadits', 'Keagamaan', 'Dra. Hj. Siti Rahmah, M.Pd', 'Kelas 8', 2, 75, 'Aktif', '📖'),
+(2, 'AGM-02', 'Akidah Akhlak', 'Keagamaan', 'Ust. Abdul Halim, S.Ag', 'Kelas 8', 2, 75, 'Aktif', '🕌'),
+(3, 'AGM-03', 'Fiqih', 'Keagamaan', 'Dra. Hj. Siti Rahmah, M.Pd', 'Kelas 8', 2, 75, 'Aktif', '⚖️'),
+(4, 'AGM-04', 'Sejarah Kebudayaan Islam', 'Keagamaan', 'Drs. KH. Mahmud Ridwan', 'Kelas 8', 2, 75, 'Aktif', '🏛️'),
+(5, 'AGM-05', 'Bahasa Arab', 'Keagamaan', 'Ustadzah Nurul Hidayah, S.Pd.I', 'Kelas 8', 3, 75, 'Aktif', '🗣️'),
+(6, 'UMM-01', 'Matematika', 'Umum', 'Bapak Hendra Wijaya, M.Sc', 'Kelas 8', 4, 75, 'Aktif', '📐'),
+(7, 'UMM-02', 'Ilmu Pengetahuan Alam', 'Umum', 'Ibu Ratna Dewi, M.Pd', 'Kelas 8', 4, 75, 'Aktif', '🔬'),
+(8, 'UMM-06', 'Informatika & Coding', 'Umum', 'H. Ahmad Syukri, S.Kom', 'Kelas 8', 2, 75, 'Aktif', '💻')
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 
 -- Seed Initial CBT Exam
@@ -173,3 +241,13 @@ ON DUPLICATE KEY UPDATE `title` = VALUES(`title`);
 INSERT INTO `tahfidz_records` (`id`, `user_id`, `student_name`, `juz_number`, `surah_name`, `verses`, `status`, `tajwid_score`, `tester_name`) VALUES
 (1, 'usr-siswa-1', 'Muhammad Fairuz Maulana', 30, 'An-Naba\'', '1 - 40', 'Mutqin', 98, 'Ustadz Ahmad Syukri, S.Pd.I')
 ON DUPLICATE KEY UPDATE `student_name` = VALUES(`student_name`);
+
+-- Seed Initial Announcements
+INSERT INTO `announcements` (`id`, `title`, `content`, `tag`, `date_str`) VALUES
+(1, 'Pelaksanaan Asesmen Sumatif Akhir Semester (ASAS) TA 2026/2027', 'Diberitahukan kepada seluruh siswa-siswi MTsN 2 Cilacap bahwa pelaksanaan ASAS berbasis CBT akan dimulai pada hari Senin mendatang. Harap persiapkan kartu ujian dan perangkat masing-masing.', 'Pengumuman Resmi', '29 Juli 2026')
+ON DUPLICATE KEY UPDATE `title` = VALUES(`title`);
+
+-- Seed Initial Agendas
+INSERT INTO `agendas` (`id`, `title`, `description`, `category`, `date_str`) VALUES
+(1, 'Rapat Koordinasi Evaluasi Pembelajaran & E-Rapor', 'Rapat pleno dewan guru bersama Waka Kurikulum mengenai persiapan penerbitan E-Rapor digital.', 'Akademik', '30 Juli 2026')
+ON DUPLICATE KEY UPDATE `title` = VALUES(`title`);

@@ -1,63 +1,105 @@
-import { getDatabaseStatsFn } from "./mysqlServerFns";
+import {
+  getDatabaseStatsFn,
+  getSubjectsFn,
+  saveSubjectFn,
+  deleteSubjectFn,
+  getAnnouncementsFn,
+  saveAnnouncementFn,
+  getAgendasFn,
+  saveAgendaFn,
+  getAttendancesFn,
+  recordAttendanceFn,
+  getAwardsFn,
+  saveAwardFn,
+  getWaLogsFn,
+  saveWaLogFn,
+  getCbtExamsFn,
+  saveCbtExamFn,
+  DatabaseStats,
+  SubjectRow,
+  AnnouncementRow,
+  AgendaRow,
+  AttendanceRow,
+  StudentAwardRow,
+  WaLogRow,
+  CbtExamRow,
+} from "./mysqlServerFns";
 
-export interface DatabaseStats {
-  totalUsers: number;
-  siswaCount: number;
-  guruStafCount: number;
-  totalRombel: number;
-  totalMapel: number;
-  cbtExamsCount: number;
-}
-
-export interface PresensiRecord {
-  id?: number;
-  user_id: string;
-  name: string;
-  role: string;
-  class_name?: string;
-  status: string;
-  xp_reward?: number;
-  created_at?: string;
-}
-
-export interface SiswaBadgeRecord {
-  id?: number;
-  siswa_id: string;
-  badge_name: string;
-  awarded_by: string;
-  created_at?: string;
-}
+export type { DatabaseStats, SubjectRow, AnnouncementRow, AgendaRow, AttendanceRow, StudentAwardRow, WaLogRow, CbtExamRow };
 
 export class MysqlDataService {
-  /**
-   * Hitung data riil murni 100% dari database Laragon MySQL (db_lms)
-   */
   static async getDatabaseStats(): Promise<DatabaseStats> {
     try {
       return await getDatabaseStatsFn();
     } catch {
-      return {
-        totalUsers: 6,
-        siswaCount: 1,
-        guruStafCount: 5,
-        totalRombel: 1,
-        totalMapel: 3,
-        cbtExamsCount: 1,
-      };
+      return { totalUsers: 6, siswaCount: 1, guruStafCount: 5, totalRombel: 1, totalMapel: 8, cbtExamsCount: 1 };
     }
   }
 
-  /**
-   * Catat Presensi Harian Siswa/Guru
-   */
-  static async recordPresensi(_record: PresensiRecord): Promise<boolean> {
-    return true;
+  // Subjects
+  static async getSubjects(): Promise<SubjectRow[]> {
+    return await getSubjectsFn();
   }
 
-  /**
-   * Ambil Lencana Prestasi Siswa
-   */
-  static async getSiswaBadges(_siswaId: string): Promise<string[]> {
-    return ["⭐ Siswa Aktif & Responsif", "🏆 Nilai Perfect 100", "🌟 Hafalan Mutqin Juz 30"];
+  static async saveSubject(data: SubjectRow): Promise<boolean> {
+    return await saveSubjectFn({ data });
+  }
+
+  static async deleteSubject(code: string): Promise<boolean> {
+    return await deleteSubjectFn({ data: { code } });
+  }
+
+  // Announcements
+  static async getAnnouncements(): Promise<AnnouncementRow[]> {
+    return await getAnnouncementsFn();
+  }
+
+  static async saveAnnouncement(data: AnnouncementRow): Promise<boolean> {
+    return await saveAnnouncementFn({ data });
+  }
+
+  // Agendas
+  static async getAgendas(): Promise<AgendaRow[]> {
+    return await getAgendasFn();
+  }
+
+  static async saveAgenda(data: AgendaRow): Promise<boolean> {
+    return await saveAgendaFn({ data });
+  }
+
+  // Attendances
+  static async getAttendances(): Promise<AttendanceRow[]> {
+    return await getAttendancesFn();
+  }
+
+  static async recordAttendance(data: AttendanceRow): Promise<boolean> {
+    return await recordAttendanceFn({ data });
+  }
+
+  // Awards & Warnings
+  static async getAwards(): Promise<StudentAwardRow[]> {
+    return await getAwardsFn();
+  }
+
+  static async saveAward(data: StudentAwardRow): Promise<boolean> {
+    return await saveAwardFn({ data });
+  }
+
+  // WA Gateway Logs
+  static async getWaLogs(): Promise<WaLogRow[]> {
+    return await getWaLogsFn();
+  }
+
+  static async saveWaLog(data: WaLogRow): Promise<boolean> {
+    return await saveWaLogFn({ data });
+  }
+
+  // CBT Exams
+  static async getCbtExams(): Promise<CbtExamRow[]> {
+    return await getCbtExamsFn();
+  }
+
+  static async saveCbtExam(data: CbtExamRow): Promise<boolean> {
+    return await saveCbtExamFn({ data });
   }
 }

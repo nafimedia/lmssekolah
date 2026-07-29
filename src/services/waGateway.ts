@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { MysqlDataService } from "./mysqlDataService";
 
 export interface WaPayload {
   recipientPhone: string;
@@ -14,7 +15,7 @@ export interface WaLogEntry extends WaPayload {
   status: "DELIVERED" | "SENT" | "FAILED";
 }
 
-// In-memory store for WhatsApp Logs
+// Fallback in-memory store for WhatsApp Logs
 const waLogsStore: WaLogEntry[] = [
   {
     id: "wa-101",
@@ -30,12 +31,11 @@ const waLogsStore: WaLogEntry[] = [
 
 export const waGatewayService = {
   /**
-   * Kirim Notifikasi WhatsApp ke Wali Murid (Live Fonnte / Wablas API Integrator)
+   * Kirim Notifikasi WhatsApp ke Wali Murid (Disimpan ke Database Laragon MySQL & Trigger Toast)
    */
   async sendNotification(payload: WaPayload): Promise<WaLogEntry> {
     console.log("[WA Gateway Dispatch]", payload);
 
-    // Mock API Delay & Success Response
     const newLog: WaLogEntry = {
       ...payload,
       id: `wa-${Date.now()}`,
@@ -44,6 +44,20 @@ export const waGatewayService = {
     };
 
     waLogsStore.unshift(newLog);
+
+    // Save to MySQL DB
+    try {
+      await MysqlDataService.saveWaLog({
+        parent_name: payload.recipientName,
+        phone: payload.recipientPhone,
+        student_name: payload.studentName,
+        category: payload.category,
+        message: payload.messageText,
+        status: "DELIVERED",
+      });
+    } catch (e) {
+      console.warn("[WA Gateway DB Error]:", e);
+    }
 
     // Trigger UI Toast Notification for Live Feedback
     toast.success(`📲 WhatsApp Sent to ${payload.recipientName} (${payload.recipientPhone})`, {
@@ -61,30 +75,18 @@ export const waGatewayService = {
     return [...waLogsStore];
   },
 
-  /**
-   * Template Builder 1: Alert Presensi Alpha / Sakit
-   */
   buildAbsensiAlert(studentName: string, date: string, status: string): string {
     return `Yth. Orang Tua/Wali dari ${studentName},\n\nPemberitahuan Presensi LMS MTsN 2 Cilacap tanggal ${date}:\nAnanda ${studentName} tercatat ${status.toUpperCase()}.\n\nJika ananda berhalangan sakit atau izin dinas luar, mohon unggah surat keterangan via LMS atau hubungi Wali Kelas.\nTerima kasih.`;
   },
 
-  /**
-   * Template Builder 2: Alert Warning Catatan Pembinaan
-   */
   buildWarningAlert(studentName: string, category: string, comment: string): string {
     return `Yth. Orang Tua/Wali dari ${studentName},\n\nInformasi Pembinaan Siswa MTsN 2 Cilacap:\nAnanda ${studentName} mendapat catatan pengingat '${category}'.\n\nCatatan Guru: "${comment}"\n\nMohon bimbingan bersama agar tugas ananda dapat segera dituntaskan. Terima kasih.`;
   },
 
-  /**
-   * Template Builder 3: Alert Lencana Apresiasi Siswa
-   */
   buildAwardAlert(studentName: string, badgeName: string, comment: string): string {
     return `Yth. Orang Tua/Wali dari ${studentName},\n\nAssalamu'alaikum Wr. Wb. Selamat! Ananda ${studentName} baru saja meraih Lencana Apresiasi '${badgeName}' di LMS MTsN 2 Cilacap 🎉.\n\nPesan Guru: "${comment}"\n\nSemoga menjadi penyemangat prestasi belajar ananda. Salam, MTsN 2 Cilacap.`;
   },
 
-  /**
-   * Template Builder 4: Alert Penerbitan E-Rapor Semester Kemenag
-   */
   buildERaporAlert(studentName: string, semester: string, nilaiRata: number): string {
     return `Yth. Orang Tua/Wali dari ${studentName},\n\nE-Rapor Kurikulum Merdeka Kemenag Semester ${semester} telah resmi diterbitkan.\nRata-Rata Nilai Ananda: ${nilaiRata} (TUNTAS KKM).\n\nAnda dapat mengunduh berkas Rapor PDF resmi melalui portal LMS MTsN 2 Cilacap.\nTerima kasih.`;
   },

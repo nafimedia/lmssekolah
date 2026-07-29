@@ -1617,6 +1617,25 @@ function MataPelajaran() {
     { code: "UMM-06", name: "Informatika & Coding", category: "Umum", teacher: "H. Ahmad Syukri, S.Kom", icon: "💻", jp: 2, kkm: 75, status: "Aktif" }
   ]);
 
+  useEffect(() => {
+    MysqlDataService.getSubjects().then((res) => {
+      if (res && res.length > 0) {
+        setMapelsStateList(
+          res.map((r) => ({
+            code: r.code,
+            name: r.name,
+            category: r.category || "Keagamaan",
+            teacher: r.teacher_name,
+            icon: r.icon || "📖",
+            jp: r.jp || 2,
+            kkm: r.kkm || 75,
+            status: r.status || "Aktif",
+          }))
+        );
+      }
+    });
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("All");
 
@@ -1663,6 +1682,19 @@ function MataPelajaran() {
     const formattedCode = inputCode.toUpperCase().trim();
     const iconStr = inputCategory === "Keagamaan" ? "📖" : inputCategory === "Muatan Lokal" ? "🎨" : "📚";
 
+    const payload = {
+      code: formattedCode,
+      name: inputName,
+      category: inputCategory,
+      teacher_name: inputTeacher,
+      jp: Number(inputJp),
+      kkm: Number(inputKkm),
+      status: inputStatus,
+      icon: iconStr,
+    };
+
+    MysqlDataService.saveSubject(payload).catch((e) => console.warn(e));
+
     if (editingMapelCode) {
       setMapelsStateList((prev) =>
         prev.map((item) =>
@@ -1705,6 +1737,7 @@ function MataPelajaran() {
 
   const handleDeleteConfirm = () => {
     if (!deletingMapel) return;
+    MysqlDataService.deleteSubject(deletingMapel.code).catch((e) => console.warn(e));
     setMapelsStateList((prev) => prev.filter((item) => item.code !== deletingMapel.code));
     toast.success(`Mata Pelajaran ${deletingMapel.name} (${deletingMapel.code}) telah dihapus.`);
     setDeletingMapel(null);

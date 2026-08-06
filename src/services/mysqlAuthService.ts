@@ -7,6 +7,7 @@ export interface UserSession {
   nis_nip?: string;
   class_name?: string;
   subject_specialty?: string;
+  avatar_url?: string;
 }
 
 export interface RegisterPayload {
@@ -74,7 +75,31 @@ export class MysqlAuthService {
     const dataStr = localStorage.getItem(this.STORAGE_KEY) || localStorage.getItem("lms_demo_user");
     if (!dataStr) return null;
     try {
-      return JSON.parse(dataStr) as UserSession;
+      const user = JSON.parse(dataStr) as UserSession;
+      if (user) {
+        // Ensure proper human full_name (never a raw NIP/NISN number)
+        if (!user.full_name || /^\d+$/.test(user.full_name.trim())) {
+          if (INITIAL_ROLE_USERS[user.email]) {
+            user.full_name = INITIAL_ROLE_USERS[user.email].name;
+          } else if (user.role === "guru" || user.role === "walikelas") {
+            user.full_name = "Dra. Hj. Siti Rahmah, M.Pd";
+          } else if (user.role === "kamad") {
+            user.full_name = "Drs. H. Hidayatullah, M.Ag";
+          } else if (user.role === "waka") {
+            user.full_name = "Dra. Hj. Maryam, M.Pd";
+          } else if (user.role === "admin" || user.role === "admin_akademik") {
+            user.full_name = "H. Ahmad Syukri, S.Kom";
+          } else {
+            user.full_name = "Ahmad Fauzi";
+          }
+        }
+        // Load stored avatar from localStorage
+        const savedAvatar = localStorage.getItem("lms_user_avatar");
+        if (savedAvatar) {
+          user.avatar_url = savedAvatar;
+        }
+      }
+      return user;
     } catch {
       return null;
     }

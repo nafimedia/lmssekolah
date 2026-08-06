@@ -1,0 +1,819 @@
+{
+  "students": [
+    {
+      "kelas": "VIII-A",
+      "nisn": "0127790481",
+      "nama": "ALIYA QIARA ABDULLAH"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0132249055",
+      "nama": "AQILAA AAMIRATUL YUMNA"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3137647595",
+      "nama": "CITRA FEBI HASIFA"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3130470613",
+      "nama": "DINA FAJRIA ASSA NASSAKI"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3121802138",
+      "nama": "FAIDATUL HUSNA ASFIA"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0135489351",
+      "nama": "FATHAN FAUZAN"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0125098562",
+      "nama": "JUSUF MAULANA"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0135221964",
+      "nama": "KEVIN EFENDI"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3135810920",
+      "nama": "KHARISA PUTRI ARIFA"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0134634710",
+      "nama": "KHAYRA TRI APRILIANI"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3136366787",
+      "nama": "MAITSAA ATIKAH AZZAHRA"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0129365012",
+      "nama": "MAULANA FIKRI"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0138362320",
+      "nama": "MUHAMAD ACHSAN SANJAYA"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0122054715",
+      "nama": "MUHAMMAD FATWA ADHWA NIYAZ"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0131645134",
+      "nama": "NAFISAH AQILATUL HAFSOH"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0123372321",
+      "nama": "NAKHLAH ZAHIYA PUTRI"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0124702907",
+      "nama": "NANDA CANTIKA PUTRI MAMENTIWALO"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0121552970",
+      "nama": "NAYLA HURY MAHFUDZ"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0107389917",
+      "nama": "NUR LAELA SARI"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3127411298",
+      "nama": "SAFIRA FIRDAYANTI SALAMAH"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3136185458",
+      "nama": "SATRIO DAMAR LUMAKSITO"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3128340444",
+      "nama": "SONIA USWATUL BAROROH"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0132640527",
+      "nama": "SYALUM SAKHILA DAMAYANTI"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0123801767",
+      "nama": "TALITA HANA NISA HUZAIFAH"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "3136821272",
+      "nama": "UWI JAYA SAKTI"
+    },
+    {
+      "kelas": "VIII-A",
+      "nisn": "0131398025",
+      "nama": "WIWIN EKA RINJANI"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0133420828",
+      "nama": "AFFANDI ANGGIT PRATAMA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "3121224054",
+      "nama": "AFINDA MULIA ROKHMAH"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "3138661737",
+      "nama": "AISYAH NUR WAHYUNI"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0139847558",
+      "nama": "ALIFAH KALTSUM ZAHRANI PURNOMO"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0127191673",
+      "nama": "ALIZA OKTAVIANI PUTRI"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "3133675161",
+      "nama": "DAFFA ADYASTA DANISH SETYAWAN"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0126160636",
+      "nama": "DHIYA MAITSA PUTRI NURISTA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0129348095",
+      "nama": "DIMAS SEPTA AZHARI"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "3129995907",
+      "nama": "DINDA IMANIAR HERLANA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0137628608",
+      "nama": "FARRENIA ARISTA WIDYA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0124903582",
+      "nama": "FAYZA ANINDYA EFENDI"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0133645526",
+      "nama": "HANSA SABIHA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0132134024",
+      "nama": "HELFAN EFENDY"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "3127292377",
+      "nama": "HUSNIYATUL KAUNI"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0121571848",
+      "nama": "INTAN NUR PUTRI AULIA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0123419194",
+      "nama": "IQLIMATUL LAELI ADRESS"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "3122643827",
+      "nama": "IZZA GANDIT PRATAMA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "3121635074",
+      "nama": "MARWAH AURA MAWARDHANI"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0139466898",
+      "nama": "MIKAYLA ROJABIYA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0134446670",
+      "nama": "MUJAHIDAH FILLAH"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0138970545",
+      "nama": "NOVAN APRILIANSYAH"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0134522326",
+      "nama": "PANDAWA RAFA RAMADHAN"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0131586460",
+      "nama": "PUTRI FITIYA AZZAHRA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0135397614",
+      "nama": "RANGGA SATYA UTAMA"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0127377941",
+      "nama": "ROHMAN LUTFI NAHAR"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0126739408",
+      "nama": "SAYYID HAEYKAL KHABIBULLOH"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "0135932663",
+      "nama": "ZAKI RIZKI RAMADHAN"
+    },
+    {
+      "kelas": "VIII-B",
+      "nisn": "3124400854",
+      "nama": "ZHAVIRA AZHAAR MYCHAELA"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "3123334074",
+      "nama": "ABIGAIL HASAN YUSUF PUTRA INDONESIA"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "3121121358",
+      "nama": "ABIMAIL HUSEN IBRAHIM PUTRA INDONESIA"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "3121331541",
+      "nama": "AHMAD NIZAM NUR FAIZIN"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0127071279",
+      "nama": "AHMAD SABIHIS"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "3122531880",
+      "nama": "ALIKA SYAFA AZAHRA"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0127115017",
+      "nama": "ANNISA NUR RIFA"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0117944345",
+      "nama": "AZKA APRILIA HARTONO"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0121576974",
+      "nama": "CALLISTA RIZKIA PUTRI"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "3133575586",
+      "nama": "DURROTUN NAFISAH"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0122672496",
+      "nama": "EFAN FERDIAN"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0128640614",
+      "nama": "FARIQ ATHARIZZ MANAF"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0123324835",
+      "nama": "GIGIH TRIDA PANGESTU"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0114924937",
+      "nama": "IHSAN NUR FAIZI"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0125470823",
+      "nama": "JUAN MIRZA ZAFRAN RAQILLA"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0112174448",
+      "nama": "KENT FARRAS TIVADAR"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0122461640",
+      "nama": "KHAIRUL NIZAM"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0123356426",
+      "nama": "MUHAMMAD FAWWAS HABIBIE"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "3125018106",
+      "nama": "MUHAMMAD LIWA ULHAQ ALFARABI"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "3116336963",
+      "nama": "MUHAMMAD RIZKY RAMADHAN"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0122758258",
+      "nama": "NABHAN RADINKA KEVAN PRASETYO"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0122848349",
+      "nama": "NASYABEL JAUZA ASHILA"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0129937851",
+      "nama": "NAURA NAZWA NUR AFIFAH"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0119436494",
+      "nama": "NAZWA DELA AZZAHRA"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0126195880",
+      "nama": "PRANANDA THERY HALANSYAH"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0113111584",
+      "nama": "RANIS ANUGRAH RAMADHAN"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0129722787",
+      "nama": "RIZKY NUR RASYDAN"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0129398154",
+      "nama": "RIZQI GALIH ARROFAH"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0128897393",
+      "nama": "SATRIYO LINSO WICAKSONO"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0111194935",
+      "nama": "SEPTIAR DWI MUHNANDAR"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0128392666",
+      "nama": "VIANDRA AISYAH SALSABILA KURNIAWAN"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0117385087",
+      "nama": "VITA ANGGRAENI"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0129634395",
+      "nama": "WAKHIDATUS SOLIKHAH"
+    },
+    {
+      "kelas": "IX-A",
+      "nisn": "0117917027",
+      "nama": "ZAHWA LUNA BAHTIAR"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0121082428",
+      "nama": "AHMAD DAFFA"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0127641678",
+      "nama": "ARDHANI SATRIADJI AKHMAD"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0125314520",
+      "nama": "AZKA SYAFIQ NUR SHIDQI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3112049996",
+      "nama": "AZKIA KUSUMA AYU"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0107113166",
+      "nama": "DAVINA NITA BAHRI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3122014751",
+      "nama": "DHIA WAFI AZALIA SAPUTRI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0117138477",
+      "nama": "ELGIA MELISSA KIRANI PUTRI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0116245748",
+      "nama": "GILANG AFIT SUBEKTI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0126090369",
+      "nama": "INDANA HILMA IKLILA"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3129148765",
+      "nama": "LATHIFATUL AZIZAH"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3110508918",
+      "nama": "MIKAEL EZRA EL GHAZY"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3120769475",
+      "nama": "MUHAMAD NGAFIFUDIN"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3120697873",
+      "nama": "MUHAMMAD HAIKAL ASRI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3104661653",
+      "nama": "MUHAMMAD NAUFAL NASHIRUL HAQ"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0128969219",
+      "nama": "MUHAMMAD SYAFI MUTAMMAM"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0126867483",
+      "nama": "NAILA NATANIA AZZARA"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3130847809",
+      "nama": "NAJWA NUR AFIFAH"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0127454810",
+      "nama": "NURUL HIKMAH RAMADHANI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0111843516",
+      "nama": "RASYA JABBAR RIFQI RIZQULLOH"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3121731162",
+      "nama": "REZA FADLU RAMADHANI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0123766654",
+      "nama": "RIDLO FAIZ MUBAROK"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0115359428",
+      "nama": "RIFQOH TYAS AFADILA"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0126845515",
+      "nama": "SHAFA NUR AULIA"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3122521292",
+      "nama": "SUBKHAN NAWWAF"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3126120542",
+      "nama": "SYAFIIQOH AULIA"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0114891264",
+      "nama": "TAHTA AGUNG RAHARTO"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0124664078",
+      "nama": "WAHYU MAZYA FILKHIYA"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "3122330903",
+      "nama": "WINA WIJAYANTI"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0123852660",
+      "nama": "WINDA NUR SAFIKA"
+    },
+    {
+      "kelas": "IX-B",
+      "nisn": "0126865403",
+      "nama": "ZAINUN AGIL RAFA SYIBAWAIHIN"
+    }
+  ],
+  "teachers": [
+    {
+      "nip": "197905162006041020",
+      "nama": "H. SOLIHUN, S.Pd., M.Si",
+      "jabatan_mapel": "Kepala Madrasah",
+      "role": "kamad"
+    },
+    {
+      "nip": "196909081998032001",
+      "nama": "Hj. NANGIMAH, S.",
+      "jabatan_mapel": "Bahasa Indonesia",
+      "role": "guru"
+    },
+    {
+      "nip": "197002272005011001",
+      "nama": "ACHMAD MAKMUN ROSID, S.Pd., M.Pd",
+      "jabatan_mapel": "Bahasa Inggris",
+      "role": "admin_akademik"
+    },
+    {
+      "nip": "197004082007012025",
+      "nama": "MAHMUDAH, S.",
+      "jabatan_mapel": "Akidah Akhlak",
+      "role": "guru"
+    },
+    {
+      "nip": "197109302007012011",
+      "nama": "Hj. SITI MUHSINAH, S",
+      "jabatan_mapel": "Bahasa Arab",
+      "role": "guru"
+    },
+    {
+      "nip": "197311232005011004",
+      "nama": "H. DASIRUN, S.Ag., M.Pd.I",
+      "jabatan_mapel": "Sejarah Kebudayaan Islam",
+      "role": "guru"
+    },
+    {
+      "nip": "197311252007102001",
+      "nama": "SRIYANI KUNTARI, S.Pd",
+      "jabatan_mapel": "Matematika",
+      "role": "guru"
+    },
+    {
+      "nip": "197312112007011021",
+      "nama": "TEGUH WIYONO, S.Pd",
+      "jabatan_mapel": "Pendidikan Jasmani, Olahraga dan Kesehatan",
+      "role": "guru"
+    },
+    {
+      "nip": "197405022007101003",
+      "nama": "MUHTAMAM, S.Ag., M.Pd.I",
+      "jabatan_mapel": "Fikih",
+      "role": "guru"
+    },
+    {
+      "nip": "197509192009012008",
+      "nama": "UMI KHAFSOH, S.Pd",
+      "jabatan_mapel": "Ilmu Pendidikan Sosial",
+      "role": "guru"
+    },
+    {
+      "nip": "197602012007011019",
+      "nama": "WAKHIBUN, S.P",
+      "jabatan_mapel": "Akidah Akhlak",
+      "role": "guru"
+    },
+    {
+      "nip": "197705132007101002",
+      "nama": "SAYONO, S.Pd., M.Pd.",
+      "jabatan_mapel": "Matematika",
+      "role": "guru"
+    },
+    {
+      "nip": "197710212007101001",
+      "nama": "WAHYUDIN, S",
+      "jabatan_mapel": "Bahasa Arab",
+      "role": "guru"
+    },
+    {
+      "nip": "197804212009012004",
+      "nama": "NAZIHATUN ZUHRIYAH, S.Pd.",
+      "jabatan_mapel": "Ilmu Pendidikan Sosial",
+      "role": "guru"
+    },
+    {
+      "nip": "197806212007101002",
+      "nama": "RIDHO ANSHORI, S.Pd., M.Pd",
+      "jabatan_mapel": "Bahasa Inggris",
+      "role": "guru"
+    },
+    {
+      "nip": "197807072007102001",
+      "nama": "CARYATI,",
+      "jabatan_mapel": "Fikih",
+      "role": "guru"
+    },
+    {
+      "nip": "197906142007102002",
+      "nama": "SOBIYATI, S.Pd",
+      "jabatan_mapel": "Bahasa Indonesia",
+      "role": "walikelas"
+    },
+    {
+      "nip": "198002152007102002",
+      "nama": "DAISAH, S.Pd",
+      "jabatan_mapel": "Bahasa Indonesia",
+      "role": "guru"
+    },
+    {
+      "nip": "198007172005012001",
+      "nama": "H. ANI YULIANI, S.Pd",
+      "jabatan_mapel": "Matematika",
+      "role": "guru"
+    },
+    {
+      "nip": "198102062007102003",
+      "nama": "CETY MAHARSY, S.Pd",
+      "jabatan_mapel": "Bahasa Inggris",
+      "role": "guru"
+    },
+    {
+      "nip": "198302142023211010",
+      "nama": "ALI MANSUR, S.Pd",
+      "jabatan_mapel": "Ilmu Pendidikan Sosial",
+      "role": "waka"
+    },
+    {
+      "nip": "198409142023211019",
+      "nama": "ASROR HIDAYAT, S.Pd",
+      "jabatan_mapel": "Bimbingan dan Konseling",
+      "role": "guru"
+    },
+    {
+      "nip": "199011022025212013",
+      "nama": "NOVANTYA KARTIKAWATI, S.Pd",
+      "jabatan_mapel": "Ilmu Pendidikan Alam",
+      "role": "walikelas"
+    },
+    {
+      "nip": "199202022023211045",
+      "nama": "HASIS SYARIFUDIN, S.Pd",
+      "jabatan_mapel": "Prakarya dan Seni Budaya",
+      "role": "guru"
+    },
+    {
+      "nip": "199204042025051002",
+      "nama": "AH. SYARIF HIDAYAH, S.Pd.I",
+      "jabatan_mapel": "Al Qur'an Hadis",
+      "role": "admin_akademik"
+    },
+    {
+      "nip": "199204152023212049",
+      "nama": "STEFI APRIONITA SETYO ARUM, S.Pd",
+      "jabatan_mapel": "Ilmu Pendidikan Alam",
+      "role": "guru"
+    },
+    {
+      "nip": "199301292025212006",
+      "nama": "IFTI NURROHMAH, S.Pd",
+      "jabatan_mapel": "Matematika",
+      "role": "guru"
+    },
+    {
+      "nip": "199309192023211016",
+      "nama": "MASRUKHAN, S.Pd",
+      "jabatan_mapel": "Pendidikan Jasmani, Olahraga dan Kesehatan",
+      "role": "guru"
+    },
+    {
+      "nip": "199405142019032021",
+      "nama": "ENDAH SUPRIHATIN, S.Pd",
+      "jabatan_mapel": "Bahasa Arab",
+      "role": "guru"
+    },
+    {
+      "nip": "199508182023212044",
+      "nama": "MAULIDIA NURUL IZATI, S.Pd",
+      "jabatan_mapel": "Bimbingan dan Konseling",
+      "role": "walikelas"
+    },
+    {
+      "nip": "199611202025211009",
+      "nama": "ILHAM HABIBI, S.Pd",
+      "jabatan_mapel": "Ilmu Pendidikan Alam",
+      "role": "guru"
+    },
+    {
+      "nip": "199701112025211009",
+      "nama": "MISBAH AHMAD DANI, S.Pd",
+      "jabatan_mapel": "Al Qur'an Hadis",
+      "role": "guru"
+    },
+    {
+      "nip": "199711212025212010",
+      "nama": "SASI VIVIANI, S.Pd",
+      "jabatan_mapel": "Bahasa Inggris",
+      "role": "guru"
+    },
+    {
+      "nip": "199711302025052006",
+      "nama": "ANGGUN NOVTALIA BERLIAN, S.Pd",
+      "jabatan_mapel": "Pendidikan Kewarganegaraan",
+      "role": "guru"
+    },
+    {
+      "nip": "199712302024212037",
+      "nama": "INDAH NURROHMAH, S.Pd",
+      "jabatan_mapel": "Bahasa Inggris",
+      "role": "walikelas"
+    },
+    {
+      "nip": "199804202025052007",
+      "nama": "SARAH SAFIRA, S.Pd",
+      "jabatan_mapel": "Bimbingan dan Konseling",
+      "role": "guru"
+    },
+    {
+      "nip": "199810202025052006",
+      "nama": "HIKMATUL ASTRI AZKIYA, S.Pd",
+      "jabatan_mapel": "Ilmu Pendidikan Alam",
+      "role": "guru"
+    },
+    {
+      "nip": "12345678",
+      "nama": "RINDANG FARIHA IDANA, S.Pd",
+      "jabatan_mapel": "Bahasa Jawa",
+      "role": "walikelas"
+    }
+  ]
+}

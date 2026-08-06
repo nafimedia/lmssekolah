@@ -1,13 +1,14 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { MysqlAuthService, INITIAL_ROLE_USERS } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import logoAsset from "@/assets/logo-mtsn2.png.asset.json";
 import { BerandaModule } from "@/components/dashboard/modules/beranda/BerandaModule";
 import { ProfilModule } from "@/components/dashboard/modules/profil/ProfilModule";
 import { SiakadMasterDataModule } from "@/components/dashboard/modules/siakad/SiakadMasterDataModule";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Home,
   BookOpen,
@@ -68,6 +69,8 @@ import {
   Activity,
   Heart,
   Send,
+  Maximize2,
+  Minimize2,
   Check,
   Briefcase,
   Bot,
@@ -118,6 +121,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -408,14 +412,17 @@ function Dashboard() {
       const user = MysqlAuthService.getActiveUser();
       if (user) {
         return {
-          full_name: user.full_name,
+          full_name: user.full_name && !/^\d+$/.test(user.full_name) ? user.full_name : (INITIAL_ROLE_USERS[user.email]?.name || user.full_name || "Ahmad Fauzi"),
           role: user.role,
           email: user.email,
+          avatar_url: user.avatar_url || (typeof window !== "undefined" ? localStorage.getItem("lms_user_avatar") : null) || null,
         };
       }
       return null;
     },
   });
+
+  const isSuperAdmin = me?.role === "admin" || me?.email?.toLowerCase() === "admin@mail.com" || me?.role === "superadmin";
 
   useEffect(() => {
     if (me?.role) {
@@ -430,145 +437,236 @@ function Dashboard() {
     navigate({ to: "/auth", replace: true });
   };
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   useEffect(() => {
     const root = document.documentElement;
     if (dark) root.classList.add("dark");
     else root.classList.remove("dark");
   }, [dark]);
 
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen w-full bg-background grid place-items-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-xs font-semibold text-muted-foreground">Memuat Dashboard LMS MTsN 2 Cilacap...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-background text-foreground font-sans">
-        {/* Lovable Native Shadcn Sidebar Universal 7 Peran */}
-        <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-          
-          {/* Header Sidebar */}
-          <SidebarHeader className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <img
-                src="/logomts.png"
-                alt="Logo MTsN 2 Cilacap"
-                className="h-10 w-10 object-contain rounded-xl bg-white p-1 shadow-sm border border-sidebar-border shrink-0"
-              />
-              <div className="leading-tight overflow-hidden">
-                <div className="font-bold text-sm text-sidebar-foreground truncate">MTsN 2 Cilacap</div>
-                <div className="text-[11px] text-sidebar-primary font-bold truncate uppercase">{roleInfo.badge}</div>
-              </div>
+      <DashboardContent
+        active={active}
+        setActive={setActive}
+        dark={dark}
+        setDark={setDark}
+        activeRole={activeRole}
+        setActiveRole={setActiveRole}
+        isSuperAdmin={isSuperAdmin}
+        userProfile={userProfile}
+        setUserProfile={setUserProfile}
+        dbStats={dbStats}
+        me={me}
+        handleSignOut={handleSignOut}
+        isWaModalOpen={isWaModalOpen}
+        setIsWaModalOpen={setIsWaModalOpen}
+      />
+    </SidebarProvider>
+  );
+}
+
+function DashboardContent({
+  active,
+  setActive,
+  dark,
+  setDark,
+  activeRole,
+  setActiveRole,
+  isSuperAdmin,
+  userProfile,
+  setUserProfile,
+  dbStats,
+  me,
+  handleSignOut,
+  isWaModalOpen,
+  setIsWaModalOpen,
+}: any) {
+  const { setOpenMobile } = useSidebar();
+
+  const rawDisplayName = me?.full_name || userProfile?.name || "Ahmad Fauzi";
+  const displayName = !rawDisplayName || /^\d+$/.test(rawDisplayName.trim()) ? (userProfile?.name && !/^\d+$/.test(userProfile.name) ? userProfile.name : "Ahmad Fauzi") : rawDisplayName;
+
+  const roleInfo = ROLE_PERMISSIONS[activeRole] || ROLE_PERMISSIONS.siswa;
+  const allowedKeys = roleInfo.allowedMenus.map((x) => x.key);
+
+  const filteredMenu = roleInfo.allowedMenus
+    .map((item) => {
+      const base = MENU.find((m) => m.key === item.key);
+      if (!base) return null;
+      return {
+        ...base,
+        label: item.label || base.label,
+        group: item.group || base.group,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+
+  const groups = Array.from(new Set(filteredMenu.map((m) => m.group)));
+
+  return (
+    <>
+      {/* Lovable Native Shadcn Sidebar Universal 7 Peran */}
+      <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+        
+        {/* Header Sidebar */}
+        <SidebarHeader className="p-4 border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <img
+              src="/logomts.png"
+              alt="Logo MTsN 2 Cilacap"
+              className="h-10 w-10 object-contain rounded-xl bg-white p-1 shadow-sm border border-sidebar-border shrink-0"
+            />
+            <div className="leading-tight overflow-hidden group-data-[state=collapsed]:hidden">
+              <div className="font-bold text-sm text-sidebar-foreground truncate">MTsN 2 Cilacap</div>
+              <div className="text-[11px] text-sidebar-primary font-bold truncate uppercase">{roleInfo.badge}</div>
             </div>
-          </SidebarHeader>
+          </div>
+        </SidebarHeader>
 
-          {/* Sidebar Content */}
-          <SidebarContent className="px-2 py-4 space-y-4">
-            {groups.map((g) => (
-              <SidebarGroup key={g}>
-                <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-1">
-                  {g}
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {filteredMenu.filter((m) => m.group === g).map((m) => {
-                      const Icon = m.icon;
-                      const isActive = active === m.key;
-                      return (
-                        <SidebarMenuItem key={m.key}>
-                          <SidebarMenuButton
-                            isActive={isActive}
-                            onClick={() => setActive(m.key)}
-                            className="gap-3 font-semibold data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground hover:bg-sidebar-accent"
-                          >
-                            <Icon className="h-4 w-4" />
-                            <span>{m.label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            ))}
-          </SidebarContent>
+        {/* Sidebar Content */}
+        <SidebarContent className="px-2 py-4 space-y-4">
+          {groups.map((g) => (
+            <SidebarGroup key={g}>
+              <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-1 group-data-[state=collapsed]:hidden">
+                {g}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {filteredMenu.filter((m) => m.group === g).map((m) => {
+                    const Icon = m.icon;
+                    const isActive = active === m.key;
+                    return (
+                      <SidebarMenuItem key={m.key}>
+                        <SidebarMenuButton
+                          tooltip={m.label}
+                          isActive={isActive}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setActive(m.key);
+                            setOpenMobile(false);
+                            if (typeof window !== "undefined") {
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }
+                          }}
+                          className={`gap-3 font-semibold cursor-pointer text-xs sm:text-sm transition-all ${
+                            isActive
+                              ? "bg-primary text-primary-foreground font-bold shadow-xs data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate group-data-[state=collapsed]:hidden">{m.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
 
-          {/* Footer Sidebar */}
-          <SidebarFooter className="p-3 border-t border-sidebar-border bg-sidebar-accent/40">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-                    {(me?.full_name || "U").slice(0, 2).toUpperCase()}
+        {/* Footer Sidebar */}
+        <SidebarFooter className="p-3 border-t border-sidebar-border bg-sidebar-accent/40">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <Avatar className="h-9 w-9 ring-2 ring-emerald-500/40 shrink-0">
+                {userProfile?.avatarUrl || me?.avatar_url ? (
+                  <img src={userProfile?.avatarUrl || me?.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <AvatarFallback className="bg-emerald-600 text-white text-xs font-black">
+                    {displayName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
-                </Avatar>
-                <div className="leading-tight overflow-hidden">
-                  <div className="text-xs font-semibold truncate text-sidebar-foreground">{me?.full_name || "Pengguna"}</div>
-                  <div className="text-[10px] text-sidebar-primary font-bold capitalize truncate">{activeRole.replace("_", " ")}</div>
+                )}
+              </Avatar>
+              <div className="leading-tight overflow-hidden group-data-[state=collapsed]:hidden">
+                <div className="font-extrabold text-xs text-sidebar-foreground truncate">
+                  {displayName}
                 </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-destructive hover:bg-destructive/10 shrink-0" title="Keluar">
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </SidebarFooter>
-
-          <SidebarRail />
-        </Sidebar>
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 bg-background">
-          
-          {/* Topbar Header */}
-          <header className="sticky top-0 z-20 h-16 border-b border-border bg-card/90 backdrop-blur-md px-4 lg:px-8 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-9 w-9 text-foreground hover:bg-accent" />
-              <div className="h-4 w-[1px] bg-border hidden sm:block" />
-
-              <div className="hidden md:flex items-center gap-2 flex-1 max-w-md">
-                <div className="flex items-center gap-2 w-full bg-muted/60 rounded-lg px-3 py-1.5 border border-border">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                  <input
-                    className="bg-transparent outline-none text-sm w-full"
-                    placeholder="Cari mapel, tugas, materi…"
-                  />
+                <div className="text-[10px] text-muted-foreground truncate font-mono font-bold uppercase">
+                  {activeRole.replace("_", " ")}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setDark((v) => !v)}
-                aria-label="Toggle dark mode"
-              >
-                {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-destructive hover:bg-destructive/10 shrink-0" title="Keluar">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
 
-              {/* Role Switcher (7 Peran) */}
+      {/* Main Container */}
+      <div className="flex flex-col flex-1 min-w-0 min-h-screen bg-background">
+        {/* Top Header Navigation */}
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/95 px-4 lg:px-8 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger className="h-9 w-9 border border-border" />
+            <div className="relative hidden md:block w-72">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Cari mapel, tugas, materi..."
+                className="pl-9 text-xs h-9 bg-muted/30"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setDark(!dark)}
+            >
+              {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
+            </Button>
+
+            {/* Admin Switch Role Tester Dropdown */}
+            {isSuperAdmin ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary border-primary/30">
-                    <Shield className="h-3.5 w-3.5 text-primary" />
-                    <span>Role: {activeRole.toUpperCase().replace("_", " ")}</span>
-                    <ChevronDown className="h-3 w-3 opacity-60" />
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20">
+                    <Shield className="h-3.5 w-3.5" /> Role: <span className="uppercase">{activeRole.replace("_", " ")}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="text-xs">Ganti Mode Perspektif Role</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuLabel className="text-xs font-bold text-muted-foreground">Mode Switch Perspektif User</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => { setActiveRole("admin"); setActive("users"); toast.info("Mode Perspektif: SUPER ADMIN"); }}>
-                    🛡️ Super Admin
+                  <DropdownMenuItem onClick={() => { setActiveRole("admin"); toast.info("Mode Perspektif: SUPER ADMIN"); }}>
+                    🛡️ Super Admin (Full Access)
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setActiveRole("admin_akademik"); toast.info("Mode Perspektif: ADMIN AKADEMIK"); }}>
-                    💼 Admin Akademik
+                    📋 Admin Akademik
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("kamad"); toast.info("Mode Perspektif: KEPALA MADRASAH"); }}>
-                    🏛️ Kepala Madrasah (Executive)
+                  <DropdownMenuItem onClick={() => { setActiveRole("kamad"); toast.info("Mode Perspektif: KEPALA MADRASAH (KAMAD)"); }}>
+                    🏛️ Kepala Madrasah (Kamad)
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("waka"); toast.info("Mode Perspektif: WAKA KURIKULUM"); }}>
-                    📐 Waka Kurikulum
+                  <DropdownMenuItem onClick={() => { setActiveRole("waka"); toast.info("Mode Perspektif: WAKIL KEPALA (WAKA)"); }}>
+                    💼 Wakil Kepala (Waka)
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("wali_kelas"); toast.info("Mode Perspektif: WALI KELAS"); }}>
-                    📋 Wali Kelas
+                  <DropdownMenuItem onClick={() => { setActiveRole("walikelas"); toast.info("Mode Perspektif: WALI KELAS"); }}>
+                    🏫 Wali Kelas
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("guru"); toast.info("Mode Perspektif: GURU PENGAMPU"); }}>
+                  <DropdownMenuItem onClick={() => { setActiveRole("guru"); toast.info("Mode Perspektif: GURU MAPEL"); }}>
                     👨‍🏫 Guru Pengampu
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setActiveRole("siswa"); toast.info("Mode Perspektif: SISWA"); }}>
@@ -576,65 +674,73 @@ function Dashboard() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : null}
 
-              {(activeRole === "guru" || activeRole === "walikelas" || activeRole === "wali_kelas" || activeRole === "kamad" || activeRole === "waka" || activeRole === "admin_akademik" || activeRole === "admin") && (
-                <Button size="sm" variant="outline" className="text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" onClick={() => setIsWaModalOpen(true)}>
-                  <MessageSquare className="h-4 w-4 text-emerald-500" />
-                  <span className="hidden sm:inline">📲 WA Gateway</span>
-                </Button>
-              )}
-
-              <Button size="icon" variant="ghost" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-secondary" />
+            {(activeRole === "guru" || activeRole === "walikelas" || activeRole === "wali_kelas" || activeRole === "kamad" || activeRole === "waka" || activeRole === "admin_akademik" || activeRole === "admin") && (
+              <Button size="sm" variant="outline" className="text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" onClick={() => setIsWaModalOpen(true)}>
+                <Send className="h-3.5 w-3.5 text-emerald-500" /> <span className="hidden sm:inline">WA Gateway</span>
               </Button>
+            )}
 
-              <WAGatewayLogModal isOpen={isWaModalOpen} onClose={() => setIsWaModalOpen(false)} />
+            {/* WA Modal */}
+            <WAGatewayLogModal isOpen={isWaModalOpen} onClose={() => setIsWaModalOpen(false)} />
 
-              {/* Pojok Akun */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-muted transition">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-                        {(me?.full_name || "U").slice(0, 2).toUpperCase()}
+            {/* User Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2.5 p-1.5 hover:bg-accent rounded-full border border-border/40">
+                  <Avatar className="h-8 w-8 ring-2 ring-emerald-500/40 shrink-0">
+                    {userProfile?.avatarUrl || me?.avatar_url ? (
+                      <img src={userProfile?.avatarUrl || me?.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      <AvatarFallback className="bg-emerald-600 text-white text-xs font-black">
+                        {displayName.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
-                    </Avatar>
-                    <div className="hidden sm:block text-left leading-tight">
-                      <div className="text-sm font-semibold">{me?.full_name || "Pengguna"}</div>
-                      <div className="text-[11px] text-muted-foreground capitalize">{activeRole.replace("_", " ")}</div>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setActive("profil")}>
-                    <UserIcon className="h-4 w-4 mr-2" /> Profil Saya
-                  </DropdownMenuItem>
+                    )}
+                  </Avatar>
+                  <div className="hidden sm:flex flex-col text-left leading-tight">
+                    <span className="text-xs font-bold text-foreground truncate max-w-[150px]">
+                      {displayName}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase">
+                      {activeRole.replace("_", " ")}
+                    </span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  Akun Terhubung: <br />
+                  <strong className="text-foreground text-sm font-bold">{displayName}</strong>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setActive("profil")}>
+                  <UserIcon className="h-4 w-4 mr-2" /> Profil Saya
+                </DropdownMenuItem>
+                {activeRole !== "siswa" && (
                   <DropdownMenuItem onClick={() => setActive("users")}>
                     <Shield className="h-4 w-4 mr-2" /> Data User & Role
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4 mr-2" /> Keluar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </header>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive font-semibold" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" /> Keluar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
 
-          <main className="p-4 lg:p-8 flex-1">
+        <main className="p-4 lg:p-8 flex-1">
           {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
           {active === "siakad" && <SiakadMasterDataModule />}
-          {active === "mapel" && <MataPelajaran />}
-          {active === "users" && <DataUserRole />}
+          {active === "mapel" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
+          {active === "users" && activeRole !== "siswa" && <DataUserRole />}
           {active === "pengumuman" && <Pengumuman />}
-          {active === "jadwal" && <Jadwal />}
+          {active === "jadwal" && <Jadwal activeRole={activeRole} userProfile={userProfile} />}
           {active === "agenda" && <AgendaKalender activeRole={activeRole} />}
           {active === "kehadiran" && <KehadiranSiswa />}
-          {active === "modul_ajar" && <ModulAjar activeRole={activeRole} />}
+          {active === "modul_ajar" && <ModulAjar activeRole={activeRole} userProfile={userProfile} />}
           {active === "asesmen" && <PusatAsesmen activeRole={activeRole} />}
           {active === "tugas" && <Tugas />}
           {active === "quiz" && <Quiz />}
@@ -653,9 +759,8 @@ function Dashboard() {
           {active === "pengaturan" && <Pengaturan />}
         </main>
       </div>
-    </div>
-  </SidebarProvider>
-);
+    </>
+  );
 }
 
 /* ---------- Pages ---------- */
@@ -690,6 +795,30 @@ function DataUserRole() {
     { id: "6", full_name: "Dra. Hj. Siti Rahmah, M.Pd", email: "guru@mtsn2cilacap.sch.id", nis: "NIP. 198004122006042003", class: "8A, 8B, 9C", roles: ["guru"] },
     { id: "7", full_name: "Muhammad Fairuz Maulana", email: "siswa@mtsn2cilacap.sch.id", nis: "NISN. 0081234567", class: "8A", roles: ["siswa"] },
   ]);
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getUsers()
+      .then((users) => {
+        if (!isMounted) return;
+        if (users && users.length > 0) {
+          const formatted = users.map((u) => ({
+            id: String(u.id),
+            full_name: u.full_name,
+            email: u.email,
+            nis: `${u.identity_type || (u.role === "siswa" ? "NISN" : "NIP")}. ${u.nis_nip || "-"}`,
+            class: u.class_name || u.subject_specialty || "Semua",
+            roles: [u.role || "siswa"],
+          }));
+          setDummyUsersList(formatted);
+        }
+      })
+      .catch((err) => console.warn("Failed fetching users from MySQL:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const availableRoles = ["admin", "admin_akademik", "kamad", "waka", "walikelas", "guru", "siswa"];
 
@@ -1100,27 +1229,64 @@ function Pengumuman() {
   );
 }
 
-function Jadwal() {
+function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+  const isSiswa = activeRole === "siswa";
+  const rawClass = userProfile?.class_name || "VIII-A";
+
+  const getStudentGrade = (cName: string) => {
+    if (cName.includes("7") || cName.toUpperCase().includes("VII")) return "Kelas VII";
+    if (cName.includes("9") || cName.toUpperCase().includes("IX")) return "Kelas IX";
+    return "Kelas VIII";
+  };
+
+  const getStudentRombel = (cName: string) => {
+    const clean = cName.replace(/[^0-9A-C]/gi, "").toUpperCase();
+    if (clean.includes("7A")) return "Rombel 7A";
+    if (clean.includes("7B")) return "Rombel 7B";
+    if (clean.includes("7C")) return "Rombel 7C";
+    if (clean.includes("8B")) return "Rombel 8B";
+    if (clean.includes("8C")) return "Rombel 8C";
+    if (clean.includes("9A")) return "Rombel 9A";
+    if (clean.includes("9C")) return "Rombel 9C";
+    return "Rombel 8A";
+  };
+
   const hari = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const [filterKelas, setFilterKelas] = useState("Semua");
-  const [filterRombel, setFilterRombel] = useState("Semua");
+  const [filterKelas, setFilterKelas] = useState(isSiswa ? getStudentGrade(rawClass) : "Semua");
+  const [filterRombel, setFilterRombel] = useState(isSiswa ? getStudentRombel(rawClass) : "Semua");
 
   const [jadwal, setJadwal] = useState<
     Record<string, { j: string; m: string; tingkat: string; rombel: string; g: string }[]>
   >({
     Senin: [
       { j: "07.30 - 09.00", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Bpk. Hendra Wijaya, M.Sc" },
+      { j: "09.15 - 10.45", m: "Al-Quran Hadits", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Dra. Hj. Siti Rahmah, M.Pd" },
       { j: "09.15 - 10.45", m: "Bahasa Arab", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "Ustadzah Nurul Hidayah, S.Pd.I" },
       { j: "10.45 - 12.15", m: "Fiqih", tingkat: "Kelas IX", rombel: "Rombel 9C", g: "Dra. Hj. Siti Rahmah, M.Pd" },
     ],
     Selasa: [
       { j: "07.30 - 09.00", m: "IPA Terpadu", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Ibu Ratna Dewi, M.Pd" },
+      { j: "09.15 - 10.45", m: "Fiqih", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Dra. Hj. Siti Rahmah, M.Pd" },
       { j: "09.15 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "Bpk. Slamet Riyadi, M.Pd" },
     ],
-    Rabu: [{ j: "07.30 - 09.00", m: "Al-Quran Hadits", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "Dra. Hj. Siti Rahmah, M.Pd" }],
-    Kamis: [{ j: "07.30 - 09.00", m: "IPS", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "Ibu Maryati, S.Pd" }],
-    Jumat: [{ j: "07.30 - 09.00", m: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7C", g: "Bpk. Agus Santoso, S.Pd" }],
-    Sabtu: [{ j: "07.30 - 09.00", m: "Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8C", g: "Ibu Rina Indriani, S.Sn" }],
+    Rabu: [
+      { j: "07.30 - 09.00", m: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Achmad Makmun Rosid, S.Pd., M.Pd" },
+      { j: "09.15 - 10.45", m: "Informatika & Coding", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "H. Ahmad Syukri, S.Kom" },
+      { j: "07.30 - 09.00", m: "Al-Quran Hadits", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "Dra. Hj. Siti Rahmah, M.Pd" },
+    ],
+    Kamis: [
+      { j: "07.30 - 09.00", m: "Akidah Akhlak", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Ust. Abdul Halim, S.Ag" },
+      { j: "09.15 - 10.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Drs. KH. Mahmud Ridwan" },
+      { j: "07.30 - 09.00", m: "IPS", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "Ibu Maryati, S.Pd" },
+    ],
+    Jumat: [
+      { j: "07.30 - 09.00", m: "PJOK", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Bpk. Agus Santoso, S.Pd" },
+      { j: "07.30 - 09.00", m: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7C", g: "Bpk. Agus Santoso, S.Pd" },
+    ],
+    Sabtu: [
+      { j: "07.30 - 09.00", m: "Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Ibu Rina Indriani, S.Sn" },
+      { j: "07.30 - 09.00", m: "Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8C", g: "Ibu Rina Indriani, S.Sn" },
+    ],
   });
 
   const [isOpen, setIsOpen] = useState(false);
@@ -1144,14 +1310,20 @@ function Jadwal() {
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Master Jadwal Pelajaran</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            Jadwal Pelajaran {isSiswa && <Badge className="bg-primary text-primary-foreground font-bold text-xs">📍 Kelas {rawClass}</Badge>}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Plotting alokasi jadwal mengajar & belajar per Tingkat Kelas dan Rombel MTsN 2 Cilacap
+            {isSiswa
+              ? `Jadwal alokasi jam tatap muka & pembelajaran khusus Kelas ${rawClass} MTsN 2 Cilacap`
+              : "Plotting alokasi jadwal mengajar & belajar per Tingkat Kelas dan Rombel MTsN 2 Cilacap"}
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-          + Tambah Jadwal Pelajaran
-        </Button>
+        {!isSiswa && (
+          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
+            + Tambah Jadwal Pelajaran
+          </Button>
+        )}
       </div>
 
       {/* Filter Bar Kelas & Rombel */}
@@ -1306,8 +1478,17 @@ function Jadwal() {
   );
 }
 
-function MataPelajaran() {
-  const [kelas, setKelas] = useState<"VII" | "VIII" | "IX">("VIII");
+function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+  const isSiswa = activeRole === "siswa";
+  const rawClass = userProfile?.class_name || "VIII-A";
+
+  const getStudentGradeKey = (cName: string): "VII" | "VIII" | "IX" => {
+    if (cName.includes("7") || cName.toUpperCase().includes("VII")) return "VII";
+    if (cName.includes("9") || cName.toUpperCase().includes("IX")) return "IX";
+    return "VIII";
+  };
+
+  const [kelas, setKelas] = useState<"VII" | "VIII" | "IX">(isSiswa ? getStudentGradeKey(rawClass) : "VIII");
   const [selectedMapel, setSelectedMapel] = useState<string | null>(null);
   const [selectedPertemuan, setSelectedPertemuan] = useState<number | null>(null);
   const [forumComment, setForumComment] = useState("");
@@ -2134,34 +2315,268 @@ function Tugas() {
 }
 
 function Quiz() {
-  const quiz = [
-    { t: "Kuis Bab 1 - Bilangan Bulat", m: "Matematika", d: "10 soal · 15 mnt" },
-    { t: "Kuis Simple Present", m: "B. Inggris", d: "20 soal · 20 mnt" },
-    { t: "Kuis Rukun Iman", m: "Akidah Akhlak", d: "15 soal · 15 mnt" },
-    { t: "Kuis Ekosistem", m: "IPA", d: "12 soal · 20 mnt" },
+  const quizList = [
+    { id: "q1", t: "Kuis Bab 1 - Bilangan Bulat", m: "Matematika", d: "10 soal · 15 mnt", icon: "📐", totalQuestions: 10, duration: 15 },
+    { id: "q2", t: "Kuis Simple Present & Past Tense", m: "Bahasa Inggris", d: "20 soal · 20 mnt", icon: "🗣️", totalQuestions: 20, duration: 20 },
+    { id: "q3", t: "Kuis Rukun Iman & Asmaul Husna", m: "Akidah Akhlak", d: "15 soal · 15 mnt", icon: "🕌", totalQuestions: 15, duration: 15 },
+    { id: "q4", t: "Kuis Ekosistem & Rantai Makanan", m: "IPA Terpadu", d: "12 soal · 20 mnt", icon: "🔬", totalQuestions: 12, duration: 20 },
+    { id: "q5", t: "Kuis Tajwid & Mad Thabi'i", m: "Al-Quran Hadits", d: "10 soal · 15 mnt", icon: "📖", totalQuestions: 10, duration: 15 },
   ];
+
+  const [activeQuiz, setActiveQuiz] = useState<any | null>(null);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+  const [quizTimeLeft, setQuizTimeLeft] = useState(600);
+  const [quizFinished, setQuizFinished] = useState(false);
+
+  const sampleQuestions = [
+    { q: "Hasil dari ( -12 ) × 4 + 72 ÷ ( -6 ) adalah ...", opts: { A: "-60", B: "-36", C: "36", D: "60" }, correct: "A" },
+    { q: "Dua suku berikutnya dari barisan 3, 7, 11, 15, ... adalah ...", opts: { A: "18, 22", B: "19, 23", C: "19, 24", D: "20, 25" }, correct: "B" },
+    { q: "Bentuk sederhana dari 3x + 5y - 2x + y adalah ...", opts: { A: "x + 6y", B: "5x + 6y", C: "x + 4y", D: "5x + 4y" }, correct: "A" },
+    { q: "Persamaan garis yang melalui titik (2, 5) dan bergradien 3 adalah ...", opts: { A: "y = 3x - 1", B: "y = 3x + 1", C: "y = 3x - 5", D: "y = 3x + 5" }, correct: "A" },
+    { q: "Nilai dari 2^4 × 2^3 adalah ...", opts: { A: "64", B: "128", C: "256", D: "512" }, correct: "B" },
+  ];
+
+  const handleStartQuiz = (q: any) => {
+    setActiveQuiz(q);
+    setCurrentIdx(0);
+    setQuizAnswers({});
+    setQuizFinished(false);
+    setQuizTimeLeft(q.duration * 60);
+    setIsQuizModalOpen(true);
+
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFs);
+    return () => document.removeEventListener("fullscreenchange", handleFs);
+  }, []);
+
+  useEffect(() => {
+    if (!isQuizModalOpen || quizFinished || quizTimeLeft <= 0) return;
+    const t = setInterval(() => {
+      setQuizTimeLeft((prev) => {
+        if (prev <= 1) {
+          setQuizFinished(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [isQuizModalOpen, quizFinished, quizTimeLeft]);
+
+  const handleFinishQuiz = () => {
+    setQuizFinished(true);
+    toast.success("🎉 Kuis Berhasil Diselesaikan!", { description: "Jawaban Anda telah dicatat oleh sistem." });
+  };
+
+  const calculateScore = () => {
+    let score = 0;
+    sampleQuestions.forEach((q, idx) => {
+      if (quizAnswers[idx] === q.correct) score += 20;
+    });
+    return score;
+  };
+
+  useEffect(() => {
+    if (isQuizModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isQuizModalOpen]);
+
   return (
     <>
-      <SectionHeader title="Quiz" sub="Latihan soal interaktif" />
-      <div className="grid sm:grid-cols-2 gap-4">
-        {quiz.map((q, i) => (
-          <Card key={i} className="hover:shadow-md transition">
-            <CardContent className="p-5">
+      <SectionHeader title="Quiz Interaktif Live" sub="Latihan soal interaktif & kuis singkat real-time berhadiah XP" />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {quizList.map((q) => (
+          <Card key={q.id} className="hover:border-primary/50 transition shadow-xs">
+            <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
               <div className="flex items-start gap-3">
-                <div className="h-11 w-11 rounded-xl bg-accent text-accent-foreground grid place-items-center">
-                  <Brain className="h-5 w-5" />
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary grid place-items-center shrink-0 font-bold text-2xl">
+                  {q.icon}
                 </div>
-                <div className="flex-1">
-                  <div className="font-semibold">{q.t}</div>
-                  <div className="text-xs text-muted-foreground">{q.m}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{q.d}</div>
+                <div className="flex-1 min-w-0">
+                  <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/30 mb-1">
+                    {q.m}
+                  </Badge>
+                  <div className="font-bold text-sm text-foreground leading-snug">{q.t}</div>
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                    <span>⏱️ {q.d}</span>
+                    <span>• 🎁 +50 XP</span>
+                  </div>
                 </div>
               </div>
-              <Button size="sm" className="w-full mt-4">Mulai Kuis</Button>
+              <Button size="sm" className="w-full font-bold bg-primary text-primary-foreground gap-1.5" onClick={() => handleStartQuiz(q)}>
+                <Brain className="h-4 w-4" /> Mulai Kuis Interaktif
+              </Button>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Fullscreen Quiz Player Modal */}
+      {isQuizModalOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[99999] bg-background w-screen h-screen min-h-screen flex flex-col p-0 m-0 overflow-hidden text-foreground">
+            {/* Header */}
+            <div className="bg-muted/40 border-b border-border p-4 flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold">
+                  ⚡
+                </div>
+                <div>
+                  <h2 className="font-bold text-base text-foreground leading-tight">{activeQuiz?.t}</h2>
+                  <p className="text-xs text-muted-foreground">Mapel: {activeQuiz?.m} • Mode Kuis Interaktif</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={toggleFullscreen}
+                  className="h-8 text-xs font-bold gap-1 bg-background border-border hover:bg-accent"
+                >
+                  {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 text-primary" /> : <Maximize2 className="h-3.5 w-3.5 text-primary" />}
+                  <span className="hidden sm:inline">{isFullscreen ? "Keluar Fullscreen" : "Mode Fullscreen"}</span>
+                </Button>
+
+                {!quizFinished && (
+                  <Badge variant="outline" className="px-3 py-1.5 font-mono font-bold text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                    ⏱️ Sisa Waktu: {Math.floor(quizTimeLeft / 60)}:{String(quizTimeLeft % 60).padStart(2, "0")}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 flex-1 overflow-y-auto space-y-6">
+              {!quizFinished ? (
+                <>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground font-bold">
+                    <span>Soal Ke-{currentIdx + 1} dari {sampleQuestions.length}</span>
+                    <span>Skor Terjawab: {Object.keys(quizAnswers).length}/{sampleQuestions.length}</span>
+                  </div>
+
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-300"
+                      style={{ width: `${((currentIdx + 1) / sampleQuestions.length) * 100}%` }}
+                    />
+                  </div>
+
+                  <Card className="border-border shadow-xs max-w-4xl mx-auto">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="text-base sm:text-lg font-bold text-foreground leading-relaxed">
+                        {sampleQuestions[currentIdx]?.q}
+                      </div>
+
+                      <div className="grid sm:grid-cols-2 gap-3 pt-2">
+                        {Object.entries(sampleQuestions[currentIdx]?.opts || {}).map(([key, val]) => {
+                          const isSelected = quizAnswers[currentIdx] === key;
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => setQuizAnswers((prev) => ({ ...prev, [currentIdx]: key }))}
+                              className={`p-4 rounded-xl border text-left flex items-center gap-3 transition font-medium text-sm ${
+                                isSelected
+                                  ? "border-primary bg-primary/10 text-primary font-bold shadow-xs ring-1 ring-primary/40"
+                                  : "border-border hover:border-primary/40 bg-card text-foreground"
+                              }`}
+                            >
+                              <span className={`h-8 w-8 rounded-lg border grid place-items-center font-bold text-xs shrink-0 ${isSelected ? "bg-primary text-primary-foreground border-primary" : "border-border bg-muted"}`}>
+                                {key}
+                              </span>
+                              <span>{val}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Footer Controls */}
+                  <div className="flex items-center justify-between pt-4 border-t border-border max-w-4xl mx-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentIdx === 0}
+                      onClick={() => setCurrentIdx((prev) => Math.max(0, prev - 1))}
+                    >
+                      ← Soal Sebelumnya
+                    </Button>
+
+                    {currentIdx < sampleQuestions.length - 1 ? (
+                      <Button
+                        size="sm"
+                        className="bg-primary text-primary-foreground font-bold"
+                        onClick={() => setCurrentIdx((prev) => Math.min(sampleQuestions.length - 1, prev + 1))}
+                      >
+                        Soal Berikutnya →
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5"
+                        onClick={handleFinishQuiz}
+                      >
+                        <CheckCircle2 className="h-4 w-4" /> Selesaikan Kuis
+                      </Button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-10 space-y-6 max-w-md mx-auto">
+                  <div className="h-20 w-20 rounded-full bg-emerald-500/15 text-emerald-600 grid place-items-center mx-auto text-4xl font-bold">
+                    🏆
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-foreground">Kuis Selesai!</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Hasil latihan kuis interaktif Anda telah dihitung.</p>
+                  </div>
+
+                  <div className="p-6 rounded-2xl bg-card border border-border space-y-3">
+                    <div className="text-xs font-bold text-muted-foreground uppercase">NILAI AKHIR KUIS</div>
+                    <div className="text-5xl font-black text-emerald-600 font-mono">{calculateScore()} / 100</div>
+                    <Badge className="bg-emerald-600 text-white font-bold">
+                      {calculateScore() >= 75 ? "LULUS SANGAT BAIK 🎉 (+50 XP)" : "CUKUP BAIK (+25 XP)"}
+                    </Badge>
+                  </div>
+
+                  <Button className="w-full bg-primary text-primary-foreground font-bold" onClick={() => setIsQuizModalOpen(false)}>
+                    Tutup & Kembali ke Dashboard
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }
@@ -4008,8 +4423,18 @@ function Pengaturan() {
 
 
 /* ---------- Modul Ajar PDF per Jenjang ---------- */
-function ModulAjar({ activeRole }: { activeRole?: string }) {
-  const [selectedJenjang, setSelectedJenjang] = useState("semua");
+function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+  const isSiswa = activeRole === "siswa";
+  const rawClass = userProfile?.class_name || "VIII-A";
+
+  const getStudentJenjang = (cName: string) => {
+    if (cName.includes("7") || cName.toUpperCase().includes("VII")) return "Kelas VII";
+    if (cName.includes("9") || cName.toUpperCase().includes("IX")) return "Kelas IX";
+    return "Kelas VIII";
+  };
+
+  const initialJenjang = isSiswa ? getStudentJenjang(rawClass) : "semua";
+  const [selectedJenjang, setSelectedJenjang] = useState(initialJenjang);
   const [modulList, setModulList] = useState([
     { id: "m1", title: "Modul Ajar Al-Quran Hadits Pertemuan 1-18", mapel: "Al-Quran Hadits", jenjang: "Kelas VIII", teacher: "Dra. Hj. Siti Rahmah, M.Pd", size: "3.4 MB", date: "15 Juli 2026", status: "Terverifikasi Waka" },
     { id: "m2", title: "Modul Ajar Fiqih Kebangsaan & Ibadah", mapel: "Fiqih", jenjang: "Kelas IX", teacher: "Dra. Hj. Siti Rahmah, M.Pd", size: "4.1 MB", date: "18 Juli 2026", status: "Terverifikasi Waka" },
@@ -4041,15 +4466,19 @@ function ModulAjar({ activeRole }: { activeRole?: string }) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FileText className="h-6 w-6 text-emerald-500" /> Perangkat Ajar & Modul Ajar PDF
+            <FileText className="h-6 w-6 text-emerald-500" /> Perangkat Ajar & Modul Ajar PDF {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs">📍 Kelas {rawClass}</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Unggah dan kelola file PDF Modul Ajar Kurikulum Merdeka per mata pelajaran & jenjang (Kelas VII, VIII, IX).
+            {isSiswa
+              ? `Akses berkas PDF Modul Ajar Kurikulum Merdeka khusus Kelas ${rawClass} MTsN 2 Cilacap`
+              : "Unggah dan kelola file PDF Modul Ajar Kurikulum Merdeka per mata pelajaran & jenjang (Kelas VII, VIII, IX)."}
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setIsUploadOpen(true)}>
-          <Upload className="h-3.5 w-3.5 mr-1" /> + Unggah Modul Ajar PDF
-        </Button>
+        {!isSiswa && (
+          <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setIsUploadOpen(true)}>
+            <Upload className="h-3.5 w-3.5 mr-1" /> + Unggah Modul Ajar PDF
+          </Button>
+        )}
       </div>
 
       {/* Filter Jenjang */}

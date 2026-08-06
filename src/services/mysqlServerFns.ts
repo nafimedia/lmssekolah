@@ -9,6 +9,17 @@ export interface DatabaseStats {
   cbtExamsCount: number;
 }
 
+export interface UserRow {
+  id: string;
+  full_name: string;
+  email: string;
+  identity_type?: string;
+  nis_nip?: string;
+  class_name?: string;
+  subject_specialty?: string;
+  role: string;
+}
+
 export interface SubjectRow {
   id?: number;
   code: string;
@@ -112,6 +123,17 @@ export const getDatabaseStatsFn = createServerFn({ method: "GET" }).handler(
       };
     } catch {
       return { totalUsers: 6, siswaCount: 1, guruStafCount: 5, totalRombel: 1, totalMapel: 8, cbtExamsCount: 1 };
+    }
+  }
+);
+
+export const getUsersFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<UserRow[]> => {
+    try {
+      const { query } = await import("@/lib/db");
+      return await query<UserRow[]>("SELECT id, full_name, email, identity_type, nis_nip, class_name, subject_specialty, role FROM users ORDER BY role ASC, full_name ASC");
+    } catch {
+      return [];
     }
   }
 );

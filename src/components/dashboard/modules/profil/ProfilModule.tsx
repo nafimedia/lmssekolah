@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 
 interface ProfilModuleProps {
   userProfile?: any;
@@ -38,6 +39,9 @@ export function ProfilModule({
   const [tagline, setTagline] = useState(
     userProfile?.tagline || "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀"
   );
+  const [classNameState, setClassNameState] = useState(userProfile?.className || "VIII (Delapan)");
+  const [rombelName, setRombelName] = useState(userProfile?.rombelName || "VIII A (Rombel 8A)");
+  const [waliKelas, setWaliKelas] = useState(userProfile?.waliKelas || "Bpk. Hendra Wijaya, M.Sc");
 
   // Avatar upload states
   const [previewAvatar, setPreviewAvatar] = useState<string | null>(userProfile?.avatarUrl || null);
@@ -62,10 +66,13 @@ export function ProfilModule({
       phone,
       address,
       tagline,
+      className: classNameState,
+      rombelName,
+      waliKelas,
     }));
 
     toast.success("✅ Perubahan Profil & Motto Berhasil Disimpan!", {
-      description: "Motto baru Anda kini otomatis ditampilkan di Dashboard.",
+      description: "Motto baru & Kelas Rombel Anda kini otomatis diperbarui.",
     });
   };
 
@@ -92,8 +99,19 @@ export function ProfilModule({
       avatarUrl: previewAvatar,
     }));
 
-    toast.success("📸 Foto Profil Avatar Berhasil Diperbarui!", {
-      description: "Foto baru Anda kini aktif di Header & Sidebar LMS.",
+    if (typeof window !== "undefined") {
+      localStorage.setItem("lms_user_avatar", previewAvatar);
+      const currentUser = MysqlAuthService.getActiveUser();
+      if (currentUser) {
+        MysqlAuthService.setActiveUser({
+          ...currentUser,
+          avatar_url: previewAvatar,
+        });
+      }
+    }
+
+    toast.success("📸 Foto Profil Avatar Berhasil Diperbarui & Disimpan!", {
+      description: "Foto baru Anda kini tersimpan dan aktif di seluruh tampilan LMS.",
     });
   };
 
@@ -103,6 +121,16 @@ export function ProfilModule({
       ...prev,
       avatarUrl: null,
     }));
+
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("lms_user_avatar");
+      const currentUser = MysqlAuthService.getActiveUser();
+      if (currentUser) {
+        const { avatar_url, ...rest } = currentUser;
+        MysqlAuthService.setActiveUser(rest);
+      }
+    }
+
     toast.success("Foto profil dikembalikan ke inisial default.");
   };
 
@@ -120,37 +148,52 @@ export function ProfilModule({
 
   return (
     <div className="space-y-6">
-      {/* Profile Header Hero Card */}
-      <Card className="border-border bg-card overflow-hidden shadow-md">
-        <div className="h-32 bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-950 p-4 flex justify-between items-start">
-          <Badge className="bg-white/20 text-white border-white/20 font-mono text-xs">
-            MADRASAH TSANAWIYAH NEGERI 2 CILACAP
-          </Badge>
-          <Badge variant="outline" className="bg-black/30 text-emerald-300 border-emerald-400/40 text-xs font-bold uppercase">
-            {activeRole?.replace("_", " ")}
-          </Badge>
+      {/* Profile Header Hero Card with Super High Contrast & Rich Aesthetics */}
+      <Card className="border-border bg-card overflow-hidden shadow-lg">
+        {/* Banner - Clean Gradient with Top Badges Only */}
+        <div className="h-44 sm:h-48 bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 p-4 sm:p-6 flex flex-wrap justify-between items-start border-b border-emerald-500/30">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="bg-white/10 text-emerald-100 border-emerald-400/40 font-mono text-xs font-bold tracking-wide">
+              🏫 MADRASAH TSANAWIYAH NEGERI 2 CILACAP
+            </Badge>
+            {isSiswa && (
+              <Badge className="bg-amber-400 text-slate-950 border-amber-300 font-black text-xs px-3 py-1 shadow-sm">
+                🎓 KELAS {rombelName.toUpperCase()}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-emerald-500/30 text-emerald-200 border-emerald-400/40 text-xs font-extrabold uppercase px-2.5 py-1">
+              {activeRole?.replace("_", " ")}
+            </Badge>
+            {isSiswa && (
+              <Badge className="bg-blue-500/30 text-blue-200 border-blue-400/40 text-xs font-bold px-2.5 py-1">
+                STATUS: AKTIF (2026/2027)
+              </Badge>
+            )}
+          </div>
         </div>
 
-        <CardContent className="px-6 pb-6 pt-0 relative">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 -mt-14 mb-4">
+        {/* Card Content - Clean Uncluttered Layout */}
+        <CardContent className="px-4 sm:px-8 pb-6 pt-0 relative">
+          {/* Top Row: Avatar & Action Button */}
+          <div className="flex flex-wrap items-end justify-between gap-4 -mt-16 sm:-mt-20 mb-6">
             <div className="relative">
-              {/* Profile Avatar Frame */}
-              <Avatar className="h-28 w-28 border-4 border-background shadow-xl ring-2 ring-emerald-500/50">
+              <Avatar className="h-32 w-32 sm:h-36 sm:w-36 border-4 border-background shadow-2xl ring-4 ring-emerald-500/50 bg-slate-900">
                 {userProfile?.avatarUrl ? (
                   <img src={userProfile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <AvatarFallback className="bg-emerald-700 text-white text-3xl font-extrabold">
-                    {(userProfile?.name || "U").slice(0, 2).toUpperCase()}
+                  <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-800 text-white text-4xl font-black">
+                    {(userProfile?.name || name || "U").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 )}
               </Avatar>
 
-              {/* Requirement 3: Overlay Achievement Badges for Students on/near Profile Photo */}
               {isSiswa && userProfile?.badges && userProfile.badges.length > 0 && (
-                <div className="absolute -bottom-2 -right-2 flex -space-x-1 hover:space-x-1 transition-all">
+                <div className="absolute -bottom-2 -right-2">
                   <Badge
                     title="Lencana Prestasi Penilaian Guru"
-                    className="bg-amber-500 text-black border-2 border-background shadow-lg px-2 py-0.5 text-[10px] font-extrabold flex items-center gap-1 animate-pulse"
+                    className="bg-amber-400 text-slate-950 border-2 border-background shadow-lg px-2.5 py-1 text-[11px] font-black flex items-center gap-1"
                   >
                     🏆 PRESTASI
                   </Badge>
@@ -158,56 +201,86 @@ export function ProfilModule({
               )}
             </div>
 
-            <div className="flex-1 text-center sm:text-left sm:ml-2">
-              <h1 className="text-2xl font-bold text-foreground flex items-center justify-center sm:justify-start gap-2">
-                {userProfile?.name || name}
-              </h1>
-              <div className="text-xs text-muted-foreground font-mono mt-0.5">
-                {isSiswa ? "NISN: " : "NIP: "}
-                <span className="font-semibold text-foreground">{userProfile?.nipNis || nipNis}</span> • MTsN 2 Cilacap
-              </div>
-
-              {/* Requirement 2: Motto / Tagline Badge Box */}
-              <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 max-w-xl">
-                <div className="font-bold flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  <Sparkles className="h-3.5 w-3.5" /> Motto Hidup / Tagline Pembelajaran:
-                </div>
-                <p className="text-xs font-semibold italic mt-0.5 text-foreground">
-                  "{userProfile?.tagline || tagline}"
-                </p>
-              </div>
-            </div>
-
             <div className="shrink-0 flex gap-2">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setActiveTab("avatar")}
-                className="gap-1.5 text-xs font-bold border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20"
               >
-                <Upload className="h-3.5 w-3.5" /> Ganti Foto
+                <Upload className="h-4 w-4" /> Ganti Foto Profil
               </Button>
             </div>
           </div>
 
-          {/* Requirement 3: Badges Chips Displayed Near Profile for Student */}
-          {isSiswa && userProfile?.badges && userProfile.badges.length > 0 && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5 mt-2">
-              <div className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                <Trophy className="h-4 w-4 text-amber-500" /> Lencana Apresiasi Guru (Penilaian Prestasi Siswa):
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {userProfile.badges.map((b: string, i: number) => (
-                  <Badge
-                    key={i}
-                    className="bg-amber-500/20 text-amber-900 dark:text-amber-200 border-amber-500/40 text-xs font-bold px-2.5 py-1 flex items-center gap-1"
-                  >
-                    {b}
-                  </Badge>
-                ))}
-              </div>
+          {/* Student Profile Info Section (Clean & Spacious) */}
+          <div className="space-y-4">
+            {/* Student Name */}
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                {userProfile?.name || name}
+              </h1>
+              <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                Siswa Aktif MTs Negeri 2 Cilacap — Tahun Ajaran 2026/2027
+              </p>
             </div>
-          )}
+
+            {/* High Contrast Academic Metadata Bar */}
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border flex flex-wrap items-center gap-3 text-xs">
+              <div className="flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-lg border border-border shadow-2xs">
+                <span className="text-muted-foreground font-medium">{isSiswa ? "NISN:" : "NIP:"}</span>
+                <strong className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{userProfile?.nipNis || nipNis}</strong>
+              </div>
+
+              {isSiswa && (
+                <>
+                  <div className="flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-lg border border-border shadow-2xs">
+                    <span className="text-muted-foreground font-medium">Tingkat Kelas:</span>
+                    <strong className="text-foreground font-bold">{classNameState}</strong>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/30 shadow-2xs font-bold">
+                    <span>Rombel:</span>
+                    <span className="uppercase">{rombelName}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-500/30 shadow-2xs font-bold">
+                    <span>Wali Kelas:</span>
+                    <span>{waliKelas}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Motto / Tagline Badge Box (Super High Contrast Dark Box) */}
+            <div className="p-4 rounded-xl bg-slate-900 dark:bg-slate-950 text-white border border-emerald-500/40 shadow-sm space-y-1.5">
+              <div className="font-extrabold flex items-center gap-1.5 text-xs uppercase tracking-wider text-amber-300">
+                <Sparkles className="h-4 w-4 text-amber-400" /> Motto Hidup / Tagline Pembelajaran:
+              </div>
+              <p className="text-xs sm:text-sm font-semibold italic text-emerald-100 leading-relaxed">
+                "{userProfile?.tagline || tagline}"
+              </p>
+            </div>
+
+            {/* Student Achievement Badges Display */}
+            {isSiswa && userProfile?.badges && userProfile.badges.length > 0 && (
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2.5">
+                <div className="text-xs font-extrabold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 uppercase tracking-wide">
+                  <Trophy className="h-4 w-4 text-amber-500" /> Lencana Apresiasi Guru (Penilaian Prestasi Siswa):
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {userProfile.badges.map((b: string, i: number) => (
+                    <Badge
+                      key={i}
+                      className="bg-amber-400 text-slate-950 border-amber-300 text-xs font-extrabold px-3 py-1 flex items-center gap-1.5 shadow-2xs"
+                    >
+                      {b}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -313,6 +386,23 @@ export function ProfilModule({
                   <Input id="prof-phone" name="phone" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="text-xs font-mono" />
                 </div>
               </div>
+
+              {isSiswa && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="prof-class" className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Tingkat Kelas Siswa</Label>
+                    <Input id="prof-class" value={classNameState} onChange={(e) => setClassNameState(e.target.value)} className="text-xs font-semibold bg-background" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="prof-rombel" className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Rombel / Ruang Kelas</Label>
+                    <Input id="prof-rombel" value={rombelName} onChange={(e) => setRombelName(e.target.value)} className="text-xs font-semibold bg-background" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="prof-walikelas" className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Wali Kelas Pengampu</Label>
+                    <Input id="prof-walikelas" value={waliKelas} onChange={(e) => setWaliKelas(e.target.value)} className="text-xs font-semibold bg-background" />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="prof-address" className="text-xs font-semibold">Alamat Tempat Tinggal</Label>

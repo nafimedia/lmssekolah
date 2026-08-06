@@ -1,17 +1,24 @@
 // Service Worker PWA LMS MTsN 2 Cilacap
-const CACHE_NAME = "lms-mtsn2-cache-v1";
+const CACHE_NAME = "lms-mtsn2-cache-v2";
 const ASSETS_TO_CACHE = [
   "/",
   "/manifest.json",
-  "/favicon.ico",
+  "/favicon.png",
+  "/logomts.png",
 ];
 
-// Install Event - Caching static shell
+// Install Event - Caching static shell safely
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log("[ServiceWorker] Pre-caching offline LMS shell");
-      return cache.addAll(ASSETS_TO_CACHE);
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn("[ServiceWorker] Skipped caching missing item:", url, err);
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
@@ -36,8 +43,9 @@ self.addEventListener("activate", (event) => {
 
 // Fetch Event - Network first with Cache Fallback for offline resilience
 self.addEventListener("fetch", (event) => {
-  // Only intercept GET requests
+  // Only intercept GET requests with http/https scheme
   if (event.request.method !== "GET") return;
+  if (!event.request.url.startsWith("http:") && !event.request.url.startsWith("https:")) return;
 
   event.respondWith(
     fetch(event.request)
@@ -49,7 +57,7 @@ self.addEventListener("fetch", (event) => {
         ) {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
+            cache.put(event.request, responseClone).catch(() => {});
           });
         }
         return networkResponse;

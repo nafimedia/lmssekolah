@@ -1,5 +1,6 @@
 import {
   getDatabaseStatsFn,
+  getUsersFn,
   getSubjectsFn,
   saveSubjectFn,
   deleteSubjectFn,
@@ -16,6 +17,7 @@ import {
   getCbtExamsFn,
   saveCbtExamFn,
   DatabaseStats,
+  UserRow,
   SubjectRow,
   AnnouncementRow,
   AgendaRow,
@@ -25,7 +27,7 @@ import {
   CbtExamRow,
 } from "./mysqlServerFns";
 
-export type { DatabaseStats, SubjectRow, AnnouncementRow, AgendaRow, AttendanceRow, StudentAwardRow, WaLogRow, CbtExamRow };
+export type { DatabaseStats, UserRow, SubjectRow, AnnouncementRow, AgendaRow, AttendanceRow, StudentAwardRow, WaLogRow, CbtExamRow };
 
 export class MysqlDataService {
   static async getDatabaseStats(): Promise<DatabaseStats> {
@@ -36,70 +38,173 @@ export class MysqlDataService {
     }
   }
 
+  // Users
+  static async getUsers(): Promise<UserRow[]> {
+    try {
+      return await getUsersFn();
+    } catch (e) {
+      console.warn("getUsersFn failed:", e);
+      return [];
+    }
+  }
+
   // Subjects
   static async getSubjects(): Promise<SubjectRow[]> {
-    return await getSubjectsFn();
+    try {
+      return await getSubjectsFn();
+    } catch (e) {
+      console.warn("getSubjectsFn failed:", e);
+      return [];
+    }
   }
 
   static async saveSubject(data: SubjectRow): Promise<boolean> {
-    return await saveSubjectFn({ data });
+    try {
+      return await saveSubjectFn({ data });
+    } catch (e) {
+      console.warn("saveSubjectFn failed:", e);
+      return false;
+    }
   }
 
   static async deleteSubject(code: string): Promise<boolean> {
-    return await deleteSubjectFn({ data: { code } });
+    try {
+      return await deleteSubjectFn({ data: { code } });
+    } catch (e) {
+      console.warn("deleteSubjectFn failed:", e);
+      return false;
+    }
   }
 
   // Announcements
   static async getAnnouncements(): Promise<AnnouncementRow[]> {
-    return await getAnnouncementsFn();
+    try {
+      return await getAnnouncementsFn();
+    } catch (e) {
+      console.warn("getAnnouncementsFn failed:", e);
+      return [];
+    }
   }
 
   static async saveAnnouncement(data: AnnouncementRow): Promise<boolean> {
-    return await saveAnnouncementFn({ data });
+    try {
+      return await saveAnnouncementFn({ data });
+    } catch (e) {
+      console.warn("saveAnnouncementFn failed:", e);
+      return false;
+    }
   }
 
   // Agendas
   static async getAgendas(): Promise<AgendaRow[]> {
-    return await getAgendasFn();
+    try {
+      return await getAgendasFn();
+    } catch (e) {
+      console.warn("getAgendasFn failed:", e);
+      return [];
+    }
   }
 
   static async saveAgenda(data: AgendaRow): Promise<boolean> {
-    return await saveAgendaFn({ data });
+    try {
+      return await saveAgendaFn({ data });
+    } catch (e) {
+      console.warn("saveAgendaFn failed:", e);
+      return false;
+    }
   }
 
   // Attendances
   static async getAttendances(): Promise<AttendanceRow[]> {
-    return await getAttendancesFn();
+    try {
+      return await getAttendancesFn();
+    } catch (e) {
+      console.warn("getAttendancesFn failed:", e);
+      return [];
+    }
   }
 
   static async recordAttendance(data: AttendanceRow): Promise<boolean> {
-    return await recordAttendanceFn({ data });
+    try {
+      return await recordAttendanceFn({ data });
+    } catch (e) {
+      console.warn("recordAttendanceFn failed:", e);
+      return false;
+    }
+  }
+
+  static async recordPresensi(data: { user_id?: string; studentId?: string; name?: string; studentName?: string; role?: string; class_name?: string; rombel?: string; status?: string; xp_reward?: number; note?: string }): Promise<boolean> {
+    try {
+      return await recordAttendanceFn({
+        data: {
+          user_id: data.user_id || data.studentId || "usr-siswa-1",
+          student_name: data.name || data.studentName || "Siswa",
+          class_name: data.class_name || data.rombel || "VIII A",
+          status: data.status || "Hadir",
+          keterangan: data.note || "",
+          date_str: new Date().toISOString().split("T")[0],
+        },
+      });
+    } catch (e) {
+      console.warn("recordPresensi failed:", e);
+      return false;
+    }
   }
 
   // Awards & Warnings
   static async getAwards(): Promise<StudentAwardRow[]> {
-    return await getAwardsFn();
+    try {
+      return await getAwardsFn();
+    } catch (e) {
+      console.warn("getAwardsFn failed:", e);
+      return [];
+    }
   }
 
   static async saveAward(data: StudentAwardRow): Promise<boolean> {
-    return await saveAwardFn({ data });
+    try {
+      return await saveAwardFn({ data });
+    } catch (e) {
+      console.warn("saveAwardFn failed:", e);
+      return false;
+    }
   }
 
   // WA Gateway Logs
   static async getWaLogs(): Promise<WaLogRow[]> {
-    return await getWaLogsFn();
+    try {
+      return await getWaLogsFn();
+    } catch (e) {
+      console.warn("getWaLogsFn failed:", e);
+      return [];
+    }
   }
 
   static async saveWaLog(data: WaLogRow): Promise<boolean> {
-    return await saveWaLogFn({ data });
+    try {
+      return await saveWaLogFn({ data });
+    } catch (e) {
+      console.warn("saveWaLogFn failed:", e);
+      return false;
+    }
   }
 
   // CBT Exams
   static async getCbtExams(): Promise<CbtExamRow[]> {
-    return await getCbtExamsFn();
+    try {
+      return await getCbtExamsFn();
+    } catch (e) {
+      console.warn("getCbtExamsFn failed:", e);
+      return [];
+    }
   }
 
   static async saveCbtExam(data: CbtExamRow): Promise<boolean> {
-    return await saveCbtExamFn({ data });
+    try {
+      return await saveCbtExamFn({ data });
+    } catch (e) {
+      console.warn("saveCbtExamFn failed:", e);
+      return false;
+    }
   }
 }

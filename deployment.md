@@ -27,15 +27,15 @@ npm install
 npm run build   # (atau npx vite build)
 ```
 
-Setelah kompilasi selesai, direktori `.output/` akan terbentuk dengan struktur:
-- `.output/public/` (Berkas statis HTML, CSS, JS, Gambar)
-- `.output/server/` (Berkas Server Node.js SSR: `index.mjs`)
+Setelah kompilasi selesai, direktori `dist/` akan terbentuk dengan struktur:
+- `dist/client/` (Berkas statis HTML, CSS, JS, Gambar)
+- `dist/server/` (Berkas Server Node.js SSR: `server.js`)
 
 ---
 
 ## 📦 Langkah 2: Kompres & Unggah Berkas ke aaPanel
 
-1. Kompres folder proyek (termasuk folder `.output`, `package.json`, dan `.env` jika ada) menjadi berkas **`lms-build.zip`**.
+1. Kompres folder proyek (termasuk folder `dist`, `app.js`, `package.json`, dan `.env` jika ada) menjadi berkas **`lms-build.zip`**.
 2. Buka Dashboard **aaPanel** ➔ Masuk ke menu **Files**.
 3. Navigasi ke direktori `/www/wwwroot/`.
 4. Buat folder baru dengan nama domain Anda, contoh: **`lms.mtsn2cilacap.sch.id`**.
@@ -54,8 +54,8 @@ Setelah kompilasi selesai, direktori `.output/` akan terbentuk dengan struktur:
    - **Run opt:** Pilih **`npm`** (atau `node`).
    - **User:** `www`
    - **Project name:** `lmscilacap`
-   - **Run script / Command:** `start` *(aaPanel akan otomatis menjalankan `npm start` yang mengeksekusi `node .output/server/index.mjs`)*
-   - **Port:** **`3001`** (atau port lain yang masih kosong).
+   - **Run script / Command:** `start` *(aaPanel akan otomatis menjalankan `npm start` yang mengeksekusi `node app.js`)*
+   - **Port:** **`3002`** (atau port lain yang masih kosong).
 
 ### Metode B: Via Terminal aaPanel / PM2 CLI (Paling Stabil & Anti-Fail 💯)
 Jika via form aaPanel terus mengalami *Failed to start*, jalankan 2 perintah ini langsung di **Terminal aaPanel**:
@@ -65,7 +65,7 @@ Jika via form aaPanel terus mengalami *Failed to start*, jalankan 2 perintah ini
 cd /www/wwwroot/lmscilacap
 
 # 2. Jalankan aplikasi menggunakan PM2
-PORT=3001 pm2 start .output/server/index.mjs --name lmscilacap
+PORT=3002 pm2 start app.js --name lmscilacap
 ```
 
 ---
@@ -79,11 +79,11 @@ PORT=3001 pm2 start .output/server/index.mjs --name lmscilacap
      2. Centang nama domain Anda ➔ Klik **Apply**.
      3. Setelah sertifikat terbit, aktifkan sakelar **Force HTTPS**.
    - **Konfigurasi Nginx Reverse Proxy:**
-     aaPanel akan membuatkan reverse proxy mengarah ke port aplikasi Anda. Sesuaikan port di Nginx (`3001`):
+     aaPanel akan membuatkan reverse proxy mengarah ke port aplikasi Anda. Sesuaikan port di Nginx (`3002`):
 
 ```nginx
 location / {
-    proxy_pass http://127.0.0.1:3001;  # Sesuaikan dengan Port yang Anda pilih
+    proxy_pass http://127.0.0.1:3002;  # Sesuaikan dengan Port yang Anda pilih
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection 'upgrade';

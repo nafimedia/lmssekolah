@@ -165,7 +165,7 @@ const ROLE_PREVIEWS = [
     description: "Kontrol penuh sistem, audit trail aktivitas, backup & restore database SQL, dan status server.",
     features: [
       "Pengaturan Sistem & Manajemen RBAC 7 Roles",
-      "Monitoring Status Server (CPU, RAM, SSD, Supabase)",
+      "Monitoring Status Server (CPU, RAM, SSD, MySQL Engine)",
       "Audit Log Trail Aktivitas Seluruh Pengguna",
       "Backup Database (.SQL) 1-Click & Restore Fail-Safe",
       "Pengaturan Mode Keamanan & Session Token",
@@ -734,7 +734,7 @@ function LandingPage() {
                   </div>
                   <h4 className="text-xl font-bold text-white">{selectedRoleData.title} Dashboard</h4>
                   <p className="text-xs text-slate-400">
-                    Akses aman dengan autentikasi dual Supabase Cloud & Fail-safe session.
+                    Akses aman dengan autentikasi murni MySQL Database Engine & Session.
                   </p>
                   <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-left text-xs font-mono text-teal-300">
                     Scope: /{selectedRoleData.id === "admin" ? "admin" : "dashboard"}

@@ -4360,7 +4360,7 @@ function Pengaturan() {
             <div className="flex justify-between"><span>CPU Utilization:</span><strong className="font-mono text-emerald-600">12% (Normal)</strong></div>
             <div className="flex justify-between"><span>RAM Usage:</span><strong className="font-mono text-emerald-600">1.4 GB / 8 GB</strong></div>
             <div className="flex justify-between"><span>Storage SSD:</span><strong className="font-mono text-emerald-600">24 GB / 256 GB</strong></div>
-            <div className="flex justify-between"><span>Database Status:</span><strong className="font-mono text-primary">Supabase Cloud (Connected)</strong></div>
+            <div className="flex justify-between"><span>Database Status:</span><strong className="font-mono text-emerald-600">Pure MySQL Engine (Connected & Sync)</strong></div>
           </CardContent>
         </Card>
 

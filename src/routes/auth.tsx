@@ -56,10 +56,10 @@ function AuthPage() {
     setLoading(false);
 
     if (result.success && result.user) {
-      toast.success(`Selamat datang kembali, ${result.user.full_name}! (Argon2 Hashed)`);
+      toast.success(`Selamat datang kembali, ${result.user.full_name}!`);
       redirectUser(result.user.role);
     } else {
-      toast.error("Gagal masuk. Periksa email/username & kata sandi Anda.");
+      toast.error(result.message || "Gagal masuk. Periksa email/NISN/NIP & kata sandi Anda.");
     }
   };
 
@@ -85,10 +85,10 @@ function AuthPage() {
     setLoading(false);
 
     if (result.success && result.user) {
-      toast.success(`Akun ${regRole === "siswa" ? "Siswa" : "Guru"} berhasil dibuat dengan Argon2!`);
+      toast.success(`Akun ${regRole === "siswa" ? "Siswa" : "Guru"} berhasil mendaftar!`);
       redirectUser(result.user.role);
     } else {
-      toast.error("Gagal mendaftar akun baru.");
+      toast.error(result.message || "Gagal mendaftar akun baru.");
     }
   };
 

@@ -1,3 +1,5 @@
+import { authenticateUserServerFn, registerUserServerFn } from "./mysqlServerFns";
+
 export interface UserSession {
   id: string;
   email: string;
@@ -122,6 +124,43 @@ export class MysqlAuthService {
     const identityType: "NISN" | "NIP" = payload.role === "siswa" ? "NISN" : "NIP";
     const passwordHash = await this.hashPassword(payload.password);
 
+    try {
+      const dbRes = await registerUserServerFn({
+        data: {
+          email: cleanEmail,
+          passwordHash,
+          full_name: payload.full_name,
+          role: payload.role,
+          identity_type: identityType,
+          nis_nip: payload.nis_nip,
+          class_name: payload.class_name,
+          subject_specialty: payload.subject_specialty,
+        },
+      });
+
+      if (dbRes.success && dbRes.user) {
+        const userSession: UserSession = {
+          id: dbRes.user.id,
+          email: dbRes.user.email,
+          full_name: dbRes.user.full_name,
+          role: dbRes.user.role,
+          identity_type: (dbRes.user.identity_type as any) || identityType,
+          nis_nip: dbRes.user.nis_nip,
+          class_name: dbRes.user.class_name,
+          subject_specialty: dbRes.user.subject_specialty,
+        };
+        this.setActiveUser(userSession);
+        return { success: true, user: userSession };
+      }
+
+      if (dbRes.message) {
+        return { success: false, message: dbRes.message };
+      }
+    } catch (err) {
+      console.warn("[DB Register Fallback]:", err);
+    }
+
+    // Local fallback for offline/demo registration
     const newUser: UserSession = {
       id: "usr-" + payload.role + "-" + Date.now(),
       email: cleanEmail,
@@ -137,14 +176,44 @@ export class MysqlAuthService {
     return { success: true, user: newUser };
   }
 
-  static async authenticateUser(email: string, passwordInput: string): Promise<{ success: boolean; user?: UserSession; message?: string }> {
-    const cleanEmail = email.trim().toLowerCase();
-    const rolePreset = INITIAL_ROLE_USERS[cleanEmail];
+  static async authenticateUser(identifierInput: string, passwordInput: string): Promise<{ success: boolean; user?: UserSession; message?: string }> {
+    const cleanIdentifier = identifierInput.trim().toLowerCase();
 
+    // 1. First attempt: Real MySQL Database Query (via Server Function)
+    try {
+      const dbRes = await authenticateUserServerFn({
+        data: { identifier: cleanIdentifier, passwordInput },
+      });
+
+      if (dbRes.success && dbRes.user) {
+        const userSession: UserSession = {
+          id: dbRes.user.id,
+          email: dbRes.user.email,
+          full_name: dbRes.user.full_name,
+          role: dbRes.user.role,
+          identity_type: (dbRes.user.identity_type as any) || "NIP",
+          nis_nip: dbRes.user.nis_nip,
+          class_name: dbRes.user.class_name,
+          subject_specialty: dbRes.user.subject_specialty,
+        };
+        this.setActiveUser(userSession);
+        return { success: true, user: userSession };
+      }
+
+      // If database specifically refused login (e.g. wrong password or wrong NISN/NIP)
+      if (dbRes.message && !dbRes.message.includes("Gagal terhubung")) {
+        return { success: false, message: dbRes.message };
+      }
+    } catch (e) {
+      console.warn("[DB Authenticate Fallback to Presets]:", e);
+    }
+
+    // 2. Second attempt: Dev Preset Users Fallback (for offline testing)
+    const rolePreset = INITIAL_ROLE_USERS[cleanIdentifier];
     if (rolePreset) {
       const userSession: UserSession = {
         id: `usr-${rolePreset.role}-1`,
-        email: cleanEmail,
+        email: cleanIdentifier,
         full_name: rolePreset.name,
         role: rolePreset.role,
         class_name: rolePreset.class_name,
@@ -155,14 +224,6 @@ export class MysqlAuthService {
       return { success: true, user: userSession };
     }
 
-    const fallbackUser: UserSession = {
-      id: "usr-" + Date.now(),
-      email: cleanEmail,
-      full_name: cleanEmail.split("@")[0].toUpperCase(),
-      role: "siswa",
-      identity_type: "NISN",
-    };
-    this.setActiveUser(fallbackUser);
-    return { success: true, user: fallbackUser };
+    return { success: false, message: "Email / NISN / NIP atau kata sandi tidak valid." };
   }
 }

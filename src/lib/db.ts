@@ -16,8 +16,13 @@ if (typeof window === 'undefined') {
 
 export async function query<T = any[]>(sql: string, params?: any[]): Promise<T> {
   if (!pool) return [] as unknown as T;
-  const [rows] = await pool.execute(sql, params);
-  return rows as T;
+  try {
+    const [rows] = await pool.execute(sql, params);
+    return rows as T;
+  } catch (err: any) {
+    console.error(`[MySQL Query Error]: ${err?.message || err}`);
+    throw err;
+  }
 }
 
 export async function queryOne<T = any>(sql: string, params?: any[]): Promise<T | null> {
@@ -30,8 +35,13 @@ export async function queryOne<T = any>(sql: string, params?: any[]): Promise<T 
 
 export async function execute(sql: string, params?: any[]): Promise<any> {
   if (!pool) return { affectedRows: 0 };
-  const [result] = await pool.execute(sql, params);
-  return result;
+  try {
+    const [result] = await pool.execute(sql, params);
+    return result;
+  } catch (err: any) {
+    console.error(`[MySQL Execute Error]: ${err?.message || err}`);
+    throw err;
+  }
 }
 
 export default pool;

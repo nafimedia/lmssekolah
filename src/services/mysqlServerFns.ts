@@ -121,7 +121,8 @@ export const getDatabaseStatsFn = createServerFn({ method: "GET" }).handler(
         totalMapel: mapelRes?.total || 8,
         cbtExamsCount: cbtRes?.total || 1,
       };
-    } catch {
+    } catch (e) {
+      console.error("[getDatabaseStatsFn Error]:", e);
       return { totalUsers: 6, siswaCount: 1, guruStafCount: 5, totalRombel: 1, totalMapel: 8, cbtExamsCount: 1 };
     }
   }
@@ -132,7 +133,8 @@ export const getUsersFn = createServerFn({ method: "GET" }).handler(
     try {
       const { query } = await import("@/lib/db");
       return await query<UserRow[]>("SELECT id, full_name, email, identity_type, nis_nip, class_name, subject_specialty, role FROM users ORDER BY role ASC, full_name ASC");
-    } catch {
+    } catch (e) {
+      console.error("[getUsersFn Error]:", e);
       return [];
     }
   }

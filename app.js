@@ -6,6 +6,32 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load .env file into process.env if available
+const envPath = path.join(__dirname, ".env");
+if (fs.existsSync(envPath)) {
+  try {
+    const envContent = fs.readFileSync(envPath, "utf-8");
+    for (const line of envContent.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx > 0) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        let val = trimmed.slice(eqIdx + 1).trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+    console.log("✅ Loaded environment variables from .env file");
+  } catch (err) {
+    console.warn("⚠️ Failed to parse .env file:", err.message);
+  }
+}
+
 const PORT = process.env.PORT || 3002;
 const HOST = process.env.HOST || "0.0.0.0";
 

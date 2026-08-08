@@ -640,7 +640,7 @@ export function BerandaModule({
           <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-3">
             DASHBOARD GURU PENGAMPU
           </Badge>
-          <h2 className="text-2xl lg:text-3xl font-extrabold">{"Assalamu'alaikum, Dra. Hj. Siti Rahmah, M.Pd 👨‍🏫"}</h2>
+          <h2 className="text-2xl lg:text-3xl font-extrabold">{`Assalamu'alaikum, ${userProfile?.name || "Bpk/Ibu Guru"} 👨‍🏫`}</h2>
           <p className="mt-2 text-sm text-slate-200 max-w-3xl leading-relaxed">
             Portal KBM Guru: Pengingat jadwal tatap muka hari ini, pemeriksaan submisi LKPD siswa, penyusunan Pusat Asesmen, serta pemanfaatan Asisten AI & Tools Pembelajaran.
           </p>

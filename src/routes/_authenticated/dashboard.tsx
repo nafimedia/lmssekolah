@@ -341,36 +341,36 @@ function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // User Profile Global State
-  const [userProfile, setUserProfile] = useState({
-    name: "Ahmad Fauzi",
-    role: activeRole,
-    tagline: "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀",
-    avatarUrl: null as string | null,
-    nipNis: "0081928371",
-    email: "ahmad.fauzi@mtsn2cilacap.sch.id",
-    phone: "081234567890",
-    address: "Jl. Masjid No. 12, Cilacap Tengah",
-    badges: [
-      "⭐ Siswa Aktif & Responsif",
-      "🏆 Nilai Perfect 100",
-      "🌟 Hafalan Mutqin Juz 30",
-    ],
+  // User Profile Global State (Synchronized with logged in user session)
+  const [userProfile, setUserProfile] = useState(() => {
+    const activeUserSession = MysqlAuthService.getActiveUser();
+    return {
+      name: activeUserSession?.full_name || "Pengguna LMS",
+      role: activeUserSession?.role || activeRole,
+      tagline: "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀",
+      avatarUrl: activeUserSession?.avatar_url || (null as string | null),
+      nipNis: activeUserSession?.nis_nip || "",
+      email: activeUserSession?.email || "",
+      phone: "081234567890",
+      address: "Cilacap, Jawa Tengah",
+      badges: [
+        "⭐ Siswa/Pendidik Aktif",
+        "🏆 Terverifikasi LMS",
+      ],
+    };
   });
 
   useEffect(() => {
-    if (activeRole === "guru") {
-      setUserProfile((prev) => ({ ...prev, name: "Dra. Hj. Siti Rahmah, M.Pd", nipNis: "19780315 200501 2 004" }));
-    } else if (activeRole === "kamad") {
-      setUserProfile((prev) => ({ ...prev, name: "H. Ahmad Syukri, S.Kom, M.Pd", nipNis: "19720412 199803 1 002" }));
-    } else if (activeRole === "waka") {
-      setUserProfile((prev) => ({ ...prev, name: "Drs. KH. Mahmud Ridwan", nipNis: "19700210 199602 1 001" }));
-    } else if (activeRole === "walikelas" || activeRole === "wali_kelas") {
-      setUserProfile((prev) => ({ ...prev, name: "Dra. Hj. Siti Rahmah, M.Pd", nipNis: "19780315 200501 2 004" }));
-    } else if (activeRole === "admin" || activeRole === "admin_akademik") {
-      setUserProfile((prev) => ({ ...prev, name: "Ahmad Hidayat, S.Pd.", nipNis: "19850112 201001 1 003" }));
-    } else {
-      setUserProfile((prev) => ({ ...prev, name: "Ahmad Fauzi", nipNis: "0081928371" }));
+    const user = MysqlAuthService.getActiveUser();
+    if (user) {
+      setUserProfile((prev) => ({
+        ...prev,
+        name: user.full_name && user.full_name.trim() !== "" ? user.full_name : prev.name,
+        email: user.email || prev.email,
+        nipNis: user.nis_nip || prev.nipNis,
+        role: user.role || activeRole,
+        avatarUrl: user.avatar_url || prev.avatarUrl,
+      }));
     }
   }, [activeRole]);
 

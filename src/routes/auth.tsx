@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Lock, UserCheck, ShieldCheck, GraduationCap, BookOpen, KeyRound } from "lucide-react";
+import { Lock, UserCheck, ShieldCheck, GraduationCap, BookOpen, KeyRound, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -35,6 +35,8 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   
   // Registration Form States
   const [regRole, setRegRole] = useState<"siswa" | "guru">("siswa");
@@ -51,15 +53,21 @@ function AuthPage() {
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setLoginError(null);
 
     const result = await MysqlAuthService.authenticateUser(email, password);
     setLoading(false);
 
     if (result.success && result.user) {
+      setLoginError(null);
       toast.success(`Selamat datang kembali, ${result.user.full_name}!`);
       redirectUser(result.user.role);
     } else {
-      toast.error(result.message || "Gagal masuk. Periksa email/NISN/NIP & kata sandi Anda.");
+      const errorMsg = result.message || "Kata sandi yang Anda masukkan salah.";
+      setLoginError(errorMsg);
+      toast.error("🔒 Autentikasi Gagal!", {
+        description: errorMsg,
+      });
     }
   };
 
@@ -70,6 +78,12 @@ function AuthPage() {
     if (!nisNip.trim()) {
       setLoading(false);
       return toast.error(regRole === "siswa" ? "Wajib mengisikan NIS / NISN!" : "Wajib mengisikan NIP / ID Pendidik!");
+    }
+
+    const strength = MysqlAuthService.validatePasswordStrength(password);
+    if (!strength.isValid) {
+      setLoading(false);
+      return toast.error(`Kata sandi terlalu lemah: ${strength.feedback.join(", ")}`);
     }
 
     const result = await MysqlAuthService.registerUser({
@@ -93,11 +107,12 @@ function AuthPage() {
   };
 
   const handleQuickLogin = (demoEmail: string) => {
+    const demoPass = demoEmail.toLowerCase() === "admin@mail.com" ? "4dminGanteng" : "asd123";
     setEmail(demoEmail);
-    setPassword("asd123");
+    setPassword(demoPass);
     setLoading(true);
 
-    MysqlAuthService.authenticateUser(demoEmail, "asd123").then((res) => {
+    MysqlAuthService.authenticateUser(demoEmail, demoPass).then((res) => {
       setLoading(false);
       if (res.user) {
         toast.success(`Berhasil masuk sebagai ${res.user.full_name} (${res.user.role})`);
@@ -148,6 +163,15 @@ function AuthPage() {
             {/* TAB MASUK */}
             <TabsContent value="signin">
               <form onSubmit={signIn} className="space-y-4 mt-4">
+                {loginError && (
+                  <div className="bg-rose-500/15 border border-rose-500/30 rounded-xl p-3 flex items-start gap-2.5 text-xs text-rose-300 animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <div className="font-bold text-rose-200">🔒 Akses Ditolak: Kata Sandi / Akun Salah</div>
+                      <p className="text-[11px] text-rose-300/90">{loginError}</p>
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label htmlFor="si-email" className="text-slate-300 text-xs font-semibold">
                     Email / Username Resmi
@@ -169,17 +193,27 @@ function AuthPage() {
                   <Label htmlFor="si-pass" className="text-slate-300 text-xs font-semibold">
                     Kata Sandi (Argon2 Verified)
                   </Label>
-                  <Input
-                    id="si-pass"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="si-pass"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 transition"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <Button
@@ -311,20 +345,64 @@ function AuthPage() {
 
                 <div className="space-y-1">
                   <Label htmlFor="su-pass" className="text-slate-300 text-xs font-semibold">
-                    Kata Sandi (Enkripsi Argon2)
+                    Kata Sandi (Enkripsi Argon2id + Salt)
                   </Label>
-                  <Input
-                    id="su-pass"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    minLength={6}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimal 6 Karakter"
-                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="su-pass"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min 8 Karakter (Huruf Besar, Kecil & Angka/Simbol)"
+                      className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white pr-10 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 transition"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {password && (() => {
+                    const strength = MysqlAuthService.validatePasswordStrength(password);
+                    const colorMap = {
+                      "Sangat Lemah": "text-rose-400 bg-rose-500",
+                      "Lemah": "text-orange-400 bg-orange-500",
+                      "Sedang": "text-amber-400 bg-amber-500",
+                      "Kuat": "text-emerald-400 bg-emerald-500",
+                      "Sangat Kuat": "text-emerald-300 bg-emerald-400",
+                    };
+                    return (
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-slate-400">Kekuatan:</span>
+                          <span className={`font-bold ${colorMap[strength.label].split(" ")[0]}`}>
+                            {strength.label}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1 h-1 rounded-full overflow-hidden bg-slate-800">
+                          {[1, 2, 3, 4].map((bar) => (
+                            <div
+                              key={bar}
+                              className={`h-full transition-all ${
+                                strength.score >= bar ? colorMap[strength.label].split(" ")[1] : "bg-transparent"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        {strength.feedback.length > 0 && (
+                          <p className="text-[10px] text-amber-400">
+                            Ketentuan: {strength.feedback.join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <Button

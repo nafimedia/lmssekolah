@@ -7,7 +7,7 @@ import logoAsset from "@/assets/logo-mtsn2.png.asset.json";
 import { BerandaModule } from "@/components/dashboard/modules/beranda/BerandaModule";
 import { ProfilModule } from "@/components/dashboard/modules/profil/ProfilModule";
 import { SiakadMasterDataModule } from "@/components/dashboard/modules/siakad/SiakadMasterDataModule";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
 import {
   Home,
@@ -57,13 +57,18 @@ import {
   AlertTriangle,
   FolderKanban,
   Eye,
+  EyeOff,
   ThumbsUp,
+  Save,
+  UserCog,
+  Trash2,
+  ShieldAlert,
+  AlertCircle,
   MessageSquare,
   Filter,
   Plus,
   FileSpreadsheet,
   UserCheck,
-  ShieldAlert,
   ShieldCheck,
   Laptop,
   Activity,
@@ -78,7 +83,6 @@ import {
   Clock,
   XCircle,
   Pencil,
-  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,12 +157,14 @@ type MenuKey =
   | "kokurikuler_report"
   | "erapor"
   | "perpustakaan"
+  | "manajemen_kelas"
   | "profil"
   | "pengaturan";
 
 const MENU: { key: MenuKey; label: string; icon: typeof Home; group?: string }[] = [
   { key: "beranda", label: "Beranda", icon: Home, group: "Utama" },
   { key: "siakad", label: "SIAKAD Master & Pengampu", icon: BarChart3, group: "Utama" },
+  { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", icon: Layers, group: "Utama" },
   { key: "users", label: "Data User & Role", icon: Shield, group: "Utama" },
   { key: "pengumuman", label: "Pengumuman", icon: Megaphone, group: "Utama" },
   { key: "jadwal", label: "Jadwal Pelajaran", icon: CalendarClock, group: "Utama" },
@@ -193,6 +199,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "🛡️ SUPER ADMIN PORTAL",
     allowedMenus: [
       { key: "beranda", label: "Beranda & Log Sistem", group: "Utama & Kontrol" },
+      { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", group: "Utama & Kontrol" },
       { key: "users", label: "Data User & Perizinan", group: "Utama & Kontrol" },
       { key: "siakad", label: "SIAKAD Master & Pengampu", group: "Akademik" },
       { key: "mapel", label: "Master Pelajaran", group: "Akademik" },
@@ -213,6 +220,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "💼 ADMIN AKADEMIK",
     allowedMenus: [
       { key: "beranda", label: "Beranda Akademik", group: "Master Data" },
+      { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", group: "Master Data" },
       { key: "siakad", label: "SIAKAD Master & Pengampu", group: "Master Data" },
       { key: "users", label: "Data Guru & Siswa", group: "Master Data" },
       { key: "mapel", label: "Master Mapel", group: "Master Data" },
@@ -229,6 +237,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "🏛️ KEPALA MADRASAH",
     allowedMenus: [
       { key: "beranda", label: "Executive Dashboard", group: "Eksekutif" },
+      { key: "manajemen_kelas", label: "Monitoring Kelas & Rombel", group: "Eksekutif" },
       { key: "siakad", label: "SIAKAD Master Data", group: "Eksekutif" },
       { key: "agenda", label: "Agenda & Kalender Akademik", group: "Informasi & Agenda" },
       { key: "pengumuman", label: "Pengumuman", group: "Informasi & Agenda" },
@@ -247,6 +256,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "📐 WAKA KURIKULUM",
     allowedMenus: [
       { key: "beranda", label: "Executive Dashboard", group: "Kurikulum & Validasi" },
+      { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", group: "Kurikulum & Validasi" },
       { key: "siakad", label: "SIAKAD Master & Pengampu", group: "Kurikulum & Validasi" },
       { key: "mapel", label: "Perangkat Ajar 1-18", group: "Kurikulum & Validasi" },
       { key: "agenda", label: "Agenda & Kalender Akademik", group: "Kurikulum & Validasi" },
@@ -265,6 +275,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "📋 WALI KELAS 8A",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Kelas 8A", group: "Manajemen Kelas" },
+      { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", group: "Manajemen Kelas" },
       { key: "jadwal", label: "Jadwal Kelas 8A", group: "Manajemen Kelas" },
       { key: "agenda", label: "Agenda & Kalender", group: "Manajemen Kelas" },
       { key: "pengumuman", label: "Pengumuman", group: "Manajemen Kelas" },
@@ -332,21 +343,78 @@ const ROLE_PERMISSIONS: Record<
   },
 };
 
+const ROLE_LABELS: Record<string, { label: string; icon: string }> = {
+  admin: { label: "Super Admin", icon: "🛡️" },
+  admin_akademik: { label: "Admin Akademik", icon: "📋" },
+  kamad: { label: "Kepala Madrasah (Kamad)", icon: "🏛️" },
+  waka: { label: "Wakil Kepala (Waka)", icon: "📐" },
+  walikelas: { label: "Wali Kelas", icon: "🏫" },
+  guru: { label: "Guru Pengampu", icon: "👨‍🏫" },
+  siswa: { label: "Siswa", icon: "🎓" },
+};
+
 function Dashboard() {
   const [active, setActive] = useState<MenuKey>("beranda");
   const [openMobile, setOpenMobile] = useState(false);
   const [dark, setDark] = useState(false);
-  const [activeRole, setActiveRole] = useState<string>("siswa");
   const [isWaModalOpen, setIsWaModalOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const me = MysqlAuthService.getActiveUser();
+
+  // Multi-Role list allocated to currently logged-in user
+  const myAssignedRoles = useMemo(() => {
+    if (!me) return ["siswa"];
+    let savedRolesMap: Record<string, string[]> = {};
+    if (typeof window !== "undefined") {
+      try {
+        savedRolesMap = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
+      } catch (e) {}
+    }
+
+    const cleanEmail = me.email ? me.email.toLowerCase() : "";
+    let roles = savedRolesMap[cleanEmail] || savedRolesMap[me.id];
+    if (!roles || roles.length === 0) {
+      if (me.role && me.role.includes(",")) {
+        roles = me.role.split(",").map((r) => r.trim());
+      } else {
+        roles = [me.role || "siswa"];
+      }
+    }
+
+    if (me.role === "admin" || cleanEmail === "admin@mail.com") {
+      return ["admin", "admin_akademik", "kamad", "waka", "walikelas", "guru", "siswa"];
+    }
+
+    return roles;
+  }, [me]);
+
+  const [activeRole, setActiveRole] = useState<string>(() => {
+    const activeUserSession = MysqlAuthService.getActiveUser();
+    if (!activeUserSession) return "siswa";
+    let savedRolesMap: Record<string, string[]> = {};
+    if (typeof window !== "undefined") {
+      try {
+        savedRolesMap = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
+      } catch (e) {}
+    }
+    const roles = savedRolesMap[activeUserSession.email.toLowerCase()] || savedRolesMap[activeUserSession.id];
+    return roles && roles.length > 0 ? roles[0] : (activeUserSession.role || "siswa");
+  });
+
+  const handleSwitchRole = (newRole: string) => {
+    setActiveRole(newRole);
+    const info = ROLE_LABELS[newRole] || { label: newRole, icon: "👤" };
+    toast.info(`🔄 Mode Peran Aktif Diubah Ke: ${info.icon} ${info.label}`);
+  };
 
   // User Profile Global State (Synchronized with logged in user session)
   const [userProfile, setUserProfile] = useState(() => {
     const activeUserSession = MysqlAuthService.getActiveUser();
     return {
       name: activeUserSession?.full_name || "Pengguna LMS",
-      role: activeUserSession?.role || activeRole,
+      role: activeRole,
       tagline: "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀",
       avatarUrl: activeUserSession?.avatar_url || (null as string | null),
       nipNis: activeUserSession?.nis_nip || "",
@@ -368,7 +436,7 @@ function Dashboard() {
         name: user.full_name && user.full_name.trim() !== "" ? user.full_name : prev.name,
         email: user.email || prev.email,
         nipNis: user.nis_nip || prev.nipNis,
-        role: user.role || activeRole,
+        role: activeRole,
         avatarUrl: user.avatar_url || prev.avatarUrl,
       }));
     }
@@ -404,31 +472,9 @@ function Dashboard() {
     if (!allowedKeys.includes(active)) {
       setActive("beranda");
     }
-  }, [activeRole]);
-
-  const { data: me } = useQuery({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const user = MysqlAuthService.getActiveUser();
-      if (user) {
-        return {
-          full_name: user.full_name && !/^\d+$/.test(user.full_name) ? user.full_name : (INITIAL_ROLE_USERS[user.email]?.name || user.full_name || "Ahmad Fauzi"),
-          role: user.role,
-          email: user.email,
-          avatar_url: user.avatar_url || (typeof window !== "undefined" ? localStorage.getItem("lms_user_avatar") : null) || null,
-        };
-      }
-      return null;
-    },
-  });
+  }, [activeRole, allowedKeys, active]);
 
   const isSuperAdmin = me?.role === "admin" || me?.email?.toLowerCase() === "admin@mail.com" || me?.role === "superadmin";
-
-  useEffect(() => {
-    if (me?.role) {
-      setActiveRole(me.role);
-    }
-  }, [me]);
 
   const handleSignOut = async () => {
     MysqlAuthService.logout();
@@ -468,6 +514,8 @@ function Dashboard() {
         setDark={setDark}
         activeRole={activeRole}
         setActiveRole={setActiveRole}
+        myAssignedRoles={myAssignedRoles}
+        handleSwitchRole={handleSwitchRole}
         isSuperAdmin={isSuperAdmin}
         userProfile={userProfile}
         setUserProfile={setUserProfile}
@@ -488,6 +536,8 @@ function DashboardContent({
   setDark,
   activeRole,
   setActiveRole,
+  myAssignedRoles,
+  handleSwitchRole,
   isSuperAdmin,
   userProfile,
   setUserProfile,
@@ -523,7 +573,7 @@ function DashboardContent({
     <>
       {/* Lovable Native Shadcn Sidebar Universal 7 Peran */}
       <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-        
+
         {/* Header Sidebar */}
         <SidebarHeader className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
@@ -565,11 +615,10 @@ function DashboardContent({
                               window.scrollTo({ top: 0, behavior: "smooth" });
                             }
                           }}
-                          className={`gap-3 font-semibold cursor-pointer text-xs sm:text-sm transition-all ${
-                            isActive
-                              ? "bg-primary text-primary-foreground font-bold shadow-xs data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                          }`}
+                          className={`gap-3 font-semibold cursor-pointer text-xs sm:text-sm transition-all ${isActive
+                            ? "bg-primary text-primary-foreground font-bold shadow-xs data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            }`}
                         >
                           <Icon className="h-4 w-4 shrink-0" />
                           <span className="truncate group-data-[state=collapsed]:hidden">{m.label}</span>
@@ -640,38 +689,41 @@ function DashboardContent({
               {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
             </Button>
 
-            {/* Admin Switch Role Tester Dropdown */}
-            {isSuperAdmin ? (
+            {/* Multi-Role Switcher Dropdown */}
+            {myAssignedRoles.length > 1 || isSuperAdmin ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20">
-                    <Shield className="h-3.5 w-3.5" /> Role: <span className="uppercase">{activeRole.replace("_", " ")}</span>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 shadow-xs">
+                    <Shield className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="hidden xs:inline">Mode Role:</span>
+                    <span className="uppercase font-extrabold">{ROLE_LABELS[activeRole]?.icon || "👤"} {activeRole.replace("_", " ")}</span>
+                    <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuLabel className="text-xs font-bold text-muted-foreground">Mode Switch Perspektif User</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-56 p-1.5">
+                  <DropdownMenuLabel className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-2 py-1">
+                    Ganti Peran / Mode Perspektif ({myAssignedRoles.length} Role)
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => { setActiveRole("admin"); toast.info("Mode Perspektif: SUPER ADMIN"); }}>
-                    🛡️ Super Admin (Full Access)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("admin_akademik"); toast.info("Mode Perspektif: ADMIN AKADEMIK"); }}>
-                    📋 Admin Akademik
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("kamad"); toast.info("Mode Perspektif: KEPALA MADRASAH (KAMAD)"); }}>
-                    🏛️ Kepala Madrasah (Kamad)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("waka"); toast.info("Mode Perspektif: WAKIL KEPALA (WAKA)"); }}>
-                    💼 Wakil Kepala (Waka)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("walikelas"); toast.info("Mode Perspektif: WALI KELAS"); }}>
-                    🏫 Wali Kelas
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("guru"); toast.info("Mode Perspektif: GURU MAPEL"); }}>
-                    👨‍🏫 Guru Pengampu
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveRole("siswa"); toast.info("Mode Perspektif: SISWA"); }}>
-                    🎓 Siswa
-                  </DropdownMenuItem>
+                  {myAssignedRoles.map((r: string) => {
+                    const info = ROLE_LABELS[r] || { label: r.toUpperCase().replace("_", " "), icon: "👤" };
+                    const isSelected = activeRole === r;
+                    return (
+                      <DropdownMenuItem
+                        key={r}
+                        onClick={() => handleSwitchRole(r)}
+                        className={`flex items-center justify-between py-2 px-2.5 rounded-lg text-xs font-semibold cursor-pointer ${
+                          isSelected ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold" : ""
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>{info.icon}</span>
+                          <span>{info.label}</span>
+                        </span>
+                        {isSelected && <Badge variant="outline" className="text-[9px] bg-emerald-500/20 text-emerald-600 border-emerald-500/40">Aktif</Badge>}
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
@@ -734,6 +786,7 @@ function DashboardContent({
         <main className="p-4 lg:p-8 flex-1">
           {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
           {active === "siakad" && <SiakadMasterDataModule />}
+          {active === "manajemen_kelas" && <ManajemenKelas activeRole={activeRole} />}
           {active === "mapel" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
           {active === "users" && activeRole !== "siswa" && <DataUserRole />}
           {active === "pengumuman" && <Pengumuman />}
@@ -764,7 +817,6 @@ function DashboardContent({
 }
 
 /* ---------- Pages ---------- */
-
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
     <div className="mb-6">
@@ -777,39 +829,96 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
 function DataUserRole() {
   const [search, setSearch] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; full_name: string; email: string; nis: string; roles: string[] } | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Super Admin Password Reset & Edit State
+  const [userToResetPass, setUserToResetPass] = useState<{ id: string; full_name: string; email: string; nis: string; roles: string[] } | null>(null);
+  const [isResetPassModalOpen, setIsResetPassModalOpen] = useState(false);
+  const [adminNewPassword, setAdminNewPassword] = useState("MtsN2#2026!Reset");
+  const [showAdminNewPassword, setShowAdminNewPassword] = useState(false);
+
+  // Edit Multi-Role Modal State
+  const [userToEditRoles, setUserToEditRoles] = useState<{ id: string; full_name: string; email: string; nis: string; roles: string[] } | null>(null);
+  const [isEditRoleModalOpen, setIsEditRoleModalOpen] = useState(false);
+  const [tempEditRoles, setTempEditRoles] = useState<string[]>([]);
 
   // Form input state
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("asd123");
+  const [password, setPassword] = useState("MtsN2#2026!Sec");
   const [nis, setNis] = useState("");
   const [userClass, setUserClass] = useState("8A");
-  const [selectedRole, setSelectedRole] = useState("guru");
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(["guru"]);
 
-  const [dummyUsersList, setDummyUsersList] = useState([
-    { id: "1", full_name: "Super Administrator MTsN 2", email: "admin@mail.com", nis: "NIP. 198501012010011001", class: "Semua", roles: ["admin"] },
-    { id: "2", full_name: "H. Ahmad Syukri, S.Kom", email: "admin.akademik@mtsn2cilacap.sch.id", nis: "NIP. 198802152012011002", class: "Semua", roles: ["admin_akademik"] },
-    { id: "3", full_name: "Drs. H. Hidayatullah, M.Ag", email: "kamad@mtsn2cilacap.sch.id", nis: "NIP. 197505102000031001", class: "Semua", roles: ["kamad"] },
-    { id: "4", full_name: "Dra. Hj. Maryam, M.Pd", email: "waka@mtsn2cilacap.sch.id", nis: "NIP. 197808202003122002", class: "Semua", roles: ["waka"] },
-    { id: "5", full_name: "Bpk. Hendra Wijaya, M.Sc", email: "walikelas@mtsn2cilacap.sch.id", nis: "NIP. 198203112008011005", class: "8A", roles: ["walikelas", "guru"] },
-    { id: "6", full_name: "Dra. Hj. Siti Rahmah, M.Pd", email: "guru@mtsn2cilacap.sch.id", nis: "NIP. 198004122006042003", class: "8A, 8B, 9C", roles: ["guru"] },
-    { id: "7", full_name: "Muhammad Fairuz Maulana", email: "siswa@mtsn2cilacap.sch.id", nis: "NISN. 0081234567", class: "8A", roles: ["siswa"] },
-  ]);
+  // Helper to persist roles map
+  const saveRolesToStorage = (emailOrId: string, roles: string[]) => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem("lms_persisted_user_roles_v2") || "{}";
+      const rolesMap = JSON.parse(raw);
+      rolesMap[emailOrId.toLowerCase()] = roles;
+      localStorage.setItem("lms_persisted_user_roles_v2", JSON.stringify(rolesMap));
+    } catch (e) {}
+  };
+
+  const [dummyUsersList, setDummyUsersList] = useState(() => {
+    let savedRolesMap: Record<string, string[]> = {};
+    if (typeof window !== "undefined") {
+      try {
+        savedRolesMap = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
+      } catch (e) {}
+    }
+
+    const defaultList = [
+      { id: "1", full_name: "Super Administrator MTsN 2", email: "admin@mail.com", nis: "NIP. 198501012010011001", class: "Semua", roles: ["admin"] },
+      { id: "2", full_name: "H. Ahmad Syukri, S.Kom", email: "admin.akademik@mtsn2cilacap.sch.id", nis: "NIP. 198802152012011002", class: "Semua", roles: ["admin_akademik"] },
+      { id: "3", full_name: "Drs. H. Hidayatullah, M.Ag", email: "kamad@mtsn2cilacap.sch.id", nis: "NIP. 197505102000031001", class: "Semua", roles: ["kamad"] },
+      { id: "4", full_name: "Dra. Hj. Maryam, M.Pd", email: "waka@mtsn2cilacap.sch.id", nis: "NIP. 197808202003122002", class: "Semua", roles: ["waka"] },
+      { id: "5", full_name: "Bpk. Hendra Wijaya, M.Sc", email: "walikelas@mtsn2cilacap.sch.id", nis: "NIP. 198203112008011005", class: "8A", roles: ["walikelas", "guru"] },
+      { id: "6", full_name: "Dra. Hj. Siti Rahmah, M.Pd", email: "guru@mtsn2cilacap.sch.id", nis: "NIP. 198004122006042003", class: "8A, 8B, 9C", roles: ["guru"] },
+      { id: "7", full_name: "Muhammad Fairuz Maulana", email: "siswa@mtsn2cilacap.sch.id", nis: "NISN. 0081234567", class: "8A", roles: ["siswa"] },
+    ];
+
+    return defaultList.map((u) => ({
+      ...u,
+      roles: savedRolesMap[u.email.toLowerCase()] || savedRolesMap[u.id] || u.roles,
+    }));
+  });
 
   useEffect(() => {
     let isMounted = true;
+
+    let savedRolesMap: Record<string, string[]> = {};
+    if (typeof window !== "undefined") {
+      try {
+        savedRolesMap = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
+      } catch (e) {}
+    }
+
     MysqlDataService.getUsers()
       .then((users) => {
         if (!isMounted) return;
         if (users && users.length > 0) {
-          const formatted = users.map((u) => ({
-            id: String(u.id),
-            full_name: u.full_name,
-            email: u.email,
-            nis: `${u.identity_type || (u.role === "siswa" ? "NISN" : "NIP")}. ${u.nis_nip || "-"}`,
-            class: u.class_name || u.subject_specialty || "Semua",
-            roles: [u.role || "siswa"],
-          }));
+          const formatted = users.map((u) => {
+            const cleanEmail = u.email.toLowerCase();
+            let finalRoles = savedRolesMap[cleanEmail] || savedRolesMap[u.id];
+            if (!finalRoles) {
+              if (u.role && u.role.includes(",")) {
+                finalRoles = u.role.split(",").map((r) => r.trim());
+              } else {
+                finalRoles = [u.role || "siswa"];
+              }
+            }
+            return {
+              id: String(u.id),
+              full_name: u.full_name,
+              email: u.email,
+              nis: `${u.identity_type || (u.role === "siswa" ? "NISN" : "NIP")}. ${u.nis_nip || "-"}`,
+              class: u.class_name || u.subject_specialty || "Semua",
+              roles: finalRoles,
+            };
+          });
           setDummyUsersList(formatted);
         }
       })
@@ -822,20 +931,79 @@ function DataUserRole() {
 
   const availableRoles = ["admin", "admin_akademik", "kamad", "waka", "walikelas", "guru", "siswa"];
 
+  // Open Edit Roles Modal
+  const handlePromptEditRoles = (u: { id: string; full_name: string; email: string; nis: string; roles: string[] }) => {
+    setUserToEditRoles(u);
+    setTempEditRoles([...u.roles]);
+    setIsEditRoleModalOpen(true);
+  };
+
+  const toggleTempEditRole = (role: string) => {
+    if (tempEditRoles.includes(role)) {
+      if (tempEditRoles.length <= 1) {
+        return toast.error("Minimal 1 role aktif wajib dimiliki pengguna!");
+      }
+      setTempEditRoles(tempEditRoles.filter((r) => r !== role));
+    } else {
+      setTempEditRoles([...tempEditRoles, role]);
+    }
+  };
+
+  const saveUserRoles = () => {
+    if (!userToEditRoles) return;
+    if (tempEditRoles.length === 0) {
+      return toast.error("Pengguna harus memiliki minimal 1 role aktif!");
+    }
+
+    const userId = userToEditRoles.id;
+    const userEmail = userToEditRoles.email;
+    const newRoles = tempEditRoles;
+
+    // Persist immediately to localStorage & MySQL DB
+    saveRolesToStorage(userEmail, newRoles);
+    saveRolesToStorage(userId, newRoles);
+    MysqlDataService.updateUserRole(userId, newRoles, userEmail).catch(() => { });
+
+    setDummyUsersList((prev) =>
+      prev.map((u) => {
+        if (u.id !== userId && u.email.toLowerCase() !== userEmail.toLowerCase()) return u;
+        return { ...u, roles: newRoles };
+      })
+    );
+
+    toast.success(`💾 Hak akses multi-role untuk ${userToEditRoles.full_name} berhasil disimpan secara permanen! (${newRoles.join(", ").toUpperCase()})`);
+    setIsEditRoleModalOpen(false);
+    setUserToEditRoles(null);
+  };
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !password) {
       return toast.error("Harap isi Nama Lengkap, Email, dan Kata Sandi.");
     }
 
+    if (selectedRoles.length === 0) {
+      return toast.error("Pilih minimal 1 role untuk pengguna baru.");
+    }
+
+    const strength = MysqlAuthService.validatePasswordStrength(password);
+    if (!strength.isValid) {
+      return toast.error(`Kata sandi terlalu lemah: ${strength.feedback.join(", ")}`);
+    }
+
+    const primaryRole = selectedRoles[0];
     const newUserObj = {
       id: String(Date.now()),
       full_name: fullName,
       email: email.trim().toLowerCase(),
-      nis: nis || (selectedRole === "siswa" ? "NISN. 008" + Math.floor(100000 + Math.random() * 900000) : "NIP. 199" + Math.floor(10000000 + Math.random() * 90000000)),
+      nis: nis || (primaryRole === "siswa" ? "NISN. 008" + Math.floor(100000 + Math.random() * 900000) : "NIP. 199" + Math.floor(10000000 + Math.random() * 90000000)),
       class: userClass || "Semua",
-      roles: [selectedRole],
+      roles: selectedRoles,
     };
+
+    saveRolesToStorage(newUserObj.email, selectedRoles);
+    saveRolesToStorage(newUserObj.id, selectedRoles);
+    MysqlDataService.updateUserRole(newUserObj.id, selectedRoles, newUserObj.email).catch(() => { });
 
     setDummyUsersList([newUserObj, ...dummyUsersList]);
 
@@ -845,47 +1013,146 @@ function DataUserRole() {
         email,
         password,
         full_name: fullName,
-        role: selectedRole as any,
+        role: primaryRole as any,
         nis_nip: newUserObj.nis,
         class_name: userClass,
       });
-    } catch (err) {}
+    } catch (err) { }
 
-    toast.success(`Akun pengguna ${fullName} (${selectedRole.toUpperCase().replace("_", " ")}) berhasil ditambahkan!`);
+    toast.success(`Akun pengguna ${fullName} dengan ${selectedRoles.length} role (${selectedRoles.join(", ").toUpperCase()}) berhasil ditambahkan!`);
     setIsAddUserOpen(false);
-    
+
     // Reset Form
     setFullName("");
     setEmail("");
-    setPassword("asd123");
+    setPassword("MtsN2#2026!Sec");
     setNis("");
     setUserClass("8A");
-    setSelectedRole("guru");
+    setSelectedRoles(["guru"]);
   };
 
   const toggleRole = (userId: string, role: string) => {
-    setDummyUsersList((prev) =>
-      prev.map((u) => {
-        if (u.id !== userId) return u;
-        const exists = u.roles.includes(role);
-        const newRoles = exists ? u.roles.filter((r) => r !== role) : [...u.roles, role];
-        return { ...u, roles: newRoles };
-      })
-    );
-    toast.success(`Hak akses role ${role} berhasil diperbarui!`);
+    const userObj = dummyUsersList.find((u) => u.id === userId);
+    if (userObj) {
+      const exists = userObj.roles.includes(role);
+      // Rule 3: Minimum 1 role active check
+      if (exists && userObj.roles.length <= 1) {
+        return toast.error("Rule Delete: Pengguna harus memiliki minimal 1 role aktif! Gunakan tombol 'Hapus User' jika ingin menghapus akun.");
+      }
+
+      const newRoles = exists ? userObj.roles.filter((r) => r !== role) : [...userObj.roles, role];
+
+      saveRolesToStorage(userObj.email, newRoles);
+      saveRolesToStorage(userId, newRoles);
+      MysqlDataService.updateUserRole(userId, newRoles, userObj.email).catch(() => { });
+
+      setDummyUsersList((prev) =>
+        prev.map((u) => {
+          if (u.id !== userId) return u;
+          return { ...u, roles: newRoles };
+        })
+      );
+      toast.success(`Hak akses role ${role} berhasil diperbarui dan tersimpan permanen!`);
+    }
   };
 
-  const filtered = dummyUsersList.filter(
-    (u) =>
-      u.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase()) ||
-      u.nis.toLowerCase().includes(search.toLowerCase())
-  );
+  const handlePromptDeleteUser = (u: { id: string; full_name: string; email: string; nis: string; roles: string[] }) => {
+    const activeSession = MysqlAuthService.getActiveUser();
+
+    // Rule 1: Protection for Super Admin Primary Account
+    if (u.email === "admin@mail.com" || (u.roles.includes("admin") && dummyUsersList.filter((item) => item.roles.includes("admin")).length <= 1)) {
+      return toast.error("Rule Protection: Akun Super Admin Utama (admin@mail.com) dilindungi dan tidak dapat dihapus!");
+    }
+
+    // Rule 2: Active Logged In User Protection
+    if (activeSession && activeSession.email.toLowerCase() === u.email.toLowerCase()) {
+      return toast.error("Rule Protection: Anda tidak dapat menghapus akun Anda sendiri yang sedang digunakan saat ini!");
+    }
+
+    setUserToDelete(u);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    const targetId = userToDelete.id;
+    const targetEmail = userToDelete.email;
+    const targetName = userToDelete.full_name;
+
+    // Update state local
+    setDummyUsersList((prev) => prev.filter((u) => u.id !== targetId));
+
+    // Call backend API MySQL Delete User
+    try {
+      await MysqlDataService.deleteUser(targetId, targetEmail);
+    } catch (err) {
+      console.warn("Failed executing MySQL delete user:", err);
+    }
+
+    toast.success(`Akun pengguna ${targetName} (${targetEmail}) berhasil dihapus permanen!`);
+    setIsDeleteModalOpen(false);
+    setUserToDelete(null);
+  };
+
+  // Super Admin Password Reset & Edit Handlers
+  const handlePromptResetPassword = (u: { id: string; full_name: string; email: string; nis: string; roles: string[] }) => {
+    const activeSession = MysqlAuthService.getActiveUser();
+    const isSuperAdmin = activeSession?.role === "admin" || activeSession?.email?.toLowerCase() === "admin@mail.com";
+
+    if (!isSuperAdmin) {
+      return toast.error("Hanya Super Administrator yang berhak mengelola & mereset kata sandi akun pengguna!");
+    }
+
+    setUserToResetPass(u);
+    setAdminNewPassword("MtsN2#2026!Reset");
+    setShowAdminNewPassword(false);
+    setIsResetPassModalOpen(true);
+  };
+
+  const confirmAdminResetPassword = async (customPass?: string) => {
+    if (!userToResetPass) return;
+    const targetPass = customPass || adminNewPassword;
+
+    const res = await MysqlAuthService.adminResetPassword(userToResetPass.email, targetPass);
+    if (res.success) {
+      toast.success(`🔒 Kata sandi akun ${userToResetPass.full_name} (${userToResetPass.email}) berhasil diubah menjadi: "${targetPass}"`, {
+        duration: 9000,
+      });
+      setIsResetPassModalOpen(false);
+      setUserToResetPass(null);
+    } else {
+      toast.error(res.message);
+    }
+  };
+
+  // User Grouping Filter State (Siswa, Guru & Wali Kelas, Pejabat & Petugas Staf)
+  const [activeGroup, setActiveGroup] = useState<"semua" | "siswa" | "guru" | "pejabat">("semua");
+
+  // Group Counts Calculation
+  const siswaCount = dummyUsersList.filter((u) => u.roles.includes("siswa")).length;
+  const guruCount = dummyUsersList.filter((u) => u.roles.some((r) => r === "guru" || r === "walikelas")).length;
+  const pejabatCount = dummyUsersList.filter((u) => u.roles.some((r) => ["admin", "admin_akademik", "kamad", "waka"].includes(r))).length;
+
+  const filtered = dummyUsersList.filter((u) => {
+    // 1. Group Category Filter
+    if (activeGroup === "siswa" && !u.roles.includes("siswa")) return false;
+    if (activeGroup === "guru" && !u.roles.some((r) => r === "guru" || r === "walikelas")) return false;
+    if (activeGroup === "pejabat" && !u.roles.some((r) => ["admin", "admin_akademik", "kamad", "waka"].includes(r))) return false;
+
+    // 2. Search Text Filter
+    const searchLower = search.toLowerCase();
+    return (
+      u.full_name.toLowerCase().includes(searchLower) ||
+      u.email.toLowerCase().includes(searchLower) ||
+      u.nis.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Manajemen Pengguna & Hak Akses (Role)" sub="Pengelolaan akun pengguna dan matriks wewenang LMS MTsN 2 Cilacap" />
+      <SectionHeader title="Manajemen Pengguna & Hak Akses (Role)" sub="Pengelolaan terkelompok untuk Siswa, Guru & Wali Kelas, serta Pejabat/Petugas Staf LMS MTsN 2 Cilacap" />
 
+      {/* Card Tab Pengelompokan Pengguna */}
       <Card className="border-border shadow-sm">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
@@ -893,7 +1160,7 @@ function DataUserRole() {
               <Shield className="h-5 w-5 text-primary" /> Data Akun Pengguna & Hak Akses
             </CardTitle>
             <CardDescription>
-              Total {dummyUsersList.length} Akun Terdaftar (Super Admin, Kamad, Waka, Wali Kelas, Guru, Siswa).
+              Kelola akun terdaftar ({dummyUsersList.length} total) berdasarkan pengelompokan peran dan wewenang.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -911,7 +1178,86 @@ function DataUserRole() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-4">
+
+        <CardContent className="pt-4 space-y-4">
+          {/* Baris Tombol Pengelompokan (Grouping Tabs) */}
+          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80">
+            <button
+              type="button"
+              onClick={() => setActiveGroup("semua")}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                activeGroup === "semua"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <span>🌐 Semua Pengguna</span>
+              <Badge variant="secondary" className="text-[10px] bg-background/80 text-foreground font-extrabold px-1.5 py-0.2">
+                {dummyUsersList.length}
+              </Badge>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveGroup("siswa")}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                activeGroup === "siswa"
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <span>🎓 Kelompok Siswa</span>
+              <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-extrabold px-1.5 py-0.2 border border-emerald-500/30">
+                {siswaCount}
+              </Badge>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveGroup("guru")}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                activeGroup === "guru"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <span>👨‍🏫 Guru & Wali Kelas</span>
+              <Badge variant="secondary" className="text-[10px] bg-blue-500/20 text-blue-600 dark:text-blue-300 font-extrabold px-1.5 py-0.2 border border-blue-500/30">
+                {guruCount}
+              </Badge>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveGroup("pejabat")}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                activeGroup === "pejabat"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <span>🏛️ Pejabat & Petugas Staf</span>
+              <Badge variant="secondary" className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-300 font-extrabold px-1.5 py-0.2 border border-amber-500/30">
+                {pejabatCount}
+              </Badge>
+            </button>
+          </div>
+
+          {/* Banner Info Kelompok Aktif */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+            <div>
+              Menampilkan <strong className="text-foreground">{filtered.length}</strong> akun dari kelompok{" "}
+              <strong className="text-foreground uppercase">
+                {activeGroup === "semua" ? "Semua User" : activeGroup === "siswa" ? "Siswa" : activeGroup === "guru" ? "Guru & Wali Kelas" : "Pejabat & Petugas Staf"}
+              </strong>
+            </div>
+            {search && (
+              <div>
+                Pencarian: &quot;<span className="font-semibold text-foreground">{search}</span>&quot;
+              </div>
+            )}
+          </div>
+
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
               <thead>
@@ -921,51 +1267,323 @@ function DataUserRole() {
                   <th className="py-3 px-4 font-semibold">Kelas</th>
                   <th className="py-3 px-4 font-semibold">Role Aktif</th>
                   <th className="py-3 px-4 font-semibold">Kelola Hak Akses</th>
+                  <th className="py-3 px-4 font-semibold text-center">Aksi & Kontrol</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u) => (
-                  <tr key={u.id} className="border-b border-border/60 hover:bg-muted/30 transition">
-                    <td className="py-3 px-4 font-medium">
-                      <div className="font-bold text-foreground">{u.full_name}</div>
-                      <div className="text-xs text-muted-foreground font-mono">{u.nis}</div>
-                    </td>
-                    <td className="py-3 px-4 text-xs font-mono text-muted-foreground">{u.email}</td>
-                    <td className="py-3 px-4 text-xs font-semibold">{u.class}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex flex-wrap gap-1">
-                        {u.roles.map((r) => (
-                          <Badge key={r} variant="secondary" className="text-[10px] uppercase font-bold bg-primary/10 text-primary border border-primary/20">
-                            {r.replace("_", " ")}
-                          </Badge>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex flex-wrap gap-1">
-                        {availableRoles.map((r) => {
-                          const hasRole = u.roles.includes(r);
-                          return (
+                {filtered.map((u) => {
+                  const isSuperAdmin = u.email === "admin@mail.com";
+                  const activeSession = MysqlAuthService.getActiveUser();
+                  const isSelf = activeSession && activeSession.email.toLowerCase() === u.email.toLowerCase();
+                  const currentIsSuperAdmin = activeSession?.role === "admin" || activeSession?.email?.toLowerCase() === "admin@mail.com";
+
+                  return (
+                    <tr key={u.id} className="border-b border-border/60 hover:bg-muted/30 transition">
+                      <td className="py-3 px-4 font-medium">
+                        <div className="font-bold text-foreground flex items-center gap-1.5">
+                          {u.full_name}
+                          {isSuperAdmin && (
+                            <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/30">
+                              🛡️ Dilindungi
+                            </Badge>
+                          )}
+                          {isSelf && (
+                            <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                              👤 Sesi Anda
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono">{u.nis}</div>
+                      </td>
+                      <td className="py-3 px-4 text-xs font-mono text-muted-foreground">{u.email}</td>
+                      <td className="py-3 px-4 text-xs font-semibold">{u.class}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-1">
+                          {u.roles.map((r) => (
+                            <Badge key={r} variant="secondary" className="text-[10px] uppercase font-bold bg-primary/10 text-primary border border-primary/20">
+                              {r.replace("_", " ")}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 text-[10px] px-2 font-bold bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 gap-1 mr-1"
+                            onClick={() => handlePromptEditRoles(u)}
+                            title="Buka Modal Kelola & Simpan Multi-Role"
+                          >
+                            <UserCog className="h-3 w-3" /> 🎭 Atur & Simpan Role
+                          </Button>
+                          {availableRoles.map((r) => {
+                            const hasRole = u.roles.includes(r);
+                            return (
+                              <Button
+                                key={r}
+                                size="sm"
+                                variant={hasRole ? "default" : "outline"}
+                                className={`h-6 text-[10px] px-2 ${hasRole ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
+                                onClick={() => toggleRole(u.id, r)}
+                              >
+                                {hasRole ? `✓ ${r}` : `+ ${r}`}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30 gap-1"
+                            onClick={() => handlePromptEditRoles(u)}
+                            title="Buka Form Kelola & Simpan Role"
+                          >
+                            <Save className="h-3.5 w-3.5" /> Simpan Role
+                          </Button>
+
+                          {currentIsSuperAdmin && (
                             <Button
-                              key={r}
                               size="sm"
-                              variant={hasRole ? "default" : "outline"}
-                              className={`h-6 text-[10px] px-2 ${hasRole ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
-                              onClick={() => toggleRole(u.id, r)}
+                              variant="outline"
+                              className="h-7 px-2 text-xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 border-teal-500/30 gap-1"
+                              onClick={() => handlePromptResetPassword(u)}
+                              title="Ubah / Reset Kata Sandi Akun (Khusus Super Admin)"
                             >
-                              {hasRole ? `✓ ${r}` : `+ ${r}`}
+                              <KeyRound className="h-3.5 w-3.5" /> Sandi
                             </Button>
-                          );
-                        })}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          )}
+
+                          {isSuperAdmin || isSelf ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled
+                              className="h-7 px-2 text-xs text-muted-foreground opacity-50 cursor-not-allowed"
+                              title={isSuperAdmin ? "Super Admin Utama dilindungi dari penghapusan" : "Tidak dapat menghapus akun sendiri"}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
+                              onClick={() => handlePromptDeleteUser(u)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog Modal Reset/Ubah Password Khusus Super Admin */}
+      <Dialog open={isResetPassModalOpen} onOpenChange={setIsResetPassModalOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-teal-600 dark:text-teal-400 flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-teal-600" /> Kelola & Reset Kata Sandi Pengguna
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Fitur kontrol khusus Super Administrator untuk memperbarui kata sandi akun pengguna LMS.
+            </DialogDescription>
+          </DialogHeader>
+
+          {userToResetPass && (
+            <div className="space-y-4 py-2">
+              <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-3 text-xs space-y-1">
+                <div><span className="font-semibold text-muted-foreground">Target Akun:</span> <strong className="text-foreground">{userToResetPass.full_name}</strong></div>
+                <div><span className="font-semibold text-muted-foreground">Email / Username:</span> <code className="font-mono text-foreground">{userToResetPass.email}</code></div>
+                <div><span className="font-semibold text-muted-foreground">NIP / NISN:</span> <code className="font-mono text-foreground">{userToResetPass.nis}</code></div>
+              </div>
+
+              {/* Action 1: Quick Reset Default Pass */}
+              <div className="p-3 border border-border rounded-xl bg-muted/30 space-y-2">
+                <div className="text-xs font-bold flex items-center justify-between">
+                  <span>⚡ Reset Cepat (Default Password)</span>
+                  <Badge variant="outline" className="text-[10px] bg-teal-500/10 text-teal-600 border-teal-500/30">
+                    Otomatis
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Sistem akan mereset password akun ini menjadi kata sandi sementara yang aman: <code className="font-mono text-teal-600 dark:text-teal-400 font-bold">MtsN2#2026!Reset</code>
+                </p>
+                <Button
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  className="w-full text-xs font-bold border-teal-500/40 text-teal-600 hover:bg-teal-500/10"
+                  onClick={() => confirmAdminResetPassword("MtsN2#2026!Reset")}
+                >
+                  ⚡ Terbitkan Password Reset Default
+                </Button>
+              </div>
+
+              {/* Action 2: Custom Password Input */}
+              <div className="space-y-2 pt-1">
+                <Label htmlFor="admin-custom-pass" className="text-xs font-semibold">Atau Masukkan Kata Sandi Kustom Baru</Label>
+                <div className="relative">
+                  <Input
+                    id="admin-custom-pass"
+                    type={showAdminNewPassword ? "text" : "password"}
+                    value={adminNewPassword}
+                    onChange={(e) => setAdminNewPassword(e.target.value)}
+                    placeholder="Min 8 Karakter (Huruf Besar, Kecil & Angka)"
+                    className="text-xs pr-10 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminNewPassword(!showAdminNewPassword)}
+                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition"
+                  >
+                    {showAdminNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {adminNewPassword && (() => {
+                  const strength = MysqlAuthService.validatePasswordStrength(adminNewPassword);
+                  return (
+                    <p className={`text-[10px] ${strength.isValid ? "text-emerald-500 font-semibold" : "text-amber-500"}`}>
+                      Kekuatan: {strength.label} {strength.feedback.length > 0 ? `(${strength.feedback.join(", ")})` : "✓"}
+                    </p>
+                  );
+                })()}
+              </div>
+
+              <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <Button variant="outline" size="sm" onClick={() => setIsResetPassModalOpen(false)}>
+                  Batal
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-teal-600 hover:bg-teal-700 text-white font-bold gap-1.5 text-xs"
+                  onClick={() => confirmAdminResetPassword()}
+                >
+                  <KeyRound className="h-4 w-4" /> Simpan Kata Sandi Kustom
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Modal Edit & Simpan Hak Akses Multi-Role */}
+      <Dialog open={isEditRoleModalOpen} onOpenChange={setIsEditRoleModalOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+              <UserCog className="h-5 w-5 text-emerald-600" /> Kelola & Simpan Hak Akses Multi-Role
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Atur dan centang peran (role) untuk akun pengguna ini, lalu klik Simpan Perubahan.
+            </DialogDescription>
+          </DialogHeader>
+
+          {userToEditRoles && (
+            <div className="space-y-4 py-2">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-xs space-y-1">
+                <div><span className="font-semibold text-muted-foreground">Nama Pengguna:</span> <strong className="text-foreground">{userToEditRoles.full_name}</strong></div>
+                <div><span className="font-semibold text-muted-foreground">Email / Username:</span> <code className="font-mono text-foreground">{userToEditRoles.email}</code></div>
+                <div><span className="font-semibold text-muted-foreground">NIP / NISN:</span> <code className="font-mono text-foreground">{userToEditRoles.nis}</code></div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs font-semibold">Pilih Role yang Diberikan (Bisa Lebih Dari 1 Role)</Label>
+                  <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold">
+                    {tempEditRoles.length} Role Terpilih
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: "guru", label: "👨‍🏫 Guru Pengampu" },
+                    { id: "siswa", label: "🎓 Siswa" },
+                    { id: "walikelas", label: "📋 Wali Kelas" },
+                    { id: "waka", label: "📐 Waka Kurikulum" },
+                    { id: "kamad", label: "🏛️ Kepala Madrasah" },
+                    { id: "admin_akademik", label: "💼 Admin Akademik" },
+                    { id: "admin", label: "🛡️ Super Admin" },
+                  ].map((r) => {
+                    const isSelected = tempEditRoles.includes(r.id);
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => toggleTempEditRole(r.id)}
+                        className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between transition ${isSelected
+                          ? "bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs"
+                          : "bg-muted/40 border-border hover:bg-muted text-muted-foreground"
+                          }`}
+                      >
+                        <span>{r.label}</span>
+                        {isSelected && <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <Button variant="outline" size="sm" onClick={() => setIsEditRoleModalOpen(false)}>
+                  Batal
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5 text-xs"
+                  onClick={saveUserRoles}
+                >
+                  <Save className="h-4 w-4" /> Simpan Perubahan Role
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Modal Hapus User Confirmation */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-rose-600" /> Konfirmasi Penghapusan Akun
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Apakah Anda yakin ingin menghapus akun pengguna ini dari sistem LMS secara permanen?
+            </DialogDescription>
+          </DialogHeader>
+
+          {userToDelete && (
+            <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 text-xs space-y-1.5 my-2">
+              <div><span className="font-semibold text-muted-foreground">Nama Pengguna:</span> <strong className="text-foreground">{userToDelete.full_name}</strong></div>
+              <div><span className="font-semibold text-muted-foreground">Email / Username:</span> <code className="font-mono text-foreground">{userToDelete.email}</code></div>
+              <div><span className="font-semibold text-muted-foreground">NIP / NISN:</span> <code className="font-mono text-foreground">{userToDelete.nis}</code></div>
+              <div>
+                <span className="font-semibold text-muted-foreground">Role Saat Ini:</span>{" "}
+                <span className="font-semibold uppercase text-rose-600 dark:text-rose-400">{userToDelete.roles.join(", ")}</span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setIsDeleteModalOpen(false)}>
+              Batal
+            </Button>
+            <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5" onClick={confirmDeleteUser}>
+              <Trash2 className="h-4 w-4" /> Ya, Hapus Pengguna
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog Modal Form Tambah User Baru */}
       <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
@@ -1044,7 +1662,10 @@ function DataUserRole() {
             </div>
 
             <div>
-              <Label className="text-xs font-semibold">Pilih Peran Utama (Role)</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Pilih Peran Pengguna (Dapat Memilih Lebih Dari 1 Role)</Label>
+                <span className="text-[10px] text-emerald-600 font-bold">{selectedRoles.length} Role Terpilih</span>
+              </div>
               <div className="grid grid-cols-2 gap-2 mt-1.5">
                 {[
                   { id: "guru", label: "👨‍🏫 Guru Pengampu" },
@@ -1054,21 +1675,30 @@ function DataUserRole() {
                   { id: "kamad", label: "🏛️ Kepala Madrasah" },
                   { id: "admin_akademik", label: "💼 Admin Akademik" },
                   { id: "admin", label: "🛡️ Super Admin" },
-                ].map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setSelectedRole(r.id)}
-                    className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-between transition ${
-                      selectedRole === r.id
-                        ? "bg-primary/10 border-primary text-primary shadow-xs"
+                ].map((r) => {
+                  const isSelected = selectedRoles.includes(r.id);
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          if (selectedRoles.length <= 1) return toast.error("Minimal 1 role wajib dipilih!");
+                          setSelectedRoles(selectedRoles.filter((item) => item !== r.id));
+                        } else {
+                          setSelectedRoles([...selectedRoles, r.id]);
+                        }
+                      }}
+                      className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-between transition ${isSelected
+                        ? "bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs"
                         : "bg-muted/40 border-border hover:bg-muted"
-                    }`}
-                  >
-                    <span>{r.label}</span>
-                    {selectedRole === r.id && <span className="text-primary font-bold">✓</span>}
-                  </button>
-                ))}
+                        }`}
+                    >
+                      <span>{r.label}</span>
+                      {isSelected && <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1229,6 +1859,285 @@ function Pengumuman() {
   );
 }
 
+/* ---------- MODUL KEHADIRAN & REKAP PRESENSI ROMBEL ---------- */
+function KehadiranSiswa() {
+  const [selectedClass, setSelectedClass] = useState("Rombel 8A");
+  const [selectedMonth, setSelectedMonth] = useState("Agustus 2026");
+  const [isPrintPresensiOpen, setIsPrintPresensiOpen] = useState(false);
+
+  const [attendanceData] = useState([
+    { id: "s1", nisn: "0081928371", name: "Ahmad Fauzi", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567890", status: "Sangat Baik (A)" },
+    { id: "s2", nisn: "0081928372", name: "Fatimah Az-Zahra", class: "Rombel 8A", hadir: 21, izin: 0, sakit: 0, alpa: 0, pct: 100.0, parentWa: "081234567894", status: "Sempurna (100%)" },
+    { id: "s3", nisn: "0081928373", name: "Muhammad Rizky", class: "Rombel 8A", hadir: 16, izin: 2, sakit: 1, alpa: 2, pct: 76.2, parentWa: "081234567895", status: "⚠️ Perlu Alert Pembinaan" },
+    { id: "s4", nisn: "0081928374", name: "Siti Nurhaliza", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567896", status: "Sangat Baik (A)" },
+    { id: "s5", nisn: "0081928375", name: "Budi Santoso", class: "Rombel 8B", hadir: 19, izin: 1, sakit: 1, alpa: 0, pct: 90.5, parentWa: "081234567897", status: "Baik (B)" },
+  ]);
+
+  const filteredAttendance = attendanceData.filter((a) => selectedClass === "Semua" || a.class === selectedClass);
+
+  const handlePrintPresensi = () => {
+    window.print();
+    toast.success(`🖨️ Rekap Presensi Bulanan (${selectedClass} - ${selectedMonth}) berhasil dicetak!`);
+  };
+
+  const handleSendWaPresensiAlert = (student: any) => {
+    MysqlDataService.saveWaLog({
+      parent_name: `Orang Tua ${student.name}`,
+      phone: student.parentWa,
+      student_name: student.name,
+      category: "ALERT PRESENSI",
+      message: `[ALERT PRESENSI MTsN 2 CILACAP]: Bpk/Ibu Orang Tua ${student.name}, kami sampaikan rekap presensi bulan ${selectedMonth}: Hadir: ${student.hadir} hari, Izin: ${student.izin}, Sakit: ${student.sakit}, Alpa: ${student.alpa} hari (${student.pct}% Kehadiran).`,
+      status: "TERKIRIM",
+    }).catch(() => {});
+
+    toast.success(`📱 WA Alert Presensi Berhasil Dikirim ke Orang Tua ${student.name} (${student.parentWa})!`);
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        title="Kehadiran & Rekapitulasi Presensi Siswa Rombel"
+        sub="Pemantauan persentase kehadiran bulanan, cetak rekap presensi resmi, & direct WhatsApp alert ke orang tua siswa MTsN 2 Cilacap"
+      />
+
+      {/* Overview Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
+              ✓
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Rata-Rata Kehadiran</div>
+              <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">96.8% Hadir</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
+              ℹ️
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Siswa Izin / Sakit</div>
+              <div className="text-lg font-extrabold text-foreground">3 Siswa</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+              ⚠️
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Alert Indisipliner (Alpa)</div>
+              <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">1 Siswa EWS</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
+              📱
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">WA Alert Gateway</div>
+              <div className="text-lg font-extrabold text-purple-600 dark:text-purple-400">Terintegrasi</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Table Card */}
+      <Card className="border-border shadow-sm">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <div>
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-emerald-600" /> Matriks Presensi Siswa per Rombel
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Rekapitulasi kehadiran tatap muka harian KBM ({selectedMonth}).
+            </CardDescription>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+            >
+              <option value="Semua">Semua Rombel</option>
+              <option value="Rombel 8A">Rombel 8A</option>
+              <option value="Rombel 8B">Rombel 8B</option>
+            </select>
+
+            <select
+              className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            >
+              <option value="Agustus 2026">Agustus 2026</option>
+              <option value="Juli 2026">Juli 2026</option>
+            </select>
+
+            <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setIsPrintPresensiOpen(true)}>
+              <Download className="h-3.5 w-3.5" /> 🖨️ Cetak Rekap Presensi PDF
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0 overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
+              <tr>
+                <th className="py-3 px-4">NISN & Nama Siswa</th>
+                <th className="py-3 px-3">Rombel</th>
+                <th className="py-3 px-3 text-center">Hadir (H)</th>
+                <th className="py-3 px-3 text-center">Izin (I)</th>
+                <th className="py-3 px-3 text-center">Sakit (S)</th>
+                <th className="py-3 px-3 text-center">Alpa (A)</th>
+                <th className="py-3 px-3 text-center">% Kehadiran</th>
+                <th className="py-3 px-3">Status Evaluasi</th>
+                <th className="py-3 px-4 text-right">Kontrol WA Ortu</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredAttendance.map((s) => (
+                <tr key={s.id} className="hover:bg-muted/30 transition">
+                  <td className="py-3 px-4 font-semibold">
+                    <div className="font-bold text-foreground">{s.name}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono">{s.nisn}</div>
+                  </td>
+                  <td className="py-3 px-3 font-bold">{s.class}</td>
+                  <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{s.hadir}</td>
+                  <td className="py-3 px-3 text-center font-mono">{s.izin}</td>
+                  <td className="py-3 px-3 text-center font-mono">{s.sakit}</td>
+                  <td className="py-3 px-3 text-center font-mono font-bold text-red-600">{s.alpa}</td>
+                  <td className="py-3 px-3 text-center font-mono font-bold text-primary text-sm">{s.pct}%</td>
+                  <td className="py-3 px-3">
+                    {s.pct < 80 ? (
+                      <Badge variant="outline" className="text-[9px] bg-red-500/15 text-red-600 border-red-500/30 font-bold">
+                        {s.status}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[9px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30 font-bold">
+                        {s.status}
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px] font-bold gap-1 border-purple-500/40 text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
+                      onClick={() => handleSendWaPresensiAlert(s)}
+                    >
+                      <Send className="h-3 w-3 text-purple-500" /> WA Alert Ortu
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      {/* 🖨️ MODAL PRATINJAU & CETAK REKAP PRESENSI PDF */}
+      <Dialog open={isPrintPresensiOpen} onOpenChange={setIsPrintPresensiOpen}>
+        <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
+          <DialogHeader className="border-b border-border pb-3">
+            <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-emerald-600" /> Pratinjau Rekapitulasi Presensi Bulanan
+              </div>
+              <Badge className="bg-emerald-600 text-white font-mono text-xs">{selectedClass}</Badge>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Format Dokumen Resmi Rekapitulasi Kehadiran Siswa MTsN 2 Cilacap ({selectedMonth}).
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* DOKUMEN RESMI REKAP PRESENSI (LEMBAR KERTAS) */}
+          <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
+            {/* Kop Resmi */}
+            <div className="text-center border-b-2 border-slate-900 pb-3">
+              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+              <div className="mt-2 py-1 bg-emerald-800 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
+                REKAPITULASI PRESENSI KEHADIRAN SISWA BULANAN
+              </div>
+            </div>
+
+            {/* Identitas Filter */}
+            <div className="flex justify-between items-center text-xs font-medium text-slate-800 bg-slate-50 p-3 rounded-md border border-slate-200">
+              <div>Rombongan Belajar: <strong className="text-emerald-900 font-bold">{selectedClass}</strong></div>
+              <div>Bulan / Periode: <strong>{selectedMonth}</strong></div>
+              <div>Tahun Ajaran: <strong>2025/2026 Ganjil</strong></div>
+            </div>
+
+            {/* Tabel Matriks Presensi */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px] border-collapse border border-slate-300">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
+                    <th className="border border-slate-300 p-2 text-center w-8">No</th>
+                    <th className="border border-slate-300 p-2 text-left">NISN</th>
+                    <th className="border border-slate-300 p-2 text-left">Nama Lengkap Siswa</th>
+                    <th className="border border-slate-300 p-2 text-center">Hadir</th>
+                    <th className="border border-slate-300 p-2 text-center">Izin</th>
+                    <th className="border border-slate-300 p-2 text-center">Sakit</th>
+                    <th className="border border-slate-300 p-2 text-center">Alpa</th>
+                    <th className="border border-slate-300 p-2 text-center">% Hadir</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAttendance.map((s, idx) => (
+                    <tr key={s.id} className="border-b border-slate-200 hover:bg-slate-50">
+                      <td className="border border-slate-300 p-2 text-center font-mono">{idx + 1}</td>
+                      <td className="border border-slate-300 p-2 font-mono">{s.nisn}</td>
+                      <td className="border border-slate-300 p-2 font-bold">{s.name}</td>
+                      <td className="border border-slate-300 p-2 text-center font-mono font-bold text-emerald-800">{s.hadir}</td>
+                      <td className="border border-slate-300 p-2 text-center font-mono">{s.izin}</td>
+                      <td className="border border-slate-300 p-2 text-center font-mono">{s.sakit}</td>
+                      <td className="border border-slate-300 p-2 text-center font-mono text-red-700 font-bold">{s.alpa}</td>
+                      <td className="border border-slate-300 p-2 text-center font-mono font-bold text-slate-950">{s.pct}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Tanda Tangan Official */}
+            <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
+              <div className="text-center space-y-8">
+                <div>Wali Kelas {selectedClass}</div>
+                <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+              </div>
+              <div className="text-center space-y-8">
+                <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
+                <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-3 border-t border-border flex justify-between items-center w-full">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsPrintPresensiOpen(false)}>
+              Tutup
+            </Button>
+            <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5" onClick={handlePrintPresensi}>
+              <Download className="h-4 w-4" /> 🖨️ Cetak Rekap Presensi PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
   const rawClass = userProfile?.class_name || "VIII-A";
@@ -1306,6 +2215,13 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
     setIsOpen(false);
   };
 
+  const [isPrintJadwalOpen, setIsPrintJadwalOpen] = useState(false);
+
+  const handlePrintJadwal = () => {
+    window.print();
+    toast.success(`🖨️ Cetak Matriks Jadwal Pelajaran KBM (${filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}) berhasil diproses!`);
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -1319,11 +2235,16 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
               : "Plotting alokasi jadwal mengajar & belajar per Tingkat Kelas dan Rombel MTsN 2 Cilacap"}
           </p>
         </div>
-        {!isSiswa && (
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-            + Tambah Jadwal Pelajaran
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
+            <Download className="h-3.5 w-3.5" /> 🖨️ Cetak Jadwal KBM PDF
           </Button>
-        )}
+          {!isSiswa && (
+            <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
+              + Tambah Jadwal Pelajaran
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter Bar Kelas & Rombel */}
@@ -1472,6 +2393,105 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
               <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Jadwal</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 🖨️ MODAL PRATINJAU & CETAK JADWAL KBM PDF */}
+      <Dialog open={isPrintJadwalOpen} onOpenChange={setIsPrintJadwalOpen}>
+        <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
+          <DialogHeader className="border-b border-border pb-3">
+            <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="h-5 w-5 text-blue-600" /> Pratinjau Matriks Jadwal Pelajaran KBM
+              </div>
+              <Badge className="bg-blue-600 text-white font-mono text-xs">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</Badge>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Jadwal Resmi Alokasi Pembelajaran Tatap Muka & KBM MTsN 2 Cilacap (Tahun Ajaran 2025/2026 Ganjil).
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* DOKUMEN RESMI JADWAL KBM (LEMBAR KERTAS) */}
+          <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
+            {/* Kop Resmi */}
+            <div className="text-center border-b-2 border-slate-900 pb-3">
+              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+              <div className="mt-2 py-1 bg-blue-900 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
+                JADWAL PELAJARAN KBM MADRASAH (SEMESTER GANJIL)
+              </div>
+            </div>
+
+            {/* Identitas Filter */}
+            <div className="flex justify-between items-center text-xs font-medium text-slate-800 bg-slate-50 p-3 rounded-md border border-slate-200">
+              <div>Tingkat Kelas: <strong>{filterKelas}</strong></div>
+              <div>Rombongan Belajar: <strong className="text-blue-900 font-bold">{filterRombel}</strong></div>
+              <div>Tahun Ajaran: <strong>2025/2026 Ganjil</strong></div>
+            </div>
+
+            {/* Matriks Hari (Senin - Sabtu) */}
+            <div className="space-y-3">
+              {hari.map((h) => {
+                const listForDay = (jadwal[h] || []).filter((s) => {
+                  const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
+                  const matchRombel = filterRombel === "Semua" || s.rombel === filterRombel;
+                  return matchKelas && matchRombel;
+                });
+                if (listForDay.length === 0) return null;
+
+                return (
+                  <div key={h} className="border border-slate-300 rounded-md overflow-hidden text-xs">
+                    <div className="bg-slate-100 px-3 py-1.5 font-bold text-slate-900 border-b border-slate-300 flex justify-between">
+                      <span>📅 HARI {h.toUpperCase()}</span>
+                      <span className="font-mono text-[11px] text-slate-600">{listForDay.length} Sesi Pelajaran</span>
+                    </div>
+                    <table className="w-full text-[11px] border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
+                          <th className="p-1.5 text-center w-24 border-r border-slate-200">Jam Waktu</th>
+                          <th className="p-1.5 text-left border-r border-slate-200">Mata Pelajaran</th>
+                          <th className="p-1.5 text-left border-r border-slate-200">Rombel / Ruang</th>
+                          <th className="p-1.5 text-left">Guru Pengampu Utama</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {listForDay.map((s, idx) => (
+                          <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
+                            <td className="p-1.5 text-center font-mono font-bold text-slate-900 border-r border-slate-200">{s.j}</td>
+                            <td className="p-1.5 font-bold text-blue-950 border-r border-slate-200">{s.m}</td>
+                            <td className="p-1.5 border-r border-slate-200">{s.rombel} ({s.tingkat})</td>
+                            <td className="p-1.5 text-slate-800">{s.g}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Tanda Tangan Official */}
+            <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
+              <div className="text-center space-y-8">
+                <div>Waka Kurikulum</div>
+                <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+              </div>
+              <div className="text-center space-y-8">
+                <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
+                <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-3 border-t border-border flex justify-between items-center w-full">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsPrintJadwalOpen(false)}>
+              Tutup
+            </Button>
+            <Button type="button" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1.5" onClick={handlePrintJadwal}>
+              <Download className="h-4 w-4" /> 🖨️ Cetak Jadwal KBM PDF
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
@@ -1881,16 +2901,16 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
         prev.map((item) =>
           item.code === editingMapelCode
             ? {
-                ...item,
-                code: formattedCode,
-                name: inputName,
-                category: inputCategory,
-                teacher: inputTeacher,
-                jp: Number(inputJp),
-                kkm: Number(inputKkm),
-                status: inputStatus,
-                icon: iconStr,
-              }
+              ...item,
+              code: formattedCode,
+              name: inputName,
+              category: inputCategory,
+              teacher: inputTeacher,
+              jp: Number(inputJp),
+              kkm: Number(inputKkm),
+              status: inputStatus,
+              icon: iconStr,
+            }
             : item
         )
       );
@@ -2348,18 +3368,18 @@ function Quiz() {
     setIsQuizModalOpen(true);
 
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+      document.documentElement.requestFullscreen().catch(() => { });
       setIsFullscreen(true);
     }
   };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+      document.documentElement.requestFullscreen().catch(() => { });
       setIsFullscreen(true);
     } else {
       if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch(() => { });
       }
       setIsFullscreen(false);
     }
@@ -2503,11 +3523,10 @@ function Quiz() {
                             <button
                               key={key}
                               onClick={() => setQuizAnswers((prev) => ({ ...prev, [currentIdx]: key }))}
-                              className={`p-4 rounded-xl border text-left flex items-center gap-3 transition font-medium text-sm ${
-                                isSelected
-                                  ? "border-primary bg-primary/10 text-primary font-bold shadow-xs ring-1 ring-primary/40"
-                                  : "border-border hover:border-primary/40 bg-card text-foreground"
-                              }`}
+                              className={`p-4 rounded-xl border text-left flex items-center gap-3 transition font-medium text-sm ${isSelected
+                                ? "border-primary bg-primary/10 text-primary font-bold shadow-xs ring-1 ring-primary/40"
+                                : "border-border hover:border-primary/40 bg-card text-foreground"
+                                }`}
                             >
                               <span className={`h-8 w-8 rounded-lg border grid place-items-center font-bold text-xs shrink-0 ${isSelected ? "bg-primary text-primary-foreground border-primary" : "border-border bg-muted"}`}>
                                 {key}
@@ -2592,6 +3611,17 @@ function Nilai({ activeRole }: { activeRole?: string }) {
 
   const [selectedClassModal, setSelectedClassModal] = useState<any>(null);
   const [selectedEntryModal, setSelectedEntryModal] = useState<any>(null);
+
+  // E-Rapor Print State
+  const [isPrintRaporOpen, setIsPrintRaporOpen] = useState(false);
+  const [raporStudentName, setRaporStudentName] = useState("Ahmad Fauzi");
+  const [raporNisn, setRaporNisn] = useState("0081928371");
+  const [raporClass, setRaporClass] = useState("8A (VIII A)");
+
+  const handlePrintRapor = () => {
+    window.print();
+    toast.success(`🖨️ Cetak E-Rapor Kurikulum Merdeka (${raporStudentName}) berhasil diproses!`);
+  };
 
   const teacherEntryList = [
     { code: "AGM-01", mapel: "Al-Quran Hadits", rombel: "Kelas VIII A", totalSiswa: 32, entered: 32, progress: 100, status: "Lengkap 100%", c: "text-emerald-500" },
@@ -2944,8 +3974,142 @@ function Nilai({ activeRole }: { activeRole?: string }) {
 
           <DialogFooter className="pt-2 border-t border-border">
             <Button variant="outline" size="sm" onClick={() => setSelectedClassModal(null)}>Tutup</Button>
-            <Button size="sm" className="bg-primary text-primary-foreground font-bold" onClick={() => toast.success(`Rekap Nilai Official ${selectedClassModal?.name} berhasil diunduh!`)}>
-              🖨️ Cetak PDF Nilai Kelas
+            <Button size="sm" className="bg-primary text-primary-foreground font-bold" onClick={() => setIsPrintRaporOpen(true)}>
+              🖨️ Pratinjau & Cetak E-Rapor
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 🖨️ MODAL PRATINJAU & CETAK E-RAPOR KURIKULUM MERDEKA PDF */}
+      <Dialog open={isPrintRaporOpen} onOpenChange={setIsPrintRaporOpen}>
+        <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
+          <DialogHeader className="border-b border-border pb-3">
+            <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-blue-600" /> Pratinjau E-Rapor Kurikulum Merdeka
+              </div>
+              <Badge className="bg-blue-600 text-white font-mono text-xs">{raporClass}</Badge>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Format lembar dokumen E-Rapor Resmi Kurikulum Merdeka MTsN 2 Cilacap (Semester Ganjil 2025/2026).
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Selector Siswa */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-muted/40 rounded-xl border border-border text-xs">
+            <div>
+              <Label className="text-[11px] font-semibold text-muted-foreground">Pilih Nama Siswa</Label>
+              <select
+                className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs mt-1 font-bold"
+                value={raporStudentName}
+                onChange={(e) => {
+                  setRaporStudentName(e.target.value);
+                  if (e.target.value === "Fatimah Az-Zahra") setRaporNisn("0081928372");
+                  else if (e.target.value === "Anisa Rahma") setRaporNisn("0081234002");
+                  else setRaporNisn("0081928371");
+                }}
+              >
+                <option value="Ahmad Fauzi">Ahmad Fauzi (8A)</option>
+                <option value="Fatimah Az-Zahra">Fatimah Az-Zahra (8A)</option>
+                <option value="Anisa Rahma">Anisa Rahma (7A)</option>
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-[11px] font-semibold text-muted-foreground">NISN / NIS</Label>
+              <Input value={raporNisn} onChange={(e) => setRaporNisn(e.target.value)} className="h-8 text-xs font-mono mt-1" />
+            </div>
+
+            <div>
+              <Label className="text-[11px] font-semibold text-muted-foreground">Kelas / Rombel</Label>
+              <Input value={raporClass} onChange={(e) => setRaporClass(e.target.value)} className="h-8 text-xs font-bold mt-1" />
+            </div>
+          </div>
+
+          {/* DOKUMEN RESMI E-RAPOR (LEMBAR KERTAS) */}
+          <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
+            {/* Kop Resmi */}
+            <div className="text-center border-b-2 border-slate-900 pb-3">
+              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+              <div className="mt-2 py-1 bg-blue-900 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
+                LAPORAN HASIL BELAJAR (E-RAPOR KURIKULUM MERDEKA)
+              </div>
+            </div>
+
+            {/* Identitas Siswa */}
+            <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-800 bg-slate-50 p-3 rounded-md border border-slate-200">
+              <div>
+                <div>Nama Peserta Didik: <strong className="text-slate-950 font-bold">{raporStudentName}</strong></div>
+                <div>NISN / NIS: <span className="font-mono">{raporNisn}</span></div>
+                <div>Madrasah: <strong>MTsN 2 Cilacap</strong></div>
+              </div>
+              <div>
+                <div>Kelas / Rombel: <strong>{raporClass}</strong></div>
+                <div>Fase / Semester: <strong>Fase D / Ganjil</strong></div>
+                <div>Tahun Ajaran: <strong>2025/2026</strong></div>
+              </div>
+            </div>
+
+            {/* Tabel Nilai Capaian Hasil Belajar */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px] border-collapse border border-slate-300">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
+                    <th className="border border-slate-300 p-2 text-center w-8">No</th>
+                    <th className="border border-slate-300 p-2 text-left">Mata Pelajaran</th>
+                    <th className="border border-slate-300 p-2 text-center">Nilai Akhir</th>
+                    <th className="border border-slate-300 p-2 text-left">Capaian Pembelajaran (CP) Deskripsi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mapelDetails.map((m, idx) => (
+                    <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
+                      <td className="border border-slate-300 p-2 text-center font-mono">{idx + 1}</td>
+                      <td className="border border-slate-300 p-2 font-bold">{m.mapel}</td>
+                      <td className="border border-slate-300 p-2 text-center font-bold text-blue-900 text-xs">{m.avg}</td>
+                      <td className="border border-slate-300 p-2 text-slate-700">
+                        Menunjukkan penguasaan sangat baik dalam alur {m.mapel} {m.cp}.
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Catatan Wali Kelas */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-md text-xs space-y-1">
+              <div className="font-bold text-slate-900">Catatan Wali Kelas:</div>
+              <div className="text-slate-700 italic">
+                "Ananda {raporStudentName} menunjukkan semangat belajar yang sangat tinggi dan tingkat kedisiplinan serta akhlak terpuji. Pertahankan kinerjamu."
+              </div>
+            </div>
+
+            {/* Tanda Tangan Official */}
+            <div className="grid grid-cols-3 gap-2 text-[11px] pt-4 text-slate-800 border-t border-slate-200">
+              <div className="text-center space-y-8">
+                <div>Orang Tua / Wali</div>
+                <div className="font-bold underline text-slate-950">( .......................... )</div>
+              </div>
+              <div className="text-center space-y-8">
+                <div>Wali Kelas {raporClass}</div>
+                <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+              </div>
+              <div className="text-center space-y-8">
+                <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
+                <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-3 border-t border-border flex justify-between items-center w-full">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsPrintRaporOpen(false)}>
+              Tutup
+            </Button>
+            <Button type="button" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1.5" onClick={handlePrintRapor}>
+              <Download className="h-4 w-4" /> 🖨️ Cetak E-Rapor PDF
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3513,9 +4677,8 @@ function ApresiasiGuru({ activeRole }: { activeRole?: string }) {
                     type="button"
                     key={emo}
                     onClick={() => setEmote(emo)}
-                    className={`h-9 w-9 rounded-xl border text-lg grid place-items-center transition ${
-                      emote === emo ? "bg-primary/20 border-primary scale-110" : "bg-muted/40 border-border hover:bg-muted"
-                    }`}
+                    className={`h-9 w-9 rounded-xl border text-lg grid place-items-center transition ${emote === emo ? "bg-primary/20 border-primary scale-110" : "bg-muted/40 border-border hover:bg-muted"
+                      }`}
                   >
                     {emo}
                   </button>
@@ -3847,6 +5010,16 @@ function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
     },
   ]);
 
+  const [isPrintP5ModalOpen, setIsPrintP5ModalOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState("p1");
+
+  const activeProject = projectsList.find((p) => p.id === selectedProjectId) || projectsList[0];
+
+  const handlePrintP5 = () => {
+    window.print();
+    toast.success(`🖨️ Laporan Portofolio P5 (${activeProject.title}) berhasil dicetak!`);
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -3858,7 +5031,7 @@ function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
             Rekap Eksekutif Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil Alamin (P5/PPA-RA) MTsN 2 Cilacap.
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white" onClick={() => toast.success("PDF Laporan Portofolio Kokurikuler berhasil diunduh!")}>
+        <Button size="sm" className="gap-1.5 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white" onClick={() => setIsPrintP5ModalOpen(true)}>
           <Download className="h-3.5 w-3.5 mr-1" /> 🖨️ Cetak Portfolio P5 PDF
         </Button>
       </div>
@@ -3913,9 +5086,14 @@ function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
                   <CardTitle className="text-lg font-bold">{p.title}</CardTitle>
                   <CardDescription className="text-xs mt-0.5">Koordinator Projek: <strong>{p.coordinator}</strong> • {p.studentsCount} Siswa</CardDescription>
                 </div>
-                <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 font-bold text-xs shrink-0">
-                  {p.status}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-purple-500/40 text-purple-600 dark:text-purple-300" onClick={() => { setSelectedProjectId(p.id); setIsPrintP5ModalOpen(true); }}>
+                    🖨️ Pratinjau Portfolio
+                  </Button>
+                  <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 font-bold text-xs shrink-0">
+                    {p.status}
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
 
@@ -3946,6 +5124,124 @@ function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
           </Card>
         ))}
       </div>
+
+      {/* 🖨️ MODAL PRATINJAU CETAK PORTFOLIO P5 / PPA-RA PDF */}
+      <Dialog open={isPrintP5ModalOpen} onOpenChange={setIsPrintP5ModalOpen}>
+        <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
+          <DialogHeader className="border-b border-border pb-3">
+            <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <FolderKanban className="h-5 w-5 text-purple-600" /> Pratinjau Portofolio P5 & PPA-RA
+              </div>
+              <Badge className="bg-purple-600 text-white text-xs">{activeProject.target}</Badge>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Format Laporan Portofolio Capaian Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil Alamin.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Selector Projek */}
+          <div className="p-3 bg-muted/40 rounded-xl border border-border text-xs">
+            <Label className="text-[11px] font-semibold text-muted-foreground">Pilih Tema Projek P5</Label>
+            <select
+              className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs mt-1 font-bold"
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              {projectsList.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title} ({p.target})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* DOKUMEN RESMI PORTOFOLIO P5 (LEMBAR KERTAS) */}
+          <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
+            {/* Kop Resmi */}
+            <div className="text-center border-b-2 border-slate-900 pb-3">
+              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+              <div className="mt-2 py-1 bg-purple-800 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
+                PORTOFOLIO CAPAIAN PROJEK P5 & PPA-RA
+              </div>
+            </div>
+
+            {/* Identitas Projek */}
+            <div className="bg-slate-50 p-3 rounded-md border border-slate-200 text-xs space-y-1 text-slate-800 font-medium">
+              <div>Nama Projek: <strong className="text-purple-900 font-bold">{activeProject.title}</strong></div>
+              <div>Sasaran Tingkat: <strong>{activeProject.target}</strong></div>
+              <div>Koordinator Projek: <strong>{activeProject.coordinator}</strong> • Total Siswa: <strong>{activeProject.studentsCount} Siswa</strong></div>
+              <div>Status Pencapaian: <strong className="text-emerald-700 font-bold">{activeProject.status} ({activeProject.progress}% Tuntas)</strong></div>
+            </div>
+
+            {/* Rubrik Penilaian Dimensi Pancasila */}
+            <div className="space-y-2">
+              <div className="text-xs font-bold text-slate-900 uppercase tracking-wider">Tabel Rubrik Penilaian Dimensi Pelajar Pancasila:</div>
+              <table className="w-full text-[11px] border-collapse border border-slate-300">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
+                    <th className="border border-slate-300 p-2 text-left">Dimensi / Elemen Profil</th>
+                    <th className="border border-slate-300 p-2 text-center">Tingkat Capaian</th>
+                    <th className="border border-slate-300 p-2 text-left">Deskripsi Hasil Observasi Projek</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-slate-200">
+                    <td className="border border-slate-300 p-2 font-bold">Beriman, Bertakwa & Berakhlak Mulia</td>
+                    <td className="border border-slate-300 p-2 text-center text-emerald-700 font-bold">Sangat Berkembang</td>
+                    <td className="border border-slate-300 p-2 text-slate-700">Siswa konsisten menerapkan akhlak lingkungan & kepedulian sosial.</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="border border-slate-300 p-2 font-bold">Gotong Royong & Kolaborasi</td>
+                    <td className="border border-slate-300 p-2 text-center text-emerald-700 font-bold">Sangat Berkembang</td>
+                    <td className="border border-slate-300 p-2 text-slate-700">Aktif bekerja sama dalam tim pembuatan produk & gelar karya.</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="border border-slate-300 p-2 font-bold">Kreativitas & Inovasi Produk</td>
+                    <td className="border border-slate-300 p-2 text-center text-purple-700 font-bold">Berkembang Sesuai Harapan</td>
+                    <td className="border border-slate-300 p-2 text-slate-700">Mampu menghasilkan karya inovatif yang memiliki nilai ekonomi.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Produk Gelar Karya */}
+            <div className="pt-1">
+              <div className="text-xs font-bold text-slate-900 mb-1">Produk Hasil Gelar Karya Siswa:</div>
+              <div className="flex flex-wrap gap-1.5">
+                {activeProject.outcomes.map((out, idx) => (
+                  <span key={idx} className="bg-purple-100 text-purple-900 border border-purple-300 px-2 py-0.5 rounded-xs text-[11px] font-semibold">
+                    ✨ {out}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Tanda Tangan Official */}
+            <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
+              <div className="text-center space-y-8">
+                <div>Koordinator Projek P5</div>
+                <div className="font-bold underline text-slate-950">{activeProject.coordinator}</div>
+              </div>
+              <div className="text-center space-y-8">
+                <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
+                <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-3 border-t border-border flex justify-between items-center w-full">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsPrintP5ModalOpen(false)}>
+              Tutup
+            </Button>
+            <Button type="button" size="sm" className="bg-purple-600 hover:bg-purple-700 text-white font-bold gap-1.5" onClick={handlePrintP5}>
+              <Download className="h-4 w-4" /> 🖨️ Cetak Portofolio P5 PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -3960,12 +5256,19 @@ function Tahfidz() {
     { id: "5", juz: "Juz 29", s: "Al-Mulk", ayat: "1 - 30 (Lengkap)", status: "Mutqin", nilai: "96 (Mumtaz)", ustadz: "Ust. Abdul Halim, S.Ag", tgl: "10 Juni 2026", murojaah: "Mutqin 🔵" },
   ]);
 
+  // Modal Input Setoran State
   const [isOpen, setIsOpen] = useState(false);
   const [surah, setSurah] = useState("An-Naba'");
   const [ayat, setAyat] = useState("1 - 20");
   const [status, setStatus] = useState("Lancar");
   const [nilai, setNilai] = useState("90 (Jayyid Jiddan)");
   const [ustadz, setUstadz] = useState("Ust. Abdul Halim, S.Ag");
+
+  // Modal Cetak Kartu Murojaah State
+  const [isPrintCardOpen, setIsPrintCardOpen] = useState(false);
+  const [printStudentName, setPrintStudentName] = useState("Ahmad Fauzi");
+  const [printNisn, setPrintNisn] = useState("0081928371");
+  const [printClass, setPrintClass] = useState("8A (VIII A)");
 
   const handleAddHafalan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -3975,6 +5278,11 @@ function Tahfidz() {
     ]);
     toast.success(`Setoran QS. ${surah} (${ayat}) berhasil dicatat pada ${selectedJuz}!`);
     setIsOpen(false);
+  };
+
+  const handlePrintCard = () => {
+    window.print();
+    toast.success(`🖨️ Cetak Kartu Murojaah (${printStudentName} - ${selectedJuz}) berhasil diproses!`);
   };
 
   const filteredHafalan = hafalanList.filter((h) => h.juz === selectedJuz);
@@ -3987,12 +5295,17 @@ function Tahfidz() {
             <BookMarked className="h-6 w-6 text-primary" /> Modul Keagamaan Tahfidz Al-Quran
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Monitoring Target Hafalan, Setoran Ayat, Evaluasi Tajwid, & Kartu Murojaah MTsN 2 Cilacap
+            Monitoring Target Hafalan, Setoran Ayat, Evaluasi Tajwid, & Pratinjau Cetak Kartu Murojaah MTsN 2 Cilacap
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-          + Input Setoran Hafalan Baru
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" onClick={() => setIsPrintCardOpen(true)}>
+            <Download className="h-3.5 w-3.5" /> 🖨️ Cetak Kartu Murojaah PDF
+          </Button>
+          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
+            + Input Setoran Hafalan Baru
+          </Button>
+        </div>
       </div>
 
       {/* Target Progress Hafalan Card */}
@@ -4000,11 +5313,11 @@ function Tahfidz() {
         <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1 text-center sm:text-left">
             <div className="text-xs font-bold text-primary uppercase tracking-wider">Capaian Target Hafalan ({selectedJuz})</div>
-            <div className="text-xl font-extrabold text-foreground">Target Hafalan: 85% Tuntas</div>
-            <div className="text-xs text-muted-foreground">Telah menyetorkan 12 dari 37 Surah di {selectedJuz} dengan Tajwid Mumtaz.</div>
+            <div className="text-xl font-extrabold text-foreground">Target Hafalan: 85% Tuntas (Mutqin)</div>
+            <div className="text-xs text-muted-foreground">Telah menyetorkan 12 dari 37 Surah di {selectedJuz} dengan Tajwid & Makhraj Mumtaz.</div>
           </div>
-          <Button size="sm" variant="outline" className="text-xs font-bold shrink-0" onClick={() => toast.success(`Kartu Murojaah PDF (${selectedJuz}) berhasil diunduh!`)}>
-            <Download className="h-3.5 w-3.5 mr-1" /> 🖨️ Cetak Kartu Murojaah PDF
+          <Button size="sm" className="text-xs font-bold shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5" onClick={() => setIsPrintCardOpen(true)}>
+            <Download className="h-3.5 w-3.5" /> Pratinjau & Cetak Kartu Murojaah
           </Button>
         </CardContent>
       </Card>
@@ -4101,38 +5414,1121 @@ function Tahfidz() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 🖨️ MODAL PRATINJAU & CETAK KARTU MUROJAAH PDF */}
+      <Dialog open={isPrintCardOpen} onOpenChange={setIsPrintCardOpen}>
+        <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
+          <DialogHeader className="border-b border-border pb-3">
+            <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <BookMarked className="h-5 w-5 text-emerald-600" /> Pratinjau Cetak Kartu Murojaah & Setoran Tahfidz
+              </div>
+              <Badge className="bg-emerald-600 text-white font-mono text-xs">{selectedJuz}</Badge>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Format lembar dokumen resmi Kartu Murojaah & Rekapitulasi Setoran Hafalan Al-Qur'an MTsN 2 Cilacap.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Form Pengaturan Data Cetak */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-muted/40 rounded-xl border border-border text-xs">
+            <div>
+              <Label className="text-[11px] font-semibold text-muted-foreground">Pilih Nama Siswa</Label>
+              <select
+                className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs mt-1 font-bold"
+                value={printStudentName}
+                onChange={(e) => {
+                  setPrintStudentName(e.target.value);
+                  if (e.target.value === "Fatimah Az-Zahra") setPrintNisn("0081928372");
+                  else if (e.target.value === "Anisa Rahma") setPrintNisn("0081234002");
+                  else setPrintNisn("0081928371");
+                }}
+              >
+                <option value="Ahmad Fauzi">Ahmad Fauzi (8A)</option>
+                <option value="Fatimah Az-Zahra">Fatimah Az-Zahra (8A)</option>
+                <option value="Anisa Rahma">Anisa Rahma (7A)</option>
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-[11px] font-semibold text-muted-foreground">NISN / NIS</Label>
+              <Input value={printNisn} onChange={(e) => setPrintNisn(e.target.value)} className="h-8 text-xs font-mono mt-1" />
+            </div>
+
+            <div>
+              <Label className="text-[11px] font-semibold text-muted-foreground">Kelas / Rombel</Label>
+              <Input value={printClass} onChange={(e) => setPrintClass(e.target.value)} className="h-8 text-xs font-bold mt-1" />
+            </div>
+          </div>
+
+          {/* DOKUMEN RESMI KARTU MUROJAAH TAHFIDZ (LEMBAR KERTAS) */}
+          <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
+            {/* Kop Resmi Madrasah */}
+            <div className="text-center border-b-2 border-slate-900 pb-3">
+              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+              <div className="mt-2 py-1 bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
+                KARTU SETORAN HAFALAN & MUROJAAH TAHFIDZ AL-QUR'AN
+              </div>
+            </div>
+
+            {/* Identitas Santri / Siswa */}
+            <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-800 bg-slate-50 p-3 rounded-md border border-slate-200">
+              <div>
+                <div>Nama Siswa: <strong className="text-slate-950 font-bold">{printStudentName}</strong></div>
+                <div>NISN / NIS: <span className="font-mono">{printNisn}</span></div>
+              </div>
+              <div>
+                <div>Kelas / Rombel: <strong>{printClass}</strong></div>
+                <div>Target Juz: <strong className="text-emerald-700 font-extrabold">{selectedJuz}</strong></div>
+              </div>
+            </div>
+
+            {/* Tabel Setoran Hafalan & Murojaah */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px] border-collapse border border-slate-300">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
+                    <th className="border border-slate-300 p-2 text-center w-8">No</th>
+                    <th className="border border-slate-300 p-2 text-left">Nama Surah</th>
+                    <th className="border border-slate-300 p-2 text-left">Cakupan Ayat</th>
+                    <th className="border border-slate-300 p-2 text-center">Nilai Tajwid</th>
+                    <th className="border border-slate-300 p-2 text-center">Status Murojaah</th>
+                    <th className="border border-slate-300 p-2 text-left">Penguji</th>
+                    <th className="border border-slate-300 p-2 text-center w-16">Paraf</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredHafalan.map((h, i) => (
+                    <tr key={h.id} className="border-b border-slate-200 hover:bg-slate-50">
+                      <td className="border border-slate-300 p-2 text-center font-mono">{i + 1}</td>
+                      <td className="border border-slate-300 p-2 font-bold">QS. {h.s}</td>
+                      <td className="border border-slate-300 p-2">{h.ayat}</td>
+                      <td className="border border-slate-300 p-2 text-center font-bold text-emerald-800">{h.nilai}</td>
+                      <td className="border border-slate-300 p-2 text-center font-semibold">{h.status}</td>
+                      <td className="border border-slate-300 p-2 text-slate-700">{h.ustadz}</td>
+                      <td className="border border-slate-300 p-2 text-center font-mono text-[10px] text-slate-400">✓ Valid</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Tanda Tangan Official */}
+            <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
+              <div className="text-center space-y-8">
+                <div>Orang Tua / Wali Siswa</div>
+                <div className="font-bold underline text-slate-950">( ............................................ )</div>
+              </div>
+              <div className="text-center space-y-8">
+                <div>Cilacap, 11 Agustus 2026<br />Ustadz / Penguji Tahfidz</div>
+                <div className="font-bold underline text-slate-950">Ust. Abdul Halim, S.Ag</div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-3 border-t border-border flex justify-between items-center w-full">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsPrintCardOpen(false)}>
+              Tutup
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5" onClick={handlePrintCard}>
+                <Download className="h-4 w-4" /> 🖨️ Cetak Kartu Murojaah PDF
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
+}
+
+/* ---------- MODUL MANAJEMEN KELAS & ROMBEL (TABEL HIRARKI DATA) ---------- */
+function ManajemenKelas({ activeRole }: { activeRole?: string }) {
+  const [gradeFilter, setGradeFilter] = useState<"Semua" | "VII" | "VIII" | "IX">("Semua");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedRombelId, setExpandedRombelId] = useState<string | null>("r-8a");
+
+  // Initial Rombel Master Data with LocalStorage persistence
+  const [rombelList, setRombelList] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_rombel_management_v1");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [
+      {
+        id: "r-7a",
+        grade: "VII",
+        name: "7A",
+        room: "Ruang R-101",
+        waliKelas: "Slamet Riyadi, S.Pd",
+        capacity: 32,
+        tahunAjaran: "2025/2026 Ganjil",
+        presensiPct: 96.5,
+        ewsAlertCount: 2,
+        students: [
+          { id: "s7-1", nisn: "0081234001", name: "Ahmad Dani", gender: "L", parentWa: "081234567891", kkmStatus: "TUNTAS (82)" },
+          { id: "s7-2", nisn: "0081234002", name: "Anisa Rahma", gender: "P", parentWa: "081234567892", kkmStatus: "TUNTAS (88)" },
+          { id: "s7-3", nisn: "0081234003", name: "Bagus Setiawan", gender: "L", parentWa: "081234567893", kkmStatus: "PERLU PEMBINAAN (72)" },
+        ],
+        teachers: [
+          { mapel: "Fikih", teacher: "Ahmad Fauzi, S.Ag" },
+          { mapel: "Al-Qur'an Hadits", teacher: "Ustadz H. Abdullah, M.Pd" },
+          { mapel: "Matematika", teacher: "Hendra Wijaya, M.Sc" },
+        ],
+      },
+      {
+        id: "r-8a",
+        grade: "VIII",
+        name: "8A",
+        room: "Ruang R-201",
+        waliKelas: "Bpk. Hendra Wijaya, M.Sc",
+        capacity: 32,
+        tahunAjaran: "2025/2026 Ganjil",
+        presensiPct: 98.2,
+        ewsAlertCount: 1,
+        students: [
+          { id: "s8-1", nisn: "0081928371", name: "Ahmad Fauzi (Siswa Aktif)", gender: "L", parentWa: "081234567890", kkmStatus: "TUNTAS (92)" },
+          { id: "s8-2", nisn: "0081928372", name: "Fatimah Az-Zahra", gender: "P", parentWa: "081234567894", kkmStatus: "TUNTAS (95)" },
+          { id: "s8-3", nisn: "0081928373", name: "Muhammad Rizky", gender: "L", parentWa: "081234567895", kkmStatus: "PERLU PEMBINAAN (70)" },
+          { id: "s8-4", nisn: "0081928374", name: "Siti Nurhaliza", gender: "P", parentWa: "081234567896", kkmStatus: "TUNTAS (89)" },
+        ],
+        teachers: [
+          { mapel: "Matematika", teacher: "Hendra Wijaya, M.Sc" },
+          { mapel: "Fikih", teacher: "Ahmad Fauzi, S.Ag" },
+          { mapel: "IPA Terpadu", teacher: "Dr. Tri Nugroho, M.Pd" },
+          { mapel: "Bahasa Inggris", teacher: "Siti Rahmawati, S.Pd" },
+        ],
+      },
+      {
+        id: "r-8b",
+        grade: "VIII",
+        name: "8B",
+        room: "Ruang R-202",
+        waliKelas: "Siti Rahmawati, S.Pd",
+        capacity: 32,
+        tahunAjaran: "2025/2026 Ganjil",
+        presensiPct: 95.8,
+        ewsAlertCount: 0,
+        students: [
+          { id: "s8-5", nisn: "0081928375", name: "Budi Santoso", gender: "L", parentWa: "081234567897", kkmStatus: "TUNTAS (85)" },
+          { id: "s8-6", nisn: "0081928376", name: "Dewi Lestari", gender: "P", parentWa: "081234567898", kkmStatus: "TUNTAS (87)" },
+        ],
+        teachers: [
+          { mapel: "Bahasa Inggris", teacher: "Siti Rahmawati, S.Pd" },
+          { mapel: "Fikih", teacher: "Ahmad Fauzi, S.Ag" },
+        ],
+      },
+      {
+        id: "r-9a",
+        grade: "IX",
+        name: "9A",
+        room: "Ruang R-301",
+        waliKelas: "Dr. Tri Nugroho, M.Pd",
+        capacity: 32,
+        tahunAjaran: "2025/2026 Ganjil",
+        presensiPct: 97.0,
+        ewsAlertCount: 1,
+        students: [
+          { id: "s9-1", nisn: "0071928391", name: "Farhan Mahesa", gender: "L", parentWa: "081234567899", kkmStatus: "TUNTAS (90)" },
+          { id: "s9-2", nisn: "0071928392", name: "Zahra Amalia", gender: "P", parentWa: "081234567800", kkmStatus: "PERLU PEMBINAAN (74)" },
+        ],
+        teachers: [
+          { mapel: "IPA Terpadu", teacher: "Dr. Tri Nugroho, M.Pd" },
+          { mapel: "Matematika", teacher: "Hendra Wijaya, M.Sc" },
+        ],
+      },
+    ];
+  });
+
+  const saveRombelToStorage = (list: any[]) => {
+    setRombelList(list);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("lms_rombel_management_v1", JSON.stringify(list));
+      } catch (e) {}
+    }
+  };
+
+  // Dialog States
+  const [isAddRombelOpen, setIsAddRombelOpen] = useState(false);
+  const [rombelNameInput, setRombelNameInput] = useState("");
+  const [gradeInput, setGradeInput] = useState<"VII" | "VIII" | "IX">("VIII");
+  const [roomInput, setRoomInput] = useState("Ruang R-203");
+  const [waliKelasInput, setWaliKelasInput] = useState("Bpk. Hendra Wijaya, M.Sc");
+  const [capacityInput, setCapacityInput] = useState(32);
+
+  // Student Plotting Modal State
+  const [isPlottingOpen, setIsPlottingOpen] = useState(false);
+  const [targetRombelForPlotting, setTargetRombelForPlotting] = useState<any>(null);
+  const [newStudentName, setNewStudentName] = useState("");
+  const [newStudentNisn, setNewStudentNisn] = useState("");
+  const [newStudentWa, setNewStudentWa] = useState("081234567890");
+
+  // WA Broadcast Modal State
+  const [isWaBroadcastOpen, setIsWaBroadcastOpen] = useState(false);
+  const [targetRombelForWa, setTargetRombelForWa] = useState<any>(null);
+  const [waSubject, setWaSubject] = useState("Pengumuman Rapat Orang Tua & Rekap Presensi");
+  const [waMessage, setWaMessage] = useState("Assalamu'alaikum Wr. Wb. Bpk/Ibu Orang Tua Siswa, kami sampaikan rekapitulasi presensi & kegiatan KBM siswa di rombel ini.");
+
+  // Add Rombel Handler
+  const handleCreateRombel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rombelNameInput.trim()) return toast.error("Nama Rombel tidak boleh kosong!");
+
+    const newRombel = {
+      id: `r-${Date.now()}`,
+      grade: gradeInput,
+      name: rombelNameInput.trim().toUpperCase(),
+      room: roomInput.trim(),
+      waliKelas: waliKelasInput.trim(),
+      capacity: Number(capacityInput) || 32,
+      tahunAjaran: "2025/2026 Ganjil",
+      presensiPct: 98.0,
+      ewsAlertCount: 0,
+      students: [],
+      teachers: [{ mapel: "Fikih", teacher: "Ahmad Fauzi, S.Ag" }],
+    };
+
+    const updated = [...rombelList, newRombel];
+    saveRombelToStorage(updated);
+    toast.success(`🎉 Rombel Kelas ${newRombel.name} (${newRombel.grade}) berhasil dibuat!`);
+    setIsAddRombelOpen(false);
+    setRombelNameInput("");
+  };
+
+  // Add Student to Rombel Handler
+  const handleAddStudentToRombel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStudentName.trim()) return toast.error("Nama siswa tidak boleh kosong!");
+    if (!targetRombelForPlotting) return;
+
+    const newStudentObj = {
+      id: `s-${Date.now()}`,
+      nisn: newStudentNisn.trim() || `0081${Math.floor(100000 + Math.random() * 900000)}`,
+      name: newStudentName.trim(),
+      gender: "L",
+      parentWa: newStudentWa.trim() || "081234567890",
+      kkmStatus: "TUNTAS (85)",
+    };
+
+    const updated = rombelList.map((r: any) => {
+      if (r.id !== targetRombelForPlotting.id) return r;
+      return {
+        ...r,
+        students: [newStudentObj, ...r.students],
+      };
+    });
+
+    saveRombelToStorage(updated);
+    toast.success(`🎓 Siswa ${newStudentName} berhasil di-plotting ke Rombel ${targetRombelForPlotting.name}!`);
+    setNewStudentName("");
+    setNewStudentNisn("");
+  };
+
+  // Remove Student from Rombel Handler
+  const handleRemoveStudent = (rombelId: string, studentId: string, studentName: string) => {
+    const updated = rombelList.map((r: any) => {
+      if (r.id !== rombelId) return r;
+      return {
+        ...r,
+        students: r.students.filter((s: any) => s.id !== studentId),
+      };
+    });
+    saveRombelToStorage(updated);
+    toast.info(`Siswa ${studentName} dikeluarkan dari rombel.`);
+  };
+
+  const activeUserSession = MysqlAuthService.getActiveUser();
+  const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
+  const isManagement = activeRole === "admin" || activeRole === "admin_akademik" || activeRole === "kamad" || activeRole === "waka";
+
+  // If user is Wali Kelas (and not Management), scope to their assigned Rombel only!
+  const myWaliRombel = useMemo(() => {
+    if (!isWaliKelas || isManagement) return null;
+    const userName = activeUserSession?.full_name?.toLowerCase() || "";
+    const matched = rombelList.find((r: any) =>
+      (userName && r.waliKelas.toLowerCase().includes(userName)) ||
+      r.name === "8A"
+    );
+    return matched || rombelList.find((r: any) => r.name === "8A") || rombelList[0];
+  }, [isWaliKelas, isManagement, activeUserSession, rombelList]);
+
+  // Auto-expand Wali Kelas's own rombel on mount or mode change
+  useEffect(() => {
+    if (isWaliKelas && !isManagement && myWaliRombel) {
+      setExpandedRombelId(myWaliRombel.id);
+    }
+  }, [isWaliKelas, isManagement, myWaliRombel]);
+
+  // Send WA Broadcast Handler
+  const handleSendWaBroadcast = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetRombelForWa) return;
+
+    const totalParents = targetRombelForWa.students.length;
+    MysqlDataService.saveWaLog({
+      parent_name: `Seluruh Orang Tua Rombel ${targetRombelForWa.name}`,
+      phone: "081234567890 (Broadcast Rombel)",
+      student_name: `Rombel ${targetRombelForWa.name}`,
+      category: "BROADCAST ROMBEL",
+      message: `[BROADCAST WA ROMBEL ${targetRombelForWa.name}]: ${waSubject}\n\n${waMessage}`,
+      status: "TERKIRIM",
+    }).catch(() => {});
+
+    toast.success(`📱 Broadcast WhatsApp Berhasil Dikirim ke ${totalParents} Orang Tua Siswa Rombel ${targetRombelForWa.name}!`, {
+      description: "Log pengiriman tercatat di EWS WA Gateway System.",
+    });
+    setIsWaBroadcastOpen(false);
+  };
+
+  // Grouping Rombel by Level 1 Grade (VII, VIII, IX)
+  const gradesOrder: ("VII" | "VIII" | "IX")[] = ["VII", "VIII", "IX"];
+  const filteredRombels = rombelList.filter((r: any) => {
+    // 🛡️ Data Scoping for Wali Kelas: restrict to assigned rombel only
+    if (isWaliKelas && !isManagement && myWaliRombel) {
+      if (r.id !== myWaliRombel.id) return false;
+    }
+
+    const matchGrade = gradeFilter === "Semua" || r.grade === gradeFilter;
+    const matchSearch =
+      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.waliKelas.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.students.some((s: any) => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchGrade && matchSearch;
+  });
+
+  // Calculations for Summary Badges
+  const totalRombel = filteredRombels.length;
+  const totalStudents = filteredRombels.reduce((acc: number, r: any) => acc + r.students.length, 0);
+  const totalEwsAlerts = filteredRombels.reduce((acc: number, r: any) => acc + r.ewsAlertCount, 0);
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        title={isWaliKelas && !isManagement ? `Manajemen Rombel ${myWaliRombel?.name || "8A"} (Mode Wali Kelas)` : "Manajemen Kelas & Plotting Rombong Belajar (Tabel Hirarki Data)"}
+        sub={
+          isWaliKelas && !isManagement
+            ? `Portal pengelolaan khusus Wali Kelas untuk Rombel ${myWaliRombel?.name || "8A"} (${myWaliRombel?.room || "Ruang R-201"}) MTsN 2 Cilacap`
+            : "Pengelolaan hirarki kelas (VII, VIII, IX), penugasan wali kelas & guru mapel, plotting siswa, serta broadcast WA Gateway per rombel MTsN 2 Cilacap"
+        }
+      />
+
+      {/* Mode Wali Kelas Info Banner */}
+      {isWaliKelas && !isManagement && (
+        <div className="bg-blue-500/15 border border-blue-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-blue-800 dark:text-blue-200 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400 shrink-0 font-bold text-base">
+              📋
+            </div>
+            <div>
+              <div className="font-extrabold text-sm text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                <span>Perspektif Wali Kelas Aktif</span>
+                <Badge className="bg-blue-600 text-white font-bold text-[10px] px-2">ROMBEL {myWaliRombel?.name || "8A"}</Badge>
+              </div>
+              <p className="text-xs text-blue-700/90 dark:text-blue-300/90 mt-0.5">
+                Anda hanya memiliki akses mengelola siswa, presensi, dan WhatsApp broadcast untuk Rombel <strong>{myWaliRombel?.name || "8A"}</strong> ({myWaliRombel?.waliKelas}).
+              </p>
+            </div>
+          </div>
+          <Badge variant="outline" className="text-[11px] font-bold border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300 shrink-0">
+            ✓ Data Terisolasi Mandiri
+          </Badge>
+        </div>
+      )}
+
+      {/* Top Stats Overview Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary grid place-items-center shrink-0 font-bold">
+              <Layers className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Total Rombel Aktif</div>
+              <div className="text-lg font-extrabold text-foreground">{totalRombel} Rombel</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Total Siswa Terplotting</div>
+              <div className="text-lg font-extrabold text-foreground">{totalStudents} Siswa</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
+              <UserCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Wali Kelas Terisi</div>
+              <div className="text-lg font-extrabold text-foreground">{totalRombel} Wali Kelas</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">EWS Perlu Pembinaan</div>
+              <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{totalEwsAlerts} Siswa</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Hierarchy Card */}
+      <Card className="border-border shadow-sm">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <div>
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" /> Matriks Hirarki Kelas & Rombel
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Struktur hirarki 3 tingkat: Tingkat Kelas (VII - IX) ➔ Baris Rombel ➔ Tabel Lipat Anggota Siswa & Guru.
+            </CardDescription>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
+              <Input
+                placeholder="Cari rombel, wali kelas, siswa..."
+                className="pl-9 h-9 text-xs"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            {(!isWaliKelas || isManagement) && (
+              <Button size="sm" className="gap-1.5 shrink-0 bg-primary text-primary-foreground font-bold" onClick={() => setIsAddRombelOpen(true)}>
+                + Buat Rombel Baru
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-4 space-y-6">
+          {/* Grade Filter Bar */}
+          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80">
+            {(["Semua", "VII", "VIII", "IX"] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setGradeFilter(g)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  gradeFilter === g
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <span>{g === "Semua" ? "🌐 Semua Tingkat" : `🎓 Kelas ${g}`}</span>
+                <Badge variant="secondary" className="text-[10px] bg-background/80 text-foreground font-extrabold px-1.5 py-0.2">
+                  {g === "Semua" ? rombelList.length : rombelList.filter((r: any) => r.grade === g).length}
+                </Badge>
+              </button>
+            ))}
+          </div>
+
+          {/* TABEL HIRARKI DATA (LEVEL 1: TINGKAT KELAS ➔ LEVEL 2: ROMBEL ➔ LEVEL 3: SISWA) */}
+          <div className="space-y-6">
+            {gradesOrder
+              .filter((g) => gradeFilter === "Semua" || gradeFilter === g)
+              .map((gradeVal) => {
+                const rombelsInGrade = filteredRombels.filter((r: any) => r.grade === gradeVal);
+                if (rombelsInGrade.length === 0) return null;
+
+                return (
+                  <div key={gradeVal} className="rounded-xl border border-border/80 overflow-hidden shadow-2xs">
+                    {/* LEVEL 1: HEADER BANNER TINGKAT KELAS */}
+                    <div className="bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 p-3 sm:px-4 text-white flex items-center justify-between border-b border-emerald-500/30">
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-emerald-500 text-slate-950 font-black text-xs px-2.5 py-0.5">
+                          TINGKAT {gradeVal}
+                        </Badge>
+                        <span className="font-extrabold text-sm text-emerald-100">
+                          Kelas {gradeVal} MTsN 2 Cilacap ({rombelsInGrade.length} Rombel)
+                        </span>
+                      </div>
+                      <div className="text-xs text-emerald-200/80 font-mono">
+                        Tahun Ajaran 2025/2026 Ganjil
+                      </div>
+                    </div>
+
+                    {/* LEVEL 2 & LEVEL 3: TABEL HIRARKI DATA ROMBEL & NESTED SISWA */}
+                    <div className="overflow-x-auto bg-card">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-muted/60 text-left border-b border-border text-muted-foreground font-bold">
+                            <th className="py-2.5 px-3">Rombel & Ruangan</th>
+                            <th className="py-2.5 px-3">Wali Kelas Pengampu</th>
+                            <th className="py-2.5 px-3">Kapasitas & Kuota</th>
+                            <th className="py-2.5 px-3">Presensi & EWS KKM</th>
+                            <th className="py-2.5 px-3 text-center">Detail Lipat</th>
+                            <th className="py-2.5 px-3 text-right">Kontrol & Aksi Rombel</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/60">
+                          {rombelsInGrade.map((r: any) => {
+                            const isExpanded = expandedRombelId === r.id;
+                            const isFull = r.students.length >= r.capacity;
+
+                            return (
+                              <Fragment key={r.id}>
+                                {/* LEVEL 2 ROW: ROMBEL BARIS DATA */}
+                                <tr className={`hover:bg-muted/30 transition ${isExpanded ? "bg-muted/20" : ""}`}>
+                                  <td className="py-3 px-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="h-8 w-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-extrabold grid place-items-center">
+                                        {r.name}
+                                      </div>
+                                      <div>
+                                        <div className="font-extrabold text-sm text-foreground">Rombel {r.name}</div>
+                                        <div className="text-[11px] text-muted-foreground flex items-center gap-1 font-mono">
+                                          <span>🏢 {r.room}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  <td className="py-3 px-3">
+                                    <div className="font-bold text-foreground flex items-center gap-1.5">
+                                      <UserCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                      {r.waliKelas}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">Wali Kelas Resmi</div>
+                                  </td>
+
+                                  <td className="py-3 px-3 font-medium">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-bold text-foreground">{r.students.length} / {r.capacity} Siswa</span>
+                                      {isFull ? (
+                                        <Badge variant="outline" className="text-[9px] bg-red-500/15 text-red-600 border-red-500/30">Penuh</Badge>
+                                      ) : (
+                                        <Badge variant="outline" className="text-[9px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30">Tersedia</Badge>
+                                      )}
+                                    </div>
+                                    <div className="w-28 bg-muted rounded-full h-1.5 mt-1 overflow-hidden">
+                                      <div
+                                        className="bg-emerald-500 h-full rounded-full"
+                                        style={{ width: `${Math.min(100, (r.students.length / r.capacity) * 100)}%` }}
+                                      />
+                                    </div>
+                                  </td>
+
+                                  <td className="py-3 px-3">
+                                    <div className="font-bold text-emerald-600 dark:text-emerald-400">
+                                      {r.presensiPct}% Hadir
+                                    </div>
+                                    {r.ewsAlertCount > 0 ? (
+                                      <Badge variant="outline" className="text-[9px] bg-amber-500/15 text-amber-600 border-amber-500/30 font-bold">
+                                        ⚠️ {r.ewsAlertCount} Siswa Perlu Pembinaan
+                                      </Badge>
+                                    ) : (
+                                      <span className="text-[10px] text-muted-foreground">✓ KKM & Presensi Aman</span>
+                                    )}
+                                  </td>
+
+                                  <td className="py-3 px-3 text-center">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 text-xs font-bold gap-1 text-primary hover:bg-primary/10"
+                                      onClick={() => setExpandedRombelId(isExpanded ? null : r.id)}
+                                    >
+                                      {isExpanded ? <ChevronDown className="h-4 w-4 rotate-180 transition-transform" /> : <ChevronDown className="h-4 w-4 transition-transform" />}
+                                      <span>{isExpanded ? "Tutup" : `Lihat Siswa (${r.students.length})`}</span>
+                                    </Button>
+                                  </td>
+
+                                  <td className="py-3 px-3 text-right">
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-[11px] font-bold gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                                        onClick={() => {
+                                          setTargetRombelForPlotting(r);
+                                          setIsPlottingOpen(true);
+                                        }}
+                                      >
+                                        🎓 Plotting Siswa
+                                      </Button>
+
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-[11px] font-bold gap-1 border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
+                                        onClick={() => {
+                                          setTargetRombelForWa(r);
+                                          setIsWaBroadcastOpen(true);
+                                        }}
+                                      >
+                                        <Send className="h-3 w-3 text-blue-500" /> WA Rombel
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+
+                                {/* LEVEL 3 NESTED EXPANDABLE TABLE: SISWA & GURU MAPEL ANGGOTA ROMBEL */}
+                                {isExpanded && (
+                                  <tr className="bg-muted/15">
+                                    <td colSpan={6} className="p-3 sm:px-6">
+                                      <div className="p-4 rounded-xl bg-background border border-border/80 shadow-xs space-y-4">
+                                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+                                          <div className="font-bold text-xs flex items-center gap-2 text-foreground">
+                                            <Users className="h-4 w-4 text-emerald-600" />
+                                            Daftar Siswa & Pengampu Rombel {r.name} ({r.students.length} Siswa Terdaftar)
+                                          </div>
+                                          <Button
+                                            size="sm"
+                                            className="h-7 text-xs font-bold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                            onClick={() => {
+                                              setTargetRombelForPlotting(r);
+                                              setIsPlottingOpen(true);
+                                            }}
+                                          >
+                                            + Tambah Siswa ke Rombel {r.name}
+                                          </Button>
+                                        </div>
+
+                                        {/* Sub-Table Siswa Anggota */}
+                                        {r.students.length > 0 ? (
+                                          <div className="overflow-x-auto rounded-lg border border-border">
+                                            <table className="w-full text-xs">
+                                              <thead>
+                                                <tr className="bg-muted/50 text-left border-b border-border font-bold text-muted-foreground">
+                                                  <th className="py-2 px-3">No</th>
+                                                  <th className="py-2 px-3">NISN</th>
+                                                  <th className="py-2 px-3">Nama Lengkap Siswa</th>
+                                                  <th className="py-2 px-3">L/P</th>
+                                                  <th className="py-2 px-3">WA Orang Tua</th>
+                                                  <th className="py-2 px-3">Status KKM & EWS</th>
+                                                  <th className="py-2 px-3 text-right">Aksi</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody className="divide-y divide-border/60">
+                                                {r.students.map((s: any, idx: number) => (
+                                                  <tr key={s.id} className="hover:bg-muted/20">
+                                                    <td className="py-2 px-3 font-mono">{idx + 1}</td>
+                                                    <td className="py-2 px-3 font-mono font-bold text-primary">{s.nisn}</td>
+                                                    <td className="py-2 px-3 font-bold text-foreground">{s.name}</td>
+                                                    <td className="py-2 px-3 font-semibold">{s.gender}</td>
+                                                    <td className="py-2 px-3 font-mono text-muted-foreground">{s.parentWa}</td>
+                                                    <td className="py-2 px-3">
+                                                      {s.kkmStatus.includes("PERLU") ? (
+                                                        <Badge variant="outline" className="text-[9px] bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 font-bold">
+                                                          ⚠️ {s.kkmStatus}
+                                                        </Badge>
+                                                      ) : (
+                                                        <Badge variant="outline" className="text-[9px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-bold">
+                                                          ✓ {s.kkmStatus}
+                                                        </Badge>
+                                                      )}
+                                                    </td>
+                                                    <td className="py-2 px-3 text-right">
+                                                      <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-6 text-[10px] text-red-600 hover:bg-red-500/10 font-bold"
+                                                        onClick={() => handleRemoveStudent(r.id, s.id, s.name)}
+                                                      >
+                                                        Keluarkan
+                                                      </Button>
+                                                    </td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                          </div>
+                                        ) : (
+                                          <div className="p-4 text-center text-xs text-muted-foreground bg-muted/20 rounded-lg">
+                                            Belum ada siswa yang di-plotting pada Rombel {r.name}.
+                                          </div>
+                                        )}
+
+                                        {/* Sub-Section Guru Mapel Pengampu */}
+                                        <div className="pt-2">
+                                          <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                                            👨‍🏫 Guru Pengampu Mapel Rombel {r.name}:
+                                          </div>
+                                          <div className="flex flex-wrap gap-2">
+                                            {r.teachers.map((t: any, tidx: number) => (
+                                              <Badge key={tidx} variant="secondary" className="text-xs font-semibold px-2.5 py-1 flex items-center gap-1.5">
+                                                <span className="text-primary font-bold">{t.mapel}:</span>
+                                                <span>{t.teacher}</span>
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ➕ MODAL BUAT ROMBEL BARU */}
+      <Dialog open={isAddRombelOpen} onOpenChange={setIsAddRombelOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" /> Buat Ruang Rombel Baru
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Tambahkan data rombongan belajar baru ke struktur hirarki madrasah.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateRombel} className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs font-semibold">Tingkat Kelas</Label>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                value={gradeInput}
+                onChange={(e: any) => setGradeInput(e.target.value)}
+              >
+                <option value="VII">Kelas VII (7)</option>
+                <option value="VIII">Kelas VIII (8)</option>
+                <option value="IX">Kelas IX (9)</option>
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Nama Rombel / Kode Kelas</Label>
+              <Input
+                placeholder="Contoh: 8C, 7D, 9B"
+                value={rombelNameInput}
+                onChange={(e) => setRombelNameInput(e.target.value)}
+                required
+                className="mt-1 text-xs font-bold"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Ruangan / Gedung</Label>
+              <Input
+                placeholder="Contoh: Ruang R-203"
+                value={roomInput}
+                onChange={(e) => setRoomInput(e.target.value)}
+                className="mt-1 text-xs"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Guru Wali Kelas Pengampu</Label>
+              <Input
+                placeholder="Nama Guru Wali Kelas"
+                value={waliKelasInput}
+                onChange={(e) => setWaliKelasInput(e.target.value)}
+                className="mt-1 text-xs"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Kapasitas Maksimal Siswa</Label>
+              <Input
+                type="number"
+                value={capacityInput}
+                onChange={(e) => setCapacityInput(Number(e.target.value))}
+                className="mt-1 text-xs font-mono"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddRombelOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">
+                Simpan Rombel Baru
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 🎓 MODAL PLOTTING SISWA KE ROMBEL */}
+      <Dialog open={isPlottingOpen} onOpenChange={setIsPlottingOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Users className="h-5 w-5 text-emerald-600" /> Plotting Siswa ke Rombel {targetRombelForPlotting?.name}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Tambahkan atau alokasikan siswa baru ke Rombel {targetRombelForPlotting?.name} ({targetRombelForPlotting?.grade}).
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleAddStudentToRombel} className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs font-semibold">Nama Lengkap Siswa</Label>
+              <Input
+                placeholder="Masukkan nama siswa"
+                value={newStudentName}
+                onChange={(e) => setNewStudentName(e.target.value)}
+                required
+                className="mt-1 text-xs"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">NISN Siswa</Label>
+              <Input
+                placeholder="Contoh: 0081928399"
+                value={newStudentNisn}
+                onChange={(e) => setNewStudentNisn(e.target.value)}
+                className="mt-1 text-xs font-mono"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">No. WhatsApp Orang Tua / Wali</Label>
+              <Input
+                placeholder="Contoh: 081234567890"
+                value={newStudentWa}
+                onChange={(e) => setNewStudentWa(e.target.value)}
+                className="mt-1 text-xs font-mono"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsPlottingOpen(false)}>
+                Selesai
+              </Button>
+              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                + Tambah Siswa ke Rombel
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 📱 MODAL BROADCAST WA GATEWAY PER ROMBEL */}
+      <Dialog open={isWaBroadcastOpen} onOpenChange={setIsWaBroadcastOpen}>
+        <DialogContent className="sm:max-w-lg border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Send className="h-5 w-5 text-blue-500" /> Broadcast WA Gateway Rombel {targetRombelForWa?.name}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Kirim notifikasi WhatsApp massal ke seluruh Orang Tua Siswa Rombel {targetRombelForWa?.name} ({targetRombelForWa?.students?.length || 0} Kontak).
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSendWaBroadcast} className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs font-semibold">Subjek / Judul Pengumuman</Label>
+              <Input
+                value={waSubject}
+                onChange={(e) => setWaSubject(e.target.value)}
+                required
+                className="mt-1 text-xs font-bold"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Isi Pesan WhatsApp Broadcast</Label>
+              <textarea
+                rows={4}
+                value={waMessage}
+                onChange={(e) => setWaMessage(e.target.value)}
+                required
+                className="w-full p-3 rounded-md border border-border bg-background text-xs mt-1"
+              />
+            </div>
+
+            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-xs text-blue-700 dark:text-blue-300">
+              📲 <strong>Pesan EWS Broadcast:</strong> Pesan ini akan dikirim secara simultan ke {targetRombelForWa?.students?.length || 0} kontak WhatsApp Orang Tua siswa Rombel {targetRombelForWa?.name}.
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsWaBroadcastOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1.5">
+                <Send className="h-3.5 w-3.5" /> Kirim Broadcast WA
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function parseMediaUrl(url: string): { embedUrl: string; provider: "youtube" | "gdrive" | "direct" } {
+  if (!url) return { embedUrl: "", provider: "direct" };
+
+  // YouTube match
+  const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  if (ytMatch && ytMatch[1]) {
+    return {
+      embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?autoplay=1&rel=0`,
+      provider: "youtube",
+    };
+  }
+
+  // Google Drive match
+  const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return {
+      embedUrl: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
+      provider: "gdrive",
+    };
+  }
+
+  return { embedUrl: url, provider: "direct" };
 }
 
 function Perpustakaan() {
   const [filterTag, setFilterTag] = useState("Semua");
   const [activeMediaModal, setActiveMediaModal] = useState<any>(null);
+  const [activePdfModal, setActivePdfModal] = useState<any>(null);
+  const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
+  const [isVideoFullScreen, setIsVideoFullScreen] = useState(false);
 
-  const [bukuList, setBukuList] = useState([
-    { id: "1", t: "Buku Digital Fikih Kelas VIII (Kemenag)", icon: FileText, tag: "PDF Modul", size: "12.4 MB", type: "pdf", url: "#" },
-    { id: "2", t: "Video Tutorial Pembelajaran Tajwid Mad Silah", icon: Video, tag: "Video Tutorial", size: "45.0 MB", type: "video", videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4", desc: "Penjelasan audio-visual contoh hukum bacaan Mad Silah Qashirah & Thawilah." },
-    { id: "3", t: "Audio Murottal Tajwid Juz 30 (Surah An-Naba')", icon: Headphones, tag: "Audio Murottal", size: "18.2 MB", type: "audio", audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", desc: "Murottal merdu beserta panduan makhraj dan hukum tajwid." },
-    { id: "4", t: "Video Tutorial Praktikum Organ Pernapasan IPA", icon: Video, tag: "Video Tutorial", size: "38.5 MB", type: "video", videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4", desc: "Peragaan simulasi paru-paru dan mekanisme inspirasi-ekspirasi." },
-    { id: "5", t: "E-Book Sejarah Kebudayaan Islam", icon: Library, tag: "E-Book", size: "8.7 MB", type: "pdf", url: "#" },
-  ]);
+  // Initial E-Library List with LocalStorage Persistence
+  const [bukuList, setBukuList] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_elibrary_books_v2");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [
+      {
+        id: "1",
+        t: "Buku Digital Fikih Kelas VIII (Kemenag RI)",
+        icon: FileText,
+        tag: "PDF Modul",
+        size: "12.4 MB",
+        type: "pdf",
+        url: "https://pdfobject.com/pdf/sample.pdf",
+        desc: "Buku Teks Utama Pendidikan Agama Islam Fikih MTs Kelas 8 Kurikulum Merdeka.",
+      },
+      {
+        id: "2",
+        t: "Video Tutorial Pembelajaran Tajwid Mad Silah (YouTube HD)",
+        icon: Video,
+        tag: "Video YouTube",
+        size: "YouTube HD",
+        type: "video",
+        videoUrl: "https://www.youtube.com/watch?v=kYJzXv0h0bU",
+        desc: "Penjelasan audio-visual contoh hukum bacaan Mad Silah Qashirah & Thawilah.",
+        provider: "youtube",
+      },
+      {
+        id: "3",
+        t: "Video Praktikum Paru-Paru & Organ Pernapasan (Google Drive Video)",
+        icon: Video,
+        tag: "Video G-Drive",
+        size: "Google Drive HD",
+        type: "video",
+        videoUrl: "https://drive.google.com/file/d/1A2B3C4D5E6F7G8H9/view",
+        desc: "Rekaman video peragaan praktikum paru-paru dan mekanisme inspirasi-ekspirasi.",
+        provider: "gdrive",
+      },
+      {
+        id: "4",
+        t: "Audio Murottal Tajwid Juz 30 (Surah An-Naba')",
+        icon: Headphones,
+        tag: "Audio Murottal",
+        size: "18.2 MB",
+        type: "audio",
+        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        desc: "Murottal merdu beserta panduan makhraj dan hukum tajwid.",
+        provider: "direct",
+      },
+      {
+        id: "5",
+        t: "E-Book Sejarah Kebudayaan Islam MTs",
+        icon: Library,
+        tag: "E-Book",
+        size: "8.7 MB",
+        type: "pdf",
+        url: "https://pdfobject.com/pdf/sample.pdf",
+        desc: "Sejarah Perkembangan Islam pada Masa Daulah Abbasiyah & Wali Songo.",
+      },
+    ];
+  });
 
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [tag, setTag] = useState("PDF Modul");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [desc, setDesc] = useState("");
+
+  const saveListToStorage = (list: any[]) => {
+    setBukuList(list);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("lms_elibrary_books_v2", JSON.stringify(list));
+      } catch (e) {}
+    }
+  };
 
   const handleAddBook = (e: React.FormEvent) => {
     e.preventDefault();
-    setBukuList([
-      { id: String(Date.now()), t: title, icon: tag === "Video Tutorial" ? Video : tag === "Audio Murottal" ? Headphones : FileText, tag, size: "3.5 MB", type: tag === "Video Tutorial" ? "video" : tag === "Audio Murottal" ? "audio" : "pdf", url: "#" },
-      ...bukuList,
-    ]);
-    toast.success(`Berkas "${title}" berhasil diunggah ke E-Library!`);
+    if (!title.trim()) return toast.error("Judul modul / media tidak boleh kosong!");
+
+    const isVideo = tag === "Video YouTube" || tag === "Video G-Drive" || tag === "Video Tutorial";
+    const isAudio = tag === "Audio Murottal";
+    const isPdf = tag === "PDF Modul" || tag === "E-Book";
+
+    let mediaType = isVideo ? "video" : isAudio ? "audio" : "pdf";
+    let defaultUrl = mediaUrl.trim() || (isPdf ? "https://pdfobject.com/pdf/sample.pdf" : "https://www.youtube.com/watch?v=kYJzXv0h0bU");
+
+    const parsed = parseMediaUrl(defaultUrl);
+
+    const newItem = {
+      id: String(Date.now()),
+      t: title.trim(),
+      icon: isVideo ? Video : isAudio ? Headphones : FileText,
+      tag,
+      size: parsed.provider === "youtube" ? "YouTube HD" : parsed.provider === "gdrive" ? "Google Drive" : "15.0 MB",
+      type: mediaType,
+      url: defaultUrl,
+      videoUrl: defaultUrl,
+      audioUrl: defaultUrl,
+      desc: desc.trim() || "Modul & media pembelajaran digital MTsN 2 Cilacap.",
+      provider: parsed.provider,
+    };
+
+    const updated = [newItem, ...bukuList];
+    saveListToStorage(updated);
+
+    toast.success(`🎉 Berkas "${title}" (${tag}) berhasil ditambahkan ke E-Library!`);
     setIsOpen(false);
     setTitle("");
+    setMediaUrl("");
+    setDesc("");
   };
 
-  const filtered = bukuList.filter((b) => filterTag === "Semua" || b.tag === filterTag);
+  const filtered = bukuList.filter((b: any) => filterTag === "Semua" || b.tag === filterTag);
 
   return (
     <>
@@ -4142,17 +6538,17 @@ function Perpustakaan() {
             <Library className="h-6 w-6 text-primary" /> Perpustakaan Digital & E-Resources
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Koleksi E-Book resmi Kemenag, Modul PDF, Video Pembelajaran, Audio Murottal Streaming, & Simulasi Interaktif.
+            Koleksi PDF E-Book, Modul Digital, Embed Video YouTube & Google Drive, serta Audio Murottal Streaming MTsN 2 Cilacap.
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-          + Unggah Berkas E-Library
+        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => setIsOpen(true)}>
+          + Tautkan / Unggah Berkas E-Library
         </Button>
       </div>
 
       {/* Filter Bar E-Library */}
       <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-border pb-3">
-        {["Semua", "PDF Modul", "Video Tutorial", "Audio Murottal", "Interaktif", "E-Book"].map((t) => (
+        {["Semua", "PDF Modul", "Video YouTube", "Video G-Drive", "Audio Murottal", "E-Book"].map((t) => (
           <Button
             key={t}
             size="sm"
@@ -4166,62 +6562,232 @@ function Perpustakaan() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((k) => {
-          const Icon = k.icon;
+        {filtered.map((k: any) => {
+          const Icon = k.icon || FileText;
           const isMedia = k.type === "video" || k.type === "audio";
+          const isPdf = k.type === "pdf" || k.tag === "PDF Modul" || k.tag === "E-Book";
+
+          const parsed = parseMediaUrl(k.videoUrl || k.url || "");
+
           return (
             <Card key={k.id} className="border-border shadow-xs hover:border-primary/40 transition group">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-primary/15 text-primary grid place-items-center shrink-0 font-bold group-hover:scale-105 transition">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-xs text-foreground truncate">{k.t}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary" className="text-[9px] font-bold bg-primary/10 text-primary border-primary/20">
-                      {k.tag}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground font-mono">{k.size}</span>
+              <CardContent className="p-4 flex flex-col justify-between h-full gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-xl bg-primary/15 text-primary grid place-items-center shrink-0 font-bold group-hover:scale-105 transition">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-xs text-foreground line-clamp-2 leading-snug">{k.t}</div>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <Badge variant="secondary" className="text-[9px] font-bold bg-primary/10 text-primary border-primary/20">
+                        {k.tag}
+                      </Badge>
+                      {parsed.provider === "youtube" && (
+                        <Badge variant="outline" className="text-[9px] font-extrabold bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30">
+                          ▶ YouTube
+                        </Badge>
+                      )}
+                      {parsed.provider === "gdrive" && (
+                        <Badge variant="outline" className="text-[9px] font-extrabold bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30">
+                          📁 Google Drive
+                        </Badge>
+                      )}
+                      <span className="text-[10px] text-muted-foreground font-mono">{k.size}</span>
+                    </div>
                   </div>
                 </div>
 
-                {isMedia ? (
-                  <Button size="sm" className="shrink-0 text-xs font-bold gap-1 bg-primary text-primary-foreground" onClick={() => setActiveMediaModal(k)}>
-                    ▶ {k.type === "video" ? "Tonton" : "Dengar"}
-                  </Button>
-                ) : (
-                  <Button size="icon" variant="ghost" className="shrink-0" onClick={() => toast.success(`Membuka berkas ${k.t}`)}>
-                    <Download className="h-4 w-4 text-primary" />
-                  </Button>
-                )}
+                {k.desc && <p className="text-[11px] text-muted-foreground line-clamp-2 italic px-1">{k.desc}</p>}
+
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between gap-2 mt-auto">
+                  {isPdf && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                      onClick={() => setActivePdfModal(k)}
+                    >
+                      <FileText className="h-3.5 w-3.5" /> 📄 Baca / Lihat PDF
+                    </Button>
+                  )}
+
+                  {isMedia && (
+                    <Button
+                      size="sm"
+                      className="w-full text-xs font-bold gap-1.5 bg-primary text-primary-foreground shadow-xs"
+                      onClick={() => setActiveMediaModal(k)}
+                    >
+                      ▶ {k.type === "video" ? (parsed.provider === "youtube" ? "Tonton YouTube" : parsed.provider === "gdrive" ? "Tonton G-Drive" : "Tonton Video") : "Dengar Audio"}
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* MODAL STREAMING VIDEO / AUDIO PLAYER (TANPA DOWNLOAD) */}
-      <Dialog open={!!activeMediaModal} onOpenChange={() => setActiveMediaModal(null)}>
-        <DialogContent className="sm:max-w-xl border-border bg-card">
-          <DialogHeader className="border-b border-border pb-3">
-            <DialogTitle className="text-base font-bold flex items-center gap-2">
-              {activeMediaModal?.type === "video" ? <Video className="h-5 w-5 text-blue-500" /> : <Headphones className="h-5 w-5 text-purple-500" />}
-              {activeMediaModal?.t}
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              {activeMediaModal?.desc || "Media pembelajaran digital terintegrasi MTsN 2 Cilacap"}
-            </DialogDescription>
+      {/* 📄 MODAL PDF VIEWER / READER WITH FULLSCREEN SUPPORT */}
+      <Dialog
+        open={!!activePdfModal}
+        onOpenChange={() => {
+          setActivePdfModal(null);
+          setIsPdfFullScreen(false);
+        }}
+      >
+        <DialogContent
+          id="pdf-modal-container"
+          className={
+            isPdfFullScreen
+              ? "max-w-[98vw] w-[98vw] h-[95vh] max-h-[95vh] p-4 flex flex-col border-border bg-card shadow-2xl transition-all duration-300"
+              : "sm:max-w-4xl max-h-[90vh] border-border bg-card flex flex-col transition-all duration-300"
+          }
+        >
+          <DialogHeader className="border-b border-border pb-3 flex flex-row items-center justify-between">
+            <div>
+              <DialogTitle className="text-base font-bold flex items-center gap-2">
+                <FileText className="h-5 w-5 text-emerald-600" /> {activePdfModal?.t}
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                {activePdfModal?.desc || "Pratinjau Berkas PDF E-Library MTsN 2 Cilacap"}
+              </DialogDescription>
+            </div>
+            <Button
+              size="sm"
+              variant={isPdfFullScreen ? "default" : "outline"}
+              className="gap-1.5 text-xs font-bold shrink-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+              onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
+            >
+              {isPdfFullScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {isPdfFullScreen ? "Keluar Fullscreen" : "🗖 Layar Penuh (Fullscreen)"}
+            </Button>
           </DialogHeader>
 
-          <div className="py-3 space-y-4">
-            {activeMediaModal?.type === "video" && (
-              <div className="rounded-xl overflow-hidden bg-black border border-border aspect-video grid place-items-center">
-                <video controls autoPlay className="w-full h-full object-contain">
-                  <source src={activeMediaModal?.videoUrl} type="video/mp4" />
-                  Browser Anda tidak mendukung HTML5 Video.
-                </video>
+          <div className="py-2 flex-1 min-h-[60vh]">
+            {activePdfModal?.url ? (
+              <iframe
+                src={activePdfModal.url}
+                className={`w-full rounded-xl border border-border shadow-inner bg-muted/20 ${
+                  isPdfFullScreen ? "h-[80vh]" : "h-[62vh]"
+                }`}
+                title={activePdfModal.t}
+              />
+            ) : (
+              <div className="h-[50vh] grid place-items-center text-center p-6 bg-muted/20 rounded-xl">
+                <p className="text-xs text-muted-foreground">URL dokumen PDF tidak dapat dimuat secara langsung.</p>
               </div>
             )}
+          </div>
+
+          <DialogFooter className="pt-2 border-t border-border flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40 font-bold">
+                📄 {isPdfFullScreen ? "Mode Layar Penuh Aktif" : "PDF Viewer Ready"}
+              </Badge>
+              {activePdfModal?.url && (
+                <a
+                  href={activePdfModal.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-primary underline font-bold flex items-center gap-1"
+                >
+                  🔗 Buka Tab Baru
+                </a>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs font-bold"
+                onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
+              >
+                {isPdfFullScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                {isPdfFullScreen ? "Kecilkan Tampilan" : "Layar Penuh"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { setActivePdfModal(null); setIsPdfFullScreen(false); }}>
+                Tutup Pembaca PDF
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 🎥 MODAL STREAMING VIDEO (YOUTUBE / GOOGLE DRIVE / MP4 / AUDIO) WITH FULLSCREEN SUPPORT */}
+      <Dialog
+        open={!!activeMediaModal}
+        onOpenChange={() => {
+          setActiveMediaModal(null);
+          setIsVideoFullScreen(false);
+        }}
+      >
+        <DialogContent
+          id="video-modal-container"
+          className={
+            isVideoFullScreen
+              ? "max-w-[98vw] w-[98vw] h-[95vh] max-h-[95vh] p-4 flex flex-col border-border bg-card shadow-2xl transition-all duration-300"
+              : "sm:max-w-3xl border-border bg-card transition-all duration-300"
+          }
+        >
+          <DialogHeader className="border-b border-border pb-3 flex flex-row items-center justify-between">
+            <div>
+              <DialogTitle className="text-base font-bold flex items-center gap-2">
+                {activeMediaModal?.type === "video" ? <Video className="h-5 w-5 text-blue-500" /> : <Headphones className="h-5 w-5 text-purple-500" />}
+                {activeMediaModal?.t}
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                {activeMediaModal?.desc || "Media pembelajaran digital terintegrasi MTsN 2 Cilacap"}
+              </DialogDescription>
+            </div>
+            {activeMediaModal?.type === "video" && (
+              <Button
+                size="sm"
+                variant={isVideoFullScreen ? "default" : "outline"}
+                className="gap-1.5 text-xs font-bold shrink-0 border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
+                onClick={() => setIsVideoFullScreen(!isVideoFullScreen)}
+              >
+                {isVideoFullScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                {isVideoFullScreen ? "Keluar Fullscreen" : "🗖 Layar Penuh (Fullscreen)"}
+              </Button>
+            )}
+          </DialogHeader>
+
+          <div className="py-3 space-y-4 flex-1">
+            {activeMediaModal?.type === "video" && (() => {
+              const targetUrl = activeMediaModal.videoUrl || activeMediaModal.url || "";
+              const parsed = parseMediaUrl(targetUrl);
+
+              if (parsed.provider === "youtube" || parsed.provider === "gdrive") {
+                return (
+                  <div
+                    className={`rounded-xl overflow-hidden bg-black border border-border shadow-lg ${
+                      isVideoFullScreen ? "h-[78vh] w-full" : "aspect-video w-full"
+                    }`}
+                  >
+                    <iframe
+                      src={parsed.embedUrl}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      title={activeMediaModal.t}
+                    />
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  className={`rounded-xl overflow-hidden bg-black border border-border grid place-items-center ${
+                    isVideoFullScreen ? "h-[78vh] w-full" : "aspect-video w-full"
+                  }`}
+                >
+                  <video controls autoPlay className="w-full h-full object-contain">
+                    <source src={targetUrl} type="video/mp4" />
+                    Browser Anda tidak mendukung HTML5 Video.
+                  </video>
+                </div>
+              );
+            })()}
 
             {activeMediaModal?.type === "audio" && (
               <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-950 text-white space-y-4 text-center border border-purple-500/30">
@@ -4234,7 +6800,7 @@ function Perpustakaan() {
                 </div>
                 <div className="pt-2">
                   <audio controls autoPlay className="w-full rounded-lg">
-                    <source src={activeMediaModal?.audioUrl} type="audio/mpeg" />
+                    <source src={activeMediaModal?.audioUrl || activeMediaModal?.url} type="audio/mpeg" />
                     Browser Anda tidak mendukung HTML5 Audio.
                   </audio>
                 </div>
@@ -4242,50 +6808,100 @@ function Perpustakaan() {
             )}
           </div>
 
-          <DialogFooter className="pt-2 border-t border-border">
+          <DialogFooter className="pt-2 border-t border-border flex items-center justify-between">
             <Badge variant="outline" className="text-[10px] text-muted-foreground mr-auto">
-              🔒 Standard Streaming Mode (Tonton / Dengar Tanpa Download)
+              🔒 Embedded Streaming Mode (YouTube / Google Drive Supported)
             </Badge>
-            <Button size="sm" variant="outline" onClick={() => setActiveMediaModal(null)}>Tutup Pemutar</Button>
+            <div className="flex items-center gap-2">
+              {activeMediaModal?.type === "video" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs font-bold"
+                  onClick={() => setIsVideoFullScreen(!isVideoFullScreen)}
+                >
+                  {isVideoFullScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                  {isVideoFullScreen ? "Kecilkan Tampilan" : "Layar Penuh"}
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => { setActiveMediaModal(null); setIsVideoFullScreen(false); }}>
+                Tutup Pemutar
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal Form Unggah E-Library */}
+      {/* ➕ Modal Form Unggah & Tautkan Link E-Library */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
+        <DialogContent className="sm:max-w-lg border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Upload className="h-5 w-5 text-primary" /> Unggah Berkas Digital ke E-Library
+              <Upload className="h-5 w-5 text-primary" /> Tautkan / Unggah Berkas ke E-Library
             </DialogTitle>
-            <DialogDescription>Tambahkan modul, video, atau e-book ke koleksi perpustakaan madrasah.</DialogDescription>
+            <DialogDescription>
+              Tambahkan modul PDF, tautan Video YouTube, Video Google Drive, atau Audio ke koleksi perpustakaan madrasah.
+            </DialogDescription>
           </DialogHeader>
+
           <form onSubmit={handleAddBook} className="space-y-4 py-2">
             <div>
-              <Label className="text-xs font-semibold">Judul Berkas / Modul</Label>
-              <Input placeholder="Contoh: Modul Fikih Bab 3" value={title} onChange={(e) => setTitle(e.target.value)} required className="mt-1 text-xs" />
+              <Label className="text-xs font-semibold">Judul Berkas / Media / Modul</Label>
+              <Input
+                placeholder="Contoh: Modul Fikih Bab 3 / Video Pembelajaran Tajwid"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="mt-1 text-xs"
+              />
             </div>
 
             <div>
               <Label className="text-xs font-semibold">Kategori Media</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={tag} onChange={(e) => setTag(e.target.value)}>
-                <option value="PDF Modul">PDF Modul</option>
-                <option value="Video Tutorial">Video Tutorial</option>
-                <option value="Audio Murottal">Audio Murottal</option>
-                <option value="Interaktif">Interaktif</option>
-                <option value="E-Book">E-Book</option>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+              >
+                <option value="PDF Modul">📄 PDF Modul</option>
+                <option value="Video YouTube">▶ Video YouTube</option>
+                <option value="Video G-Drive">📁 Video Google Drive</option>
+                <option value="Audio Murottal">🎧 Audio Murottal</option>
+                <option value="E-Book">📚 E-Book Digital</option>
               </select>
             </div>
 
-            <div className="border-2 border-dashed border-primary/30 rounded-xl p-4 text-center hover:bg-primary/5 transition cursor-pointer">
-              <Upload className="h-6 w-6 text-primary mx-auto mb-1 opacity-80" />
-              <div className="text-xs font-bold">Pilih Berkas dari Komputer</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">Format: PDF, PPTX, MP4, MP3 (Maks 50MB)</div>
+            <div>
+              <Label className="text-xs font-semibold">Tautan Link Media / PDF (YouTube, Google Drive, URL)</Label>
+              <Input
+                placeholder="https://www.youtube.com/watch?v=... ATAU https://drive.google.com/file/d/... ATAU URL PDF"
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+                className="mt-1 text-xs font-mono"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                *Mendukung link YouTube (`watch?v=...`), Google Drive (`/file/d/.../view`), dan link PDF.
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Deskripsi Ringkas</Label>
+              <textarea
+                placeholder="Penjelasan ringkas mengenai isi modul atau video..."
+                rows={2}
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                className="w-full p-2.5 rounded-md border border-border bg-background text-xs mt-1"
+              />
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Unggah Berkas</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">
+                Simpan & Tautkan Media
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -4945,173 +7561,6 @@ function ApresiasiSiswa({ activeRole }: { activeRole?: string }) {
               <Button type="submit" size="sm" className={actionType === "award" ? "bg-amber-500 text-black font-bold" : "bg-destructive text-white font-bold"}>
                 {actionType === "award" ? "Kirim Badge Siswa" : "Kirim Catatan Warning"}
               </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-/* ---------- Menu Kehadiran Siswa ---------- */
-function KehadiranSiswa() {
-  const [presensiList, setPresensiList] = useState([
-    { id: "1", date: "Selasa, 28 Juli 2026", status: "Hadir di Kelas", time: "07:15 WIB", note: "Enroll Presensi Mandiri di Kelas VIII A", badge: "bg-emerald-600 text-white" },
-    { id: "2", date: "Senin, 27 Juli 2026", status: "Hadir di Kelas", time: "07:10 WIB", note: "Enroll Presensi Mandiri di Kelas VIII A", badge: "bg-emerald-600 text-white" },
-    { id: "3", date: "Jumat, 24 Juli 2026", status: "Hadir di Luar Kelas", time: "08:00 WIB", note: "Lomba Tahfidz Al-Qur'an Tingkat Kabupaten (Surat Tugas Terlampir)", badge: "bg-blue-600 text-white" },
-    { id: "4", date: "Kamis, 23 Juli 2026", status: "Hadir di Luar Kelas", time: "07:30 WIB", note: "Izin Sakit (Surat Dokter Terlampir)", badge: "bg-amber-500 text-black font-bold" },
-    { id: "5", date: "Rabu, 22 Juli 2026", status: "Alpha", time: "-", note: "Siswa tidak melakukan Enroll Harian", badge: "bg-destructive text-white" },
-  ]);
-
-  const [isPermohonanOpen, setIsPermohonanOpen] = useState(false);
-  const [statusType, setStatusType] = useState("Hadir di Luar Kelas");
-  const [dateInput, setDateInput] = useState("Rabu, 29 Juli 2026");
-  const [keteranganText, setKeteranganText] = useState("");
-
-  const handleCreatePermohonan = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!keteranganText) return toast.error("Harap isi keterangan izin atau kegiatan luar kelas!");
-    const badge = statusType === "Hadir di Luar Kelas" ? "bg-blue-600 text-white" : "bg-amber-500 text-black font-bold";
-    setPresensiList([
-      { id: String(Date.now()), date: dateInput, status: statusType, time: "Pengajuan", note: keteranganText, badge },
-      ...presensiList,
-    ]);
-    toast.success("Permohonan Presensi Hadir di Luar Kelas / Izin berhasil dikirimkan ke Wali Kelas!");
-    setIsPermohonanOpen(false);
-    setKeteranganText("");
-  };
-
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <UserCheck className="h-6 w-6 text-emerald-500" /> Kehadiran & Rekap Presensi Siswa
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Rekap status presensi harian: Hadir di Kelas (Enroll Mandiri), Hadir di Luar Kelas (Izin/Sakit/Tugas Dinas), & Alpha.
-          </p>
-        </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setIsPermohonanOpen(true)}>
-          + Ajukan Izin / Hadir Luar Kelas
-        </Button>
-      </div>
-
-      {/* 4 Cards Summary Presensi */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-card border-border hover:border-emerald-500/50 transition">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-500 grid place-items-center font-bold">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Hadir di Kelas</div>
-              <div className="text-xl font-bold font-mono text-emerald-500">18 Hari (90%)</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border hover:border-blue-500/50 transition">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-blue-500/15 text-blue-500 grid place-items-center font-bold">
-              <UserCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Hadir di Luar Kelas</div>
-              <div className="text-xl font-bold font-mono text-blue-500">2 Hari (10%)</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border hover:border-amber-500/50 transition">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-amber-500/15 text-amber-500 grid place-items-center font-bold">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Izin / Sakit</div>
-              <div className="text-xl font-bold font-mono text-amber-500">1 Hari</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border hover:border-destructive/50 transition">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-destructive/15 text-destructive grid place-items-center font-bold">
-              <XCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Alpha (Tanpa Enroll)</div>
-              <div className="text-xl font-bold font-mono text-destructive">1 Hari</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabel Detail Riwayat Presensi Siswa */}
-      <Card className="border-border shadow-xs">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-bold">Riwayat Presensi Harian Siswa (Bulan Juli 2026)</CardTitle>
-          <CardDescription className="text-xs">Catatan otomatis dari tombol Enroll Harian & permohonan luar kelas.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-muted text-muted-foreground font-bold">
-              <tr>
-                <th className="p-3">Tanggal KBM</th>
-                <th className="p-3 text-center">Waktu Presensi</th>
-                <th className="p-3 text-center">Status Kehadiran</th>
-                <th className="p-3">Keterangan / Alasan (Izin / Sakit / Dinas Luar)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {presensiList.map((item) => (
-                <tr key={item.id} className="hover:bg-muted/30 transition">
-                  <td className="p-3 font-bold text-foreground">{item.date}</td>
-                  <td className="p-3 text-center font-mono font-semibold">{item.time}</td>
-                  <td className="p-3 text-center">
-                    <Badge className={`${item.badge} text-[10px] font-bold`}>{item.status}</Badge>
-                  </td>
-                  <td className="p-3 text-muted-foreground">{item.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
-
-      {/* Modal Form Ajukan Izin / Luar Kelas */}
-      <Dialog open={isPermohonanOpen} onOpenChange={setIsPermohonanOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-blue-500" /> Ajukan Presensi Hadir Luar Kelas / Izin
-            </DialogTitle>
-            <DialogDescription className="text-xs">Lengkapi alasan izin, sakit, atau tugas dinas luar madrasah.</DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleCreatePermohonan} className="space-y-4 py-2">
-            <div>
-              <Label className="text-xs font-semibold">Jenis Status Presensi</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={statusType} onChange={(e) => setStatusType(e.target.value)}>
-                <option value="Hadir di Luar Kelas">Hadir di Luar Kelas (Dinas Luar / Lomba)</option>
-                <option value="Izin / Sakit">Izin Sakit / Halangan Syar'i</option>
-              </select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Tanggal Berlaku</Label>
-              <Input value={dateInput} onChange={(e) => setDateInput(e.target.value)} required className="mt-1 text-xs" />
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Kolom Keterangan / Alasan Disertai Bukti</Label>
-              <textarea placeholder="Contoh: Mengikuti Lomba Tahfidz Tingkat Kabupaten / Sakit demam surat dokter terlampir..." value={keteranganText} onChange={(e) => setKeteranganText(e.target.value)} className="w-full h-20 rounded-md border border-border bg-background p-3 text-xs mt-1" required />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsPermohonanOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-blue-600 text-white font-bold">Kirim Permohonan Presensi</Button>
             </DialogFooter>
           </form>
         </DialogContent>

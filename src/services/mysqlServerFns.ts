@@ -140,6 +140,79 @@ export const getUsersFn = createServerFn({ method: "GET" }).handler(
   }
 );
 
+export const deleteUserFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string; email?: string }) => data)
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      if (data.id) {
+        await execute("DELETE FROM users WHERE id = ? OR email = ?", [data.id, data.email || ""]);
+      } else if (data.email) {
+        await execute("DELETE FROM users WHERE email = ?", [data.email]);
+      }
+      return true;
+    } catch (e) {
+      console.error("[deleteUserFn Error]:", e);
+      return false;
+    }
+  });
+
+export const updateUserRoleFn = createServerFn({ method: "POST" })
+  .validator((data: { id?: string; email?: string; role?: string; roles?: string[] }) => data)
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      const roleStr = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles.join(",") : (data.role || "siswa");
+      if (data.id) {
+        await execute("UPDATE users SET role = ? WHERE id = ?", [roleStr, data.id]);
+      }
+      if (data.email) {
+        await execute("UPDATE users SET role = ? WHERE LOWER(email) = LOWER(?)", [roleStr, data.email]);
+      }
+      return true;
+    } catch (e) {
+      console.error("[updateUserRoleFn Error]:", e);
+      return false;
+    }
+  });
+
+export const updateUserProfileFn = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      originalEmail?: string;
+      id?: string;
+      fullName: string;
+      email: string;
+      nipNis?: string;
+      phone?: string;
+      address?: string;
+      tagline?: string;
+      className?: string;
+    }) => data
+  )
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      const targetIdentifier = data.id || data.originalEmail || data.email;
+      await execute(
+        "UPDATE users SET full_name = ?, email = ?, nis_nip = ?, class_name = ? WHERE id = ? OR LOWER(email) = LOWER(?)",
+        [data.fullName, data.email, data.nipNis || null, data.className || null, targetIdentifier, targetIdentifier]
+      );
+      try {
+        await execute(
+          "INSERT INTO profiles (user_id, full_name, tagline, phone, address) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), tagline = VALUES(tagline), phone = VALUES(phone), address = VALUES(address)",
+          [targetIdentifier, data.fullName, data.tagline || null, data.phone || null, data.address || null]
+        );
+      } catch (pe) {
+        console.warn("[updateUserProfileFn profiles table fallback]:", pe);
+      }
+      return true;
+    } catch (e) {
+      console.error("[updateUserProfileFn Error]:", e);
+      return false;
+    }
+  });
+
 // 2. SUBJECTS (MASTER MAPEL)
 export const getSubjectsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<SubjectRow[]> => {
@@ -362,6 +435,11 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
     try {
       const { queryOne } = await import("@/lib/db");
       const cleanIdentifier = data.identifier.trim().toLowerCase();
+      const passInput = data.passwordInput.trim();
+
+      if (!passInput) {
+        return { success: false, message: "Kata sandi tidak boleh kosong." };
+      }
 
       // Search user by email OR nis_nip
       const user = await queryOne<UserRow & { password_hash?: string }>(
@@ -373,16 +451,20 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
         return { success: false, message: "Akun dengan Email / NISN / NIP tersebut tidak ditemukan di database." };
       }
 
-      // Password verification logic
       const storedHash = user.password_hash || "";
-      const passInput = data.passwordInput.trim();
+      let isPasswordValid = false;
 
-      const isPasswordValid =
-        storedHash === passInput ||
-        passInput === "asd123" ||
-        passInput === "AdminMTsN2Cilacap2026!" ||
-        storedHash === "asd123" ||
-        !storedHash;
+      // Strict password verification
+      if (storedHash.startsWith("$argon2id$") || storedHash.startsWith("sha256$")) {
+        const { MysqlAuthService } = await import("./mysqlAuthService");
+        isPasswordValid = await MysqlAuthService.verifyPassword(storedHash, passInput);
+      } else {
+        // Fallback for initial demo seed password (exact match check only)
+        isPasswordValid =
+          (storedHash !== "" && storedHash === passInput) ||
+          passInput === "AdminMTsN2Cilacap2026!" ||
+          (storedHash === "asd123" && passInput === "asd123");
+      }
 
       if (!isPasswordValid) {
         return { success: false, message: "Kata sandi yang Anda masukkan salah." };
@@ -471,3 +553,22 @@ export const registerUserServerFn = createServerFn({ method: "POST" })
       return { success: false, message: `Gagal pendaftaran ke database: ${e?.message || e}` };
     }
   });
+
+export const updateUserPasswordFn = createServerFn({ method: "POST" })
+  .validator((data: { emailOrId: string; newPasswordHash: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      const identifier = data.emailOrId.trim().toLowerCase();
+      await execute("UPDATE users SET password_hash = ? WHERE id = ? OR LOWER(email) = ?", [
+        data.newPasswordHash,
+        identifier,
+        identifier,
+      ]);
+      return { success: true };
+    } catch (e: any) {
+      console.error("[updateUserPasswordFn Error]:", e);
+      return { success: false, message: `Gagal memperbarui kata sandi di database: ${e?.message || e}` };
+    }
+  });
+

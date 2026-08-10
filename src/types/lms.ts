@@ -24,6 +24,7 @@ export type MenuKey =
   | "kokurikuler"
   | "kokurikuler_report"
   | "perpustakaan"
+  | "manajemen_kelas"
   | "profil"
   | "pengaturan";
 

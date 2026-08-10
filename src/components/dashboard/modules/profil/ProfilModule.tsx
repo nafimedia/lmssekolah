@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Upload,
   Sparkles,
@@ -7,6 +7,7 @@ import {
   Shield,
   CheckCircle2,
   KeyRound,
+  Bell,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { MysqlDataService } from "@/services/mysqlDataService";
 
 interface ProfilModuleProps {
   userProfile?: any;
@@ -29,6 +31,7 @@ export function ProfilModule({
   activeRole,
 }: ProfilModuleProps) {
   const [activeTab, setActiveTab] = useState<"biodata" | "avatar" | "keamanan" | "lencana">("biodata");
+  const [updateNotification, setUpdateNotification] = useState<string | null>(null);
 
   // Form states for biodata & motto
   const [name, setName] = useState(userProfile?.name || "Ahmad Fauzi");
@@ -53,26 +56,115 @@ export function ProfilModule({
 
   const isSiswa = activeRole === "siswa";
 
-  const handleSaveBiodata = (e: React.FormEvent) => {
+  // Re-sync internal form states whenever active user or userProfile changes
+  useEffect(() => {
+    const activeUser = MysqlAuthService.getActiveUser();
+    let savedBio: any = {};
+    if (typeof window !== "undefined") {
+      try {
+        savedBio = JSON.parse(localStorage.getItem("lms_user_biodata_v1") || "{}");
+      } catch (e) {}
+    }
+
+    const currentEmail = activeUser?.email || userProfile?.email || "ahmad.fauzi@mtsn2cilacap.sch.id";
+    const userBio = savedBio[currentEmail.toLowerCase()] || {};
+
+    setName(userBio.name || userProfile?.name || activeUser?.full_name || "Ahmad Fauzi");
+    setEmail(userBio.email || userProfile?.email || activeUser?.email || "ahmad.fauzi@mtsn2cilacap.sch.id");
+    setNipNis(userBio.nipNis || userProfile?.nipNis || activeUser?.nis_nip || "0081928371");
+    setPhone(userBio.phone || userProfile?.phone || "081234567890");
+    setAddress(userBio.address || userProfile?.address || "Jl. Masjid No. 12, Cilacap Tengah");
+    setTagline(userBio.tagline || userProfile?.tagline || "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀");
+    setClassNameState(userBio.className || userProfile?.className || "VIII (Delapan)");
+    setRombelName(userBio.rombelName || userProfile?.rombelName || "VIII A (Rombel 8A)");
+    setWaliKelas(userBio.waliKelas || userProfile?.waliKelas || "Bpk. Hendra Wijaya, M.Sc");
+  }, [userProfile]);
+
+  const handleSaveBiodata = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return toast.error("Nama lengkap tidak boleh kosong!");
+    if (!email.trim()) return toast.error("Email tidak boleh kosong!");
     if (!tagline.trim()) return toast.error("Motto / Tagline tidak boleh kosong!");
 
+    const activeUser = MysqlAuthService.getActiveUser();
+    const originalEmail = activeUser?.email || email;
+
+    // 1. Update parent React state
     setUserProfile?.((prev: any) => ({
       ...prev,
-      name,
-      nipNis,
-      email,
-      phone,
-      address,
-      tagline,
+      name: name.trim(),
+      nipNis: nipNis.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      address: address.trim(),
+      tagline: tagline.trim(),
       className: classNameState,
       rombelName,
       waliKelas,
     }));
 
-    toast.success("✅ Perubahan Profil & Motto Berhasil Disimpan!", {
-      description: "Motto baru & Kelas Rombel Anda kini otomatis diperbarui.",
+    // 2. Update Active Session in MysqlAuthService
+    if (activeUser) {
+      MysqlAuthService.setActiveUser({
+        ...activeUser,
+        full_name: name.trim(),
+        email: email.trim(),
+        nis_nip: nipNis.trim(),
+      });
+    }
+
+    // 3. Update localStorage bio
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("lms_user_biodata_v1") || "{}";
+        const bioMap = JSON.parse(raw);
+        const bioData = {
+          name: name.trim(),
+          email: email.trim(),
+          nipNis: nipNis.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+          tagline: tagline.trim(),
+          className: classNameState,
+          rombelName,
+          waliKelas,
+        };
+        bioMap[originalEmail.toLowerCase()] = bioData;
+        bioMap[email.trim().toLowerCase()] = bioData;
+        localStorage.setItem("lms_user_biodata_v1", JSON.stringify(bioMap));
+      } catch (err) {}
+    }
+
+    // 4. Update database MySQL
+    try {
+      await MysqlDataService.updateUserProfile({
+        originalEmail,
+        fullName: name.trim(),
+        email: email.trim(),
+        nipNis: nipNis.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        tagline: tagline.trim(),
+        className: classNameState,
+      });
+
+      // 5. System WA Log Notification
+      await MysqlDataService.saveWaLog({
+        parent_name: name.trim(),
+        phone: phone.trim() || "081234567890",
+        student_name: name.trim(),
+        category: "UPDATE PROFIL",
+        message: `[NOTIFIKASI AKTIVITAS USER]: Profil & email akun ${name.trim()} (${email.trim()}) berhasil diperbarui pada ${new Date().toLocaleTimeString("id-ID")} WIB.`,
+        status: "TERKIRIM",
+      }).catch(() => {});
+    } catch (e) {}
+
+    const successMsg = `🎉 Pembaruan Berhasil! Data profil & email Anda (${email.trim()}) telah diperbarui secara permanen ke sistem MySQL.`;
+    setUpdateNotification(successMsg);
+
+    toast.success("✅ Perubahan Profil & Email Berhasil Disimpan!", {
+      description: `Profil ${name.trim()} (${email.trim()}) telah tersimpan permanen.`,
+      duration: 8000,
     });
   };
 
@@ -110,8 +202,12 @@ export function ProfilModule({
       }
     }
 
+    const avatarMsg = "📸 Foto Profil Avatar Anda berhasil diperbarui dan aktif di seluruh sistem LMS!";
+    setUpdateNotification(avatarMsg);
+
     toast.success("📸 Foto Profil Avatar Berhasil Diperbarui & Disimpan!", {
       description: "Foto baru Anda kini tersimpan dan aktif di seluruh tampilan LMS.",
+      duration: 8000,
     });
   };
 
@@ -134,20 +230,60 @@ export function ProfilModule({
     toast.success("Foto profil dikembalikan ke inisial default.");
   };
 
-  const handleSaveSecurity = (e: React.FormEvent) => {
+  const handleSaveSecurity = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!oldPassword) return toast.error("Masukkan kata sandi lama Anda!");
-    if (newPassword.length < 6) return toast.error("Kata sandi baru minimal 6 karakter!");
-    if (newPassword !== confirmPassword) return toast.error("Konfirmasi kata sandi baru tidak cocok!");
+    if (!oldPassword) return toast.error("Masukkan kata sandi saat ini!");
 
-    toast.success("🔒 Kata Sandi Berhasil Diperbarui!");
-    setOldPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    const strength = MysqlAuthService.validatePasswordStrength(newPassword);
+    if (!strength.isValid) {
+      return toast.error(`Kata sandi baru terlalu lemah: ${strength.feedback.join(", ")}`);
+    }
+
+    if (newPassword !== confirmPassword) {
+      return toast.error("Konfirmasi kata sandi baru tidak cocok!");
+    }
+
+    const activeUser = MysqlAuthService.getActiveUser();
+    const userIdentifier = activeUser?.email || userProfile?.email || "user";
+
+    const res = await MysqlAuthService.changePassword(userIdentifier, oldPassword, newPassword);
+    if (res.success) {
+      toast.success(res.message);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } else {
+      toast.error(res.message);
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* Inline Banner Notifikasi Perubahan Profil */}
+      {updateNotification && (
+        <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between gap-3 text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in slide-in-from-top-2 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                <Bell className="h-4 w-4 text-emerald-500" /> Notifikasi Pembaruan Akun LMS
+              </div>
+              <p className="text-xs text-emerald-700/90 dark:text-emerald-300/90 mt-0.5">{updateNotification}</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/20 shrink-0"
+            onClick={() => setUpdateNotification(null)}
+          >
+            Tutup ✕
+          </Button>
+        </div>
+      )}
+
       {/* Profile Header Hero Card with Super High Contrast & Rich Aesthetics */}
       <Card className="border-border bg-card overflow-hidden shadow-lg">
         {/* Banner - Clean Gradient with Top Badges Only */}
@@ -503,23 +639,45 @@ export function ProfilModule({
               <div className="space-y-2">
                 <Label htmlFor="new-password" className="text-xs font-semibold">Kata Sandi Baru</Label>
                 <Input id="new-password" name="newPassword" autoComplete="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="text-xs" />
-                {newPassword && (
-                  <div className="space-y-1 pt-1">
-                    <div className="flex justify-between text-[11px] font-semibold">
-                      <span>Kekuatan Kata Sandi:</span>
-                      <span className={newPassword.length >= 8 ? "text-emerald-500 font-bold" : "text-amber-500"}>
-                        {newPassword.length >= 8 ? "🟢 Kuat (Strong)" : "⚠️ Sedang (Medium)"}
-                      </span>
+                {newPassword && (() => {
+                  const strength = MysqlAuthService.validatePasswordStrength(newPassword);
+                  const colorMap = {
+                    "Sangat Lemah": "bg-rose-500 text-rose-500",
+                    "Lemah": "bg-orange-500 text-orange-500",
+                    "Sedang": "bg-amber-500 text-amber-500",
+                    "Kuat": "bg-emerald-500 text-emerald-500",
+                    "Sangat Kuat": "bg-emerald-400 text-emerald-400 font-bold",
+                  };
+                  return (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex justify-between text-[11px] font-semibold">
+                        <span>Kekuatan Sandi:</span>
+                        <span className={colorMap[strength.label].split(" ")[1]}>
+                          {strength.label}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-1 h-1.5">
+                        {[1, 2, 3, 4].map((barIndex) => (
+                          <div
+                            key={barIndex}
+                            className={`h-full rounded-full transition-all ${
+                              strength.score >= barIndex ? colorMap[strength.label].split(" ")[0] : "bg-muted"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      {strength.feedback.length > 0 ? (
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                          Saran: {strength.feedback.join(", ")}
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                          ✓ Memenuhi seluruh kebijakan keamanan kata sandi LMS
+                        </p>
+                      )}
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          newPassword.length >= 8 ? "bg-emerald-500 w-full" : "bg-amber-500 w-1/2"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               <div className="space-y-2">

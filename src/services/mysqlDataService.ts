@@ -1,6 +1,9 @@
 import {
   getDatabaseStatsFn,
   getUsersFn,
+  deleteUserFn,
+  updateUserRoleFn,
+  updateUserProfileFn,
   getSubjectsFn,
   saveSubjectFn,
   deleteSubjectFn,
@@ -45,6 +48,44 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("getUsersFn failed:", e);
       return [];
+    }
+  }
+
+  static async deleteUser(id: string, email?: string): Promise<boolean> {
+    try {
+      return await deleteUserFn({ data: { id, email } });
+    } catch (e) {
+      console.warn("deleteUserFn failed:", e);
+      return false;
+    }
+  }
+
+  static async updateUserRole(id: string, role: string | string[], email?: string): Promise<boolean> {
+    try {
+      const rolesArr = Array.isArray(role) ? role : [role];
+      return await updateUserRoleFn({ data: { id, email, role: rolesArr[0], roles: rolesArr } });
+    } catch (e) {
+      console.warn("updateUserRoleFn failed:", e);
+      return false;
+    }
+  }
+
+  static async updateUserProfile(data: {
+    originalEmail?: string;
+    id?: string;
+    fullName: string;
+    email: string;
+    nipNis?: string;
+    phone?: string;
+    address?: string;
+    tagline?: string;
+    className?: string;
+  }): Promise<boolean> {
+    try {
+      return await updateUserProfileFn({ data });
+    } catch (e) {
+      console.warn("updateUserProfileFn failed:", e);
+      return false;
     }
   }
 

@@ -34,33 +34,57 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+  console.error("Root Route Error Caught:", error);
   const router = useRouter();
+
+  const isChunkError =
+    error?.message?.includes("Failed to fetch dynamically imported module") ||
+    error?.message?.includes("Importing a module script failed") ||
+    String(error).includes("routes--");
+
+  useEffect(() => {
+    if (isChunkError && typeof window !== "undefined") {
+      const hasReloaded = sessionStorage.getItem("lms_chunk_reloaded");
+      if (!hasReloaded) {
+        sessionStorage.setItem("lms_chunk_reloaded", "true");
+        window.location.reload();
+      }
+    }
+  }, [isChunkError]);
+
+  const handleRetry = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("lms_chunk_reloaded");
+      window.location.reload();
+    } else {
+      router.invalidate();
+      reset();
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          {isChunkError ? "Pembaruan Aplikasi Tersedia" : "Halaman Gagal Dimuat"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          {isChunkError
+            ? "Versi terbaru LMS MTsN 2 Cilacap telah diperbarui. Silakan muat ulang halaman untuk menggunakan versi terbaru."
+            : "Terjadi kendala saat memuat halaman. Silakan muat ulang halaman atau kembali ke beranda."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
+            onClick={handleRetry}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Muat Ulang Halaman (Try Again)
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Kembali ke Beranda
           </a>
         </div>
       </div>
@@ -121,6 +145,26 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    const handleChunkError = (e: ErrorEvent | PromiseRejectionEvent) => {
+      const msg = "reason" in e ? (e.reason?.message || String(e.reason)) : e.message;
+      if (msg && (msg.includes("Failed to fetch dynamically imported module") || msg.includes("Importing a module script failed"))) {
+        const reloaded = sessionStorage.getItem("lms_chunk_reloaded");
+        if (!reloaded) {
+          sessionStorage.setItem("lms_chunk_reloaded", "true");
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener("error", handleChunkError);
+    window.addEventListener("unhandledrejection", handleChunkError);
+    return () => {
+      window.removeEventListener("error", handleChunkError);
+      window.removeEventListener("unhandledrejection", handleChunkError);
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

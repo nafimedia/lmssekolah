@@ -34,3 +34,7 @@ dist-ssr
 # Temporary archives
 *.zip
 
+# Environment variables
+.env
+.env.*
+!.env.example

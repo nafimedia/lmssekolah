@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss";
 @source "../src";
 @import "tw-animate-css";
 
@@ -141,5 +141,11 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+
+  select option,
+  select optgroup {
+    background-color: var(--color-card);
+    color: var(--color-card-foreground);
   }
 }

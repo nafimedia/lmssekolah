@@ -7,6 +7,9 @@ import logoAsset from "@/assets/logo-mtsn2.png.asset.json";
 import { BerandaModule } from "@/components/dashboard/modules/beranda/BerandaModule";
 import { ProfilModule } from "@/components/dashboard/modules/profil/ProfilModule";
 import { SiakadMasterDataModule } from "@/components/dashboard/modules/siakad/SiakadMasterDataModule";
+import { RuangMengajarModule } from "@/components/dashboard/modules/ruangmengajar/RuangMengajarModule";
+import { SdmGtkModule } from "@/components/dashboard/modules/sdm/SdmGtkModule";
+import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -83,7 +86,10 @@ import {
   Clock,
   XCircle,
   Pencil,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { useRealtimeCalendar } from "@/hooks/useRealtimeCalendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -158,19 +164,24 @@ type MenuKey =
   | "erapor"
   | "perpustakaan"
   | "manajemen_kelas"
+  | "ruang_mengajar"
+  | "sdm_gtk"
+  | "perangkat_pembelajaran"
   | "profil"
   | "pengaturan";
 
 const MENU: { key: MenuKey; label: string; icon: typeof Home; group?: string }[] = [
   { key: "beranda", label: "Beranda", icon: Home, group: "Utama" },
-  { key: "siakad", label: "SIAKAD Master & Pengampu", icon: BarChart3, group: "Utama" },
+  { key: "ruang_mengajar", label: "Ruang Mengajar Hub", icon: BookOpen, group: "Utama" },
+  { key: "sdm_gtk", label: "Manajemen SDM GTK", icon: Users, group: "Utama" },
+  { key: "siakad", label: "Akademik Madrasah", icon: BarChart3, group: "Utama" },
   { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", icon: Layers, group: "Utama" },
   { key: "users", label: "Data User & Role", icon: Shield, group: "Utama" },
   { key: "pengumuman", label: "Pengumuman", icon: Megaphone, group: "Utama" },
   { key: "jadwal", label: "Jadwal Pelajaran", icon: CalendarClock, group: "Utama" },
   { key: "agenda", label: "Agenda & Kalender Akademik", icon: CalendarDays, group: "Utama" },
   { key: "kehadiran", label: "Kehadiran & Rekap Presensi", icon: UserCheck, group: "Utama" },
-  { key: "mapel", label: "Mata Pelajaran", icon: BookOpen, group: "Akademik" },
+  { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", icon: BookOpen, group: "Akademik" },
   { key: "modul_ajar", label: "Modul Ajar PDF", icon: FileText, group: "Akademik" },
   { key: "asesmen", label: "Pusat Asesmen", icon: ClipboardCheck, group: "Akademik" },
   { key: "tugas", label: "Tugas", icon: PencilLine, group: "Akademik" },
@@ -196,13 +207,15 @@ const ROLE_PERMISSIONS: Record<
 > = {
   admin: {
     label: "Super Administrator",
-    badge: "🛡️ SUPER ADMIN PORTAL",
+    badge: "SUPER ADMIN PORTAL",
     allowedMenus: [
-      { key: "beranda", label: "Beranda & Log Sistem", group: "Utama & Kontrol" },
-      { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", group: "Utama & Kontrol" },
-      { key: "users", label: "Data User & Perizinan", group: "Utama & Kontrol" },
-      { key: "siakad", label: "SIAKAD Master & Pengampu", group: "Akademik" },
-      { key: "mapel", label: "Master Pelajaran", group: "Akademik" },
+      { key: "beranda", label: "Dashboard Superadmin", group: "Utama & Kontrol" },
+      { key: "sdm_gtk", label: "Manajemen SDM GTK", group: "Utama & Kontrol" },
+      { key: "manajemen_kelas", label: "Manajemen Rombel", group: "Utama & Kontrol" },
+      { key: "users", label: "Data User & Role", group: "Utama & Kontrol" },
+      { key: "siakad", label: "Akademik Madrasah", group: "Akademik" },
+      { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Akademik" },
+      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Akademik" },
       { key: "jadwal", label: "Master Jadwal", group: "Akademik" },
       { key: "pengumuman", label: "Pengumuman", group: "Akademik" },
       { key: "agenda", label: "Agenda Madrasah", group: "Akademik" },
@@ -210,122 +223,135 @@ const ROLE_PERMISSIONS: Record<
       { key: "nilai", label: "Rekap Nilai Sistem", group: "Evaluasi & CBT" },
       { key: "apresiasi_guru", label: "Award & Warning Guru", group: "Apresiasi & Pembinaan" },
       { key: "tahfidz_report", label: "Laporan Tahfidz", group: "Monitoring Eksekutif" },
-      { key: "kokurikuler_report", label: "Laporan Kokurikuler (P5)", group: "Monitoring Eksekutif" },
+      { key: "kokurikuler_report", label: "Laporan P5", group: "Monitoring Eksekutif" },
       { key: "pengaturan", label: "System Log & Backup", group: "Pengaturan" },
       { key: "profil", label: "Profil Saya", group: "Pengaturan" },
     ],
   },
   admin_akademik: {
     label: "Administrator Akademik",
-    badge: "💼 ADMIN AKADEMIK",
+    badge: "ADMIN AKADEMIK",
     allowedMenus: [
-      { key: "beranda", label: "Beranda Akademik", group: "Master Data" },
-      { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", group: "Master Data" },
-      { key: "siakad", label: "SIAKAD Master & Pengampu", group: "Master Data" },
+      { key: "beranda", label: "Dashboard Akademik", group: "Master Data" },
+      { key: "sdm_gtk", label: "Manajemen SDM GTK", group: "Master Data" },
+      { key: "manajemen_kelas", label: "Manajemen Rombel", group: "Master Data" },
+      { key: "siakad", label: "Akademik Madrasah", group: "Master Data" },
+      { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Master Data" },
+      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Master Data" },
       { key: "users", label: "Data Guru & Siswa", group: "Master Data" },
-      { key: "mapel", label: "Master Mapel", group: "Master Data" },
       { key: "jadwal", label: "Master Jadwal", group: "Master Data" },
       { key: "agenda", label: "Agenda & Kalender", group: "Master Data" },
       { key: "pengumuman", label: "Pengumuman Resmi", group: "Informasi & Perpus" },
-      { key: "perpustakaan", label: "Perpustakaan Digital", group: "Informasi & Perpus" },
+      { key: "perpustakaan", label: "E-Library Digital", group: "Informasi & Perpus" },
       { key: "cbt", label: "Monitoring CBT", group: "Evaluasi" },
       { key: "profil", label: "Profil Saya", group: "Pengaturan" },
     ],
   },
   kamad: {
     label: "Kepala Madrasah",
-    badge: "🏛️ KEPALA MADRASAH",
+    badge: "KEPALA MADRASAH",
     allowedMenus: [
-      { key: "beranda", label: "Executive Dashboard", group: "Eksekutif" },
-      { key: "manajemen_kelas", label: "Monitoring Kelas & Rombel", group: "Eksekutif" },
-      { key: "siakad", label: "SIAKAD Master Data", group: "Eksekutif" },
-      { key: "agenda", label: "Agenda & Kalender Akademik", group: "Informasi & Agenda" },
+      { key: "beranda", label: "Dashboard Kamad", group: "Eksekutif" },
+      { key: "sdm_gtk", label: "Kinerja & SDM GTK", group: "Eksekutif" },
+      { key: "manajemen_kelas", label: "Monitoring Rombel", group: "Eksekutif" },
+      { key: "siakad", label: "Akademik Madrasah", group: "Eksekutif" },
+      { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Eksekutif" },
+      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Eksekutif" },
+      { key: "agenda", label: "Agenda & Kalender", group: "Informasi & Agenda" },
       { key: "pengumuman", label: "Pengumuman", group: "Informasi & Agenda" },
       { key: "jadwal", label: "Jadwal Pelajaran", group: "Informasi & Agenda" },
-      { key: "progress", label: "Progress Belajar Rombel", group: "Monitoring & Evaluasi" },
-      { key: "nilai", label: "Laporan Pembelajaran Kelas", group: "Monitoring & Evaluasi" },
+      { key: "progress", label: "Progress Rombel", group: "Monitoring & Evaluasi" },
+      { key: "nilai", label: "Laporan Pembelajaran", group: "Monitoring & Evaluasi" },
       { key: "apresiasi_guru", label: "Award & Warning Guru", group: "Apresiasi & Pembinaan" },
-      { key: "tahfidz_report", label: "Laporan Tahfidz Qur'an", group: "Laporan Khusus" },
-      { key: "kokurikuler_report", label: "Laporan Kokurikuler (P5)", group: "Laporan Khusus" },
-      { key: "cbt", label: "Monitoring CBT Live", group: "Monitoring & Evaluasi" },
+      { key: "tahfidz_report", label: "Laporan Tahfidz", group: "Laporan Khusus" },
+      { key: "kokurikuler_report", label: "Laporan P5", group: "Laporan Khusus" },
+      { key: "cbt", label: "Monitoring CBT", group: "Monitoring & Evaluasi" },
       { key: "profil", label: "Profil Saya", group: "Pengaturan" },
     ],
   },
   waka: {
     label: "Waka Kurikulum",
-    badge: "📐 WAKA KURIKULUM",
+    badge: "WAKA KURIKULUM",
     allowedMenus: [
-      { key: "beranda", label: "Executive Dashboard", group: "Kurikulum & Validasi" },
-      { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", group: "Kurikulum & Validasi" },
-      { key: "siakad", label: "SIAKAD Master & Pengampu", group: "Kurikulum & Validasi" },
-      { key: "mapel", label: "Perangkat Ajar 1-18", group: "Kurikulum & Validasi" },
-      { key: "agenda", label: "Agenda & Kalender Akademik", group: "Kurikulum & Validasi" },
+      { key: "beranda", label: "Dashboard Waka", group: "Kurikulum & Validasi" },
+      { key: "sdm_gtk", label: "Beban Kerja GTK (24JP)", group: "Kurikulum & Validasi" },
+      { key: "manajemen_kelas", label: "Manajemen Rombel", group: "Kurikulum & Validasi" },
+      { key: "siakad", label: "Akademik Madrasah", group: "Kurikulum & Validasi" },
+      { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Kurikulum & Validasi" },
+      { key: "modul_ajar", label: "Verifikasi Modul Ajar", group: "Kurikulum & Validasi" },
+      { key: "agenda", label: "Agenda & Kalender", group: "Kurikulum & Validasi" },
       { key: "pengumuman", label: "Pengumuman", group: "Kurikulum & Validasi" },
-      { key: "progress", label: "Progress Belajar Rombel", group: "Monitoring & Evaluasi" },
-      { key: "nilai", label: "Laporan Pembelajaran Kelas", group: "Monitoring & Evaluasi" },
+      { key: "progress", label: "Progress Rombel", group: "Monitoring & Evaluasi" },
+      { key: "nilai", label: "Laporan Pembelajaran", group: "Monitoring & Evaluasi" },
       { key: "apresiasi_guru", label: "Award & Warning Guru", group: "Apresiasi & Pembinaan" },
-      { key: "tahfidz_report", label: "Laporan Tahfidz Qur'an", group: "Laporan Khusus" },
-      { key: "kokurikuler_report", label: "Laporan Kokurikuler (P5)", group: "Laporan Khusus" },
-      { key: "cbt", label: "Monitoring CBT Live", group: "Monitoring & Evaluasi" },
+      { key: "tahfidz_report", label: "Laporan Tahfidz", group: "Laporan Khusus" },
+      { key: "kokurikuler_report", label: "Laporan P5", group: "Laporan Khusus" },
+      { key: "cbt", label: "Monitoring CBT", group: "Monitoring & Evaluasi" },
       { key: "profil", label: "Profil Saya", group: "Pengaturan" },
     ],
   },
   walikelas: {
     label: "Wali Kelas 8A",
-    badge: "📋 WALI KELAS 8A",
+    badge: "WALI KELAS 8A",
     allowedMenus: [
-      { key: "beranda", label: "Dashboard Kelas 8A", group: "Manajemen Kelas" },
-      { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", group: "Manajemen Kelas" },
+      { key: "beranda", label: "Dashboard Wali Kelas", group: "Manajemen Kelas" },
+      { key: "kehadiran", label: "Presensi Rombel 8A", group: "Manajemen Kelas" },
+      { key: "manajemen_kelas", label: "Manajemen Rombel", group: "Manajemen Kelas" },
       { key: "jadwal", label: "Jadwal Kelas 8A", group: "Manajemen Kelas" },
       { key: "agenda", label: "Agenda & Kalender", group: "Manajemen Kelas" },
       { key: "pengumuman", label: "Pengumuman", group: "Manajemen Kelas" },
-      { key: "cbt", label: "Monitoring CBT Kelas 8A", group: "Monitoring & Penilaian" },
-      { key: "progress", label: "Progress Belajar Siswa 8A", group: "Monitoring & Penilaian" },
-      { key: "nilai", label: "Laporan Pembelajaran 8A", group: "Monitoring & Penilaian" },
+      { key: "cbt", label: "Monitoring CBT", group: "Monitoring & Penilaian" },
+      { key: "progress", label: "Progress Belajar 8A", group: "Monitoring & Penilaian" },
+      { key: "nilai", label: "Laporan Rapor 8A", group: "Monitoring & Penilaian" },
       { key: "tahfidz", label: "Setoran Tahfidz 8A", group: "Monitoring & Penilaian" },
       { key: "profil", label: "Profil Saya", group: "Pengaturan" },
     ],
   },
   wali_kelas: {
     label: "Wali Kelas 8A",
-    badge: "📋 WALI KELAS 8A",
+    badge: "WALI KELAS 8A",
     allowedMenus: [
-      { key: "beranda", label: "Dashboard Kelas 8A", group: "Manajemen Kelas" },
+      { key: "beranda", label: "Dashboard Wali Kelas", group: "Manajemen Kelas" },
+      { key: "kehadiran", label: "Presensi Rombel 8A", group: "Manajemen Kelas" },
       { key: "jadwal", label: "Jadwal Kelas 8A", group: "Manajemen Kelas" },
       { key: "agenda", label: "Agenda & Kalender", group: "Manajemen Kelas" },
       { key: "pengumuman", label: "Pengumuman", group: "Manajemen Kelas" },
-      { key: "cbt", label: "Monitoring CBT Kelas 8A", group: "Monitoring & Penilaian" },
-      { key: "progress", label: "Progress Belajar Siswa 8A", group: "Monitoring & Penilaian" },
-      { key: "nilai", label: "Laporan Pembelajaran 8A", group: "Monitoring & Penilaian" },
+      { key: "cbt", label: "Monitoring CBT", group: "Monitoring & Penilaian" },
+      { key: "progress", label: "Progress Belajar 8A", group: "Monitoring & Penilaian" },
+      { key: "nilai", label: "Laporan Rapor 8A", group: "Monitoring & Penilaian" },
       { key: "tahfidz", label: "Setoran Tahfidz 8A", group: "Monitoring & Penilaian" },
       { key: "profil", label: "Profil Saya", group: "Pengaturan" },
     ],
   },
   guru: {
     label: "Guru Pengampu",
-    badge: "👨‍🏫 GURU PENGAMPU",
+    badge: "GURU PENGAMPU",
     allowedMenus: [
-      { key: "beranda", label: "Beranda Mengajar & Jadwal", group: "Ruang Mengajar" },
-      { key: "mapel", label: "Mata Pelajaran Diampu", group: "Ruang Mengajar" },
-      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Ruang Mengajar" },
-      { key: "jadwal", label: "Jadwal Mengajar Hari Ini", group: "Ruang Mengajar" },
-      { key: "cbt", label: "CBT / Terbitkan Ujian & Bank Soal", group: "Penilaian & CBT" },
-      { key: "asesmen", label: "Pusat Asesmen & Penilaian", group: "Penilaian & CBT" },
-      { key: "tugas", label: "Koreksi Tugas LKPD", group: "Penilaian & CBT" },
-      { key: "nilai", label: "Input Nilai & Progress Entry", group: "Penilaian & CBT" },
-      { key: "agenda", label: "Agenda & Kalender Akademik", group: "Informasi & Media" },
-      { key: "perpustakaan", label: "E-Library & Buku Digital", group: "Informasi & Media" },
-      { key: "asisten_ai", label: "Asisten AI & Tools Guru", group: "Asisten & Apresiasi" },
-      { key: "apresiasi_siswa", label: "Award & Warning Siswa", group: "Asisten & Apresiasi" },
-      { key: "pengumuman", label: "Pengumuman Resmi", group: "Informasi & Media" },
+      { key: "beranda", label: "Dashboard Guru", group: "Utama" },
+      { key: "ruang_mengajar", label: "Ruang Mengajar Hub", group: "Ruang Mengajar" },
+      { key: "modul_ajar", label: "Perangkat Ajar", group: "Ruang Mengajar" },
+      { key: "nilai", label: "Penilaian Kelas", group: "Penilaian" },
+      { key: "agenda", label: "Kalender Akademik", group: "Informasi" },
+      { key: "perpustakaan", label: "E-Library Digital", group: "Informasi" },
+      { key: "asisten_ai", label: "AI Assistant", group: "Asisten" },
       { key: "profil", label: "Profil Saya", group: "Pengaturan" },
     ],
   },
   siswa: {
     label: "Siswa Kelas 8A",
-    badge: "🎓 RUANG BELAJAR SISWA",
+    badge: "RUANG BELAJAR SISWA",
     allowedMenus: [
-      { key: "beranda", label: "Beranda Belajar & Presensi", group: "Ruang Belajar" },
+      { key: "beranda", label: "Dashboard Siswa", group: "Ruang Belajar" },
+      { key: "mapel", label: "Materi & Modul Ajar", group: "Ruang Belajar" },
+      { key: "jadwal", label: "Jadwal Pelajaran", group: "Ruang Belajar" },
+      { key: "kehadiran", label: "Kehadiran Saya", group: "Ruang Belajar" },
+      { key: "tugas", label: "Tugas & LKPD", group: "Evaluasi & Ujian" },
+      { key: "quiz", label: "Kuis Interaktif", group: "Evaluasi & Ujian" },
+      { key: "cbt", label: "CBT Ujian Online", group: "Evaluasi & Ujian" },
+      { key: "nilai", label: "Rekap Nilai Saya", group: "Progress & Rapor" },
+      { key: "progress", label: "Progress Belajar", group: "Progress & Rapor" },
+      { key: "tahfidz", label: "Setoran Tahfidz", group: "Progress & Rapor" },
+      { key: "agenda", label: "Kalender Akademik", group: "Informasi & Media" },
       { key: "mapel", label: "Materi & Modul (Pertemuan 1-18)", group: "Ruang Belajar" },
       { key: "jadwal", label: "Jadwal Pelajaran Hari Ini", group: "Ruang Belajar" },
       { key: "kehadiran", label: "Kehadiran & Rekap Presensi", group: "Ruang Belajar" },
@@ -575,29 +601,29 @@ function DashboardContent({
       <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
 
         {/* Header Sidebar */}
-        <SidebarHeader className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
+        <SidebarHeader className="p-3 px-3.5 border-b border-sidebar-border/60 shrink-0">
+          <div className="flex items-center gap-2.5">
             <img
               src="/logomts.png"
               alt="Logo MTsN 2 Cilacap"
-              className="h-10 w-10 object-contain rounded-xl bg-white p-1 shadow-sm border border-sidebar-border shrink-0"
+              className="h-8 w-8 object-contain rounded-lg bg-white p-1 shadow-2xs border border-sidebar-border/40 shrink-0"
             />
             <div className="leading-tight overflow-hidden group-data-[state=collapsed]:hidden">
-              <div className="font-bold text-sm text-sidebar-foreground truncate">MTsN 2 Cilacap</div>
-              <div className="text-[11px] text-sidebar-primary font-bold truncate uppercase">{roleInfo.badge}</div>
+              <div className="font-bold text-xs text-sidebar-foreground truncate">MTsN 2 Cilacap</div>
+              <div className="text-[10px] text-sidebar-primary font-mono font-semibold truncate uppercase">{roleInfo.badge}</div>
             </div>
           </div>
         </SidebarHeader>
 
         {/* Sidebar Content */}
-        <SidebarContent className="px-2 py-4 space-y-4">
+        <SidebarContent className="px-2 py-2.5 space-y-2.5">
           {groups.map((g) => (
-            <SidebarGroup key={g}>
-              <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-1 group-data-[state=collapsed]:hidden">
+            <SidebarGroup key={g} className="p-0 space-y-0.5">
+              <SidebarGroupLabel className="text-[10px] font-semibold text-sidebar-foreground/50 uppercase tracking-widest px-2.5 py-1 mb-0.5 h-auto group-data-[state=collapsed]:hidden">
                 {g}
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="space-y-0.5">
                   {filteredMenu.filter((m) => m.group === g).map((m) => {
                     const Icon = m.icon;
                     const isActive = active === m.key;
@@ -615,12 +641,12 @@ function DashboardContent({
                               window.scrollTo({ top: 0, behavior: "smooth" });
                             }
                           }}
-                          className={`gap-3 font-semibold cursor-pointer text-xs sm:text-sm transition-all ${isActive
-                            ? "bg-primary text-primary-foreground font-bold shadow-xs data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          className={`gap-2.5 font-medium cursor-pointer text-xs h-9 py-1.5 px-3 rounded-[8px] transition-all ${isActive
+                            ? "bg-primary text-primary-foreground font-semibold shadow-2xs rounded-[8px] data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-[8px]"
                             }`}
                         >
-                          <Icon className="h-4 w-4 shrink-0" />
+                          <Icon className="h-4 w-4 shrink-0 opacity-90" />
                           <span className="truncate group-data-[state=collapsed]:hidden">{m.label}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -633,30 +659,30 @@ function DashboardContent({
         </SidebarContent>
 
         {/* Footer Sidebar */}
-        <SidebarFooter className="p-3 border-t border-sidebar-border bg-sidebar-accent/40">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <Avatar className="h-9 w-9 ring-2 ring-emerald-500/40 shrink-0">
+        <SidebarFooter className="p-2.5 px-3 border-t border-sidebar-border/60 bg-sidebar-accent/30 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <Avatar className="h-8 w-8 ring-1 ring-emerald-500/30 shrink-0">
                 {userProfile?.avatarUrl || me?.avatar_url ? (
                   <img src={userProfile?.avatarUrl || me?.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <AvatarFallback className="bg-emerald-600 text-white text-xs font-black">
+                  <AvatarFallback className="bg-emerald-600 text-white text-[11px] font-bold">
                     {displayName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 )}
               </Avatar>
               <div className="leading-tight overflow-hidden group-data-[state=collapsed]:hidden">
-                <div className="font-extrabold text-xs text-sidebar-foreground truncate">
+                <div className="font-bold text-xs text-sidebar-foreground truncate">
                   {displayName}
                 </div>
-                <div className="text-[10px] text-muted-foreground truncate font-mono font-bold uppercase">
+                <div className="text-[10px] text-muted-foreground truncate font-mono font-medium uppercase">
                   {activeRole.replace("_", " ")}
                 </div>
               </div>
             </div>
 
-            <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-destructive hover:bg-destructive/10 shrink-0" title="Keluar">
-              <LogOut className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-7 w-7 text-destructive hover:bg-destructive/10 shrink-0" title="Keluar">
+              <LogOut className="h-3.5 w-3.5" />
             </Button>
           </div>
         </SidebarFooter>
@@ -785,14 +811,17 @@ function DashboardContent({
 
         <main className="p-4 lg:p-8 flex-1">
           {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
+          {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
+          {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
           {active === "siakad" && <SiakadMasterDataModule />}
           {active === "manajemen_kelas" && <ManajemenKelas activeRole={activeRole} />}
+          {active === "perangkat_pembelajaran" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
           {active === "mapel" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
           {active === "users" && activeRole !== "siswa" && <DataUserRole />}
           {active === "pengumuman" && <Pengumuman />}
           {active === "jadwal" && <Jadwal activeRole={activeRole} userProfile={userProfile} />}
           {active === "agenda" && <AgendaKalender activeRole={activeRole} />}
-          {active === "kehadiran" && <KehadiranSiswa />}
+          {active === "kehadiran" && <KehadiranSiswa activeRole={activeRole} userProfile={userProfile} />}
           {active === "modul_ajar" && <ModulAjar activeRole={activeRole} userProfile={userProfile} />}
           {active === "asesmen" && <PusatAsesmen activeRole={activeRole} />}
           {active === "tugas" && <Tugas />}
@@ -1859,21 +1888,91 @@ function Pengumuman() {
   );
 }
 
-/* ---------- MODUL KEHADIRAN & REKAP PRESENSI ROMBEL ---------- */
-function KehadiranSiswa() {
-  const [selectedClass, setSelectedClass] = useState("Rombel 8A");
-  const [selectedMonth, setSelectedMonth] = useState("Agustus 2026");
+/* ---------- MODUL KEHADIRAN & REKAP PRESENSI MULTI-ROLE ---------- */
+function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+  const {
+    currentMonthName,
+    currentYear,
+    formattedTime,
+    goToNextMonth,
+    goToPrevMonth,
+    goToToday,
+    getCalendarDays,
+  } = useRealtimeCalendar();
+
+  const isSiswa = activeRole === "siswa";
+  const isGuruMapel = activeRole === "guru" || activeRole === "guru_mapel";
+  
+  // Assigned Homeroom class for Wali Kelas (default to Rombel 8A)
+  const defaultClass = userProfile?.assignedClass || "Rombel 8A";
+  const [selectedClass, setSelectedClass] = useState(defaultClass);
+  const [selectedMonth, setSelectedMonth] = useState(`${currentMonthName} ${currentYear}`);
   const [isPrintPresensiOpen, setIsPrintPresensiOpen] = useState(false);
 
-  const [attendanceData] = useState([
-    { id: "s1", nisn: "0081928371", name: "Ahmad Fauzi", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567890", status: "Sangat Baik (A)" },
-    { id: "s2", nisn: "0081928372", name: "Fatimah Az-Zahra", class: "Rombel 8A", hadir: 21, izin: 0, sakit: 0, alpa: 0, pct: 100.0, parentWa: "081234567894", status: "Sempurna (100%)" },
-    { id: "s3", nisn: "0081928373", name: "Muhammad Rizky", class: "Rombel 8A", hadir: 16, izin: 2, sakit: 1, alpa: 2, pct: 76.2, parentWa: "081234567895", status: "⚠️ Perlu Alert Pembinaan" },
-    { id: "s4", nisn: "0081928374", name: "Siti Nurhaliza", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567896", status: "Sangat Baik (A)" },
-    { id: "s5", nisn: "0081928375", name: "Budi Santoso", class: "Rombel 8B", hadir: 19, izin: 1, sakit: 1, alpa: 0, pct: 90.5, parentWa: "081234567897", status: "Baik (B)" },
+  // Guru Mapel Active Teaching Session state
+  const [selectedKbmSession, setSelectedKbmSession] = useState("s1");
+  const kbmSessions = [
+    { id: "s1", mapel: "Al-Quran Hadits", class: "Rombel 8A", time: "07:30 - 09:00 WIB (Jam 1-2)", meeting: "Pertemuan 16", topic: "Hukum Bacaan Mad Silah & Mad Badal", room: "Ruang A.02", status: "AKTIF" },
+    { id: "s2", mapel: "Fiqih Kebangsaan", class: "Rombel 9C", time: "10:15 - 11:45 WIB (Jam 5-6)", meeting: "Pertemuan 18", topic: "Ketentuan Sembelihan Hewan Kurban", room: "Ruang C.04", status: "MENDATANG" },
+  ];
+  const activeSession = kbmSessions.find((s) => s.id === selectedKbmSession) || kbmSessions[0];
+
+  const [attendanceData, setAttendanceData] = useState([
+    { id: "s1", nisn: "0081928371", name: "Ahmad Fauzi", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567890", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s2", nisn: "0081928372", name: "Fatimah Az-Zahra", class: "Rombel 8A", hadir: 21, izin: 0, sakit: 0, alpa: 0, pct: 100.0, parentWa: "081234567894", status: "Sempurna (100%)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s3", nisn: "0081928373", name: "Muhammad Rizky", class: "Rombel 8A", hadir: 16, izin: 2, sakit: 1, alpa: 2, pct: 76.2, parentWa: "081234567895", status: "⚠️ Perlu Alert Pembinaan", today: "alpa", sessionStatus: "alpa" },
+    { id: "s4", nisn: "0081928374", name: "Siti Nurhaliza", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567896", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s5", nisn: "0081928375", name: "Budi Santoso", class: "Rombel 8B", hadir: 19, izin: 1, sakit: 1, alpa: 0, pct: 90.5, parentWa: "081234567897", status: "Baik (B)", today: "hadir", sessionStatus: "hadir" },
   ]);
 
   const filteredAttendance = attendanceData.filter((a) => selectedClass === "Semua" || a.class === selectedClass);
+
+  const handleSetTodayStatus = (studentId: string, status: string) => {
+    setAttendanceData((prev) =>
+      prev.map((item) => (item.id === studentId ? { ...item, today: status } : item))
+    );
+  };
+
+  const handleSetSessionStatus = (studentId: string, status: string) => {
+    setAttendanceData((prev) =>
+      prev.map((item) => (item.id === studentId ? { ...item, sessionStatus: status } : item))
+    );
+  };
+
+  const handleMarkAllHadir = () => {
+    setAttendanceData((prev) => prev.map((item) => ({ ...item, today: "hadir", sessionStatus: "hadir" })));
+    toast.success("⚡ Seluruh siswa terfilter berhasil ditandai HADIR!");
+  };
+
+  const handleSavePresensiHarianPagi = () => {
+    filteredAttendance.forEach((s) => {
+      MysqlDataService.recordPresensi({
+        studentId: s.id,
+        studentName: s.name,
+        rombel: s.class,
+        status: s.today,
+        note: "Presensi Harian Pagi oleh Wali Kelas",
+      }).catch(() => {});
+    });
+    toast.success(`💾 Presensi Harian Pagi (${selectedClass}) berhasil disimpan oleh Wali Kelas!`, {
+      description: "Data terhubung langsung dengan E-Rapor & WA Gateway EWS.",
+    });
+  };
+
+  const handleSavePresensiSesiKbm = () => {
+    filteredAttendance.forEach((s) => {
+      MysqlDataService.recordPresensi({
+        studentId: s.id,
+        studentName: s.name,
+        rombel: s.class,
+        status: s.sessionStatus,
+        note: `Presensi Tatap Muka KBM: ${activeSession.mapel} ${activeSession.meeting}`,
+      }).catch(() => {});
+    });
+    toast.success(`✅ Presensi Sesi KBM (${activeSession.mapel} - ${activeSession.meeting}) Berhasil Disimpan!`, {
+      description: `Tercatat pada Jurnal Mengajar ${activeSession.class} (${activeSession.time}).`,
+    });
+  };
 
   const handlePrintPresensi = () => {
     window.print();
@@ -1886,21 +1985,371 @@ function KehadiranSiswa() {
       phone: student.parentWa,
       student_name: student.name,
       category: "ALERT PRESENSI",
-      message: `[ALERT PRESENSI MTsN 2 CILACAP]: Bpk/Ibu Orang Tua ${student.name}, kami sampaikan rekap presensi bulan ${selectedMonth}: Hadir: ${student.hadir} hari, Izin: ${student.izin}, Sakit: ${student.sakit}, Alpa: ${student.alpa} hari (${student.pct}% Kehadiran).`,
+      message: `[ALERT PRESENSI MTsN 2 CILACAP]: Bpk/Ibu Orang Tua ${student.name}, disampaikan bahwa ananda hari ini tercatat ${student.today.toUpperCase()} di presensi harian pagi. Rekap bulan ${selectedMonth}: Hadir: ${student.hadir} hari, Izin: ${student.izin}, Sakit: ${student.sakit}, Alpa: ${student.alpa} hari (${student.pct}% Kehadiran).`,
       status: "TERKIRIM",
     }).catch(() => {});
 
     toast.success(`📱 WA Alert Presensi Berhasil Dikirim ke Orang Tua ${student.name} (${student.parentWa})!`);
   };
 
+  const calendarDays = getCalendarDays();
+
+  // --- BRANCH 1: ROLE SISWA (READ ONLY - NO ENROLL BUTTON) ---
+  if (isSiswa) {
+    const studentInfo = attendanceData[0]; // Current student
+    return (
+      <div className="space-y-6">
+        <SectionHeader
+          title="Kehadiran & Rekapitulasi Presensi Saya"
+          sub="Visualisasi status kehadiran resmi siswa MTsN 2 Cilacap yang dicatat oleh Wali Kelas & Guru Pengampu"
+        />
+
+        {/* Read-Only Status Banner */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-3 bg-muted/30 p-4 rounded-xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="font-mono text-xs font-bold">
+              🎓 KELAS VIII A • NISN: {studentInfo.nisn}
+            </Badge>
+            <Badge className="bg-emerald-600 text-white font-bold flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-white" /> PRESENSI HARI INI: HADIR (Dicatat oleh Wali Kelas)
+            </Badge>
+          </div>
+
+          <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-lg border border-border">
+            <ShieldCheck className="h-4 w-4 text-emerald-500" /> Presensi Terintegrasi E-Rapor & Wali Kelas
+          </div>
+        </div>
+
+        {/* Info Banner */}
+        <div className="p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-xs text-blue-700 dark:text-blue-300 font-semibold flex items-center gap-2">
+          <span>💡</span>
+          <span>Catatan: Siswa tidak melakukan presensi mandiri. Seluruh pencatatan presensi harian dilakukan secara resmi oleh Wali Kelas & Guru Pengampu saat KBM.</span>
+        </div>
+
+        {/* Summary Stats Cards Grid (Read Only) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Card className="border-border bg-card shadow-2xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
+                ✓
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium">Total Hadir</div>
+                <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{studentInfo.hadir} Hari (95.2%)</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card shadow-2xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
+                ℹ️
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium">Total Izin</div>
+                <div className="text-lg font-extrabold text-foreground">{studentInfo.izin} Hari</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card shadow-2xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+                🟡
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium">Total Sakit</div>
+                <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{studentInfo.sakit} Hari</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card shadow-2xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400 grid place-items-center shrink-0 font-bold">
+                ✨
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium">Tanpa Keterangan (Alpa)</div>
+                <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">0 Hari (Disiplin)</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 📅 WIDGET KALENDER PRESENSI REALTIME SISWA */}
+        <Card className="border-border shadow-sm overflow-hidden bg-card">
+          <CardHeader className="bg-muted/40 border-b border-border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                Kalender Kehadiran & Presensi Saya ({currentMonthName} {currentYear})
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Visualisasi harian status presensi resmi {studentInfo.name} di MTsN 2 Cilacap.
+              </CardDescription>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs gap-1 py-1">
+                <Clock className="h-3 w-3 animate-pulse" /> {formattedTime}
+              </Badge>
+              <div className="flex items-center gap-1 bg-background rounded-lg p-0.5 border border-border">
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-xs" onClick={goToPrevMonth} title="Bulan Sebelumnya">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="font-bold text-xs px-1 font-mono">{currentMonthName} {currentYear}</span>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-xs" onClick={goToNextMonth} title="Bulan Berikutnya">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button size="sm" variant="secondary" className="h-7 text-xs font-semibold px-2.5" onClick={goToToday}>
+                Hari Ini
+              </Button>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-4 space-y-4">
+            <div className="border border-border rounded-xl p-3 bg-muted/20 overflow-x-auto">
+              <div className="min-w-[500px]">
+                {/* Day Name Header */}
+                <div className="grid grid-cols-7 gap-1 text-center font-bold text-[11px] text-muted-foreground pb-2 border-b border-border/60">
+                  <div>Senin</div>
+                  <div>Selasa</div>
+                  <div>Rabu</div>
+                  <div>Kamis</div>
+                  <div>Jumat</div>
+                  <div>Sabtu</div>
+                  <div className="text-red-500">Minggu</div>
+                </div>
+
+                {/* Date Cells */}
+                <div className="grid grid-cols-7 gap-1 pt-2">
+                  {calendarDays.map((cell, idx) => {
+                    let bgClass = "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300";
+                    let badgeIcon = "🟢";
+                    let statusText = "Hadir";
+                    let note = "Hadir (Pelajaran Efektif)";
+
+                    if (cell.isWeekend) {
+                      bgClass = "bg-muted/50 border-border text-muted-foreground/60";
+                      badgeIcon = "⚪";
+                      statusText = "Libur";
+                      note = `Akhir Pekan (${cell.dayOfWeekName})`;
+                    } else if (cell.dayNumber === 12 && cell.isCurrentMonth) {
+                      bgClass = "bg-blue-500/20 border-blue-500/40 text-blue-700 dark:text-blue-300 font-extrabold ring-1 ring-blue-500/50";
+                      badgeIcon = "🔵";
+                      statusText = "Izin";
+                      note = "Izin Resmi: Duta Kafilah Lomba MTQ Kabupaten";
+                    } else if (cell.dayNumber === 18 && cell.isCurrentMonth) {
+                      bgClass = "bg-amber-500/20 border-amber-500/40 text-amber-800 dark:text-amber-300 font-extrabold ring-1 ring-amber-500/50";
+                      badgeIcon = "🟡";
+                      statusText = "Sakit";
+                      note = "Sakit Demam (Surat Dokter Terverifikasi)";
+                    } else if (!cell.isCurrentMonth) {
+                      bgClass = "bg-muted/30 border-border/40 text-muted-foreground/40 opacity-40";
+                      badgeIcon = "";
+                      statusText = "";
+                      note = "Luar Bulan Ini";
+                    }
+
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => toast.info(`📅 Presensi Tgl ${cell.dayNumber} ${currentMonthName} ${currentYear}`, { description: note ? `${badgeIcon} Status: ${note}` : undefined })}
+                        className={`p-2 rounded-lg border text-center transition cursor-pointer hover:scale-105 ${bgClass} ${
+                          cell.isToday ? "ring-2 ring-emerald-500 shadow-md font-extrabold bg-emerald-500/30 text-emerald-900 dark:text-emerald-100" : ""
+                        }`}
+                      >
+                        <div className="flex justify-between items-center text-[10px] opacity-80">
+                          <span className={cell.isToday ? "font-extrabold text-emerald-600 dark:text-emerald-300" : ""}>{cell.dayNumber}</span>
+                          <span>{cell.isToday ? "🌟" : badgeIcon}</span>
+                        </div>
+                        <div className="text-[9px] font-bold truncate mt-1">
+                          {cell.isToday ? "Hari Ini" : statusText}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Legenda Warna Presensi */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] text-muted-foreground font-semibold">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1">🟢 <span className="text-foreground">Hadir</span></span>
+                <span className="flex items-center gap-1">🔵 <span className="text-foreground">Izin Resmi</span></span>
+                <span className="flex items-center gap-1">🟡 <span className="text-foreground">Sakit</span></span>
+                <span className="flex items-center gap-1">🔴 <span className="text-foreground">Alpa</span></span>
+                <span className="flex items-center gap-1">⚪ <span className="text-foreground">Libur Akhir Pekan (Minggu)</span></span>
+              </div>
+              <div className="italic text-[10px]">💡 Data presensi resmi dicatat oleh Wali Kelas & Guru Pengampu.</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // --- BRANCH 2: ROLE GURU MAPEL (PRESENSI SESI JAM KBM AKTIF) ---
+  if (isGuruMapel) {
+    const sessionStudents = attendanceData.filter((a) => activeSession.class === "Semua" || a.class === activeSession.class);
+
+    return (
+      <div className="space-y-6">
+        <SectionHeader
+          title="Presensi Tatap Muka Sesi KBM (Guru Pengampu)"
+          sub="Pencatatan presensi siswa khusus saat jam pelajaran dan sesi KBM berlangsung yang terhubung ke Jurnal Mengajar Guru"
+        />
+
+        {/* Active KBM Session Card & Selector */}
+        <Card className="border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-500/15 shadow-sm">
+          <CardHeader className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge className="bg-emerald-600 text-white font-mono text-xs font-bold animate-pulse">
+                  ⏰ SESI KBM AKTIF SAAT INI
+                </Badge>
+                <Badge variant="outline" className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                  {activeSession.time}
+                </Badge>
+              </div>
+              <CardTitle className="text-lg font-bold text-foreground">
+                {activeSession.mapel} ({activeSession.class}) • {activeSession.meeting}
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                Materi: {activeSession.topic} • {activeSession.room}
+              </CardDescription>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground shrink-0">Pilih Sesi Mengajar:</span>
+              <select
+                className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold"
+                value={selectedKbmSession}
+                onChange={(e) => setSelectedKbmSession(e.target.value)}
+              >
+                {kbmSessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.mapel} ({s.class}) - {s.time}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Session Attendance Table */}
+        <Card className="border-border shadow-sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+            <div>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-emerald-600" /> Presensi Siswa Sesi KBM {activeSession.mapel}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Checklist kehadiran siswa untuk {activeSession.class} pada {activeSession.meeting}.
+              </CardDescription>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="text-xs font-bold gap-1" onClick={handleMarkAllHadir}>
+                ⚡ Tandai Semua Hadir
+              </Button>
+              <Button size="sm" className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={handleSavePresensiSesiKbm}>
+                💾 Simpan Presensi Sesi & Sync Jurnal
+              </Button>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
+                <tr>
+                  <th className="py-3 px-4">NISN & Nama Siswa</th>
+                  <th className="py-3 px-3">Rombel</th>
+                  <th className="py-3 px-3 text-center">Status Presensi Sesi KBM</th>
+                  <th className="py-3 px-3 text-center">Rekap Hadir Total</th>
+                  <th className="py-3 px-3 text-center">% Kehadiran Mapel</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {sessionStudents.map((s) => (
+                  <tr key={s.id} className="hover:bg-muted/30 transition">
+                    <td className="py-3 px-4 font-semibold">
+                      <div className="font-bold text-foreground">{s.name}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">{s.nisn}</div>
+                    </td>
+                    <td className="py-3 px-3 font-bold">{s.class}</td>
+                    <td className="py-3 px-3 text-center">
+                      <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border">
+                        <button
+                          onClick={() => handleSetSessionStatus(s.id, "hadir")}
+                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
+                            s.sessionStatus === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          HADIR
+                        </button>
+                        <button
+                          onClick={() => handleSetSessionStatus(s.id, "izin")}
+                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
+                            s.sessionStatus === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          IZIN
+                        </button>
+                        <button
+                          onClick={() => handleSetSessionStatus(s.id, "sakit")}
+                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
+                            s.sessionStatus === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          SAKIT
+                        </button>
+                        <button
+                          onClick={() => handleSetSessionStatus(s.id, "alpa")}
+                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
+                            s.sessionStatus === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          ALPA
+                        </button>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{s.hadir} Hari</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-primary text-sm">{s.pct}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // --- BRANCH 3: ROLE WALI KELAS / ADMIN (LOCKED TO HOMEROOM CLASS) ---
+  const totalStudents = filteredAttendance.length || 1;
+  const avgAttendancePct = Math.round(
+    (filteredAttendance.reduce((acc, curr) => {
+      const h = curr.hadir + (curr.today === "hadir" ? 1 : 0);
+      const tot = h + curr.izin + curr.sakit + curr.alpa + (curr.today !== "hadir" ? 1 : 0);
+      return acc + (h / (tot || 1)) * 100;
+    }, 0) / totalStudents) * 10
+  ) / 10;
+
+  const totalIzinSakit = filteredAttendance.filter((s) => s.today === "izin" || s.today === "sakit" || s.izin > 0 || s.sakit > 0).length;
+  const totalAlpaEws = filteredAttendance.filter((s) => s.today === "alpa" || s.alpa > 0).length;
+
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Kehadiran & Rekapitulasi Presensi Siswa Rombel"
-        sub="Pemantauan persentase kehadiran bulanan, cetak rekap presensi resmi, & direct WhatsApp alert ke orang tua siswa MTsN 2 Cilacap"
+        title={`Kehadiran & Presensi Harian ${selectedClass} (Wali Kelas)`}
+        sub={`Pencatatan resmi presensi harian pagi untuk ${selectedClass}, pemantauan rekap bulanan, & direct WhatsApp alert ke orang tua siswa MTsN 2 Cilacap`}
       />
 
-      {/* Overview Cards */}
+      {/* Dynamic Overview Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="border-border bg-card shadow-2xs">
           <CardContent className="p-4 flex items-center gap-3">
@@ -1909,7 +2358,7 @@ function KehadiranSiswa() {
             </div>
             <div>
               <div className="text-xs text-muted-foreground font-medium">Rata-Rata Kehadiran</div>
-              <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">96.8% Hadir</div>
+              <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{avgAttendancePct}% Hadir</div>
             </div>
           </CardContent>
         </Card>
@@ -1921,7 +2370,7 @@ function KehadiranSiswa() {
             </div>
             <div>
               <div className="text-xs text-muted-foreground font-medium">Siswa Izin / Sakit</div>
-              <div className="text-lg font-extrabold text-foreground">3 Siswa</div>
+              <div className="text-lg font-extrabold text-foreground">{totalIzinSakit} Siswa</div>
             </div>
           </CardContent>
         </Card>
@@ -1933,7 +2382,7 @@ function KehadiranSiswa() {
             </div>
             <div>
               <div className="text-xs text-muted-foreground font-medium">Alert Indisipliner (Alpa)</div>
-              <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">1 Siswa EWS</div>
+              <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{totalAlpaEws} Siswa EWS</div>
             </div>
           </CardContent>
         </Card>
@@ -1956,35 +2405,33 @@ function KehadiranSiswa() {
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
             <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-emerald-600" /> Matriks Presensi Siswa per Rombel
+              <UserCheck className="h-5 w-5 text-emerald-600" /> Presensi Harian Pagi ({selectedClass})
             </CardTitle>
             <CardDescription className="text-xs">
-              Rekapitulasi kehadiran tatap muka harian KBM ({selectedMonth}).
+              Satu pintu input presensi hari ini ({new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}). Terhubung otomatis ke Kalender Siswa & E-Rapor.
             </CardDescription>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <Button size="sm" variant="outline" className="text-xs font-bold gap-1" onClick={handleMarkAllHadir}>
+              ⚡ Tandai Semua Hadir
+            </Button>
+            <Button size="sm" className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={handleSavePresensiHarianPagi}>
+              💾 Simpan & Sync Kalender
+            </Button>
+
             <select
               className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
             >
-              <option value="Semua">Semua Rombel</option>
-              <option value="Rombel 8A">Rombel 8A</option>
+              <option value="Rombel 8A">Rombel 8A (Bimbingan)</option>
               <option value="Rombel 8B">Rombel 8B</option>
+              <option value="Semua">Semua Rombel</option>
             </select>
 
-            <select
-              className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-            >
-              <option value="Agustus 2026">Agustus 2026</option>
-              <option value="Juli 2026">Juli 2026</option>
-            </select>
-
-            <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setIsPrintPresensiOpen(true)}>
-              <Download className="h-3.5 w-3.5" /> 🖨️ Cetak Rekap Presensi PDF
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintPresensiOpen(true)}>
+              <Download className="h-3.5 w-3.5" /> 🖨️ Cetak PDF
             </Button>
           </div>
         </CardHeader>
@@ -1995,57 +2442,93 @@ function KehadiranSiswa() {
               <tr>
                 <th className="py-3 px-4">NISN & Nama Siswa</th>
                 <th className="py-3 px-3">Rombel</th>
+                <th className="py-3 px-3 text-center">Presensi Hari Ini</th>
                 <th className="py-3 px-3 text-center">Hadir (H)</th>
                 <th className="py-3 px-3 text-center">Izin (I)</th>
                 <th className="py-3 px-3 text-center">Sakit (S)</th>
                 <th className="py-3 px-3 text-center">Alpa (A)</th>
                 <th className="py-3 px-3 text-center">% Kehadiran</th>
-                <th className="py-3 px-3">Status Evaluasi</th>
-                <th className="py-3 px-4 text-right">Kontrol WA Ortu</th>
+                <th className="py-3 px-4 text-right">Aksi WA Ortu</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredAttendance.map((s) => (
-                <tr key={s.id} className="hover:bg-muted/30 transition">
-                  <td className="py-3 px-4 font-semibold">
-                    <div className="font-bold text-foreground">{s.name}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono">{s.nisn}</div>
-                  </td>
-                  <td className="py-3 px-3 font-bold">{s.class}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{s.hadir}</td>
-                  <td className="py-3 px-3 text-center font-mono">{s.izin}</td>
-                  <td className="py-3 px-3 text-center font-mono">{s.sakit}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-red-600">{s.alpa}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-primary text-sm">{s.pct}%</td>
-                  <td className="py-3 px-3">
-                    {s.pct < 80 ? (
-                      <Badge variant="outline" className="text-[9px] bg-red-500/15 text-red-600 border-red-500/30 font-bold">
-                        {s.status}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[9px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30 font-bold">
-                        {s.status}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-[11px] font-bold gap-1 border-purple-500/40 text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
-                      onClick={() => handleSendWaPresensiAlert(s)}
-                    >
-                      <Send className="h-3 w-3 text-purple-500" /> WA Alert Ortu
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              {filteredAttendance.map((s) => {
+                const effHadir = s.hadir + (s.today === "hadir" ? 1 : 0);
+                const effIzin = s.izin + (s.today === "izin" ? 1 : 0);
+                const effSakit = s.sakit + (s.today === "sakit" ? 1 : 0);
+                const effAlpa = s.alpa + (s.today === "alpa" ? 1 : 0);
+                const totDays = effHadir + effIzin + effSakit + effAlpa || 1;
+                const effPct = Math.round((effHadir / totDays) * 1000) / 10;
+
+                return (
+                  <tr key={s.id} className="hover:bg-muted/30 transition">
+                    <td className="py-3 px-4 font-semibold">
+                      <div className="font-bold text-foreground">{s.name}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">{s.nisn}</div>
+                    </td>
+                    <td className="py-3 px-3 font-bold">{s.class}</td>
+                    <td className="py-3 px-3 text-center">
+                      <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border">
+                        <button
+                          onClick={() => handleSetTodayStatus(s.id, "hadir")}
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
+                            s.today === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          HADIR
+                        </button>
+                        <button
+                          onClick={() => handleSetTodayStatus(s.id, "izin")}
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
+                            s.today === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          IZIN
+                        </button>
+                        <button
+                          onClick={() => handleSetTodayStatus(s.id, "sakit")}
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
+                            s.today === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          SAKIT
+                        </button>
+                        <button
+                          onClick={() => handleSetTodayStatus(s.id, "alpa")}
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
+                            s.today === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          ALPA
+                        </button>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{effHadir}</td>
+                    <td className="py-3 px-3 text-center font-mono">{effIzin}</td>
+                    <td className="py-3 px-3 text-center font-mono">{effSakit}</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-red-600">{effAlpa}</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-primary text-sm">{effPct}%</td>
+                    <td className="py-3 px-4 text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`h-7 text-[11px] font-bold gap-1 border-purple-500/40 ${
+                          s.today !== "hadir" ? "bg-purple-600 text-white hover:bg-purple-700 font-extrabold shadow-xs" : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
+                        }`}
+                        onClick={() => handleSendWaPresensiAlert(s)}
+                      >
+                        <Send className="h-3 w-3" /> WA Alert Ortu
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </CardContent>
       </Card>
 
-      {/* 🖨️ MODAL PRATINJAU & CETAK REKAP PRESENSI PDF */}
+      {/* 🖨️ MODAL PRATINJAU & CETAK REKAP PRESENSI PDF (DENGAN LOGO RESMI SEKOLAH) */}
       <Dialog open={isPrintPresensiOpen} onOpenChange={setIsPrintPresensiOpen}>
         <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
           <DialogHeader className="border-b border-border pb-3">
@@ -2060,14 +2543,19 @@ function KehadiranSiswa() {
             </DialogDescription>
           </DialogHeader>
 
-          {/* DOKUMEN RESMI REKAP PRESENSI (LEMBAR KERTAS) */}
+          {/* DOKUMEN RESMI REKAP PRESENSI (LEMBAR KERTAS CETAK DENGAN LOGO SEKOLAH) */}
           <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
-            {/* Kop Resmi */}
-            <div className="text-center border-b-2 border-slate-900 pb-3">
-              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
-              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
-              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
-              <div className="mt-2 py-1 bg-emerald-800 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
+            {/* Kop Resmi dengan 1 Logo Sekolah Official */}
+            <div className="border-b-2 border-slate-900 pb-3">
+              <div className="flex items-center gap-4 mb-2">
+                <img src="/logomts.png" alt="Logo MTsN 2 Cilacap" className="h-14 w-14 object-contain shrink-0" />
+                <div className="text-center flex-1 pr-14">
+                  <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+                  <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+                  <div className="text-[10px] text-slate-600">Jl. Raya Sindangbarang KM.4 Karangpucung Kode Pos 53255</div>
+                </div>
+              </div>
+              <div className="py-1 bg-emerald-800 text-white font-extrabold text-xs text-center uppercase tracking-widest rounded-xs">
                 REKAPITULASI PRESENSI KEHADIRAN SISWA BULANAN
               </div>
             </div>
@@ -2076,10 +2564,10 @@ function KehadiranSiswa() {
             <div className="flex justify-between items-center text-xs font-medium text-slate-800 bg-slate-50 p-3 rounded-md border border-slate-200">
               <div>Rombongan Belajar: <strong className="text-emerald-900 font-bold">{selectedClass}</strong></div>
               <div>Bulan / Periode: <strong>{selectedMonth}</strong></div>
-              <div>Tahun Ajaran: <strong>2025/2026 Ganjil</strong></div>
+              <div>Tahun Ajaran: <strong>2026/2027 Ganjil</strong></div>
             </div>
 
-            {/* Tabel Matriks Presensi */}
+            {/* Tabel Matriks Presensi Resmi */}
             <div className="overflow-x-auto">
               <table className="w-full text-[11px] border-collapse border border-slate-300">
                 <thead>
@@ -2095,18 +2583,27 @@ function KehadiranSiswa() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAttendance.map((s, idx) => (
-                    <tr key={s.id} className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="border border-slate-300 p-2 text-center font-mono">{idx + 1}</td>
-                      <td className="border border-slate-300 p-2 font-mono">{s.nisn}</td>
-                      <td className="border border-slate-300 p-2 font-bold">{s.name}</td>
-                      <td className="border border-slate-300 p-2 text-center font-mono font-bold text-emerald-800">{s.hadir}</td>
-                      <td className="border border-slate-300 p-2 text-center font-mono">{s.izin}</td>
-                      <td className="border border-slate-300 p-2 text-center font-mono">{s.sakit}</td>
-                      <td className="border border-slate-300 p-2 text-center font-mono text-red-700 font-bold">{s.alpa}</td>
-                      <td className="border border-slate-300 p-2 text-center font-mono font-bold text-slate-950">{s.pct}%</td>
-                    </tr>
-                  ))}
+                  {filteredAttendance.map((s, idx) => {
+                    const effHadir = s.hadir + (s.today === "hadir" ? 1 : 0);
+                    const effIzin = s.izin + (s.today === "izin" ? 1 : 0);
+                    const effSakit = s.sakit + (s.today === "sakit" ? 1 : 0);
+                    const effAlpa = s.alpa + (s.today === "alpa" ? 1 : 0);
+                    const totDays = effHadir + effIzin + effSakit + effAlpa || 1;
+                    const effPct = Math.round((effHadir / totDays) * 1000) / 10;
+
+                    return (
+                      <tr key={s.id} className="border-b border-slate-200 hover:bg-slate-50">
+                        <td className="border border-slate-300 p-2 text-center font-mono">{idx + 1}</td>
+                        <td className="border border-slate-300 p-2 font-mono">{s.nisn}</td>
+                        <td className="border border-slate-300 p-2 font-bold">{s.name}</td>
+                        <td className="border border-slate-300 p-2 text-center font-mono font-bold text-emerald-800">{effHadir}</td>
+                        <td className="border border-slate-300 p-2 text-center font-mono">{effIzin}</td>
+                        <td className="border border-slate-300 p-2 text-center font-mono">{effSakit}</td>
+                        <td className="border border-slate-300 p-2 text-center font-mono text-red-700 font-bold">{effAlpa}</td>
+                        <td className="border border-slate-300 p-2 text-center font-mono font-bold text-slate-950">{effPct}%</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -2118,7 +2615,7 @@ function KehadiranSiswa() {
                 <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
               </div>
               <div className="text-center space-y-8">
-                <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
+                <div>Cilacap, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}<br />Kepala MTsN 2 Cilacap</div>
                 <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
               </div>
             </div>
@@ -2413,11 +2910,16 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
 
           {/* DOKUMEN RESMI JADWAL KBM (LEMBAR KERTAS) */}
           <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
-            {/* Kop Resmi */}
-            <div className="text-center border-b-2 border-slate-900 pb-3">
-              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
-              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
-              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+            {/* Kop Resmi (1 Logo Sekolah) */}
+            <div className="border-b-2 border-slate-900 pb-3">
+              <div className="flex items-center gap-4 mb-2">
+                <img src="/logomts.png" alt="Logo MTsN 2 Cilacap" className="h-14 w-14 object-contain shrink-0" />
+                <div className="text-center flex-1 pr-14">
+                  <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+                  <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+                  <div className="text-[10px] text-slate-600">Jl. Raya Sindangbarang KM.4 Karangpucung Kode Pos 53255</div>
+                </div>
+              </div>
               <div className="mt-2 py-1 bg-blue-900 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
                 JADWAL PELAJARAN KBM MADRASAH (SEMESTER GANJIL)
               </div>
@@ -2517,17 +3019,31 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
     { name: "Dra. Hj. Siti Rahmah, M.Pd", time: "5 mnt lalu", text: "Wa'alaikumsalam Fairuz, boleh berupa rekaman audio MP3 atau video MP4 ya." }
   ]);
   const [presensiDone, setPresensiDone] = useState(false);
+  const [isTeacherPresensiOpen, setIsTeacherPresensiOpen] = useState(false);
+  const [sessionStudents, setSessionStudents] = useState([
+    { id: "s1", nisn: "0081928371", name: "Ahmad Fauzi", status: "hadir" },
+    { id: "s2", nisn: "0081928372", name: "Fatimah Az-Zahra", status: "hadir" },
+    { id: "s3", nisn: "0081928373", name: "Muhammad Rizky", status: "hadir" },
+    { id: "s4", nisn: "0081928374", name: "Siti Nurhaliza", status: "hadir" },
+    { id: "s5", nisn: "0081928375", name: "Budi Santoso", status: "hadir" },
+  ]);
 
-  const mapelList = [
-    { code: "AGM-01", name: "Al-Quran Hadits", category: "Keagamaan", teacher: "Dra. Hj. Siti Rahmah, M.Pd", icon: "📖" },
-    { code: "AGM-02", name: "Akidah Akhlak", category: "Keagamaan", teacher: "Ust. Abdul Halim, S.Ag", icon: "🕌" },
-    { code: "AGM-03", name: "Fiqih", category: "Keagamaan", teacher: "Dra. Hj. Siti Rahmah, M.Pd", icon: "⚖️" },
-    { code: "AGM-04", name: "Sejarah Kebudayaan Islam", category: "Keagamaan", teacher: "Drs. KH. Mahmud Ridwan", icon: "🏛️" },
-    { code: "AGM-05", name: "Bahasa Arab", category: "Keagamaan", teacher: "Ustadzah Nurul Hidayah, S.Pd.I", icon: "🗣️" },
-    { code: "UMM-01", name: "Matematika", category: "Umum", teacher: "Bapak Hendra Wijaya, M.Sc", icon: "📐" },
-    { code: "UMM-02", name: "Ilmu Pengetahuan Alam", category: "Umum", teacher: "Ibu Ratna Dewi, M.Pd", icon: "🔬" },
-    { code: "UMM-06", name: "Informatika & Coding", category: "Umum", teacher: "H. Ahmad Syukri, S.Kom", icon: "💻" }
-  ];
+  const handleSetStudentStatus = (id: string, st: string) => {
+    setSessionStudents((prev) => prev.map((s) => (s.id === id ? { ...s, status: st } : s)));
+  };
+
+  const handleMarkAllSessionHadir = () => {
+    setSessionStudents((prev) => prev.map((s) => ({ ...s, status: "hadir" })));
+    toast.success("⚡ Seluruh siswa kelas ini ditandai HADIR untuk sesi KBM ini!");
+  };
+
+  const handleSaveSessionPresensi = () => {
+    setPresensiDone(true);
+    setIsTeacherPresensiOpen(false);
+    toast.success(`✅ Presensi Tatap Muka Sesi KBM (${selectedMapel} - Pertemuan ${selectedPertemuan}) Berhasil Disimpan Guru!`);
+  };
+
+  const mapelList = INITIAL_MASTER_MAPEL;
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2565,23 +3081,120 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
           <CardContent className="space-y-6">
 
             {/* Presensi Section */}
-            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="font-bold text-sm text-foreground">✋ Presensi Kehadiran Pertemuan {selectedPertemuan}</div>
-                <div className="text-xs text-muted-foreground">Silakan klik tombol di samping untuk mencatat kehadiran Anda hari ini.</div>
+            {isSiswa ? (
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="font-bold text-sm text-foreground flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Presensi Kehadiran Pertemuan {selectedPertemuan}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Status Kehadiran Hari Ini: <span className="font-bold text-emerald-600 dark:text-emerald-400">HADIR (Terhubung ke Kalender Presensi Siswa)</span>
+                  </div>
+                </div>
+                <Badge className="bg-emerald-600 text-white font-bold py-1 px-3">
+                  ✅ TERVERIFIKASI KALENDER SISWA
+                </Badge>
               </div>
-              <Button
-                size="sm"
-                disabled={presensiDone}
-                className={presensiDone ? "bg-emerald-600 text-white" : "bg-primary text-primary-foreground"}
-                onClick={() => {
-                  setPresensiDone(true);
-                  toast.success("Presensi berhasil dicatat! Anda dinyatakan HADIR.");
-                }}
-              >
-                {presensiDone ? "✅ Presensi Hadir Terdaftar" : "Isi Presensi Hadir"}
-              </Button>
-            </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="font-bold text-sm text-foreground flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-primary" /> Presensi Sesi KBM Pertemuan {selectedPertemuan}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {presensiDone
+                      ? " Presensi tatap muka pertemuan ini telah diisi & disesuaikan oleh Guru Mapel."
+                      : "⚡ Ter-sync otomatis dari Presensi Harian Pagi (30 Hadir, 1 Sakit, 1 Izin). Klik tombol di samping jika ingin menyesuaikan siswa."}
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className={presensiDone ? "bg-emerald-600 text-white font-bold gap-1.5" : "bg-primary text-primary-foreground font-bold gap-1.5"}
+                  onClick={() => setIsTeacherPresensiOpen(true)}
+                >
+                  <UserCheck className="h-4 w-4" />
+                  {presensiDone ? "✅ Presensi Sesi Terdaftar (Edit)" : "🔍 Lihat / Sesuaikan Presensi Jam Ini"}
+                </Button>
+              </div>
+            )}
+
+            {/* Modal Dialog Presensi Tatap Muka Sesi KBM (Guru) */}
+            <Dialog open={isTeacherPresensiOpen} onOpenChange={setIsTeacherPresensiOpen}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-base font-bold">
+                    <UserCheck className="h-5 w-5 text-primary" />
+                    Presensi Tatap Muka Sesi KBM - {selectedMapel} (Pertemuan {selectedPertemuan})
+                  </DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Tandai kehadiran siswa kelas pada jam tatap muka KBM ini secara cepat.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 py-2">
+                  <div className="flex items-center justify-between bg-muted/50 p-2.5 rounded-lg border border-border">
+                    <span className="text-xs font-bold text-muted-foreground">Status Kehadiran Siswa Sesi KBM</span>
+                    <Button size="sm" variant="outline" className="text-xs font-bold gap-1" onClick={handleMarkAllSessionHadir}>
+                      ⚡ Tandai Semua Hadir
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {sessionStudents.map((st) => (
+                      <div key={st.id} className="flex items-center justify-between p-2.5 rounded-lg bg-card border border-border/80 text-xs">
+                        <div>
+                          <div className="font-bold text-foreground">{st.name}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">NISN: {st.nisn}</div>
+                        </div>
+                        <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border">
+                          <button
+                            onClick={() => handleSetStudentStatus(st.id, "hadir")}
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
+                              st.status === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            HADIR
+                          </button>
+                          <button
+                            onClick={() => handleSetStudentStatus(st.id, "izin")}
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
+                              st.status === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            IZIN
+                          </button>
+                          <button
+                            onClick={() => handleSetStudentStatus(st.id, "sakit")}
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
+                              st.status === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            SAKIT
+                          </button>
+                          <button
+                            onClick={() => handleSetStudentStatus(st.id, "alpa")}
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
+                              st.status === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            ALPA
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button variant="outline" size="sm" onClick={() => setIsTeacherPresensiOpen(false)}>
+                    Batal
+                  </Button>
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5" onClick={handleSaveSessionPresensi}>
+                    💾 Simpan Presensi Sesi KBM
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* Media & Modul Tabs */}
             <Tabs defaultValue="modul" className="space-y-4">
@@ -2807,31 +3420,38 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
     );
   }
 
-  const [mapelsStateList, setMapelsStateList] = useState([
-    { code: "AGM-01", name: "Al-Quran Hadits", category: "Keagamaan", teacher: "Dra. Hj. Siti Rahmah, M.Pd", icon: "📖", jp: 2, kkm: 75, status: "Aktif" },
-    { code: "AGM-02", name: "Akidah Akhlak", category: "Keagamaan", teacher: "Ust. Abdul Halim, S.Ag", icon: "🕌", jp: 2, kkm: 75, status: "Aktif" },
-    { code: "AGM-03", name: "Fiqih", category: "Keagamaan", teacher: "Dra. Hj. Siti Rahmah, M.Pd", icon: "⚖️", jp: 2, kkm: 75, status: "Aktif" },
-    { code: "AGM-04", name: "Sejarah Kebudayaan Islam", category: "Keagamaan", teacher: "Drs. KH. Mahmud Ridwan", icon: "🏛️", jp: 2, kkm: 75, status: "Aktif" },
-    { code: "AGM-05", name: "Bahasa Arab", category: "Keagamaan", teacher: "Ustadzah Nurul Hidayah, S.Pd.I", icon: "🗣️", jp: 3, kkm: 75, status: "Aktif" },
-    { code: "UMM-01", name: "Matematika", category: "Umum", teacher: "Bapak Hendra Wijaya, M.Sc", icon: "📐", jp: 4, kkm: 75, status: "Aktif" },
-    { code: "UMM-02", name: "Ilmu Pengetahuan Alam", category: "Umum", teacher: "Ibu Ratna Dewi, M.Pd", icon: "🔬", jp: 4, kkm: 75, status: "Aktif" },
-    { code: "UMM-06", name: "Informatika & Coding", category: "Umum", teacher: "H. Ahmad Syukri, S.Kom", icon: "💻", jp: 2, kkm: 75, status: "Aktif" }
-  ]);
+  const [mapelsStateList, setMapelsStateList] = useState(
+    INITIAL_MASTER_MAPEL.map((m) => ({
+      code: m.code,
+      name: m.name,
+      category: m.category,
+      teacher: m.teacher || "Dra. Hj. Siti Rahmah, M.Pd",
+      icon: m.icon || "📖",
+      jp: parseInt(m.jp) || 2,
+      kkm: 75,
+      status: "Aktif",
+    }))
+  );
 
   useEffect(() => {
     MysqlDataService.getSubjects().then((res) => {
-      if (res && res.length > 0) {
+      if (res && res.length >= 5) {
         setMapelsStateList(
-          res.map((r) => ({
-            code: r.code,
-            name: r.name,
-            category: r.category || "Keagamaan",
-            teacher: r.teacher_name,
-            icon: r.icon || "📖",
-            jp: r.jp || 2,
-            kkm: r.kkm || 75,
-            status: r.status || "Aktif",
-          }))
+          res.map((r) => {
+            const masterMatch = INITIAL_MASTER_MAPEL.find(
+              (m) => m.code === r.code || m.name.toLowerCase() === r.name?.toLowerCase()
+            );
+            return {
+              code: r.code,
+              name: r.name,
+              category: ((r.category && r.category !== "Keagamaan" ? r.category : masterMatch?.category) || "Keagamaan") as any,
+              teacher: r.teacher_name || masterMatch?.teacher || "Guru Pengampu",
+              icon: r.icon || masterMatch?.icon || "📖",
+              jp: r.jp || (masterMatch ? parseInt(masterMatch.jp) : 2),
+              kkm: r.kkm || 75,
+              status: r.status || "Aktif",
+            };
+          })
         );
       }
     });
@@ -2904,7 +3524,7 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
               ...item,
               code: formattedCode,
               name: inputName,
-              category: inputCategory,
+              category: inputCategory as any,
               teacher: inputTeacher,
               jp: Number(inputJp),
               kkm: Number(inputKkm),
@@ -2922,7 +3542,7 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
       const newObj = {
         code: formattedCode,
         name: inputName,
-        category: inputCategory,
+        category: inputCategory as any,
         teacher: inputTeacher,
         icon: iconStr,
         jp: Number(inputJp),
@@ -3885,7 +4505,54 @@ function Nilai({ activeRole }: { activeRole?: string }) {
             Ringkasan nilai per kelas di MTsN 2 Cilacap. Klik <strong>Detail</strong> pada tiap kelas untuk melihat nilai mapel, nama guru pengampu, dan status KKM.
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => toast.success("Laporan Rekap Nilai Madrasah (PDF) berhasil diunduh!")}>
+        <Button
+          size="sm"
+          className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shadow-xs"
+          onClick={() => {
+            const printWindow = window.open("", "_blank");
+            if (!printWindow) {
+              toast.success("📄 Rekap Nilai PDF Madrasah (.txt/pdf) berhasil diunduh!");
+              return;
+            }
+            printWindow.document.write(`
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <title>Laporan Rekapitulasi Nilai Madrasah MTsN 2 Cilacap</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 30px; color: #1e293b; }
+                    .header { text-align: center; border-bottom: 3px double #0f766e; padding-bottom: 12px; margin-bottom: 20px; }
+                    .header h2 { margin: 0; font-size: 18px; text-transform: uppercase; color: #0f766e; }
+                    .header h3 { margin: 4px 0 0 0; font-size: 16px; font-weight: normal; }
+                    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 20px; }
+                    th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+                    th { bg-color: #f1f5f9; text-align: center; }
+                  </style>
+                </head>
+                <body>
+                  <div class="header">
+                    <h2>KEMENTERIAN AGAMA REPUBLIK INDONESIA</h2>
+                    <h3>MADRASAH TSANAWIYAH NEGERI 2 CILACAP</h3>
+                    <p>Laporan Rekapitulasi Nilai Hasil Belajar Siswa TP 2026/2027 Ganjil</p>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr><th>No</th><th>Rombel</th><th>Wali Kelas</th><th>Jumlah Siswa</th><th>Rata-rata Nilai</th><th>Status KKM</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>1</td><td>Kelas VII A</td><td>Ustadzah Nurul Hidayah, S.Pd.I</td><td>34 Siswa</td><td>86.4</td><td>100% Tuntas</td></tr>
+                      <tr><td>2</td><td>Kelas VIII A</td><td>Dra. Hj. Siti Rahmah, M.Pd</td><td>32 Siswa</td><td>88.2</td><td>100% Tuntas</td></tr>
+                      <tr><td>3</td><td>Kelas IX A</td><td>Bapak Hendra Wijaya, M.Sc</td><td>35 Siswa</td><td>87.5</td><td>100% Tuntas</td></tr>
+                    </tbody>
+                  </table>
+                </body>
+              </html>
+            `);
+            printWindow.document.close();
+            setTimeout(() => printWindow.print(), 400);
+            toast.success("📄 Laporan Rekap Nilai PDF Madrasah siap dicetak!");
+          }}
+        >
           <Download className="h-3.5 w-3.5 mr-1" /> Unduh Rekap Nilai PDF
         </Button>
       </div>
@@ -4029,11 +4696,16 @@ function Nilai({ activeRole }: { activeRole?: string }) {
 
           {/* DOKUMEN RESMI E-RAPOR (LEMBAR KERTAS) */}
           <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
-            {/* Kop Resmi */}
-            <div className="text-center border-b-2 border-slate-900 pb-3">
-              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
-              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
-              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+            {/* Kop Resmi (1 Logo Sekolah) */}
+            <div className="border-b-2 border-slate-900 pb-3">
+              <div className="flex items-center gap-4 mb-2">
+                <img src="/logomts.png" alt="Logo MTsN 2 Cilacap" className="h-14 w-14 object-contain shrink-0" />
+                <div className="text-center flex-1 pr-14">
+                  <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+                  <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+                  <div className="text-[10px] text-slate-600">Jl. Raya Sindangbarang KM.4 Karangpucung Kode Pos 53255</div>
+                </div>
+              </div>
               <div className="mt-2 py-1 bg-blue-900 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
                 LAPORAN HASIL BELAJAR (E-RAPOR KURIKULUM MERDEKA)
               </div>
@@ -4128,9 +4800,9 @@ function Progress({ activeRole }: { activeRole?: string }) {
   const studentsList8A = [
     { name: "Ahmad Fauzi", nis: "0081928371", cp: 95, tugas: 92, status: "Mutqin & Tuntas" },
     { name: "Anisa Rahma", nis: "0081928372", cp: 90, tugas: 88, status: "Tuntas KKM" },
-    { name: "Fatimah Az-Zahra", nis: "0081928373", cp: 96, tugas: 94, status: "Mumtaz" },
-    { name: "Muhammad Fairuz", nis: "0081928374", cp: 98, tugas: 95, status: "Mumtaz" },
-    { name: "Zaid bin Tsabit", nis: "0081928375", cp: 100, tugas: 98, status: "Mumtaz" },
+    { name: "Fatimah Az-Zahra", nis: "0081928373", cp: 96, tugas: 94, status: "Sangat Baik" },
+    { name: "Muhammad Fairuz", nis: "0081928374", cp: 98, tugas: 95, status: "Sangat Baik" },
+    { name: "Zaid bin Tsabit", nis: "0081928375", cp: 100, tugas: 98, status: "Sangat Baik" },
     { name: "Aisyah Humaira", nis: "0081928376", cp: 94, tugas: 91, status: "Tuntas KKM" },
   ];
 
@@ -4711,53 +5383,212 @@ function ApresiasiGuru({ activeRole }: { activeRole?: string }) {
 
 /* ---------- 5. Agenda Madrasah & Kalender Akademik ---------- */
 function AgendaKalender({ activeRole }: { activeRole?: string }) {
+  const {
+    currentMonthName,
+    currentYear,
+    formattedTime,
+    currentDayName,
+    goToNextMonth,
+    goToPrevMonth,
+    goToToday,
+    getCalendarDays,
+  } = useRealtimeCalendar();
+
   const [filterCategory, setFilterCategory] = useState("semua");
   const [isAddAgendaOpen, setIsAddAgendaOpen] = useState(false);
 
   const [agendaList, setAgendaList] = useState([
-    { id: "1", title: "CBT Ujian Tengah Semester (PTS) Ganjil", category: "cbt", date: "10 - 15 Agustus 2026", desc: "Evaluasi Komputer Pertemuan 1-9 untuk seluruh rombel.", badge: "🔴 Ujian CBT" },
-    { id: "2", title: "Rapat Pleno Evaluasi KBM & Kurikulum", category: "rapat", date: "18 Agustus 2026", desc: "Rapat koordinasi Kepala Madrasah, Waka, dan Guru Pengampu.", badge: "🟣 Rapat Dinas" },
-    { id: "3", title: "Gelar Karya Projek Kokurikuler P5 (Batik Cilacap)", category: "kokurikuler", date: "25 Agustus 2026", desc: "Pameran karya seni batik dan produk wirausaha siswa.", badge: "🟡 Kokurikuler P5" },
-    { id: "4", title: "Hari Libur Nasional & Peringatan HUT RI", category: "libur", date: "17 Agustus 2026", desc: "Upacara bendera & Kegiatan peringatan kemerdekaan.", badge: "🟢 Libur Resmi" },
-    { id: "5", title: "Bimbingan Sertifikasi Tahfidz Juz 30", category: "kbm", date: "01 - 05 September 2026", desc: "Murojaah massal & ujian kelayakan tajwid siswa.", badge: "🔵 KBM Efektif" },
+    { id: "1", title: "CBT Ujian Tengah Semester (PTS) Ganjil", category: "cbt", date: "15 Agustus 2026", rawDate: "2026-08-15", desc: "Evaluasi Komputer Pertemuan 1-9 untuk seluruh rombel.", badge: "🔴 Ujian CBT" },
+    { id: "2", title: "Rapat Pleno Evaluasi KBM & Kurikulum", category: "rapat", date: "18 Agustus 2026", rawDate: "2026-08-18", desc: "Rapat koordinasi Kepala Madrasah, Waka, dan Guru Pengampu.", badge: "🟣 Rapat Dinas" },
+    { id: "3", title: "Gelar Karya Projek Kokurikuler P5 (Batik Cilacap)", category: "kokurikuler", date: "25 Agustus 2026", rawDate: "2026-08-25", desc: "Pameran karya seni batik dan produk wirausaha siswa.", badge: "🟡 Kokurikuler P5" },
+    { id: "4", title: "Hari Libur Nasional & Peringatan HUT RI", category: "libur", date: "17 Agustus 2026", rawDate: "2026-08-17", desc: "Upacara bendera & Kegiatan peringatan kemerdekaan.", badge: "🟢 Libur Resmi" },
+    { id: "5", title: "Bimbingan Sertifikasi Tahfidz Juz 30", category: "kbm", date: "01 September 2026", rawDate: "2026-09-01", desc: "Murojaah massal & ujian kelayakan tajwid siswa.", badge: "🔵 KBM Efektif" },
   ]);
 
   const [title, setTitle] = useState("");
   const [cat, setCat] = useState("cbt");
-  const [dateStr, setDateStr] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [desc, setDesc] = useState("");
+
+  const calendarDays = getCalendarDays();
 
   const handleAddAgenda = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !dateStr) return toast.error("Harap lengkapi judul dan tanggal agenda!");
-    const badge = cat === "cbt" ? "🔴 Ujian CBT" : cat === "rapat" ? "🟣 Rapat Dinas" : cat === "libur" ? "🟢 Libur Resmi" : "🔵 KBM Efektif";
-    setAgendaList([{ id: String(Date.now()), title, category: cat, date: dateStr, desc, badge }, ...agendaList]);
-    toast.success(`Agenda ${title} berhasil ditambahkan ke Kalender Akademik!`);
+    if (!title || !selectedDate) return toast.error("Harap lengkapi judul dan tanggal agenda!");
+    
+    const dateObj = new Date(selectedDate);
+    const dateFormatted = dateObj.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    const badge = cat === "cbt" ? "🔴 Ujian CBT" : cat === "rapat" ? "🟣 Rapat Dinas" : cat === "kokurikuler" ? "🟡 Kokurikuler P5" : cat === "libur" ? "🟢 Libur Resmi" : "🔵 KBM Efektif";
+    
+    const newEntry = {
+      id: String(Date.now()),
+      title,
+      category: cat,
+      date: dateFormatted,
+      rawDate: selectedDate,
+      desc,
+      badge
+    };
+
+    setAgendaList([newEntry, ...agendaList]);
+    toast.success(`Agenda "${title}" berhasil ditambahkan ke Kalender Akademik!`);
     setIsAddAgendaOpen(false);
     setTitle("");
-    setDateStr("");
     setDesc("");
   };
 
   const filteredAgenda = filterCategory === "semua" ? agendaList : agendaList.filter((a) => a.category === filterCategory);
+
+  const openAddModalForDate = (dateString: string) => {
+    setSelectedDate(dateString);
+    setIsAddAgendaOpen(true);
+  };
 
   return (
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-primary" /> Agenda Madrasah & Kalender Akademik
+            <CalendarDays className="h-6 w-6 text-primary" /> Agenda Madrasah & Kalender Akademik Realtime
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Jadwal kegiatan madrasah, pelaksanaan ujian CBT, rapat dinas guru, dan hari efektif KBM MTsN 2 Cilacap.
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddAgendaOpen(true)}>
-          + Tambah Agenda Baru
-        </Button>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-primary/10 text-primary font-mono font-bold text-xs gap-1.5 py-1.5 px-3">
+            <Clock className="h-3.5 w-3.5 animate-pulse text-primary" /> {formattedTime}
+          </Badge>
+          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddAgendaOpen(true)}>
+            + Tambah Agenda Baru
+          </Button>
+        </div>
       </div>
 
-      {/* Filter Kategori */}
+      {/* Grid Kalender Realtime Bulanan */}
+      <Card className="border-border shadow-sm mb-6 bg-card">
+        <CardHeader className="p-4 border-b border-border bg-muted/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            <div>
+              <CardTitle className="text-base font-bold">
+                Kalender Akademik: {currentMonthName} {currentYear}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Klik pada sel tanggal untuk menambah agenda atau melihat kegiatan yang dijadwalkan.
+              </CardDescription>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-background rounded-lg p-0.5 border border-border">
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-xs" onClick={goToPrevMonth} title="Bulan Sebelumnya">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="font-bold text-xs px-2 font-mono">{currentMonthName} {currentYear}</span>
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-xs" onClick={goToNextMonth} title="Bulan Berikutnya">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button size="sm" variant="secondary" className="h-8 text-xs font-semibold px-3" onClick={goToToday}>
+              Hari Ini
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-4">
+          <div className="border border-border rounded-xl p-3 bg-muted/10 overflow-x-auto">
+            <div className="min-w-[650px]">
+              {/* Header Nama Hari */}
+              <div className="grid grid-cols-7 gap-1.5 text-center font-bold text-xs text-muted-foreground pb-2.5 border-b border-border">
+                <div>Senin</div>
+                <div>Selasa</div>
+                <div>Rabu</div>
+                <div>Kamis</div>
+                <div>Jumat</div>
+                <div>Sabtu</div>
+                <div className="text-red-500">Minggu</div>
+              </div>
+
+              {/* Grid Sel Tanggal Kalender */}
+              <div className="grid grid-cols-7 gap-1.5 pt-2">
+                {calendarDays.map((cell, idx) => {
+                  const dayEvents = agendaList.filter((a) => {
+                    if (a.rawDate === cell.dateString) return true;
+                    // Check date string match fallback
+                    return false;
+                  });
+
+                  const isFiltered = filterCategory !== "semua";
+                  const visibleEvents = isFiltered ? dayEvents.filter((a) => a.category === filterCategory) : dayEvents;
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => openAddModalForDate(cell.dateString)}
+                      className={`min-h-[85px] p-1.5 rounded-lg border flex flex-col justify-between transition cursor-pointer hover:border-primary/60 hover:shadow-xs ${
+                        !cell.isCurrentMonth
+                          ? "bg-muted/20 border-border/40 text-muted-foreground/40 opacity-40"
+                          : cell.isWeekend
+                          ? "bg-muted/40 border-border/60 text-muted-foreground"
+                          : "bg-background border-border"
+                      } ${
+                        cell.isToday
+                          ? "ring-2 ring-primary shadow-sm bg-primary/10 dark:bg-primary/20 font-bold"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-mono ${cell.isToday ? "font-extrabold text-primary" : ""}`}>
+                          {cell.dayNumber}
+                        </span>
+                        {cell.isToday && (
+                          <Badge className="bg-primary text-primary-foreground text-[9px] px-1 py-0 h-4 font-bold">
+                            Hari Ini
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Display Events in Date Cell */}
+                      <div className="space-y-1 my-1 overflow-hidden">
+                        {visibleEvents.map((ev) => (
+                          <div
+                            key={ev.id}
+                            title={`${ev.badge}: ${ev.title}`}
+                            className={`text-[9px] font-semibold truncate px-1 py-0.5 rounded border leading-tight ${
+                              ev.category === "cbt"
+                                ? "bg-red-500/15 text-red-600 border-red-500/30"
+                                : ev.category === "rapat"
+                                ? "bg-purple-500/15 text-purple-600 border-purple-500/30"
+                                : ev.category === "kokurikuler"
+                                ? "bg-amber-500/15 text-amber-600 border-amber-500/30"
+                                : ev.category === "libur"
+                                ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                                : "bg-blue-500/15 text-blue-600 border-blue-500/30"
+                            }`}
+                          >
+                            {ev.title}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="text-[8px] text-muted-foreground text-right opacity-60 hover:opacity-100">
+                        + Tambah
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filter Kategori & Daftar Agenda */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold">Daftar Agenda & Kegiatan ({filteredAgenda.length})</h2>
+      </div>
+
       <div className="flex items-center gap-2 mb-6 border-b border-border pb-3 overflow-x-auto">
         <span className="text-xs font-bold text-muted-foreground mr-1">Filter Kategori:</span>
         {[
@@ -4780,7 +5611,7 @@ function AgendaKalender({ activeRole }: { activeRole?: string }) {
         ))}
       </div>
 
-      {/* Grid Events */}
+      {/* Grid Cards Agenda */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAgenda.map((a) => (
           <Card key={a.id} className="border-border hover:border-primary/40 transition shadow-xs">
@@ -4828,8 +5659,8 @@ function AgendaKalender({ activeRole }: { activeRole?: string }) {
               </div>
 
               <div>
-                <Label className="text-xs font-semibold">Tanggal / Periode</Label>
-                <Input placeholder="Contoh: 15-18 Agustus 2026" value={dateStr} onChange={(e) => setDateStr(e.target.value)} required className="mt-1 text-xs" />
+                <Label className="text-xs font-semibold">Tanggal Kegiatan</Label>
+                <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required className="mt-1 text-xs" />
               </div>
             </div>
 
@@ -4854,12 +5685,12 @@ function LaporanTahfidzEksekutif({ activeRole }: { activeRole?: string }) {
   const [selectedJuz, setSelectedJuz] = useState("Juz 30");
 
   const tahfidzClassSummary = [
-    { class: "Kelas VII A", total: 32, mutqin: "28 Siswa (87.5%)", avgScore: 92.4, status: "Mumtaz", topStudent: "Ahmad Fauzi" },
-    { class: "Kelas VII B", total: 32, mutqin: "26 Siswa (81.2%)", avgScore: 89.8, status: "Jayyid Jiddan", topStudent: "Siti Nurhaliza" },
-    { class: "Kelas VIII A", total: 32, mutqin: "30 Siswa (93.7%)", avgScore: 95.1, status: "Mumtaz", topStudent: "Muhammad Rayhan" },
-    { class: "Kelas VIII B", total: 31, mutqin: "27 Siswa (87.0%)", avgScore: 91.2, status: "Mumtaz", topStudent: "Fatimah Az-Zahra" },
-    { class: "Kelas IX A", total: 32, mutqin: "32 Siswa (100%)", avgScore: 97.5, status: "Mumtaz", topStudent: "Zaid bin Tsabit" },
-    { class: "Kelas IX B", total: 31, mutqin: "29 Siswa (93.5%)", avgScore: 93.8, status: "Mumtaz", topStudent: "Aisyah Humaira" },
+    { class: "Kelas VII A", total: 32, mutqin: "28 Siswa (87.5%)", avgScore: 92.4, status: "Sangat Baik", topStudent: "Ahmad Fauzi" },
+    { class: "Kelas VII B", total: 32, mutqin: "26 Siswa (81.2%)", avgScore: 89.8, status: "Baik", topStudent: "Siti Nurhaliza" },
+    { class: "Kelas VIII A", total: 32, mutqin: "30 Siswa (93.7%)", avgScore: 95.1, status: "Sangat Baik", topStudent: "Muhammad Rayhan" },
+    { class: "Kelas VIII B", total: 31, mutqin: "27 Siswa (87.0%)", avgScore: 91.2, status: "Sangat Baik", topStudent: "Fatimah Az-Zahra" },
+    { class: "Kelas IX A", total: 32, mutqin: "32 Siswa (100%)", avgScore: 97.5, status: "Sangat Baik", topStudent: "Zaid bin Tsabit" },
+    { class: "Kelas IX B", total: 31, mutqin: "29 Siswa (93.5%)", avgScore: 93.8, status: "Sangat Baik", topStudent: "Aisyah Humaira" },
   ];
 
   return (
@@ -4915,7 +5746,7 @@ function LaporanTahfidzEksekutif({ activeRole }: { activeRole?: string }) {
             </div>
             <div>
               <div className="text-xs text-muted-foreground font-semibold">Rata-rata Nilai Tajwid</div>
-              <div className="text-2xl font-extrabold font-mono text-blue-500">93.3 (Mumtaz)</div>
+              <div className="text-2xl font-extrabold font-mono text-blue-500">93.3 (Sangat Baik)</div>
             </div>
           </CardContent>
         </Card>
@@ -5158,11 +5989,16 @@ function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
 
           {/* DOKUMEN RESMI PORTOFOLIO P5 (LEMBAR KERTAS) */}
           <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
-            {/* Kop Resmi */}
-            <div className="text-center border-b-2 border-slate-900 pb-3">
-              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
-              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
-              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+            {/* Kop Resmi (1 Logo Sekolah) */}
+            <div className="border-b-2 border-slate-900 pb-3">
+              <div className="flex items-center gap-4 mb-2">
+                <img src="/logomts.png" alt="Logo MTsN 2 Cilacap" className="h-14 w-14 object-contain shrink-0" />
+                <div className="text-center flex-1 pr-14">
+                  <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+                  <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+                  <div className="text-[10px] text-slate-600">Jl. Raya Sindangbarang KM.4 Karangpucung Kode Pos 53255</div>
+                </div>
+              </div>
               <div className="mt-2 py-1 bg-purple-800 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
                 PORTOFOLIO CAPAIAN PROJEK P5 & PPA-RA
               </div>
@@ -5463,11 +6299,16 @@ function Tahfidz() {
 
           {/* DOKUMEN RESMI KARTU MUROJAAH TAHFIDZ (LEMBAR KERTAS) */}
           <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
-            {/* Kop Resmi Madrasah */}
-            <div className="text-center border-b-2 border-slate-900 pb-3">
-              <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
-              <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
-              <div className="text-[10px] text-slate-600">Jl. KH. Sufyan Tsauri No. 02 Karangmangu, Kroya, Cilacap • Telp (0282) 492102</div>
+            {/* Kop Resmi Madrasah (1 Logo Sekolah) */}
+            <div className="border-b-2 border-slate-900 pb-3">
+              <div className="flex items-center gap-4 mb-2">
+                <img src="/logomts.png" alt="Logo MTsN 2 Cilacap" className="h-14 w-14 object-contain shrink-0" />
+                <div className="text-center flex-1 pr-14">
+                  <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+                  <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
+                  <div className="text-[10px] text-slate-600">Jl. Raya Sindangbarang KM.4 Karangpucung Kode Pos 53255</div>
+                </div>
+              </div>
               <div className="mt-2 py-1 bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
                 KARTU SETORAN HAFALAN & MUROJAAH TAHFIDZ AL-QUR'AN
               </div>
@@ -6477,10 +7318,22 @@ function Perpustakaan() {
   });
 
   const [isOpen, setIsOpen] = useState(false);
+  const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [tag, setTag] = useState("PDF Modul");
   const [mediaUrl, setMediaUrl] = useState("");
   const [desc, setDesc] = useState("");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      if (!title) {
+        setTitle(file.name.replace(/\.[^/.]+$/, ""));
+      }
+    }
+  };
 
   const saveListToStorage = (list: any[]) => {
     setBukuList(list);
@@ -6494,13 +7347,24 @@ function Perpustakaan() {
   const handleAddBook = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return toast.error("Judul modul / media tidak boleh kosong!");
+    if (uploadMode === "file" && !selectedFile && !mediaUrl.trim()) {
+      return toast.error("Harap pilih berkas dari perangkat Anda!");
+    }
 
     const isVideo = tag === "Video YouTube" || tag === "Video G-Drive" || tag === "Video Tutorial";
     const isAudio = tag === "Audio Murottal";
     const isPdf = tag === "PDF Modul" || tag === "E-Book";
 
     let mediaType = isVideo ? "video" : isAudio ? "audio" : "pdf";
-    let defaultUrl = mediaUrl.trim() || (isPdf ? "https://pdfobject.com/pdf/sample.pdf" : "https://www.youtube.com/watch?v=kYJzXv0h0bU");
+    let defaultUrl = "";
+    let fileSizeStr = "12.5 MB";
+
+    if (uploadMode === "file" && selectedFile) {
+      defaultUrl = URL.createObjectURL(selectedFile);
+      fileSizeStr = `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`;
+    } else {
+      defaultUrl = mediaUrl.trim() || (isPdf ? "https://pdfobject.com/pdf/sample.pdf" : "https://www.youtube.com/watch?v=kYJzXv0h0bU");
+    }
 
     const parsed = parseMediaUrl(defaultUrl);
 
@@ -6509,23 +7373,24 @@ function Perpustakaan() {
       t: title.trim(),
       icon: isVideo ? Video : isAudio ? Headphones : FileText,
       tag,
-      size: parsed.provider === "youtube" ? "YouTube HD" : parsed.provider === "gdrive" ? "Google Drive" : "15.0 MB",
+      size: uploadMode === "file" && selectedFile ? fileSizeStr : parsed.provider === "youtube" ? "YouTube HD" : parsed.provider === "gdrive" ? "Google Drive" : "15.0 MB",
       type: mediaType,
       url: defaultUrl,
       videoUrl: defaultUrl,
       audioUrl: defaultUrl,
       desc: desc.trim() || "Modul & media pembelajaran digital MTsN 2 Cilacap.",
-      provider: parsed.provider,
+      provider: uploadMode === "file" ? "direct" : parsed.provider,
     };
 
     const updated = [newItem, ...bukuList];
     saveListToStorage(updated);
 
-    toast.success(`🎉 Berkas "${title}" (${tag}) berhasil ditambahkan ke E-Library!`);
+    toast.success(`🎉 Berkas "${title}" (${tag}) berhasil ${uploadMode === "file" ? "diunggah" : "ditautkan"} ke E-Library!`);
     setIsOpen(false);
     setTitle("");
     setMediaUrl("");
     setDesc("");
+    setSelectedFile(null);
   };
 
   const filtered = bukuList.filter((b: any) => filterTag === "Semua" || b.tag === filterTag);
@@ -6845,6 +7710,60 @@ function Perpustakaan() {
           </DialogHeader>
 
           <form onSubmit={handleAddBook} className="space-y-4 py-2">
+            {/* Mode Switcher */}
+            <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+              <Button
+                type="button"
+                size="sm"
+                variant={uploadMode === "file" ? "default" : "ghost"}
+                className="flex-1 text-xs font-bold gap-1"
+                onClick={() => setUploadMode("file")}
+              >
+                <Upload className="h-3.5 w-3.5" /> 📤 Unggah Berkas Fisik
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={uploadMode === "url" ? "default" : "ghost"}
+                className="flex-1 text-xs font-bold gap-1"
+                onClick={() => setUploadMode("url")}
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> 🔗 Tautkan Link/URL Online
+              </Button>
+            </div>
+
+            {uploadMode === "file" ? (
+              <div>
+                <Label className="text-xs font-semibold">Pilih Berkas PDF / Audio / Video dari Perangkat</Label>
+                <div className="mt-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-primary/30 rounded-xl bg-primary/5 hover:bg-primary/10 transition cursor-pointer text-center space-y-2 relative">
+                  <input
+                    type="file"
+                    accept=".pdf,.mp4,.mp3,.epub,.docx"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handleFileChange}
+                  />
+                  <Upload className="h-8 w-8 text-primary animate-pulse" />
+                  <div className="text-xs font-bold text-foreground">
+                    {selectedFile ? `📄 ${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)` : "Klik atau seret file PDF / Media di sini"}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Format yang didukung: PDF, MP4, MP3, EPUB (Maks. 100 MB)</p>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Label className="text-xs font-semibold">Tautan Link Media / PDF (YouTube, Google Drive, URL)</Label>
+                <Input
+                  placeholder="https://www.youtube.com/watch?v=... ATAU https://drive.google.com/file/d/... ATAU URL PDF"
+                  value={mediaUrl}
+                  onChange={(e) => setMediaUrl(e.target.value)}
+                  className="mt-1 text-xs font-mono"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  *Mendukung link YouTube (`watch?v=...`), Google Drive (`/file/d/.../view`), dan link PDF.
+                </p>
+              </div>
+            )}
+
             <div>
               <Label className="text-xs font-semibold">Judul Berkas / Media / Modul</Label>
               <Input
@@ -6869,19 +7788,6 @@ function Perpustakaan() {
                 <option value="Audio Murottal">🎧 Audio Murottal</option>
                 <option value="E-Book">📚 E-Book Digital</option>
               </select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Tautan Link Media / PDF (YouTube, Google Drive, URL)</Label>
-              <Input
-                placeholder="https://www.youtube.com/watch?v=... ATAU https://drive.google.com/file/d/... ATAU URL PDF"
-                value={mediaUrl}
-                onChange={(e) => setMediaUrl(e.target.value)}
-                className="mt-1 text-xs font-mono"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1">
-                *Mendukung link YouTube (`watch?v=...`), Google Drive (`/file/d/.../view`), dan link PDF.
-              </p>
             </div>
 
             <div>
@@ -7063,54 +7969,135 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
   const [newMapel, setNewMapel] = useState("Al-Quran Hadits");
   const [newJenjang, setNewJenjang] = useState("Kelas VIII");
 
+  const isWaka = activeRole === "waka";
+  const isWakaOrAdmin = activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik" || activeRole === "kamad";
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("semua");
+
+  const handleToggleVerification = (id: string, currentStatus: string, title: string) => {
+    setModulList((prev) =>
+      prev.map((m) => {
+        if (m.id === id) {
+          const nextStatus = currentStatus === "Terverifikasi Waka" ? "Perlu Verifikasi Waka" : "Terverifikasi Waka";
+          if (nextStatus === "Terverifikasi Waka") {
+            toast.success(`✅ Berhasil! Modul Ajar "${title}" resmi diverifikasi dan disahkan oleh Waka Kurikulum.`);
+          } else {
+            toast.info(`ℹ️ Status Modul Ajar "${title}" dikembalikan ke Menunggu Verifikasi.`);
+          }
+          return { ...m, status: nextStatus };
+        }
+        return m;
+      })
+    );
+  };
+
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle) return toast.error("Harap isi judul modul ajar!");
     setModulList([
-      { id: String(Date.now()), title: newTitle, mapel: newMapel, jenjang: newJenjang, teacher: "Dra. Hj. Siti Rahmah, M.Pd", size: "3.8 MB", date: "Hari ini", status: "Terverifikasi Waka" },
+      { id: String(Date.now()), title: newTitle, mapel: newMapel, jenjang: newJenjang, teacher: userProfile?.full_name || "Dra. Hj. Siti Rahmah, M.Pd", size: "3.8 MB", date: "Hari ini", status: isWakaOrAdmin ? "Terverifikasi Waka" : "Perlu Verifikasi Waka" },
       ...modulList,
     ]);
-    toast.success(`Modul Ajar PDF "${newTitle}" berhasil diunggah!`);
+    toast.success(`Modul Ajar PDF "${newTitle}" berhasil diunggah! ${!isWakaOrAdmin ? "(Menunggu Verifikasi Waka)" : ""}`);
     setIsUploadOpen(false);
     setNewTitle("");
   };
 
-  const filteredModul = selectedJenjang === "semua" ? modulList : modulList.filter((m) => m.jenjang === selectedJenjang);
+  const filteredModul = modulList.filter((m) => {
+    const matchJenjang = selectedJenjang === "semua" || m.jenjang === selectedJenjang;
+    const matchStatus =
+      selectedStatusFilter === "semua" ||
+      (selectedStatusFilter === "pending" && m.status !== "Terverifikasi Waka") ||
+      (selectedStatusFilter === "verified" && m.status === "Terverifikasi Waka");
+    return matchJenjang && matchStatus;
+  });
+
+  const verifiedCount = modulList.filter((m) => m.status === "Terverifikasi Waka").length;
+  const pendingCount = modulList.length - verifiedCount;
 
   return (
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FileText className="h-6 w-6 text-emerald-500" /> Perangkat Ajar & Modul Ajar PDF {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs">📍 Kelas {rawClass}</Badge>}
+            <FileText className="h-6 w-6 text-emerald-500" />
+            {isWaka ? "Verifikasi & Validasi Modul Ajar PDF" : "Perangkat Ajar & Modul Ajar PDF"}{" "}
+            {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs">📍 Kelas {rawClass}</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isSiswa
+            {isWaka
+              ? "Portal verifikasi, evaluasi kesesuaian CP/ATP, dan pengesahan Modul Ajar PDF Kurikulum Merdeka yang diunggah Guru Pengampu."
+              : isSiswa
               ? `Akses berkas PDF Modul Ajar Kurikulum Merdeka khusus Kelas ${rawClass} MTsN 2 Cilacap`
               : "Unggah dan kelola file PDF Modul Ajar Kurikulum Merdeka per mata pelajaran & jenjang (Kelas VII, VIII, IX)."}
           </p>
         </div>
         {!isSiswa && (
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setIsUploadOpen(true)}>
+          <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs" onClick={() => setIsUploadOpen(true)}>
             <Upload className="h-3.5 w-3.5 mr-1" /> + Unggah Modul Ajar PDF
           </Button>
         )}
       </div>
 
-      {/* Filter Jenjang */}
-      <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
-        <span className="text-xs font-bold text-muted-foreground mr-1">Filter Jenjang:</span>
-        {["semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((j) => (
-          <Button
-            key={j}
-            size="sm"
-            variant={selectedJenjang === j ? "default" : "outline"}
-            className="text-xs font-bold"
-            onClick={() => setSelectedJenjang(j)}
-          >
-            {j === "semua" ? "Semua Jenjang" : j}
-          </Button>
-        ))}
+      {/* Metrics Summary for Waka */}
+      {isWakaOrAdmin && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="p-4 rounded-xl border border-border bg-card space-y-1 shadow-xs">
+            <div className="text-xs text-muted-foreground font-medium">Total Modul Diunggah</div>
+            <div className="text-2xl font-black text-foreground">{modulList.length} Berkas</div>
+            <div className="text-[11px] text-muted-foreground">Persyaratan Kurikulum Merdeka</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-1 shadow-xs cursor-pointer hover:bg-amber-500/10 transition" onClick={() => setSelectedStatusFilter("pending")}>
+            <div className="text-xs text-amber-700 dark:text-amber-400 font-bold flex items-center justify-between">
+              <span>Menunggu Verifikasi Waka</span>
+              <span>⏳</span>
+            </div>
+            <div className="text-2xl font-black text-amber-700 dark:text-amber-400">{pendingCount} Modul</div>
+            <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Perlu peninjauan & pengesahan</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-1 shadow-xs cursor-pointer hover:bg-emerald-500/10 transition" onClick={() => setSelectedStatusFilter("verified")}>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-between">
+              <span>Resmi Terverifikasi Waka</span>
+              <span>✅</span>
+            </div>
+            <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{verifiedCount} Modul</div>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Siap digunakan KBM & e-Rapor</div>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 border-b border-border pb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-muted-foreground mr-1">Filter Jenjang:</span>
+          {["semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((j) => (
+            <Button
+              key={j}
+              size="sm"
+              variant={selectedJenjang === j ? "default" : "outline"}
+              className="text-xs font-bold"
+              onClick={() => setSelectedJenjang(j)}
+            >
+              {j === "semua" ? "Semua Jenjang" : j}
+            </Button>
+          ))}
+        </div>
+
+        {isWakaOrAdmin && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground">Status Verifikasi:</span>
+            <select
+              className="bg-background text-xs font-bold text-foreground border border-input rounded-md px-2.5 py-1 focus:outline-hidden cursor-pointer"
+              value={selectedStatusFilter}
+              onChange={(e) => setSelectedStatusFilter(e.target.value)}
+            >
+              <option value="semua">Semua Status</option>
+              <option value="pending">⏳ Menunggu Verifikasi Waka</option>
+              <option value="verified">✅ Terverifikasi Waka</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {/* List Modul Ajar PDF */}
@@ -7126,15 +8113,36 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
                   <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 border-emerald-500/30">
                     {m.jenjang} • {m.mapel}
                   </Badge>
-                  <Badge className="bg-emerald-600 text-white text-[10px]">{m.status}</Badge>
+                  <Badge className={m.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-[10px] font-bold" : "bg-amber-500 text-white text-[10px] font-bold"}>
+                    {m.status === "Terverifikasi Waka" ? "✓ Terverifikasi Waka" : "⏳ Perlu Verifikasi"}
+                  </Badge>
                 </div>
                 <div className="font-bold text-sm text-foreground mt-1 truncate">{m.title}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">Penyusun: {m.teacher}</div>
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border">
-                  <span>Ukuran File: <strong>{m.size}</strong></span>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10" onClick={() => toast.success(`Mengunduh file PDF ${m.title}...`)}>
-                    <Download className="h-3 w-3 mr-1" /> Unduh PDF
-                  </Button>
+
+                <div className="flex flex-wrap items-center justify-between text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border gap-2">
+                  <span>Ukuran: <strong>{m.size}</strong></span>
+                  
+                  <div className="flex items-center gap-1.5">
+                    {isWakaOrAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`h-7 text-xs font-bold ${
+                          m.status === "Terverifikasi Waka"
+                            ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
+                            : "bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold shadow-xs"
+                        }`}
+                        onClick={() => handleToggleVerification(m.id, m.status, m.title)}
+                      >
+                        {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan & Verifikasi"}
+                      </Button>
+                    )}
+
+                    <Button size="sm" variant="ghost" className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10" onClick={() => toast.success(`Mengunduh file PDF ${m.title}...`)}>
+                      <Download className="h-3 w-3 mr-1" /> Unduh PDF
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -7161,12 +8169,11 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
               <div>
                 <Label className="text-xs font-semibold">Mata Pelajaran</Label>
                 <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={newMapel} onChange={(e) => setNewMapel(e.target.value)}>
-                  <option value="Al-Quran Hadits">Al-Quran Hadits</option>
-                  <option value="Fiqih">Fiqih</option>
-                  <option value="Akidah Akhlak">Akidah Akhlak</option>
-                  <option value="Bahasa Arab">Bahasa Arab</option>
-                  <option value="Matematika">Matematika</option>
-                  <option value="IPA">IPA</option>
+                  {INITIAL_MASTER_MAPEL.map((m) => (
+                    <option key={m.code} value={m.name}>
+                      {m.name} ({m.code})
+                    </option>
+                  ))}
                 </select>
               </div>
 

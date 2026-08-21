@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Sparkles,
   CheckCircle2,
@@ -7,6 +7,15 @@ import {
   Building2,
   BarChart3,
   KeyRound,
+  BookOpen,
+  Search,
+  Filter,
+  Trash2,
+  Edit,
+  GraduationCap,
+  Layers,
+  Users,
+  PencilLine,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,17 +31,19 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { INITIAL_MASTER_MAPEL, MasterMapelItem } from "@/services/masterMapelService";
 
 export function SiakadMasterDataModule() {
   const [activeTab, setActiveTab] = useState<string>("pengampu");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
+  const [selectedMapelForPerangkat, setSelectedMapelForPerangkat] = useState<MasterMapelItem | null>(null);
   const [selectedRombelJadwal, setSelectedRombelJadwal] = useState<string | null>(null);
 
   // Stepper Header Config (6 Kategori Master Data LMS MTsN 2 Cilacap)
   const steps = [
     { key: "ta", title: "Tahun Ajaran & Periode" },
-    { key: "mapel", title: "Katalog Mapel" },
+    { key: "mapel", title: "Mata Pelajaran" },
     { key: "kelas_rombel", title: "Kelas & Rombel" },
     { key: "pengampu", title: "Matriks Pengampu" },
     { key: "sarana", title: "Sarana & Ruang" },
@@ -106,55 +117,183 @@ export function SiakadMasterDataModule() {
     setNewRuangName("");
   };
 
-  // Master Mapel (Persistent, Dibuat 1x)
-  const [masterMapel] = useState([
-    { code: "AGM-01", name: "Al-Quran Hadits", category: "Keagamaan" },
-    { code: "AGM-02", name: "Akidah Akhlak", category: "Keagamaan" },
-    { code: "AGM-03", name: "Fiqih", category: "Keagamaan" },
-    { code: "AGM-04", name: "Sejarah Kebudayaan Islam", category: "Keagamaan" },
-    { code: "AGM-05", name: "Bahasa Arab", category: "Keagamaan" },
-    { code: "UMM-01", name: "Matematika", category: "Umum" },
-    { code: "UMM-02", name: "Ilmu Pengetahuan Alam (IPA)", category: "Umum" },
-    { code: "UMM-03", name: "Bahasa Indonesia", category: "Umum" },
-    { code: "UMM-04", name: "Bahasa Inggris", category: "Umum" },
-    { code: "UMM-06", name: "Informatika & Coding", category: "Umum" },
-  ]);
+  // Dynamic Master Mapel Catalog (Persistent Single Source of Truth)
+  const [masterMapel, setMasterMapel] = useState<MasterMapelItem[]>(INITIAL_MASTER_MAPEL);
 
-  // Hierarki Kelas (Tingkat) -> Rombel -> Jadwal Pelajaran
-  const [kelasTingkat] = useState([
+  // Modal State Form Tambah Mapel Baru
+  const [isAddMapelOpen, setIsAddMapelOpen] = useState(false);
+  const [newMapelCode, setNewMapelCode] = useState("");
+  const [newMapelName, setNewMapelName] = useState("");
+  const [newMapelCategory, setNewMapelCategory] = useState("Keagamaan");
+  const [newMapelJp, setNewMapelJp] = useState("2 JP");
+  const [newMapelTarget, setNewMapelTarget] = useState("Semua Tingkat");
+
+  const [mapelFilterCategory, setMapelFilterCategory] = useState("ALL");
+  const [mapelSearchQuery, setMapelSearchQuery] = useState("");
+
+  const handleCreateMapel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMapelName.trim()) return toast.error("Harap isi nama mata pelajaran!");
+
+    const code = newMapelCode.trim() || `MAPEL-${Date.now().toString().slice(-4)}`;
+    const newItem = {
+      code,
+      name: newMapelName.trim(),
+      category: newMapelCategory as any,
+      jp: newMapelJp,
+      target: newMapelTarget,
+    };
+
+    setMasterMapel((prev) => [newItem, ...prev]);
+    toast.success(`🎉 Mata Pelajaran "${newMapelName}" (${code}) berhasil ditambahkan ke Katalog SIAKAD!`);
+    setIsAddMapelOpen(false);
+    setNewMapelCode("");
+    setNewMapelName("");
+  };
+
+  const handleDeleteMapel = (code: string, name: string) => {
+    setMasterMapel((prev) => prev.filter((m) => m.code !== code));
+    toast.success(`🗑️ Mapel "${name}" (${code}) berhasil dihapus dari Katalog.`);
+  };
+
+  const filteredMapelList = useMemo(() => {
+    return masterMapel.filter((m) => {
+      const matchQuery =
+        m.name.toLowerCase().includes(mapelSearchQuery.toLowerCase()) ||
+        m.code.toLowerCase().includes(mapelSearchQuery.toLowerCase());
+      const matchCat = mapelFilterCategory === "ALL" || m.category === mapelFilterCategory;
+      return matchQuery && matchCat;
+    });
+  }, [masterMapel, mapelSearchQuery, mapelFilterCategory]);
+
+  // Dynamic Hierarki Kelas (Tingkat) -> Rombel (Editable & Addable)
+  const [kelasTingkat, setKelasTingkat] = useState([
     {
       tingkat: "Tingkat VII (Kelas 7)",
       rombels: [
-        { id: "1", name: "VII A", wali: "Ustadzah Nurul Hidayah, S.Pd.I", siswaCount: 34 },
-        { id: "2", name: "VII B", wali: "Bpk. Slamet Riyadi, M.Pd", siswaCount: 35 },
+        { id: "r1", name: "VII A", wali: "Ustadzah Nurul Hidayah, S.Pd.I", siswaCount: 34 },
+        { id: "r2", name: "VII B", wali: "Bpk. Slamet Riyadi, M.Pd", siswaCount: 35 },
+        { id: "r3", name: "VII C", wali: "Ibu Maryati, S.Pd", siswaCount: 34 },
       ],
     },
     {
       tingkat: "Tingkat VIII (Kelas 8)",
       rombels: [
-        { id: "3", name: "VIII A", wali: "Dra. Hj. Siti Rahmah, M.Pd", siswaCount: 32 },
-        { id: "4", name: "VIII B", wali: "Ibu Maryati, S.Pd", siswaCount: 33 },
+        { id: "r4", name: "VIII A", wali: "Dra. Hj. Siti Rahmah, M.Pd", siswaCount: 32 },
+        { id: "r5", name: "VIII B", wali: "Ust. Ahmad Syukri, S.Kom", siswaCount: 33 },
+        { id: "r6", name: "VIII C", wali: "Ibu Ratna Dewi, M.Pd", siswaCount: 32 },
       ],
     },
     {
       tingkat: "Tingkat IX (Kelas 9)",
       rombels: [
-        { id: "5", name: "IX A", wali: "Bpk. Hendra Wijaya, M.Sc", siswaCount: 35 },
+        { id: "r7", name: "IX A", wali: "Bpk. Hendra Wijaya, M.Sc", siswaCount: 35 },
+        { id: "r8", name: "IX B", wali: "Ust. H. Mohammad Fathoni, M.Pd", siswaCount: 34 },
+        { id: "r9", name: "IX C", wali: "Bpk. Budi Santoso, M.Pd", siswaCount: 31 },
       ],
     },
   ]);
+
+  // Modal State Form Tambah & Edit Rombel
+  const [isAddRombelOpen, setIsAddRombelOpen] = useState(false);
+  const [newRombelTingkat, setNewRombelTingkat] = useState("Tingkat VII (Kelas 7)");
+  const [newRombelName, setNewRombelName] = useState("");
+  const [newRombelWali, setNewRombelWali] = useState("Ustadzah Nurul Hidayah, S.Pd.I");
+  const [newRombelSiswaCount, setNewRombelSiswaCount] = useState(34);
+
+  const [isEditRombelOpen, setIsEditRombelOpen] = useState(false);
+  const [editingRombel, setEditingRombel] = useState<{
+    id: string;
+    tingkat: string;
+    name: string;
+    wali: string;
+    siswaCount: number;
+  } | null>(null);
+
+  const handleCreateRombel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRombelName.trim()) return toast.error("Harap isi nama Rombel!");
+
+    const newRombel = {
+      id: `r-${Date.now()}`,
+      name: newRombelName.trim(),
+      wali: newRombelWali,
+      siswaCount: Number(newRombelSiswaCount),
+    };
+
+    setKelasTingkat((prev) =>
+      prev.map((kt) => {
+        if (kt.tingkat === newRombelTingkat) {
+          return { ...kt, rombels: [...kt.rombels, newRombel] };
+        }
+        return kt;
+      })
+    );
+
+    toast.success(`🎉 Rombel "${newRombelName}" berhasil ditambahkan ke ${newRombelTingkat}!`);
+    setIsAddRombelOpen(false);
+    setNewRombelName("");
+  };
+
+  const handleOpenEditRombel = (tingkatTitle: string, rombel: { id: string; name: string; wali: string; siswaCount: number }) => {
+    setEditingRombel({
+      id: rombel.id,
+      tingkat: tingkatTitle,
+      name: rombel.name,
+      wali: rombel.wali,
+      siswaCount: rombel.siswaCount,
+    });
+    setIsEditRombelOpen(true);
+  };
+
+  const handleSaveEditRombel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRombel || !editingRombel.name.trim()) return toast.error("Harap isi nama Rombel!");
+
+    setKelasTingkat((prev) =>
+      prev.map((kt) => {
+        if (kt.tingkat === editingRombel.tingkat) {
+          return {
+            ...kt,
+            rombels: kt.rombels.map((r) =>
+              r.id === editingRombel.id
+                ? { ...r, name: editingRombel.name.trim(), wali: editingRombel.wali, siswaCount: Number(editingRombel.siswaCount) }
+                : r
+            ),
+          };
+        }
+        return kt;
+      })
+    );
+
+    toast.success(`💾 Data Rombel "${editingRombel.name}" berhasil diperbarui!`);
+    setIsEditRombelOpen(false);
+    setEditingRombel(null);
+  };
+
+  const handleDeleteRombel = (tingkatTitle: string, rombelId: string, rombelName: string) => {
+    setKelasTingkat((prev) =>
+      prev.map((kt) => {
+        if (kt.tingkat === tingkatTitle) {
+          return { ...kt, rombels: kt.rombels.filter((r) => r.id !== rombelId) };
+        }
+        return kt;
+      })
+    );
+    toast.success(`🗑️ Rombel "${rombelName}" berhasil dihapus.`);
+  };
 
   // Sample Data Jadwal di Dalam Rombel
   const rombelJadwalMap: Record<string, { hari: string; jam: string; mapel: string; guru: string }[]> = {
     "VII A": [
       { hari: "Senin", jam: "07.30 - 09.00", mapel: "Bahasa Arab", guru: "Ustadzah Nurul Hidayah, S.Pd.I" },
-      { hari: "Senin", jam: "09.15 - 10.45", mapel: "Informatika & Coding", guru: "H. Ahmad Syukri, S.Kom" },
+      { hari: "Senin", jam: "09.15 - 10.45", mapel: "Informatika & Coding AI", guru: "H. Ahmad Syukri, S.Kom" },
       { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Bahasa Indonesia", guru: "Bpk. Slamet Riyadi, M.Pd" },
     ],
     "VIII A": [
       { hari: "Senin", jam: "07.30 - 09.00", mapel: "Matematika", guru: "Bpk. Hendra Wijaya, M.Sc" },
-      { hari: "Senin", jam: "09.15 - 10.45", mapel: "Fiqih", guru: "Dra. Hj. Siti Rahmah, M.Pd" },
-      { hari: "Selasa", jam: "07.30 - 09.00", mapel: "IPA Terpadu", guru: "Ibu Ratna Dewi, M.Pd" },
+      { hari: "Senin", jam: "09.15 - 10.45", mapel: "Fiqih Kebangsaan", guru: "Dra. Hj. Siti Rahmah, M.Pd" },
+      { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Ilmu Pengetahuan Alam (IPA)", guru: "Ibu Ratna Dewi, M.Pd" },
     ],
     "IX A": [
       { hari: "Rabu", jam: "07.30 - 09.00", mapel: "Al-Quran Hadits", guru: "Dra. Hj. Siti Rahmah, M.Pd" },
@@ -164,11 +303,11 @@ export function SiakadMasterDataModule() {
   // TABEL PALING PENTING: Pengampu Mata Pelajaran (Guru + Mapel + Rombel)
   const [pengampuList, setPengampuList] = useState([
     { id: "1", guru: "Bpk. Hendra Wijaya, M.Sc", mapel: "Matematika", rombel: "VIII A", jam: "4 JP / mgg" },
-    { id: "2", guru: "Dra. Hj. Siti Rahmah, M.Pd", mapel: "Fiqih", rombel: "VIII A", jam: "2 JP / mgg" },
+    { id: "2", guru: "Dra. Hj. Siti Rahmah, M.Pd", mapel: "Fiqih Kebangsaan", rombel: "VIII A", jam: "2 JP / mgg" },
     { id: "3", guru: "Dra. Hj. Siti Rahmah, M.Pd", mapel: "Al-Quran Hadits", rombel: "IX A", jam: "2 JP / mgg" },
     { id: "4", guru: "Ustadzah Nurul Hidayah, S.Pd.I", mapel: "Bahasa Arab", rombel: "VII A", jam: "3 JP / mgg" },
     { id: "5", guru: "Ibu Ratna Dewi, M.Pd", mapel: "Ilmu Pengetahuan Alam (IPA)", rombel: "VIII A", jam: "4 JP / mgg" },
-    { id: "6", guru: "H. Ahmad Syukri, S.Kom", mapel: "Informatika & Coding", rombel: "VII A", jam: "2 JP / mgg" },
+    { id: "6", guru: "H. Ahmad Syukri, S.Kom", mapel: "Informatika & Coding AI", rombel: "VII A", jam: "2 JP / mgg" },
   ]);
 
   const [isAddPengampuOpen, setIsAddPengampuOpen] = useState(false);
@@ -178,105 +317,113 @@ export function SiakadMasterDataModule() {
 
   const handleAddPengampu = (e: React.FormEvent) => {
     e.preventDefault();
-    setPengampuList([
-      {
-        id: String(Date.now()),
-        guru: selectedGuru,
-        mapel: selectedMapel,
-        rombel: selectedRombel,
-        jam: "3 JP / mgg",
-      },
-      ...pengampuList,
-    ]);
-    toast.success(`Pengampu ${selectedGuru} -> ${selectedMapel} (${selectedRombel}) berhasil ditambahkan!`);
+    const newP = {
+      id: String(Date.now()),
+      guru: selectedGuru,
+      mapel: selectedMapel,
+      rombel: selectedRombel,
+      jam: "2 JP / mgg",
+    };
+
+    setPengampuList([newP, ...pengampuList]);
+    toast.success(`🎉 Sukses menetapkan ${selectedGuru} sebagai Pengampu ${selectedMapel} di Rombel ${selectedRombel}!`);
     setIsAddPengampuOpen(false);
   };
 
   const handleRunWizard = () => {
-    toast.success("SIAKAD Workflow: Kenaikan Kelas Massal & Plotting Tahun Ajaran 2027/2028 Berhasil!");
+    toast.success("🚀 SIAKAD Workflow Selesai! TA 2027/2028 Ganjil Resmi Berjalan.");
     setIsWizardOpen(false);
     setWizardStep(1);
   };
 
   return (
-    <>
-      {/* Banner Utama SIAKAD */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border border-primary/25 mb-6 relative overflow-hidden">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="flex items-center gap-2">
-              <Badge className="bg-primary text-primary-foreground font-bold text-xs">SIAKAD ENGINE</Badge>
-              <span className="text-xs text-muted-foreground font-mono">SIM Akademik MTsN 2 Cilacap</span>
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-foreground mt-1">
-              Struktur Akademik Terintegrasi
-            </h1>
-            <p className="text-xs text-muted-foreground max-w-2xl mt-1 leading-relaxed">
-              Model terpusat di mana Admin menyusun struktur <strong className="text-foreground">Tahun Ajaran → Semester → Kelas (Tingkat) → Rombel → Pengampu → Jadwal Pelajaran Rombel</strong>. Guru & Siswa otomatis terhubung tanpa perlu menginput kelas ulang tiap tahun.
-            </p>
+    <div className="space-y-6 text-foreground font-sans">
+      {/* HEADER UTAMA MODUL SIAKAD */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-extrabold tracking-tight">Akademik Madrasah</h1>
+            <Badge variant="outline" className="border-primary/40 text-primary font-mono text-[10px]">
+              MTsN 2 Cilacap
+            </Badge>
           </div>
-          <Button size="sm" className="gap-2 font-bold bg-primary text-primary-foreground shadow-md shrink-0" onClick={() => setIsWizardOpen(true)}>
-            <Sparkles className="h-4 w-4" /> ⚡ Workflow Tahun Ajaran Baru
+          <p className="text-xs text-muted-foreground mt-1">
+            Pusat konfigurasi Akademik, Katalog Mapel, Matriks Pengampu Guru, dan Alokasi Jadwal Rombel.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-sm"
+            onClick={() => setIsWizardOpen(true)}
+          >
+            <Sparkles className="h-4 w-4" /> Workflow TA Baru
           </Button>
         </div>
       </div>
 
-      {/* Stepper Flow Header Interactive */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6">
-        {steps.map((s, idx) => (
-          <div
-            key={s.key}
-            onClick={() => setActiveTab(s.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition shrink-0 ${
-              activeTab === s.key ? "bg-primary text-primary-foreground shadow-md" : "bg-card border border-border text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <div className={`h-5 w-5 rounded-full text-[10px] grid place-items-center font-bold ${activeTab === s.key ? "bg-white text-primary" : "bg-muted text-foreground"}`}>
-              {idx + 1}
-            </div>
-            <span>{s.title}</span>
-          </div>
-        ))}
+      {/* STEPPER NAVIGASI 6 KATEGORI MASTER DATA */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        {steps.map((step) => {
+          const isActive = activeTab === step.key;
+          return (
+            <button
+              key={step.key}
+              type="button"
+              onClick={() => setActiveTab(step.key)}
+              className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between h-20 ${
+                isActive
+                  ? "bg-primary text-primary-foreground border-primary font-bold shadow-sm"
+                  : "bg-card border-border hover:bg-muted/50 text-foreground"
+              }`}
+            >
+              <div className="text-[10px] uppercase font-mono opacity-80">Master Data</div>
+              <div className="text-xs font-extrabold leading-tight">{step.title}</div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* TAB 4: MATRIKS PENGAMPU MATA PELAJARAN (TABEL PALING PENTING) */}
+      {/* TAB 4: MATRIKS PENGAMPU GURU (PENGAMPU) */}
       {activeTab === "pengampu" && (
         <Card className="border-border shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
               <CardTitle className="text-base font-bold flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-primary" /> Matriks Guru Pengampu Mapel (Teaching Assignment)
+                <BarChart3 className="h-5 w-5 text-primary" /> Matriks Guru Pengampu Mata Pelajaran
               </CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                Tabel utama penentu otomatisasi LMS: Menghubungkan <strong className="text-foreground">Guru + Mapel + Rombel</strong> pada Tahun Ajaran Aktif.
+              <CardDescription className="text-xs">
+                Plotting alokasi Guru ke Mata Pelajaran & Rombel target. Tersinkron langsung ke Ruang Mengajar.
               </CardDescription>
             </div>
-            <Button size="sm" className="gap-1.5 text-xs font-bold" onClick={() => setIsAddPengampuOpen(true)}>
-              + Assign Guru Pengampu
+            <Button size="sm" className="text-xs font-bold gap-1.5 bg-primary text-primary-foreground" onClick={() => setIsAddPengampuOpen(true)}>
+              <Plus className="h-4 w-4" /> Plotting Pengampu Baru
             </Button>
           </CardHeader>
+
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="border-t border-border overflow-x-auto">
               <table className="w-full text-xs text-left">
-                <thead className="bg-muted/50 text-muted-foreground uppercase text-[10px] font-bold border-y border-border">
+                <thead className="bg-muted/40 text-muted-foreground font-semibold border-b border-border">
                   <tr>
+                    <th className="py-3 px-4 w-12">No</th>
                     <th className="py-3 px-4">Guru Pengampu</th>
                     <th className="py-3 px-4">Mata Pelajaran</th>
-                    <th className="py-3 px-4">Target Rombel</th>
-                    <th className="py-3 px-4">Beban Mengajar</th>
+                    <th className="py-3 px-4 text-center">Rombel Target</th>
+                    <th className="py-3 px-4">Alokasi Waktu</th>
                     <th className="py-3 px-4 text-center">Status LMS</th>
                     <th className="py-3 px-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {pengampuList.map((p) => (
+                  {pengampuList.map((p, idx) => (
                     <tr key={p.id} className="hover:bg-muted/30 transition">
+                      <td className="py-3 px-4 text-muted-foreground font-mono">{idx + 1}</td>
                       <td className="py-3 px-4 font-bold text-foreground">{p.guru}</td>
                       <td className="py-3 px-4 font-semibold text-primary">{p.mapel}</td>
-                      <td className="py-3 px-4">
-                        <Badge variant="outline" className="font-bold bg-primary/10 text-primary border-primary/20">
-                          Kelas {p.rombel}
-                        </Badge>
+                      <td className="py-3 px-4 text-center">
+                        <Badge variant="outline" className="font-mono font-bold text-xs">{p.rombel}</Badge>
                       </td>
                       <td className="py-3 px-4 font-mono text-muted-foreground">{p.jam}</td>
                       <td className="py-3 px-4 text-center">
@@ -344,15 +491,34 @@ export function SiakadMasterDataModule() {
         </Card>
       )}
 
-      {/* TAB 3: HIERARKI KELAS (TINGKAT) -> ROMBEL -> JADWAL PELAJARAN */}
+      {/* TAB 3: HIERARKI KELAS (TINGKAT) -> ROMBEL (ENHANCED & EDITABLE) */}
       {activeTab === "kelas_rombel" && (
         <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border shadow-xs">
+            <div>
+              <h2 className="text-base font-bold flex items-center gap-2 text-foreground">
+                <Layers className="h-5 w-5 text-primary" /> Master Data Kelas & Rombongan Belajar (Rombel)
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Pengelolaan struktur rombel per tingkat kelas, penetapan Wali Kelas, & kapasitas kuota siswa.
+              </p>
+            </div>
+
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground font-bold text-xs gap-1.5 shrink-0"
+              onClick={() => setIsAddRombelOpen(true)}
+            >
+              <Plus className="h-4 w-4" /> + Tambah Rombel Baru
+            </Button>
+          </div>
+
           {kelasTingkat.map((kt, i) => (
             <Card key={i} className="border-border shadow-xs">
               <CardHeader className="py-3 px-4 bg-muted/40 border-b border-border">
                 <CardTitle className="text-sm font-bold flex items-center justify-between">
                   <span>🏛️ {kt.tingkat}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono">{kt.rombels.length} Rombel</Badge>
+                  <Badge variant="outline" className="text-[10px] font-mono font-bold">{kt.rombels.length} Rombel Terdaftar</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4">
@@ -368,13 +534,32 @@ export function SiakadMasterDataModule() {
                       <div className="text-xs text-muted-foreground">
                         Wali Kelas: <span className="font-bold text-foreground">{r.wali}</span>
                       </div>
-                      <div className="pt-2 border-t border-border flex items-center gap-2">
+                      <div className="pt-2 border-t border-border flex items-center justify-between gap-2">
                         <Button variant="outline" size="sm" className="flex-1 text-xs font-bold gap-1" onClick={() => setSelectedRombelJadwal(r.name)}>
                           <CalendarClock className="h-3.5 w-3.5 text-primary" /> Jadwal Pelajaran
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-xs font-semibold" onClick={() => toast.info(`Roster Siswa Rombel ${r.name}`)}>
-                          👥 Siswa
-                        </Button>
+
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                            title="Edit Data Rombel"
+                            onClick={() => handleOpenEditRombel(kt.tingkat, r)}
+                          >
+                            <PencilLine className="h-3.5 w-3.5" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                            title="Hapus Rombel"
+                            onClick={() => handleDeleteRombel(kt.tingkat, r.id, r.name)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -385,25 +570,99 @@ export function SiakadMasterDataModule() {
         </div>
       )}
 
-      {/* TAB 2: KATALOG MAPEL (PERSISTEN) */}
+      {/* TAB 2: MATA PELAJARAN (MASTER DATA SAJA - APA YANG DIAJARMAN) */}
       {activeTab === "mapel" && (
-        <Card className="border-border shadow-xs">
-          <CardHeader>
-            <CardTitle className="text-base font-bold">Katalog Mata Pelajaran (Persisten)</CardTitle>
-            <CardDescription className="text-xs">
-              Mata pelajaran dibuat 1x saja dan berlaku secara permanen lintas tahun ajaran.
-            </CardDescription>
+        <Card className="border-border shadow-xs space-y-4">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+            <div>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" /> Master Data Mata Pelajaran
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Data master mata pelajaran resmi MTsN 2 Cilacap (Kode Mapel, Nama, Kelompok Rumpun, Alokasi JP, & Status Aktif).
+              </CardDescription>
+            </div>
+
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground font-bold text-xs gap-1.5 shrink-0"
+              onClick={() => setIsAddMapelOpen(true)}
+            >
+              <Plus className="h-4 w-4" /> + Tambah Mata Pelajaran
+            </Button>
           </CardHeader>
-          <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {masterMapel.map((m) => (
-              <div key={m.code} className="p-3 rounded-xl border border-border bg-card flex items-center justify-between">
-                <div>
-                  <div className="font-bold text-sm text-foreground">{m.name}</div>
-                  <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{m.code} • {m.category}</div>
-                </div>
-                <Badge variant="secondary" className="text-[10px] font-bold">Persisten</Badge>
+
+          <CardContent className="space-y-4">
+            {/* Filter & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-muted/30 p-3 rounded-xl border border-border">
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari Kode atau Nama Mapel..."
+                  value={mapelSearchQuery}
+                  onChange={(e) => setMapelSearchQuery(e.target.value)}
+                  className="pl-9 text-xs h-9 bg-card"
+                />
               </div>
-            ))}
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="text-xs text-muted-foreground font-semibold">Filter Rumpun:</span>
+                <select
+                  className="h-9 px-3 text-xs font-semibold rounded-lg border border-border bg-card text-foreground cursor-pointer"
+                  value={mapelFilterCategory}
+                  onChange={(e) => setMapelFilterCategory(e.target.value)}
+                >
+                  <option value="ALL">Semua Rumpun Kategori</option>
+                  <option value="Keagamaan">Rumpun Keagamaan</option>
+                  <option value="Umum">Rumpun Umum</option>
+                  <option value="Muatan Lokal">Muatan Lokal (Mulok)</option>
+                  <option value="Pengembangan Diri">Pengembangan Diri</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Grid Cards Mapel Master Data */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filteredMapelList.map((m) => (
+                <div key={m.code} className="p-4 rounded-xl border border-border bg-card flex flex-col justify-between space-y-3 hover:border-primary/40 transition">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+                        {m.code}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="text-[10px] font-bold">
+                          {m.category}
+                        </Badge>
+                        <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 text-[10px] font-bold">
+                          ✔ Aktif
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="font-extrabold text-sm text-foreground">{m.name}</div>
+                  </div>
+
+                  <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-foreground">{m.jp || "2 JP"}</span>
+                      <span>·</span>
+                      <span>{m.target || "Semua Tingkat"}</span>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteMapel(m.code, m.name)}
+                      title="Hapus Mapel"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -449,81 +708,35 @@ export function SiakadMasterDataModule() {
       {/* TAB 7: KKTP & SKEMA PENILAIAN */}
       {activeTab === "penilaian_config" && (
         <Card className="border-border shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <div>
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-amber-500" /> Kriteria KKTP & Konfigurasi Skema Penilaian
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Pengaturan batas KKM (75), pembobotan komponen nilai akhir, dan interval predikat huruf.
-              </CardDescription>
-            </div>
-            <Button size="sm" className="text-xs font-bold bg-amber-500 hover:bg-amber-600 text-black" onClick={() => toast.success("Pengaturan KKTP & Bobot Nilai Berhasil Disimpan!")}>
-              Simpan Konfigurasi
-            </Button>
+          <CardHeader>
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" /> Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Konfigurasi ambang batas KKM/KKTP dan bobot penilaian Kurikulum Merdeka.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="p-4 space-y-6">
-            {/* Form Setting Bobot & KKM */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div className="p-3.5 rounded-xl border border-border bg-card space-y-1">
-                <Label className="text-xs font-semibold">Batas KKM / KKTP</Label>
-                <Input defaultValue="75" className="font-mono text-base font-bold text-amber-600" />
-                <p className="text-[10px] text-muted-foreground">Batas ketuntasan minimal</p>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl border border-border bg-card space-y-1">
+                <div className="text-xs font-semibold text-muted-foreground">KKTP Standar Madrasah</div>
+                <div className="text-2xl font-black text-emerald-600">75.0</div>
+                <div className="text-[11px] text-muted-foreground">Batas Minimal Kelulusan TP</div>
               </div>
 
-              <div className="p-3.5 rounded-xl border border-border bg-card space-y-1">
-                <Label className="text-xs font-semibold">Bobot Formatif (F1-F3)</Label>
-                <Input defaultValue="40%" className="font-mono text-base font-bold text-emerald-600" />
-                <p className="text-[10px] text-muted-foreground">Asesmen proses harian</p>
+              <div className="p-4 rounded-xl border border-border bg-card space-y-1">
+                <div className="text-xs font-semibold text-muted-foreground">Bobot Formatif vs Sumatif</div>
+                <div className="text-2xl font-black text-primary">60% / 40%</div>
+                <div className="text-[11px] text-muted-foreground">Skema Bobot Nilai E-Rapor</div>
               </div>
 
-              <div className="p-3.5 rounded-xl border border-border bg-card space-y-1">
-                <Label className="text-xs font-semibold">Bobot Sumatif / Tugas</Label>
-                <Input defaultValue="30%" className="font-mono text-base font-bold text-blue-600" />
-                <p className="text-[10px] text-muted-foreground">Tugas & Ujian Bab</p>
-              </div>
-
-              <div className="p-3.5 rounded-xl border border-border bg-card space-y-1">
-                <Label className="text-xs font-semibold">Bobot CBT PAS/PAT</Label>
-                <Input defaultValue="30%" className="font-mono text-base font-bold text-purple-600" />
-                <p className="text-[10px] text-muted-foreground">Ujian Komputer Semester</p>
-              </div>
-            </div>
-
-            {/* Tabel Conversion Interval Predikat */}
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-foreground">Interval Predikat Nilai Capaian Siswa:</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex justify-between items-center">
-                  <div>
-                    <span className="font-bold text-emerald-700 dark:text-emerald-300">Predikat A</span>
-                    <div className="text-[11px] text-muted-foreground">Sangat Baik</div>
-                  </div>
-                  <Badge className="bg-emerald-600 text-white font-mono">90 - 100</Badge>
-                </div>
-
-                <div className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/10 flex justify-between items-center">
-                  <div>
-                    <span className="font-bold text-blue-700 dark:text-blue-300">Predikat B</span>
-                    <div className="text-[11px] text-muted-foreground">Baik</div>
-                  </div>
-                  <Badge className="bg-blue-600 text-white font-mono">80 - 89</Badge>
-                </div>
-
-                <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 flex justify-between items-center">
-                  <div>
-                    <span className="font-bold text-amber-700 dark:text-amber-300">Predikat C</span>
-                    <div className="text-[11px] text-muted-foreground">Cukup (Lulus)</div>
-                  </div>
-                  <Badge className="bg-amber-600 text-white font-mono">75 - 79</Badge>
-                </div>
-
-                <div className="p-3 rounded-xl border border-destructive/30 bg-destructive/10 flex justify-between items-center">
-                  <div>
-                    <span className="font-bold text-destructive">Predikat D</span>
-                    <div className="text-[11px] text-muted-foreground">Perlu Bimbingan</div>
-                  </div>
-                  <Badge variant="destructive" className="font-mono">&lt; 75</Badge>
+              <div className="p-4 rounded-xl border border-border bg-card space-y-1">
+                <div className="text-xs font-semibold text-muted-foreground">Predikat Kelulusan</div>
+                <div className="text-xs font-bold text-foreground mt-1 space-y-1">
+                  <div>≥ 90.0 : <span className="text-emerald-600 font-bold">Sangat Baik</span></div>
+                  <div>≥ 80.0 : <span className="text-emerald-600 font-bold">Baik</span></div>
+                  <div>≥ 75.0 : <span className="text-emerald-600 font-bold">Cukup</span></div>
+                  <div>&lt; 75.0 : <span className="text-rose-600 font-bold">Perlu Bimbingan</span></div>
                 </div>
               </div>
             </div>
@@ -531,148 +744,317 @@ export function SiakadMasterDataModule() {
         </Card>
       )}
 
-      {/* MODAL JADWAL PELAJARAN DI DALAM ROMBEL */}
-      <Dialog open={!!selectedRombelJadwal} onOpenChange={() => setSelectedRombelJadwal(null)}>
-        <DialogContent className="sm:max-w-xl border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <CalendarClock className="h-5 w-5 text-primary" /> Jadwal Pelajaran Rombel {selectedRombelJadwal}
-            </DialogTitle>
-            <DialogDescription>
-              Jadwal mingguan hasil plotting pengampu mata pelajaran untuk Rombel {selectedRombelJadwal}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            {selectedRombelJadwal && (rombelJadwalMap[selectedRombelJadwal] || []).length === 0 && (
-              <div className="text-xs text-muted-foreground py-4 text-center">Belum ada plotting jadwal untuk Rombel ini.</div>
-            )}
-            {selectedRombelJadwal && (rombelJadwalMap[selectedRombelJadwal] || []).map((j, idx) => (
-              <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="font-bold text-sm text-foreground flex items-center gap-2">
-                    {j.mapel}
-                    <Badge variant="outline" className="text-[10px] font-mono">{j.hari}</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">{j.guru}</div>
-                </div>
-                <div className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md">
-                  {j.jam}
-                </div>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button size="sm" className="bg-primary text-primary-foreground font-bold" onClick={() => setSelectedRombelJadwal(null)}>
-              Tutup Modal Jadwal
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* MODAL FORM TAMBAH TAHUN AJARAN BARU */}
-      <Dialog open={isAddTaOpen} onOpenChange={setIsAddTaOpen}>
+      {/* MODAL 1: TAMBAH ROMBEL BARU */}
+      <Dialog open={isAddRombelOpen} onOpenChange={setIsAddRombelOpen}>
         <DialogContent className="sm:max-w-md border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <CalendarClock className="h-5 w-5 text-primary" /> Terbitkan Tahun Ajaran / Periode Baru
+              <Layers className="h-5 w-5 text-primary" /> Tambah Rombongan Belajar (Rombel) Baru
             </DialogTitle>
-            <DialogDescription className="text-xs">
-              Buat struktur tahun ajaran dan semester aktif baru untuk SIAKAD MTsN 2 Cilacap.
-            </DialogDescription>
+            <DialogDescription>Input rincian Rombel baru dan alokasi Wali Kelas pengampu.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreateTa} className="space-y-4 py-2">
+
+          <form onSubmit={handleCreateRombel} className="space-y-4 py-2 text-xs">
             <div>
-              <Label className="text-xs font-semibold">Tahun Ajaran (Format: YYYY/YYYY)</Label>
+              <Label className="text-xs font-semibold">Tingkat Kelas Target</Label>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                value={newRombelTingkat}
+                onChange={(e) => setNewRombelTingkat(e.target.value)}
+              >
+                <option value="Tingkat VII (Kelas 7)">Tingkat VII (Kelas 7)</option>
+                <option value="Tingkat VIII (Kelas 8)">Tingkat VIII (Kelas 8)</option>
+                <option value="Tingkat IX (Kelas 9)">Tingkat IX (Kelas 9)</option>
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Nama Rombel</Label>
               <Input
-                placeholder="misal: 2027/2028"
-                value={newTaYear}
-                onChange={(e) => setNewTaYear(e.target.value)}
+                placeholder="Contoh: VII D / VIII D / IX D"
+                value={newRombelName}
+                onChange={(e) => setNewRombelName(e.target.value)}
                 required
+                className="mt-1 text-xs font-bold"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Pilih Wali Kelas Pengampu</Label>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                value={newRombelWali}
+                onChange={(e) => setNewRombelWali(e.target.value)}
+              >
+                <option value="Ustadzah Nurul Hidayah, S.Pd.I">Ustadzah Nurul Hidayah, S.Pd.I</option>
+                <option value="Bpk. Slamet Riyadi, M.Pd">Bpk. Slamet Riyadi, M.Pd</option>
+                <option value="Dra. Hj. Siti Rahmah, M.Pd">Dra. Hj. Siti Rahmah, M.Pd</option>
+                <option value="Ibu Maryati, S.Pd">Ibu Maryati, S.Pd</option>
+                <option value="Ust. Ahmad Syukri, S.Kom">Ust. Ahmad Syukri, S.Kom</option>
+                <option value="Ibu Ratna Dewi, M.Pd">Ibu Ratna Dewi, M.Pd</option>
+                <option value="Bpk. Hendra Wijaya, M.Sc">Bpk. Hendra Wijaya, M.Sc</option>
+                <option value="Ust. H. Mohammad Fathoni, M.Pd">Ust. H. Mohammad Fathoni, M.Pd</option>
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Kapasitas / Jumlah Siswa</Label>
+              <Input
+                type="number"
+                value={newRombelSiswaCount}
+                onChange={(e) => setNewRombelSiswaCount(Number(e.target.value))}
                 className="mt-1 text-xs font-mono font-bold"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs font-semibold">Semester Target</Label>
-                <select
-                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold"
-                  value={newTaSem}
-                  onChange={(e) => setNewTaSem(e.target.value as any)}
-                >
-                  <option value="Ganjil">Semester Ganjil</option>
-                  <option value="Genap">Semester Genap</option>
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Status Pengaktifan</Label>
-                <select
-                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold"
-                  value={newTaStatus}
-                  onChange={(e) => setNewTaStatus(e.target.value as any)}
-                >
-                  <option value="Aktif">🟢 Aktifkan Sesi Ini</option>
-                  <option value="Arsip">📁 Simpan Sebagai Arsip</option>
-                </select>
-              </div>
-            </div>
-
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddTaOpen(false)}>
-                Batal
-              </Button>
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold gap-1.5">
-                <Sparkles className="h-4 w-4" /> Terbitkan Tahun Ajaran
-              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddRombelOpen(false)}>Batal</Button>
+              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Rombel</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* MODAL FORM TAMBAH RUANG KELAS / SARANA */}
-      <Dialog open={isAddRuangOpen} onOpenChange={setIsAddRuangOpen}>
+      {/* MODAL 1B: EDIT DATA ROMBEL */}
+      <Dialog open={isEditRombelOpen} onOpenChange={setIsEditRombelOpen}>
         <DialogContent className="sm:max-w-md border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" /> Tambah Ruang Pembelajaran / Sarana Baru
+              <PencilLine className="h-5 w-5 text-primary" /> Edit Data Rombel ({editingRombel?.name})
             </DialogTitle>
-            <DialogDescription className="text-xs">
-              Input data fisik ruang kelas, laboratorium, atau fasilitas pembelajaran madrasah.
-            </DialogDescription>
+            <DialogDescription>Perbarui nama Rombel, Wali Kelas pengampu, dan kuota siswa.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreateRuang} className="space-y-4 py-2">
+
+          {editingRombel && (
+            <form onSubmit={handleSaveEditRombel} className="space-y-4 py-2 text-xs">
+              <div>
+                <Label className="text-xs font-semibold">Nama Rombel</Label>
+                <Input
+                  value={editingRombel.name}
+                  onChange={(e) => setEditingRombel({ ...editingRombel, name: e.target.value })}
+                  required
+                  className="mt-1 text-xs font-bold"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Pilih Wali Kelas Pengampu</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                  value={editingRombel.wali}
+                  onChange={(e) => setEditingRombel({ ...editingRombel, wali: e.target.value })}
+                >
+                  <option value="Ustadzah Nurul Hidayah, S.Pd.I">Ustadzah Nurul Hidayah, S.Pd.I</option>
+                  <option value="Bpk. Slamet Riyadi, M.Pd">Bpk. Slamet Riyadi, M.Pd</option>
+                  <option value="Dra. Hj. Siti Rahmah, M.Pd">Dra. Hj. Siti Rahmah, M.Pd</option>
+                  <option value="Ibu Maryati, S.Pd">Ibu Maryati, S.Pd</option>
+                  <option value="Ust. Ahmad Syukri, S.Kom">Ust. Ahmad Syukri, S.Kom</option>
+                  <option value="Ibu Ratna Dewi, M.Pd">Ibu Ratna Dewi, M.Pd</option>
+                  <option value="Bpk. Hendra Wijaya, M.Sc">Bpk. Hendra Wijaya, M.Sc</option>
+                  <option value="Ust. H. Mohammad Fathoni, M.Pd">Ust. H. Mohammad Fathoni, M.Pd</option>
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Kapasitas / Jumlah Siswa</Label>
+                <Input
+                  type="number"
+                  value={editingRombel.siswaCount}
+                  onChange={(e) => setEditingRombel({ ...editingRombel, siswaCount: Number(e.target.value) })}
+                  className="mt-1 text-xs font-mono font-bold"
+                />
+              </div>
+
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsEditRombelOpen(false)}>Batal</Button>
+                <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Perubahan</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 2: TAMBAH MATA PELAJARAN BARU */}
+      <Dialog open={isAddMapelOpen} onOpenChange={setIsAddMapelOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" /> Tambah Mata Pelajaran Baru
+            </DialogTitle>
+            <DialogDescription>Input master mata pelajaran persisten SIAKAD Kurikulum Merdeka.</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateMapel} className="space-y-4 py-2 text-xs">
             <div>
-              <Label className="text-xs font-semibold">Nama Ruang Pembelajaran</Label>
+              <Label className="text-xs font-semibold">Nama Mata Pelajaran</Label>
               <Input
-                placeholder="misal: Ruang A.03 / Lab Bahasa Digital"
-                value={newRuangName}
-                onChange={(e) => setNewRuangName(e.target.value)}
+                placeholder="Contoh: Robotika & AI Madrasah"
+                value={newMapelName}
+                onChange={(e) => setNewMapelName(e.target.value)}
                 required
-                className="mt-1 text-xs font-semibold"
+                className="mt-1 text-xs font-bold"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">Kategori / Tipe Ruang</Label>
+                <Label className="text-xs font-semibold">Kode Mapel (Opsional)</Label>
+                <Input
+                  placeholder="Contoh: AGM-06 / UMM-08"
+                  value={newMapelCode}
+                  onChange={(e) => setNewMapelCode(e.target.value)}
+                  className="mt-1 text-xs font-mono"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Rumpun Kategori</Label>
                 <select
-                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                  className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                  value={newMapelCategory}
+                  onChange={(e) => setNewMapelCategory(e.target.value)}
+                >
+                  <option value="Keagamaan">Keagamaan</option>
+                  <option value="Umum">Umum</option>
+                  <option value="Muatan Lokal">Muatan Lokal</option>
+                  <option value="Pengembangan Diri">Pengembangan Diri</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">Alokasi Waktu Standar</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                  value={newMapelJp}
+                  onChange={(e) => setNewMapelJp(e.target.value)}
+                >
+                  <option value="2 JP">2 JP / Minggu</option>
+                  <option value="3 JP">3 JP / Minggu</option>
+                  <option value="4 JP">4 JP / Minggu</option>
+                  <option value="5 JP">5 JP / Minggu</option>
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Target Tingkat</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                  value={newMapelTarget}
+                  onChange={(e) => setNewMapelTarget(e.target.value)}
+                >
+                  <option value="Semua Tingkat">Semua Tingkat (VII, VIII, IX)</option>
+                  <option value="Tingkat VII">Tingkat VII (Kelas 7)</option>
+                  <option value="Tingkat VIII">Tingkat VIII (Kelas 8)</option>
+                  <option value="Tingkat IX">Tingkat IX (Kelas 9)</option>
+                </select>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddMapelOpen(false)}>Batal</Button>
+              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Mapel</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 3: TAMBAH TAHUN AJARAN BARU */}
+      <Dialog open={isAddTaOpen} onOpenChange={setIsAddTaOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <CalendarClock className="h-5 w-5 text-primary" /> Tambah Tahun Ajaran SIAKAD Baru
+            </DialogTitle>
+            <DialogDescription>Input tahun ajaran baru untuk diterbitkan secara global.</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateTa} className="space-y-4 py-2 text-xs">
+            <div>
+              <Label className="text-xs font-semibold">Tahun Ajaran</Label>
+              <Input
+                placeholder="2027/2028"
+                value={newTaYear}
+                onChange={(e) => setNewTaYear(e.target.value)}
+                required
+                className="mt-1 text-xs font-bold"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">Semester</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                  value={newTaSem}
+                  onChange={(e) => setNewTaSem(e.target.value as any)}
+                >
+                  <option value="Ganjil">Ganjil</option>
+                  <option value="Genap">Genap</option>
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Status Awal</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                  value={newTaStatus}
+                  onChange={(e) => setNewTaStatus(e.target.value as any)}
+                >
+                  <option value="Aktif">Langsung Aktifkan</option>
+                  <option value="Arsip">Simpan Sebagai Arsip</option>
+                </select>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddTaOpen(false)}>Batal</Button>
+              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Terbitkan TA</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 4: TAMBAH RUANG BARU */}
+      <Dialog open={isAddRuangOpen} onOpenChange={setIsAddRuangOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" /> Tambah Ruang Pembelajaran / Lab
+            </DialogTitle>
+            <DialogDescription>Input master ruang kelas fisik dan laboratorium madrasah.</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateRuang} className="space-y-4 py-2 text-xs">
+            <div>
+              <Label className="text-xs font-semibold">Nama Ruang / Laboratorium</Label>
+              <Input
+                placeholder="Contoh: Lab Bahasa Digital"
+                value={newRuangName}
+                onChange={(e) => setNewRuangName(e.target.value)}
+                required
+                className="mt-1 text-xs font-bold"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">Jenis Ruang</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
                   value={newRuangType}
                   onChange={(e) => setNewRuangType(e.target.value)}
                 >
-                  <option value="Ruang Teori">Ruang Teori (Kelas)</option>
+                  <option value="Ruang Teori">Ruang Teori Kelas</option>
                   <option value="Laboratorium Praktikum">Laboratorium Praktikum</option>
-                  <option value="Laboratorium Komputer">Laboratorium Komputer CBT</option>
-                  <option value="E-Library">E-Library & Perpus</option>
+                  <option value="E-Library & Perpus">E-Library & Perpus</option>
                   <option value="Fasilitas Outdoor">Fasilitas Outdoor</option>
                 </select>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold">Kapasitas Maksimal</Label>
+                <Label className="text-xs font-semibold">Kapasitas</Label>
                 <Input
-                  placeholder="misal: 36 Siswa"
                   value={newRuangCap}
                   onChange={(e) => setNewRuangCap(e.target.value)}
                   className="mt-1 text-xs"
@@ -681,9 +1063,8 @@ export function SiakadMasterDataModule() {
             </div>
 
             <div>
-              <Label className="text-xs font-semibold">Fasilitas Penunjang</Label>
+              <Label className="text-xs font-semibold">Fasilitas Ruangan</Label>
               <Input
-                placeholder="misal: Proyektor, AC, Sound System, Wi-Fi"
                 value={newRuangFas}
                 onChange={(e) => setNewRuangFas(e.target.value)}
                 className="mt-1 text-xs"
@@ -691,32 +1072,31 @@ export function SiakadMasterDataModule() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddRuangOpen(false)}>
-                Batal
-              </Button>
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">
-                Simpan Ruang Baru
-              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddRuangOpen(false)}>Batal</Button>
+              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Ruang</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* MODAL FORM TAMBAH PENGAMPU */}
+      {/* MODAL 5: PLOTTING PENGAMPU MAPEL BARU */}
       <Dialog open={isAddPengampuOpen} onOpenChange={setIsAddPengampuOpen}>
         <DialogContent className="sm:max-w-md border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-primary" /> Assign Guru Pengampu Baru
+              <BarChart3 className="h-5 w-5 text-primary" /> Plotting Guru Pengampu Mapel
             </DialogTitle>
-            <DialogDescription>
-              Hubungkan Guru, Mata Pelajaran, dan Rombel untuk alokasi kelas otomatis.
-            </DialogDescription>
+            <DialogDescription>Alokasikan Guru ke Mata Pelajaran dan Rombel tertentu.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddPengampu} className="space-y-4 py-2">
+
+          <form onSubmit={handleAddPengampu} className="space-y-4 py-2 text-xs">
             <div>
               <Label className="text-xs font-semibold">Pilih Guru Pengampu</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={selectedGuru} onChange={(e) => setSelectedGuru(e.target.value)}>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                value={selectedGuru}
+                onChange={(e) => setSelectedGuru(e.target.value)}
+              >
                 <option value="Bpk. Hendra Wijaya, M.Sc">Bpk. Hendra Wijaya, M.Sc</option>
                 <option value="Dra. Hj. Siti Rahmah, M.Pd">Dra. Hj. Siti Rahmah, M.Pd</option>
                 <option value="Ustadzah Nurul Hidayah, S.Pd.I">Ustadzah Nurul Hidayah, S.Pd.I</option>
@@ -727,24 +1107,29 @@ export function SiakadMasterDataModule() {
 
             <div>
               <Label className="text-xs font-semibold">Pilih Mata Pelajaran</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={selectedMapel} onChange={(e) => setSelectedMapel(e.target.value)}>
-                <option value="Matematika">Matematika</option>
-                <option value="Al-Quran Hadits">Al-Quran Hadits</option>
-                <option value="Fiqih">Fiqih</option>
-                <option value="Bahasa Arab">Bahasa Arab</option>
-                <option value="Ilmu Pengetahuan Alam (IPA)">Ilmu Pengetahuan Alam (IPA)</option>
-                <option value="Informatika & Coding">Informatika & Coding</option>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                value={selectedMapel}
+                onChange={(e) => setSelectedMapel(e.target.value)}
+              >
+                {masterMapel.map((m) => (
+                  <option key={m.code} value={m.name}>{m.name} ({m.code})</option>
+                ))}
               </select>
             </div>
 
             <div>
-              <Label className="text-xs font-semibold">Pilih Target Rombel</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={selectedRombel} onChange={(e) => setSelectedRombel(e.target.value)}>
-                <option value="VII A">VII A</option>
-                <option value="VII B">VII B</option>
-                <option value="VIII A">VIII A</option>
-                <option value="VIII B">VIII B</option>
-                <option value="IX A">IX A</option>
+              <Label className="text-xs font-semibold">Pilih Rombel Target</Label>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-card px-3 text-xs mt-1 font-semibold"
+                value={selectedRombel}
+                onChange={(e) => setSelectedRombel(e.target.value)}
+              >
+                <option value="VII A">Rombel VII A</option>
+                <option value="VII B">Rombel VII B</option>
+                <option value="VIII A">Rombel VIII A</option>
+                <option value="VIII B">Rombel VIII B</option>
+                <option value="IX A">Rombel IX A</option>
               </select>
             </div>
 
@@ -825,6 +1210,155 @@ export function SiakadMasterDataModule() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+
+      {/* MODAL DETAIL KELOLA PERANGKAT PEMBELAJARAN PER MAPEL */}
+      <Dialog open={!!selectedMapelForPerangkat} onOpenChange={(open) => !open && setSelectedMapelForPerangkat(null)}>
+        <DialogContent className="sm:max-w-xl border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" /> Detail Perangkat Pembelajaran - {selectedMapelForPerangkat?.name} ({selectedMapelForPerangkat?.code})
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Pengelolaan dokumen Kurikulum Merdeka untuk mata pelajaran {selectedMapelForPerangkat?.name}.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedMapelForPerangkat && (
+            <div className="space-y-4 py-2 text-xs">
+              <div className="p-3 bg-muted/40 rounded-xl border border-border flex items-center justify-between">
+                <div>
+                  <div className="font-extrabold text-foreground">{selectedMapelForPerangkat.name}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    Kode: <code className="font-mono text-primary">{selectedMapelForPerangkat.code}</code> · Rumpun: {selectedMapelForPerangkat.category} · Beban: {selectedMapelForPerangkat.jp}
+                  </div>
+                </div>
+                <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 text-[10px] font-bold">
+                  Terverifikasi Waka
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                <div className="font-bold text-foreground flex items-center justify-between">
+                  <span>Daftar Dokumen Pembelajaran Resmi:</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] font-bold gap-1 text-primary"
+                    onClick={() => toast.success("Silakan pilih berkas PDF dari komputer Anda untuk diunggah.")}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> + Unggah Dokumen Baru
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  {[
+                    { title: `Capaian Pembelajaran (CP) ${selectedMapelForPerangkat.name} Fase D`, type: "Capaian Pembelajaran", size: "1.2 MB", tag: "PDF" },
+                    { title: `Alur Tujuan Pembelajaran (ATP) ${selectedMapelForPerangkat.name} TP 2026/2027`, type: "Alur Pembelajaran", size: "1.8 MB", tag: "PDF" },
+                    { title: `Modul Ajar PDF Lengkap Pertemuan 1-18 (${selectedMapelForPerangkat.name})`, type: "Modul Ajar", size: "4.5 MB", tag: "PDF" },
+                    { title: `Lembar Kerja Peserta Didik (LKPD) & Asesmen ${selectedMapelForPerangkat.name}`, type: "LKPD", size: "2.1 MB", tag: "PDF" },
+                  ].map((doc, idx) => (
+                    <div key={idx} className="p-3 rounded-lg border border-border bg-card flex items-center justify-between hover:bg-muted/30 transition">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary font-bold grid place-items-center text-xs">
+                          📄
+                        </div>
+                        <div>
+                          <div className="font-bold text-foreground text-xs">{doc.title}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {doc.type} · {doc.size} · Format: {doc.tag}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs font-bold gap-1"
+                        onClick={() => {
+                          const content = `=== ${doc.title} ===\nMapel: ${selectedMapelForPerangkat.name}\nKode: ${selectedMapelForPerangkat.code}\nStatus: Terverifikasi Waka Kurikulum MTsN 2 Cilacap.`;
+                          const blob = new Blob([content], { type: "text/plain" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `${doc.type.replace(/\s+/g, "_")}_${selectedMapelForPerangkat.code}.txt`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast.success(`📄 ${doc.title} berhasil diunduh!`);
+                        }}
+                      >
+                        📥 Unduh
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <DialogFooter className="pt-3 border-t border-border flex items-center justify-between sm:justify-between">
+                <Button
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+                  onClick={() => {
+                    const blob = new Blob([`📦 Paket Lengkap Perangkat Pembelajaran ${selectedMapelForPerangkat.name}`], { type: "application/zip" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `Paket_Perangkat_${selectedMapelForPerangkat.code}.zip`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success(`📦 Paket Perangkat ${selectedMapelForPerangkat.name} (.ZIP) berhasil diunduh!`);
+                  }}
+                >
+                  📦 Unduh Paket Modul Mapel ini (.ZIP)
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedMapelForPerangkat(null)}>
+                  Tutup
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL JADWAL PELAJARAN ROMBEL */}
+      <Dialog open={!!selectedRombelJadwal} onOpenChange={(open) => !open && setSelectedRombelJadwal(null)}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <CalendarClock className="h-5 w-5 text-primary" /> Jadwal Pelajaran - Rombel {selectedRombelJadwal}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Alokasi jam tatap muka KBM resmi Rombel {selectedRombelJadwal} TP 2026/2027.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedRombelJadwal && (
+            <div className="space-y-3 py-2 text-xs">
+              {(rombelJadwalMap[selectedRombelJadwal] || [
+                { hari: "Senin", jam: "07.30 - 09.00", mapel: "Al-Quran Hadits", guru: "Dra. Hj. Siti Rahmah, M.Pd" },
+                { hari: "Senin", jam: "09.15 - 10.45", mapel: "Matematika", guru: "Bpk. Hendra Wijaya, M.Sc" },
+                { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Bahasa Indonesia", guru: "Bpk. Slamet Riyadi, M.Pd" },
+              ]).map((j, idx) => (
+                <div key={idx} className="p-3 rounded-lg border border-border bg-card flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-foreground">{j.mapel}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{j.guru}</div>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="outline" className="text-[10px] font-mono font-bold">{j.hari}</Badge>
+                    <div className="text-[10px] font-mono text-muted-foreground mt-0.5">{j.jam}</div>
+                  </div>
+                </div>
+              ))}
+
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedRombelJadwal(null)}>
+                  Tutup
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

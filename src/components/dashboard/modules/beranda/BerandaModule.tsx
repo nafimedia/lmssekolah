@@ -4,10 +4,7 @@ import {
   Building2,
   BookOpen,
   Sparkles,
-  ShieldCheck,
-  Activity,
   UserCheck,
-  BarChart3,
   LineChart,
   GraduationCap,
   MonitorCheck,
@@ -16,15 +13,37 @@ import {
   PencilLine,
   CalendarDays,
   Bot,
-  CheckCircle2,
-  Trophy,
   AlertTriangle,
-  Laptop,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  ArrowRight,
+  ShieldCheck,
+  Send,
+  CheckCircle2,
+  Award,
+  Bell,
+  CheckSquare,
+  Activity,
+  FileCheck,
+  MessageCircle,
+  Database,
+  Lock,
+  Cpu,
+  Server,
+  FolderTree,
+  FileSpreadsheet,
+  BarChart3,
+  Bookmark,
+  Check,
+  TrendingUp,
+  PieChart,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useRealtimeCalendar } from "@/hooks/useRealtimeCalendar";
 
 interface BerandaModuleProps {
   activeRole: string;
@@ -39,1000 +58,1359 @@ export function BerandaModule({
   dbStats,
   setActiveTab,
 }: BerandaModuleProps) {
-  const [timeframe, setTimeframe] = useState<"harian" | "mingguan" | "bulanan">("harian");
-  const [hasEnrolled, setHasEnrolled] = useState(false);
-  const [studentXp, setStudentXp] = useState(890);
+  const {
+    currentMonthName,
+    currentYear,
+    formattedTime,
+    currentDayName,
+  } = useRealtimeCalendar();
 
-  const statsData = {
-    harian: {
-      guru: { val: "98.1%", detail: "53 dari 54 Guru Hadir Hari Ini" },
-      siswa: { val: "96.8%", detail: "918 dari 948 Siswa Hadir Hari Ini" },
-      kbm: { val: "94.2%", detail: "42 dari 45 Jam KBM Efektif Terlaksana" },
-      kkm: { val: "92.5%", detail: "Siswa Tuntas Nilai KKM (≥75)" },
-    },
-    mingguan: {
-      guru: { val: "97.8%", detail: "Rata-rata Kehadiran Guru Minggu Ini" },
-      siswa: { val: "96.2%", detail: "Rata-rata Kehadiran Siswa Minggu Ini" },
-      kbm: { val: "93.5%", detail: "Capaian Penugasan & KBM Minggu Ini" },
-      kkm: { val: "91.8%", detail: "Ketuntasan KKM Rata-rata Mingguan" },
-    },
-    bulanan: {
-      guru: { val: "98.4%", detail: "Rata-rata Kehadiran Guru Bulan Juli" },
-      siswa: { val: "96.5%", detail: "Rata-rata Kehadiran Siswa Bulan Juli" },
-      kbm: { val: "95.0%", detail: "Capaian Penugasan Bulan Juli" },
-      kkm: { val: "93.2%", detail: "Ketuntasan KKM Rata-rata Bulanan" },
-    },
-  };
+  const role = (activeRole || "").toLowerCase().trim();
 
-  const currentStats = statsData[timeframe];
-
-  // Super Administrator & Admin Akademik Dashboard
-  if (activeRole === "admin" || activeRole === "admin_akademik") {
+  // =========================================================================
+  // 1. DASHBOARD GURU PENGAMPU
+  // =========================================================================
+  if (role === "guru" || role === "teacher") {
     return (
-      <div className="space-y-6">
-        {/* Banner Admin Control Center */}
-        <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-emerald-950 to-teal-900 text-white p-6 lg:p-8 shadow-xl border border-emerald-500/30">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" /> CONTROL CENTER SUPER ADMINISTRATOR
-            </Badge>
-            <Badge variant="outline" className="bg-black/30 text-emerald-300 border-emerald-400/40 text-xs font-mono">
-              MTs NEGERI 2 CILACAP • SYSTEM V2.4
-            </Badge>
-          </div>
-
-          <h2 className="text-2xl lg:text-3xl font-extrabold flex items-center gap-2">
-            Assalamu'alaikum, {userProfile?.name || "Ahmad Hidayat, S.Pd."} 🛡️
-          </h2>
-          {userProfile?.tagline && (
-            <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs text-emerald-200 font-medium">
-              <span>💬 Motto:</span>
-              <span className="italic font-semibold text-white">"{userProfile.tagline}"</span>
-            </div>
-          )}
-          <p className="mt-2 text-sm text-slate-200 max-w-3xl leading-relaxed">
-            Pusat kendali master data SIAKAD, pengelolaan 7 role hak akses pengguna, pemantauan server CBT, serta integrasi WhatsApp Gateway EWS Madrasah.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Button
-              size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-md"
-              onClick={() => setActiveTab?.("siakad")}
-            >
-              <Building2 className="h-4 w-4" /> Kelola SIAKAD Master Data
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold text-xs gap-1.5"
-              onClick={() => setActiveTab?.("users")}
-            >
-              <Users className="h-4 w-4" /> Kelola 7 Role Pengguna
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold text-xs gap-1.5"
-              onClick={() => setActiveTab?.("cbt")}
-            >
-              <Laptop className="h-4 w-4" /> Monitor Engine CBT
-            </Button>
-          </div>
-        </div>
-
-        {/* 4 Stat Overview Cards (Live Real Database Synchronized) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-card border-border hover:border-emerald-500/50 transition cursor-pointer" onClick={() => setActiveTab?.("users")}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-500 grid place-items-center font-bold">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
-                  Total Pengguna Terdaftar <Badge className="bg-emerald-600/20 text-emerald-600 dark:text-emerald-300 text-[9px] px-1 py-0 font-mono">DB Sync</Badge>
-                </div>
-                <div className="text-xl font-bold font-mono text-emerald-500">
-                  {dbStats?.totalUsers ? `${dbStats.totalUsers} Akun` : "6 Akun"}
-                </div>
-                <div className="text-[10px] text-muted-foreground">
-                  {dbStats?.siswaCount ?? 1} Siswa • {dbStats?.guruStafCount ?? 5} Guru & Staf
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-blue-500/50 transition cursor-pointer" onClick={() => setActiveTab?.("siakad")}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-blue-500/15 text-blue-500 grid place-items-center font-bold">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
-                  Rombel & Kelas Aktif <Badge className="bg-blue-600/20 text-blue-600 dark:text-blue-300 text-[9px] px-1 py-0 font-mono">DB Sync</Badge>
-                </div>
-                <div className="text-xl font-bold font-mono text-blue-500">
-                  {dbStats?.totalRombel ? `${dbStats.totalRombel} Rombel` : "1 Rombel"}
-                </div>
-                <div className="text-[10px] text-muted-foreground">Tingkat VIII (Kelas VIII A)</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-purple-500/50 transition cursor-pointer" onClick={() => setActiveTab?.("siakad")}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-purple-500/15 text-purple-500 grid place-items-center font-bold">
-                <BookOpen className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
-                  Katalog Mapel Persisten <Badge className="bg-purple-600/20 text-purple-600 dark:text-purple-300 text-[9px] px-1 py-0 font-mono">DB Sync</Badge>
-                </div>
-                <div className="text-xl font-bold font-mono text-purple-500">
-                  {dbStats?.totalMapel ? `${dbStats.totalMapel} Mapel` : "3 Mapel"}
-                </div>
-                <div className="text-[10px] text-muted-foreground">Kurikulum Merdeka</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-amber-500/50 transition cursor-pointer" onClick={() => setActiveTab?.("cbt")}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-amber-500/15 text-amber-500 grid place-items-center font-bold">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
-                  Status Tahun Ajaran <Badge className="bg-amber-600/20 text-amber-600 dark:text-amber-300 text-[9px] px-1 py-0 font-mono">DB Sync</Badge>
-                </div>
-                <div className="text-xl font-bold font-mono text-amber-500">2026/2027</div>
-                <div className="text-[10px] text-muted-foreground">🟢 Sesi Ganjil Aktif</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* System Health & Security Monitoring Grid */}
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Activity className="h-5 w-5 text-emerald-500" /> System Health & Database Performance
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Status infrastruktur server local Laragon MySQL & konektivitas real-time.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-3 rounded-lg bg-muted/40 border border-border flex justify-between items-center text-xs">
-                <div>
-                  <div className="font-bold text-foreground">Database Engine</div>
-                  <div className="text-muted-foreground font-mono">MySQL 8.0 • `db_lms` Local</div>
-                </div>
-                <Badge className="bg-emerald-600 text-white font-mono text-[10px]">🟢 CONNECTED (2ms)</Badge>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted/40 border border-border flex justify-between items-center text-xs">
-                <div>
-                  <div className="font-bold text-foreground">CBT Live Engine Session</div>
-                  <div className="text-muted-foreground font-mono">Anti-cheat & Tab switch active</div>
-                </div>
-                <Badge className="bg-blue-600 text-white font-mono text-[10px]">READY (0 Active Lock)</Badge>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted/40 border border-border flex justify-between items-center text-xs">
-                <div>
-                  <div className="font-bold text-foreground">WhatsApp Gateway EWS Service</div>
-                  <div className="text-muted-foreground font-mono">Target: Orang Tua & Presensi</div>
-                </div>
-                <Badge className="bg-emerald-600 text-white font-mono text-[10px]">🟢 ONLINE (+62812...)</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-primary" /> Matrix Hak Akses (RBAC 7 Roles)
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Pengisolasian wewenang pengguna sesuai keputusan pimpinan madrasah.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2 text-xs">
-              {[
-                { r: "Super Admin", p: "Akses Penuh Semua Modul & Pengaturan System", c: "bg-emerald-600 text-white" },
-                { r: "Admin Akademik", p: "Kelola Master Data, Mapel, Rombel, & Pengampu", c: "bg-teal-600 text-white" },
-                { r: "Kepala Madrasah", p: "Monitoring Executive, Audit Nilai, & EWS Rekap", c: "bg-blue-600 text-white" },
-                { r: "Waka Kurikulum", p: "Master Data, Jadwal, CBT Proctor, & Asesmen", c: "bg-indigo-600 text-white" },
-                { r: "Wali Kelas", p: "Monitoring 8A, Presensi Siswa, & E-Rapor Verification", c: "bg-purple-600 text-white" },
-                { r: "Guru Pengampu", p: "Input Nilai, Bank Soal CBT, Terbitkan Asesmen, LKPD", c: "bg-amber-600 text-white" },
-                { r: "Siswa", p: "Ruang Belajar, Kerjakan CBT, Cek Nilai, & Presensi", c: "bg-sky-600 text-white" },
-              ].map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center p-2 rounded-md bg-muted/20 border border-border/40">
-                  <span className="font-bold text-foreground">{item.r}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-muted-foreground hidden sm:inline">{item.p}</span>
-                    <Badge className={`text-[10px] ${item.c}`}>ACTIVE</Badge>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Executive Dashboard (Kepala Madrasah & Waka Kurikulum)
-  if (activeRole === "kamad" || activeRole === "waka") {
-    return (
-      <div className="space-y-6">
-        <div className="rounded-2xl bg-gradient-to-r from-teal-900 via-emerald-800 to-slate-900 text-white p-6 lg:p-8 shadow-xl border border-emerald-500/30">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
-              EXECUTIVE MONITORING DASHBOARD
-            </Badge>
-            <div className="flex items-center gap-1.5 bg-black/30 p-1 rounded-xl border border-white/10 text-xs font-semibold">
-              <span className="text-slate-300 px-2 text-[11px]">Rekap Periode:</span>
-              <button
-                onClick={() => setTimeframe("harian")}
-                className={`px-3 py-1 rounded-lg transition ${
-                  timeframe === "harian" ? "bg-emerald-500 text-white font-bold shadow-sm" : "text-slate-300 hover:text-white"
-                }`}
-              >
-                ⚡ Harian (Hari Efektif)
-              </button>
-              <button
-                onClick={() => setTimeframe("mingguan")}
-                className={`px-3 py-1 rounded-lg transition ${
-                  timeframe === "mingguan" ? "bg-emerald-500 text-white font-bold shadow-sm" : "text-slate-300 hover:text-white"
-                }`}
-              >
-                📅 Mingguan
-              </button>
-              <button
-                onClick={() => setTimeframe("bulanan")}
-                className={`px-3 py-1 rounded-lg transition ${
-                  timeframe === "bulanan" ? "bg-emerald-500 text-white font-bold shadow-sm" : "text-slate-300 hover:text-white"
-                }`}
-              >
-                🗓️ Bulanan
-              </button>
-            </div>
-          </div>
-
-          <h2 className="text-2xl lg:text-3xl font-extrabold">
-            {activeRole === "kamad" ? "Assalamu'alaikum, Bapak Kepala Madrasah 🏛️" : "Assalamu'alaikum, Waka Kurikulum 📐"}
-          </h2>
-          <p className="mt-2 text-sm text-slate-200 max-w-3xl leading-relaxed">
-            Statistik Pembelajaran Hari Efektif MTsN 2 Cilacap: Pemantauan presensi guru & siswa, efektivitas penugasan KBM, ketercapaian KKM, serta progress rombel.
-          </p>
-        </div>
-
-        {/* Section Header Statistik Pembelajaran Hari Efektif / Per Hari */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-3">
+      <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-emerald-500" />
-              Statistik Pembelajaran {timeframe === "harian" ? "Hari Efektif (Per Hari)" : timeframe === "mingguan" ? "Rekap Mingguan" : "Rekap Bulanan"}
-            </h3>
-            <p className="text-xs text-muted-foreground">Persentase real-time 4 indikator utama efektivitas madrasah.</p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-xs font-bold gap-1 shrink-0"
-            onClick={() => setActiveTab?.("progress")}
-          >
-            <LineChart className="h-3.5 w-3.5 text-primary" /> Lihat Rekap Detail di Sidebar →
-          </Button>
-        </div>
-
-        {/* 4 Cards Statistik Utama */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-card border-border hover:border-emerald-500/50 transition shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-emerald-500/15 text-emerald-500 grid place-items-center font-bold shrink-0">
-                <UserCheck className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground font-semibold">Prosentase Kehadiran Guru</div>
-                <div className="text-2xl font-extrabold font-mono text-emerald-500">{currentStats.guru.val}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{currentStats.guru.detail}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-blue-500/50 transition shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-blue-500/15 text-blue-500 grid place-items-center font-bold shrink-0">
-                <Users className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground font-semibold">Prosentase Kehadiran Siswa</div>
-                <div className="text-2xl font-extrabold font-mono text-blue-500">{currentStats.siswa.val}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{currentStats.siswa.detail}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-purple-500/50 transition shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-purple-500/15 text-purple-500 grid place-items-center font-bold shrink-0">
-                <BookOpen className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground font-semibold">Pembelajaran & Penugasan</div>
-                <div className="text-2xl font-extrabold font-mono text-purple-500">{currentStats.kbm.val}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{currentStats.kbm.detail}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-amber-500/50 transition shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-amber-500/15 text-amber-500 grid place-items-center font-bold shrink-0">
-                <GraduationCap className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground font-semibold">Ketercapaian Ketuntasan (KKM)</div>
-                <div className="text-2xl font-extrabold font-mono text-amber-500">{currentStats.kkm.val}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{currentStats.kkm.detail}</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Executive Monitoring Cards */}
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-primary" /> Progress Pembelajaran Perangkat Ajar Guru
-              </CardTitle>
-              <Button size="sm" variant="ghost" className="text-xs text-primary font-bold" onClick={() => setActiveTab?.("progress")}>
-                Lihat Semua →
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                { mapel: "Al-Quran Hadits", teacher: "Dra. Hj. Siti Rahmah", status: "18 Pertemuan (100%)", c: "text-emerald-500" },
-                { mapel: "Akidah Akhlak", teacher: "Ust. Abdul Halim, S.Ag", status: "16 Pertemuan (88%)", c: "text-blue-500" },
-                { mapel: "Matematika", teacher: "Bapak Hendra Wijaya", status: "15 Pertemuan (83%)", c: "text-amber-500" },
-                { mapel: "Informatika & Coding", teacher: "H. Ahmad Syukri, S.Kom", status: "18 Pertemuan (100%)", c: "text-emerald-500" },
-              ].map((row, i) => (
-                <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-muted/40 border border-border/50 text-sm">
-                  <div>
-                    <div className="font-bold text-foreground">{row.mapel}</div>
-                    <div className="text-xs text-muted-foreground">{row.teacher}</div>
-                  </div>
-                  <Badge variant="outline" className={`font-mono text-xs font-bold ${row.c}`}>
-                    {row.status}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <MonitorCheck className="h-5 w-5 text-emerald-500" /> Monitoring Sesi Ujian CBT Online
-              </CardTitle>
-              <Button size="sm" variant="ghost" className="text-xs text-primary font-bold" onClick={() => setActiveTab?.("cbt")}>
-                Portal CBT →
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-sm text-foreground">CBT PAT Al-Quran Hadits (Kelas 8)</div>
-                  <div className="text-xs text-muted-foreground">32 Siswa Mengerjakan • Latensi Server 14ms</div>
-                </div>
-                <Badge className="bg-emerald-600 text-white">AKTIF</Badge>
-              </div>
-
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-sm text-foreground">CBT PAT Matematika (Kelas 9)</div>
-                  <div className="text-xs text-muted-foreground">128 Siswa Selesai • Rata-rata Nilai 84.5</div>
-                </div>
-                <Badge variant="secondary" className="bg-blue-500/20 text-blue-600">SELESAI</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Wali Kelas Dashboard
-  if (activeRole === "walikelas" || activeRole === "wali_kelas") {
-    const waliStatsData = {
-      harian: {
-        siswa: { val: "96.9%", detail: "31 dari 32 Siswa 8A Hadir Hari Ini" },
-        kbm: { val: "94.5%", detail: "Submisi Tugas LKPD Kelas 8A Selesai" },
-        kkm: { val: "93.8%", detail: "Siswa 8A Tuntas Nilai KKM (≥75)" },
-      },
-      mingguan: {
-        siswa: { val: "96.2%", detail: "Rata-rata Kehadiran Siswa 8A Minggu Ini" },
-        kbm: { val: "93.8%", detail: "Submisi Tugas Kelas 8A Minggu Ini" },
-        kkm: { val: "92.5%", detail: "Ketuntasan KKM Siswa 8A Minggu Ini" },
-      },
-      bulanan: {
-        siswa: { val: "96.8%", detail: "Rata-rata Kehadiran Siswa 8A Bulan Juli" },
-        kbm: { val: "95.2%", detail: "Submisi Tugas Kelas 8A Bulan Juli" },
-        kkm: { val: "94.0%", detail: "Ketuntasan KKM Siswa 8A Bulan Juli" },
-      },
-    };
-
-    const currentWaliStats = waliStatsData[timeframe];
-
-    return (
-      <div className="space-y-6">
-        <div className="rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-800 to-slate-950 text-white p-6 lg:p-8 shadow-xl border border-blue-500/30">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-            <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-              DASHBOARD WALI KELAS 8A
-            </Badge>
-            <div className="flex items-center gap-1.5 bg-black/30 p-1 rounded-xl border border-white/10 text-xs font-semibold">
-              <span className="text-slate-300 px-2 text-[11px]">Rekap Periode:</span>
-              <button
-                onClick={() => setTimeframe("harian")}
-                className={`px-3 py-1 rounded-lg transition ${
-                  timeframe === "harian" ? "bg-blue-600 text-white font-bold shadow-sm" : "text-slate-300 hover:text-white"
-                }`}
-              >
-                ⚡ Harian (Hari Efektif)
-              </button>
-              <button
-                onClick={() => setTimeframe("mingguan")}
-                className={`px-3 py-1 rounded-lg transition ${
-                  timeframe === "mingguan" ? "bg-blue-600 text-white font-bold shadow-sm" : "text-slate-300 hover:text-white"
-                }`}
-              >
-                📅 Mingguan
-              </button>
-              <button
-                onClick={() => setTimeframe("bulanan")}
-                className={`px-3 py-1 rounded-lg transition ${
-                  timeframe === "bulanan" ? "bg-blue-600 text-white font-bold shadow-sm" : "text-slate-300 hover:text-white"
-                }`}
-              >
-                🗓️ Bulanan
-              </button>
-            </div>
-          </div>
-
-          <h2 className="text-2xl lg:text-3xl font-extrabold">Assalamu'alaikum, Wali Kelas 8A 📋</h2>
-          <p className="mt-2 text-sm text-slate-200 max-w-3xl leading-relaxed">
-            Statistik Pembelajaran Hari Efektif Rombel 8A: Pemantauan presensi siswa 8A, ketuntasan submisi penugasan KBM, evaluasi KKM, serta pengesahan E-Rapor Madrasah.
-          </p>
-        </div>
-
-        {/* Section Header Statistik Pembelajaran Kelas 8A */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-3">
-          <div>
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-500" />
-              Statistik Pembelajaran Rombel 8A {timeframe === "harian" ? "(Hari Efektif)" : timeframe === "mingguan" ? "(Rekap Mingguan)" : "(Rekap Bulanan)"}
-            </h3>
-            <p className="text-xs text-muted-foreground">Persentase real-time 3 indikator utama binaan kelas 8A.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="text-xs font-bold gap-1" onClick={() => setActiveTab?.("progress")}>
-              <LineChart className="h-3.5 w-3.5 text-primary" /> Progress Belajar 8A →
-            </Button>
-          </div>
-        </div>
-
-        {/* 3 Cards Statistik Kelas 8A */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="bg-card border-border hover:border-blue-500/50 transition shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-blue-500/15 text-blue-500 grid place-items-center font-bold shrink-0">
-                <Users className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground font-semibold">Kehadiran Siswa Kelas 8A</div>
-                <div className="text-2xl font-extrabold font-mono text-blue-500">{currentWaliStats.siswa.val}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{currentWaliStats.siswa.detail}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-purple-500/50 transition shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-purple-500/15 text-purple-500 grid place-items-center font-bold shrink-0">
-                <BookOpen className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground font-semibold">Pembelajaran & Penugasan 8A</div>
-                <div className="text-2xl font-extrabold font-mono text-purple-500">{currentWaliStats.kbm.val}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{currentWaliStats.kbm.detail}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-amber-500/50 transition shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-amber-500/15 text-amber-500 grid place-items-center font-bold shrink-0">
-                <GraduationCap className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground font-semibold">Ketuntasan KKM Siswa 8A</div>
-                <div className="text-2xl font-extrabold font-mono text-amber-500">{currentWaliStats.kkm.val}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{currentWaliStats.kkm.detail}</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Wali Kelas Monitoring Cards */}
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-primary" /> Progress Capaian Pembelajaran Siswa 8A
-              </CardTitle>
-              <Button size="sm" variant="ghost" className="text-xs text-primary font-bold" onClick={() => setActiveTab?.("progress")}>
-                Lihat Rincian →
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                { name: "Ahmad Fauzi", nis: "0081928371", cp: "95% Tuntas", status: "Sangat Baik", c: "text-emerald-500" },
-                { name: "Anisa Rahma", nis: "0081928372", cp: "90% Tuntas", status: "Baik", c: "text-blue-500" },
-                { name: "Muhammad Fairuz", nis: "0081928374", cp: "98% Tuntas", status: "Sangat Baik", c: "text-emerald-500" },
-                { name: "Zaid bin Tsabit", nis: "0081928375", cp: "100% Tuntas", status: "Mumtaz", c: "text-emerald-500" },
-              ].map((row, i) => (
-                <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-muted/40 border border-border/50 text-sm">
-                  <div>
-                    <div className="font-bold text-foreground">{row.name}</div>
-                    <div className="text-xs text-muted-foreground font-mono">NISN: {row.nis}</div>
-                  </div>
-                  <Badge variant="outline" className={`font-mono text-xs font-bold ${row.c}`}>
-                    {row.cp}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <ScrollText className="h-5 w-5 text-emerald-500" /> Status Pengesahan E-Rapor Kelas 8A
-              </CardTitle>
-              <Button size="sm" variant="ghost" className="text-xs text-primary font-bold" onClick={() => setActiveTab?.("nilai")}>
-                Buka Rekap Nilai →
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-sm text-foreground">Formulasi Nilai Kurikulum Merdeka</div>
-                  <div className="text-xs text-muted-foreground">Formatif (1-3) + Sumatif (1-3) + Tugas + Rata2 Kuis</div>
-                </div>
-                <Badge className="bg-emerald-600 text-white">TERVERIFIKASI</Badge>
-              </div>
-
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-sm text-foreground">Cetak & Export Excel Rombel 8A</div>
-                  <div className="text-xs text-muted-foreground">32 Lembar Rapor Official Kemenag Siap Unduh</div>
-                </div>
-                <Badge variant="secondary" className="bg-blue-500/20 text-blue-600">SIAP CETAK</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Guru Pengampu Dashboard
-  if (activeRole === "guru") {
-    return (
-      <div className="space-y-6">
-        <div className="rounded-2xl bg-gradient-to-r from-emerald-900 via-teal-800 to-slate-950 text-white p-6 lg:p-8 shadow-xl border border-emerald-500/30">
-          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-3">
-            DASHBOARD GURU PENGAMPU
-          </Badge>
-          <h2 className="text-2xl lg:text-3xl font-extrabold">{`Assalamu'alaikum, ${userProfile?.name || "Bpk/Ibu Guru"} 👨‍🏫`}</h2>
-          <p className="mt-2 text-sm text-slate-200 max-w-3xl leading-relaxed">
-            Portal KBM Guru: Pengingat jadwal tatap muka hari ini, pemeriksaan submisi LKPD siswa, penyusunan Pusat Asesmen, serta pemanfaatan Asisten AI & Tools Pembelajaran.
-          </p>
-        </div>
-
-        {/* 4 Overview Quick Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-card border-border hover:border-emerald-500/50 transition cursor-pointer" onClick={() => setActiveTab?.("jadwal")}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-500 grid place-items-center font-bold">
-                <CalendarClock className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Jadwal Mengajar Hari Ini</div>
-                <div className="text-lg font-bold font-mono text-emerald-500">2 Kelas (8A & 9C)</div>
-                <div className="text-[10px] text-muted-foreground">Klik rincian jam & kelas →</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-amber-500/50 transition cursor-pointer" onClick={() => setActiveTab?.("tugas")}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-amber-500/15 text-amber-500 grid place-items-center font-bold">
-                <PencilLine className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Tugas Belum Dinilai</div>
-                <div className="text-lg font-bold font-mono text-amber-500">12 Submisi LKPD</div>
-                <div className="text-[10px] text-muted-foreground">Klik mulai koreksi →</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-purple-500/50 transition cursor-pointer" onClick={() => setActiveTab?.("agenda")}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-purple-500/15 text-purple-500 grid place-items-center font-bold">
-                <CalendarDays className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Reminder Agenda & CBT</div>
-                <div className="text-lg font-bold font-mono text-purple-500">3 Event Dekat</div>
-                <div className="text-[10px] text-muted-foreground">Klik kalender akademik →</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border hover:border-blue-500/50 transition cursor-pointer" onClick={() => setActiveTab?.("asisten_ai")}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-blue-500/15 text-blue-500 grid place-items-center font-bold">
-                <Bot className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Asisten AI Mengajar</div>
-                <div className="text-lg font-bold font-mono text-blue-500">6 Tools Aktif</div>
-                <div className="text-[10px] text-muted-foreground">ChatGPT, NotebookLM, dll →</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Section 1: Pengingat Jadwal Mengajar Hari Ini & Submisi Belum Dinilai */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <CalendarClock className="h-5 w-5 text-emerald-500" /> Pengingat Jadwal Mengajar Hari Ini (Selasa)
-              </CardTitle>
-              <Button size="sm" variant="ghost" className="text-xs text-emerald-500 font-bold" onClick={() => setActiveTab?.("jadwal")}>
-                Lihat Semua Jadwal →
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div
-                className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 transition cursor-pointer"
-                onClick={() => toast.info("Rincian KBM: Al-Quran Hadits Kelas VIII A • Pertemuan 16: Hukum Bacaan Mad Silah & Mad Badal • Ruang A.02")}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Badge className="bg-emerald-600 text-white font-mono text-[10px] mb-1">⏰ 07:30 - 09:00 WIB (Jam 1-2)</Badge>
-                    <div className="font-bold text-sm text-foreground">{"Al-Quran Hadits (Kelas VIII A)"}</div>
-                    <div className="text-xs text-muted-foreground">Materi: Pertemuan 16 - Tajwid Mad Silah • Ruang A.02</div>
-                  </div>
-                  <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 text-[10px] font-bold">
-                    🔍 Klik Detail KBM
-                  </Badge>
-                </div>
-              </div>
-
-              <div
-                className="p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/15 transition cursor-pointer"
-                onClick={() => toast.info("Rincian KBM: Fiqih Kelas IX C • Pertemuan 18: Syarat Sembelihan Hewan Kurban • Ruang C.04")}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Badge className="bg-blue-600 text-white font-mono text-[10px] mb-1">⏰ 10:15 - 11:45 WIB (Jam 5-6)</Badge>
-                    <div className="font-bold text-sm text-foreground">Fiqih Kebangsaan (Kelas IX C)</div>
-                    <div className="text-xs text-muted-foreground">Materi: Pertemuan 18 - Ketentuan Sembelihan • Ruang C.04</div>
-                  </div>
-                  <Badge variant="outline" className="text-blue-500 border-blue-500/30 text-[10px] font-bold">
-                    🔍 Klik Detail KBM
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <PencilLine className="h-5 w-5 text-amber-500" /> Submisi Tugas Belum Dinilai & Reminder Agenda
-              </CardTitle>
-              <Button size="sm" variant="ghost" className="text-xs text-amber-500 font-bold" onClick={() => setActiveTab?.("tugas")}>
-                Koreksi Tugas →
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-sm text-foreground">LKPD Pertemuan 15: Resume Tajwid VIII A</div>
-                  <div className="text-xs text-muted-foreground">8 Submisi Siswa Menunggu Koreksi & Input Nilai</div>
-                </div>
-                <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0" onClick={() => setActiveTab?.("tugas")}>
-                  Koreksi (8)
-                </Button>
-              </div>
-
-              <div className="p-3 rounded-xl border border-purple-500/30 bg-purple-500/10 flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-sm text-foreground">📅 CBT Ujian PTS Ganjil - 15 s/d 20 Agustus 2026</div>
-                  <div className="text-xs text-muted-foreground">Batas Pengunggahan Bank Soal CBT: 10 Agustus 2026</div>
-                </div>
-                <Button size="sm" variant="outline" className="text-xs font-bold border-purple-500/30 text-purple-500 shrink-0" onClick={() => setActiveTab?.("agenda")}>
-                  Detail Agenda
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Admin Akademik Dashboard
-  if (activeRole === "admin_akademik") {
-    return (
-      <div className="space-y-6">
-        <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 lg:p-8 shadow-xl border border-indigo-500/30">
-          <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30 mb-3">
-            DASHBOARD ADMIN AKADEMIK
-          </Badge>
-          <h2 className="text-2xl lg:text-3xl font-extrabold">Assalamu'alaikum, Admin Akademik 💼</h2>
-          <p className="mt-2 text-sm text-slate-200 max-w-2xl leading-relaxed">
-            Pengelolaan jadwal pelajaran, plotting rombel & kelas, perpustakaan digital, serta pengumuman resmi madrasah.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-card border-border">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-primary/15 text-primary grid place-items-center font-bold">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Master Siswa</div>
-                <div className="text-xl font-bold font-mono">948 Siswa</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-blue-500/15 text-blue-500 grid place-items-center font-bold">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Master Guru</div>
-                <div className="text-xl font-bold font-mono">54 Guru</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-500 grid place-items-center font-bold">
-                <BookOpen className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Total Rombel</div>
-                <div className="text-xl font-bold font-mono text-emerald-500">24 Rombel</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-amber-500/15 text-amber-500 grid place-items-center font-bold">
-                <CalendarClock className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Tahun Ajaran</div>
-                <div className="text-xl font-bold font-mono text-amber-500">2026/2027 Ganjil</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Siswa & Default Dashboard (Ruang Belajar Siswa)
-  const handleEnrollSiswa = () => {
-    setHasEnrolled(true);
-    setStudentXp((prev) => prev + 10);
-    toast.success("Presensi Harian Berhasil! Status Anda tercatat HADIR DI KELAS.", {
-      description: "🎉 Selamat! Anda memperoleh bonus +10 XP Poin Prestasi hari ini!",
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Banner Siswa & Gamifikasi XP Level */}
-      <div className="rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white p-6 lg:p-8 shadow-xl border border-blue-500/30">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                🎓 SISWA KELAS VIII A • NISN: 0081928371
-              </Badge>
-              <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 font-bold font-mono">
-                ⭐ {studentXp} XP • LEVEL 4 (PEJUANG ILMU)
-              </Badge>
-              {hasEnrolled ? (
-                <Badge className="bg-emerald-600 text-white font-bold animate-pulse">
-                  🟢 PRESENSI HARI INI: HADIR DI KELAS (07.15 WIB)
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-amber-400 border-amber-400/40">
-                  ⚠️ BELUM ENROLL PRESENSI HARI INI
-                </Badge>
-              )}
-            </div>
-            <h2 className="text-2xl lg:text-3xl font-extrabold">{"Assalamu'alaikum, Ahmad Fauzi 👋"}</h2>
-            <p className="mt-1.5 text-sm text-slate-200 max-w-2xl leading-relaxed">
-              Selamat belajar di LMS MTsN 2 Cilacap! Kumpulkan Poin Prestasi XP dari presensi, tugas, & kuis untuk meningkatkan peringkat Rombel 8A.
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Dashboard Guru Pengampu
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Selamat Datang, {userProfile?.name || "Dra. Hj. Siti Rahmah, M.Pd"} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime} WIB)
             </p>
           </div>
 
-          <div className="shrink-0">
-            {hasEnrolled ? (
-              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg gap-2 cursor-default">
-                <CheckCircle2 className="h-5 w-5" /> Presensi Hari Ini (+10 XP)
-              </Button>
-            ) : (
-              <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-black font-extrabold shadow-lg animate-bounce gap-2" onClick={handleEnrollSiswa}>
-                <UserCheck className="h-5 w-5" /> ⚡ Enroll Presensi Harian (+10 XP)
-              </Button>
-            )}
+          <Button
+            size="sm"
+            className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 h-9 shrink-0 shadow-xs"
+            onClick={() => setActiveTab?.("ruang_mengajar")}
+          >
+            <BookOpen className="h-4 w-4" /> Masuk Ruang Mengajar
+          </Button>
+        </div>
+
+        {/* 4 Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-slate-400/50 transition cursor-pointer space-y-1.5"
+            onClick={() => setActiveTab?.("jadwal")}
+          >
+            <div className="text-xs font-semibold text-slate-500">Jadwal Mengajar Hari Ini</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">2 Kelas</div>
+            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+              Lihat rincian <ArrowRight className="h-3 w-3" />
+            </div>
+          </div>
+
+          <div
+            className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 hover:border-amber-500/70 transition cursor-pointer space-y-1.5"
+            onClick={() => setActiveTab?.("tugas")}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Tugas Belum Dinilai</span>
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+            </div>
+            <div className="text-2xl font-extrabold text-amber-700 dark:text-amber-400">12 Submisi</div>
+            <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+              Koreksi sekarang <ArrowRight className="h-3 w-3" />
+            </div>
+          </div>
+
+          <div
+            className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-slate-400/50 transition cursor-pointer space-y-1.5"
+            onClick={() => setActiveTab?.("agenda")}
+          >
+            <div className="text-xs font-semibold text-slate-500">Agenda Akademik</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">3 Event Dekat</div>
+            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+              Lihat agenda <ArrowRight className="h-3 w-3" />
+            </div>
+          </div>
+
+          <div
+            className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-slate-400/50 transition cursor-pointer space-y-1.5"
+            onClick={() => setActiveTab?.("asisten_ai")}
+          >
+            <div className="text-xs font-semibold text-slate-500">Asisten AI Mengajar</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">6 Tools</div>
+            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+              Buka AI Assistant <ArrowRight className="h-3 w-3" />
+            </div>
+          </div>
+        </div>
+
+        {/* Operational Grid: Jadwal KBM + Urgent Tasks */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Jadwal Mengajar Hari Ini ({currentDayName})</h2>
+              <button type="button" className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer" onClick={() => setActiveTab?.("jadwal")}>
+                Lihat Semua →
+              </button>
+            </div>
+
+            <div
+              className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-600/60 transition cursor-pointer space-y-2"
+              onClick={() => { setActiveTab?.("ruang_mengajar"); toast.info("Masuk Ruang Mengajar: Al-Quran Hadits 8A"); }}
+            >
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-emerald-700 dark:text-emerald-400">07:30 - 09:00 WIB · Jam 1-2</span>
+                <span className="text-slate-400 font-mono text-[11px]">Ruang A.02</span>
+              </div>
+              <div className="font-extrabold text-base text-slate-900 dark:text-slate-100">Al-Quran Hadits (Kelas VIII A)</div>
+              <div className="text-xs text-slate-500">Materi: Pertemuan 2 — Tajwid Mad Silah Qashirah</div>
+              <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 pt-1 flex items-center gap-1">Lihat detail <ArrowRight className="h-3 w-3" /></div>
+            </div>
+
+            <div
+              className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-600/60 transition cursor-pointer space-y-2"
+              onClick={() => { setActiveTab?.("ruang_mengajar"); toast.info("Masuk Ruang Mengajar: Fiqih IX C"); }}
+            >
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-600 dark:text-slate-400">10:15 - 11:45 WIB · Jam 5-6</span>
+                <span className="text-slate-400 font-mono text-[11px]">Ruang C.04</span>
+              </div>
+              <div className="font-extrabold text-base text-slate-900 dark:text-slate-100">Fiqih Kebangsaan (Kelas IX C)</div>
+              <div className="text-xs text-slate-500">Materi: Pertemuan 2 — Ketentuan Qurban</div>
+              <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 pt-1 flex items-center gap-1">Lihat detail <ArrowRight className="h-3 w-3" /></div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Hal yang Perlu Dikerjakan</h2>
+              <button type="button" className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer" onClick={() => setActiveTab?.("tugas")}>
+                Koreksi Tugas →
+              </button>
+            </div>
+
+            <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 hover:border-amber-500/70 transition cursor-pointer space-y-2" onClick={() => setActiveTab?.("tugas")}>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-amber-700 dark:text-amber-400">⚠️ PERLU KOREKSI SEGERA</span>
+                <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400">12 Submisi</span>
+              </div>
+              <div className="font-bold text-sm text-slate-900 dark:text-slate-100">LKPD Pertemuan 2: Resume Tajwid Mad Silah (VIII A)</div>
+              <div className="text-xs text-slate-500">Batas Pengumpulan: Hari ini, 23:59 WIB</div>
+              <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 pt-1 flex items-center gap-1">Mulai koreksi <ArrowRight className="h-3 w-3" /></div>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-slate-400/50 transition cursor-pointer space-y-2" onClick={() => setActiveTab?.("agenda")}>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-500">AGENDA MADRASAH</span>
+                <span className="text-xs font-mono text-slate-400">15-20 Ags 2026</span>
+              </div>
+              <div className="font-bold text-sm text-slate-900 dark:text-slate-100">CBT Ujian Tengah Semester (PTS) Ganjil</div>
+              <div className="text-xs text-slate-500">Batas Pengunggahan Soal CBT: 10 Agustus 2026</div>
+              <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 pt-1 flex items-center gap-1">Lihat agenda <ArrowRight className="h-3 w-3" /></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Supporting Info */}
+        <div className="grid md:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <LineChart className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Capaian Rombel Ajar Saya
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              {[
+                { mapel: "Al-Quran Hadits", classCode: "Kelas VIII A", status: "16 Pertemuan", kkm: "95.2% KKM" },
+                { mapel: "Al-Quran Hadits", classCode: "Kelas VIII B", status: "15 Pertemuan", kkm: "92.0% KKM" },
+                { mapel: "Fiqih Kebangsaan", classCode: "Kelas IX C", status: "18 Pertemuan", kkm: "97.5% KKM" },
+              ].map((item, idx) => (
+                <div key={idx} className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                  <div>
+                    <div className="font-bold text-slate-900 dark:text-slate-100">{item.mapel}</div>
+                    <div className="text-[11px] text-slate-500">{item.classCode} · {item.status}</div>
+                  </div>
+                  <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">{item.kkm}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Agenda KBM Minggu Ini
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+                <div className="font-bold text-slate-900 dark:text-slate-100">Jumat, 21 Ags · Kuis Formatif Tajwid</div>
+                <div className="text-slate-500">Evaluasi Mad Silah Qashirah Kelas VIII B.</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Bell className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Pengumuman Kurikulum
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+                <div className="font-bold text-slate-900 dark:text-slate-100">📌 Batas Upload Bank Soal CBT</div>
+                <p className="text-slate-500 leading-relaxed">
+                  Bank Soal CBT PTS Ganjil diserahkan paling lambat 10 Agustus 2026.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 2. DASHBOARD WALI KELAS (WITH STATISTICAL BAR / PROGRESS CHART)
+  // =========================================================================
+  if (role === "walikelas" || role === "wali_kelas") {
+    return (
+      <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Dashboard Wali Kelas 8A
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Pembinaan Rombongan Belajar 8A ({userProfile?.name || "Dra. Hj. Siti Rahmah, M.Pd"}) · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+
+          <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 h-9 shrink-0 shadow-xs" onClick={() => setActiveTab?.("kehadiran")}>
+            <UserCheck className="h-4 w-4" /> Presensi Harian Pagi
+          </Button>
+        </div>
+
+        {/* 4 Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1.5 cursor-pointer" onClick={() => setActiveTab?.("kehadiran")}>
+            <div className="text-xs font-semibold text-slate-500">Kehadiran Siswa 8A</div>
+            <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">96.9%</div>
+            <div className="text-xs font-semibold text-slate-500">31 dari 32 Siswa Hadir Hari Ini</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 space-y-1.5 cursor-pointer" onClick={() => setActiveTab?.("kehadiran")}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Catatan Tidak Hadir</span>
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+            </div>
+            <div className="text-2xl font-extrabold text-amber-700 dark:text-amber-400">1 Siswa Alpa</div>
+            <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">Kirim WA Alert Ortu <Send className="h-3 w-3" /></div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1.5 cursor-pointer" onClick={() => setActiveTab?.("nilai")}>
+            <div className="text-xs font-semibold text-slate-500">Progress E-Rapor 8A</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">32 Siswa</div>
+            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">Verifikasi Rapor →</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1.5 cursor-pointer" onClick={() => setActiveTab?.("tahfidz")}>
+            <div className="text-xs font-semibold text-slate-500">Setoran Tahfidz 8A</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">28 Tuntas</div>
+            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">Buka Setoran →</div>
+          </div>
+        </div>
+
+        {/* 📊 BAR CHART / STATISTIK KHUSUS WALI KELAS */}
+        <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Analisis Statistik Kehadiran & Mutu Nilai Rombel 8A
+            </h2>
+            <span className="text-xs text-slate-400 font-mono">Bulan Agustus 2026</span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 text-xs">
+            {/* Visual Bar 1: Rekapitulasi Presensi */}
+            <div className="space-y-2.5">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">Komposisi Presensi Siswa 8A (639 Jam-Siswa)</div>
+              
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>🟢 Hadir Mengajar</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">96.9% (620)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "96.9%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>🔵 Izin Sakit</span>
+                    <span className="font-bold text-slate-600 dark:text-slate-400">2.1% (13)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-slate-500 rounded-full" style={{ width: "2.1%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>🔴 Alpa (Tanpa Ket.)</span>
+                    <span className="font-bold text-rose-600">1.0% (6)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-rose-600 rounded-full" style={{ width: "1.0%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Bar 2: Distribusi Nilai Rapor */}
+            <div className="space-y-2.5">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">Distribusi Predikat E-Rapor Kelas 8A (32 Siswa)</div>
+              
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Sangat Baik</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">56.2% (18 Siswa)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "56.2%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Baik</span>
+                    <span className="font-bold text-slate-600 dark:text-slate-400">43.8% (14 Siswa)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-slate-500 rounded-full" style={{ width: "43.8%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Columns Supporting Info */}
+        <div className="grid md:grid-cols-3 gap-6 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Detail Alpa Siswa 8A
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">Muhammad Rizky</div>
+                  <div className="text-slate-500">Status: <strong className="text-rose-600">Alpa</strong></div>
+                </div>
+                <Button size="sm" variant="outline" className="text-[11px] h-7 font-bold border-amber-500/40 text-amber-700" onClick={() => toast.success("WA Alert Dikirim!")}>
+                  WA Alert
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <MessageCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Agenda Paguyuban 8A
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+                <div className="font-bold text-slate-900 dark:text-slate-100">📌 Silaturahmi Orang Tua 8A</div>
+                <p className="text-slate-500">Sabtu, 29 Agustus 2026 di Ruang B.01.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Award className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Progress Tahfidz 8A
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <span className="font-bold text-slate-900 dark:text-slate-100">28 Siswa Juz 30 Tuntas</span>
+                <span className="font-mono font-bold text-emerald-700">87.5%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 3. DASHBOARD SISWA
+  // =========================================================================
+  if (role === "siswa" || role === "student") {
+    return (
+      <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Dashboard Siswa (Kelas VIII A)
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Selamat Datang, {userProfile?.name || "Ahmad Fauzi"} · MTsN 2 Cilacap ({currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })})
+            </p>
+          </div>
+          <Badge variant="outline" className="border-emerald-600 text-emerald-800 dark:text-emerald-300 font-bold text-xs py-1.5 px-3">
+            ✓ PRESENSI HARI INI: HADIR (Dicatat Wali Kelas)
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+            <div className="text-xs font-semibold text-slate-500">Persentase Kehadiran Saya</div>
+            <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">95.2%</div>
+            <div className="text-xs text-slate-400">Resmi Terdata di E-Rapor</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/5 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("tugas")}>
+            <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">Tugas Belum Dikumpulkan</div>
+            <div className="text-2xl font-extrabold text-amber-700 dark:text-amber-400">1 LKPD</div>
+            <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">Kumpulkan tugas →</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("nilai")}>
+            <div className="text-xs font-semibold text-slate-500">Nilai Rata-rata Saya</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">87.8 (Sangat Baik)</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Lihat rekap nilai →</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("tahfidz")}>
+            <div className="text-xs font-semibold text-slate-500">Setoran Tahfidz Qur'an</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">Juz 30 Tuntas</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Surah Abasa v.42</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 4. DASHBOARD SUPERADMIN (WITH SYSTEM & USER STATISTICAL BARS)
+  // =========================================================================
+  if (role === "admin" || role === "superadmin") {
+    return (
+      <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Dashboard Superadmin
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Infrastruktur Sistem, Hak Akses, Backup Database & Audit Log · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+
+          <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 h-9 shrink-0 shadow-xs" onClick={() => toast.success("Backup DB MySQL Ditrigger!")}>
+            <Database className="h-4 w-4" /> Trigger Backup DB
+          </Button>
+        </div>
+
+        {/* 4 Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("users")}>
+            <div className="text-xs font-semibold text-slate-500">Total Pengguna Terdaftar</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">948 Siswa</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">54 Guru · 6 Role Sync</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+            <div className="text-xs font-semibold text-slate-500">Status Server & Database</div>
+            <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">MySQL Online</div>
+            <div className="text-xs text-slate-500 font-medium">Latensi 14ms · RAM 32%</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+            <div className="text-xs font-semibold text-slate-500">Pengguna Aktif Realtime</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">142 User</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">0 Security Threats</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+            <div className="text-xs font-semibold text-slate-500">Backup Otomatis DB</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">02:00 WIB</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">✓ Status Tuntas (42 MB)</div>
+          </div>
+        </div>
+
+        {/* 📊 BAR CHART / STATISTIK KHUSUS SUPERADMIN */}
+        <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Activity className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Statistik Keaktifan Pengguna & Resource Usage System
+            </h2>
+            <span className="text-xs text-slate-400 font-mono">Live Monitoring</span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 text-xs">
+            {/* Visual Bar 1: User Login Ratio per Role */}
+            <div className="space-y-2.5">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">Rasio Keaktifan Login per Role (Hari Ini)</div>
+              
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Guru & Staf Pengampu (53/54)</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">98.1%</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "98.1%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Siswa MTsN (918/948)</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">96.8%</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600/80 rounded-full" style={{ width: "96.8%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Wali Murid / Ortu (740/948)</span>
+                    <span className="font-bold text-slate-500">78.0%</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-slate-400 rounded-full" style={{ width: "78.0%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Bar 2: System Health & Storage */}
+            <div className="space-y-2.5">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">Kapasitas Memory & Storage Database MySQL</div>
+              
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>RAM Server Utilization</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">32% (3.2 GB / 10 GB)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "32%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Database MySQL Storage Size</span>
+                    <span className="font-bold text-slate-600">0.4% (42 MB / 10 GB)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-slate-500 rounded-full" style={{ width: "10%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Columns Supporting Info */}
+        <div className="grid md:grid-cols-3 gap-6 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Log Keamanan Realtime
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">DB Sync SIAKAD</div>
+                  <div className="text-slate-500">948 akun terverifikasi</div>
+                </div>
+                <span className="font-mono text-emerald-700 font-bold">✓ OK</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Server className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Resource Infrastructure
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <span className="font-bold text-slate-900 dark:text-slate-100">Node Server Status</span>
+                <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">HEALTHY</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Lock className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Hak Akses Role
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <span className="font-bold text-slate-900 dark:text-slate-100">Role Permissions Master</span>
+                <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">SYNCED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // DASHBOARD EKSEKUTIF (KEPALA MADRASAH & WAKA KURIKULUM)
+  // =========================================================================
+  if (role === "waka" || role === "kamad" || role === "kepala" || role === "eksekutif") {
+    const isWaka = role === "waka";
+    return (
+      <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+        {/* Header Bar Eksekutif */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+                {isWaka ? "Dashboard Eksekutif Waka Kurikulum" : "Dashboard Eksekutif Kepala Madrasah"}
+              </h1>
+              <Badge className="bg-emerald-600 text-white font-mono text-[10px] font-bold">
+                EXECUTIVE OVERVIEW
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              Monitoring real-time ketercapaian Kurikulum Merdeka, verifikasi Modul Ajar, presensi KBM, & kinerja GTK MTsN 2 Cilacap.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 h-9 shadow-xs"
+              onClick={() => setActiveTab?.("modul_ajar")}
+            >
+              <FileCheck className="h-4 w-4" /> Verifikasi Modul Ajar
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs font-bold text-emerald-700 dark:text-emerald-400 border-emerald-500/30 h-9"
+              onClick={() => setActiveTab?.("nilai")}
+            >
+              <GraduationCap className="h-4 w-4" /> Laporan E-Rapor
+            </Button>
+          </div>
+        </div>
+
+        {/* 4 Metric Cards Ringkasan Eksekutif */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1.5 shadow-xs">
+            <div className="text-xs font-semibold text-slate-500 flex items-center justify-between">
+              <span>Ketercapaian Kurikulum</span>
+              <span className="text-base">📊</span>
+            </div>
+            <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">94.2%</div>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Target Semester Ganjil Tercapai</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1.5 shadow-xs cursor-pointer hover:border-emerald-500/50 transition" onClick={() => setActiveTab?.("modul_ajar")}>
+            <div className="text-xs font-semibold text-slate-500 flex items-center justify-between">
+              <span>Modul Ajar Terverifikasi</span>
+              <span className="text-base">📄</span>
+            </div>
+            <div className="text-2xl font-black text-slate-900 dark:text-slate-100">11 / 14 Mapel</div>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">78.5% Terverifikasi Waka</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1.5 shadow-xs cursor-pointer hover:border-emerald-500/50 transition" onClick={() => setActiveTab?.("kehadiran")}>
+            <div className="text-xs font-semibold text-slate-500 flex items-center justify-between">
+              <span>Rata-Rata Presensi Siswa</span>
+              <span className="text-base">👥</span>
+            </div>
+            <div className="text-2xl font-black text-slate-900 dark:text-slate-100">96.8%</div>
+            <div className="text-[11px] text-slate-500 font-medium">948 Siswa Aktif Terdaftar</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1.5 shadow-xs cursor-pointer hover:border-emerald-500/50 transition" onClick={() => setActiveTab?.("sdm_gtk")}>
+            <div className="text-xs font-semibold text-slate-500 flex items-center justify-between">
+              <span>Beban Kerja GTK (24JP)</span>
+              <span className="text-base">🏆</span>
+            </div>
+            <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">54 / 54 Guru</div>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">100% Memenuhi TPG</div>
+          </div>
+        </div>
+
+        {/* 2 Visual Progress Charts */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Chart 1: Progress Verifikasi Perangkat Pembelajaran Per Rumpun Mapel */}
+          <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <FileCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Verifikasi Perangkat Pembelajaran per Rumpun Mapel
+              </h2>
+              <span className="text-xs text-emerald-700 dark:text-emerald-400 font-mono font-bold">Waka Audit</span>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span>Rumpun Keagamaan (Quran, Akidah, Fiqih, SKI, B. Arab)</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">100% (5/5 Mapel)</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: "100%" }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span>Rumpun Umum (Matematika, IPA, B. Indo, B. Inggris, IPS, PKn, IT)</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">85.7% (6/7 Mapel)</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: "85.7%" }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span>Muatan Lokal & Pengembangan (B. Jawa, Tahfidz Qur'an)</span>
+                  <span className="font-bold text-teal-600 dark:text-teal-400">90.0% (2/2 Mapel)</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-teal-500 rounded-full transition-all duration-500" style={{ width: "90%" }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Chart 2: Presensi Real-Time per Jenjang Kelas */}
+          <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Users className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Presensi Real-Time Siswa per Jenjang (948 Siswa)
+              </h2>
+              <span className="text-xs text-slate-400 font-mono">Live Attendance</span>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span>Tingkat VII (9 Rombel - 318 Siswa)</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">97.5% Hadir</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: "97.5%" }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span>Tingkat VIII (9 Rombel - 315 Siswa)</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">96.2% Hadir</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: "96.2%" }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span>Tingkat IX (9 Rombel - 315 Siswa)</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">96.7% Hadir</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: "96.7%" }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4 Aksi Cepat Eksekutif (Quick Action Cards) */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            Aksi Cepat Pengawasan Eksekutif
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div
+              className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-500/50 transition cursor-pointer space-y-1.5"
+              onClick={() => setActiveTab?.("perangkat_pembelajaran")}
+            >
+              <div className="font-extrabold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+                <span>📁 Perangkat Pembelajaran</span>
+                <span>→</span>
+              </div>
+              <p className="text-slate-500">Kelola CP, ATP, Modul Ajar PDF 1-18 per Mapel.</p>
+            </div>
+
+            <div
+              className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-500/50 transition cursor-pointer space-y-1.5"
+              onClick={() => setActiveTab?.("tahfidz_report")}
+            >
+              <div className="font-extrabold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+                <span>🎓 Laporan Tahfidz Qur'an</span>
+                <span>→</span>
+              </div>
+              <p className="text-slate-500">Rekapitulasi capaian hafalan juz siswa madrasah.</p>
+            </div>
+
+            <div
+              className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-500/50 transition cursor-pointer space-y-1.5"
+              onClick={() => setActiveTab?.("kokurikuler_report")}
+            >
+              <div className="font-extrabold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+                <span>🎯 Laporan Kokurikuler P5</span>
+                <span>→</span>
+              </div>
+              <p className="text-slate-500">Monitoring proyek Profil Pelajar Pancasila Rahmatan lil 'Alamin.</p>
+            </div>
+
+            <div
+              className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-500/50 transition cursor-pointer space-y-1.5"
+              onClick={() => setActiveTab?.("cbt")}
+            >
+              <div className="font-extrabold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+                <span>💻 Monitoring CBT & Ujian</span>
+                <span>→</span>
+              </div>
+              <p className="text-slate-500">Live monitoring sesi ujian online & anti-cheat CBT.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 5. DASHBOARD ADMIN AKADEMIK (WITH ROMBEL DISTRIBUTIONS BAR)
+  // =========================================================================
+  if (role === "admin_akademik" || role === "akademik") {
+    return (
+      <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Dashboard Admin Akademik
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Master Data Rombel, Katalog Mapel, Ploting Jam KBM & NISN · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+
+          <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 h-9 shrink-0 shadow-xs" onClick={() => setActiveTab?.("siakad")}>
+            <Building2 className="h-4 w-4" /> Kelola Akademik Madrasah
+          </Button>
+        </div>
+
+        {/* 4 Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("siakad")}>
+            <div className="text-xs font-semibold text-slate-500">Master Rombel & Kelas</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">27 Rombel</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Tingkat VII, VIII, & IX</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("siakad")}>
+            <div className="text-xs font-semibold text-slate-500">Katalog Mata Pelajaran</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">10 Mapel</div>
+            <div className="text-xs text-slate-500 font-medium">Kurikulum Merdeka Kemenag</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+            <div className="text-xs font-semibold text-slate-500">Ploting Guru Pengampu</div>
+            <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">54/54 Guru</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">100% Jam Terploting</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("agenda")}>
+            <div className="text-xs font-semibold text-slate-500">Kalender Akademik TA</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">18 Pertemuan</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Ganjil 2026/2027</div>
+          </div>
+        </div>
+
+        {/* 📊 BAR CHART / STATISTIK KHUSUS ADMIN AKADEMIK */}
+        <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <FolderTree className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Analisis Distribusi Siswa & Kelengkapan Ploting KBM per Tingkat
+            </h2>
+            <span className="text-xs text-slate-400 font-mono">SIAKAD Sync</span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 text-xs">
+            {/* Visual Bar 1: Distribusi Siswa per Tingkat */}
+            <div className="space-y-2.5">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">Distribusi Siswa per Tingkat Rombel (948 Siswa)</div>
+              
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Tingkat VII (9 Rombel - A s/d I)</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">33.5% (318 Siswa)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "33.5%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Tingkat VIII (9 Rombel - A s/d I)</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">33.2% (315 Siswa)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600/90 rounded-full" style={{ width: "33.2%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Tingkat IX (9 Rombel - A s/d I)</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">33.2% (315 Siswa)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600/90 rounded-full" style={{ width: "33.2%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Bar 2: Status Ploting & VervalPD */}
+            <div className="space-y-2.5">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">Status Kelengkapan Ploting KBM & VervalPD NISN</div>
+              
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Ploting Guru Pengampu Mapel</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">100% (54/54 Guru)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "100%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Verifikasi NISN VervalPD Kemenag</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">100% (948/948 Siswa)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "100%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Columns Supporting Info */}
+        <div className="grid md:grid-cols-3 gap-6 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <FolderTree className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Verifikasi NISN Siswa
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">VervalPD Kemenag</div>
+                  <div className="text-slate-500">948 NISN Terdaftar</div>
+                </div>
+                <span className="font-mono font-bold text-emerald-700">✓ 100% VALID</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <FileSpreadsheet className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Distribusi Rombel
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+                <div className="font-bold text-slate-900 dark:text-slate-100">27 Rombongan Belajar</div>
+                <p className="text-slate-500">Tingkat VII (9), VIII (9), IX (9).</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Master Ruang Kelas
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <span className="font-bold text-slate-900 dark:text-slate-100">Total Ruang Kelas</span>
+                <span className="font-mono font-bold text-emerald-700">27 Ruang</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 6. DASHBOARD KEPALA MADRASAH (WITH TEACHER PRESENCE & MUTU KKM BARS)
+  // =========================================================================
+  if (role === "kamad" || role === "kepala_madrasah") {
+    return (
+      <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Dashboard Kepala Madrasah
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Pengawasan Kinerja Kelembagaan, Pengesahan Jurnal & Mutu KBM · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+
+          <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 h-9 shrink-0 shadow-xs" onClick={() => toast.success("5 Jurnal Mengajar Disahkan!")}>
+            <FileCheck className="h-4 w-4" /> Sahkan Semua Jurnal
+          </Button>
+        </div>
+
+        {/* 4 Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("rekap_presensi")}>
+            <div className="text-xs font-semibold text-slate-500">Kehadiran Guru Hari Ini</div>
+            <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">98.1%</div>
+            <div className="text-xs text-emerald-700 font-semibold">53 / 54 Guru Hadir Mengajar</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+            <div className="text-xs font-semibold text-slate-500">Kehadiran Siswa Total</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">96.8%</div>
+            <div className="text-xs text-slate-500 font-medium">918 dari 948 Siswa Hadir</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 space-y-1 cursor-pointer" onClick={() => toast.info("Membuka 5 Jurnal Menunggu Pengesahan...")}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Persetujuan Jurnal Mengajar</span>
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+            </div>
+            <div className="text-2xl font-extrabold text-amber-700 dark:text-amber-400">5 Jurnal</div>
+            <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">Sahkan Jurnal sekarang →</div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+            <div className="text-xs font-semibold text-slate-500">Indeks Mutu KKM Madrasah</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">95.2%</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Tuntas KKM (≥75)</div>
+          </div>
+        </div>
+
+        {/* 📊 BAR CHART / STATISTIK KHUSUS KEPALA MADRASAH */}
+        <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Analisis Tren Disiplin Guru & Ketuntasan Mutu KKM Madrasah
+            </h2>
+            <span className="text-xs text-slate-400 font-mono">Eksekutif Rekap</span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 text-xs">
+            {/* Visual Bar 1: Tren Presensi Guru per Bulan */}
+            <div className="space-y-2.5">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">Tren Kehadiran Guru Mengajar (Target 95.0%)</div>
+              
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Agustus 2026 (Bulan Ini)</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">98.1% (53/54 Guru)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "98.1%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Juli 2026</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">97.8% (52/54 Guru)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600/90 rounded-full" style={{ width: "97.8%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Bar 2: Ketuntasan KKM per Rumpun Mapel */}
+            <div className="space-y-2.5">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">Indeks Mutu KKM per Rumpun Pelajaran</div>
+              
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Rumpun PAI & Bahasa Arab</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">96.5% Tuntas KKM</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "96.5%" }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-medium mb-1">
+                    <span>Rumpun MIPA & Umum</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">94.2% Tuntas KKM</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full bg-slate-500 rounded-full" style={{ width: "94.2%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Columns Supporting Info */}
+        <div className="grid md:grid-cols-3 gap-6 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Kedisiplinan Guru
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">Presensi Guru Bulan Ini</div>
+                  <div className="text-slate-500">53 Hadir Tepat Waktu</div>
+                </div>
+                <span className="font-mono font-bold text-emerald-700">98.1%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <ScrollText className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Kebijakan & SK Mengajar
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+                <div className="font-bold text-slate-900 dark:text-slate-100">📌 SK Beban Mengajar Guru</div>
+                <p className="text-slate-500">SK Resmi Nomor MTs.02/PP.00.5/08/2026 disahkan.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Award className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Kinerja Madrasah
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <span className="font-bold text-slate-900 dark:text-slate-100">Akreditasi Madrasah</span>
+                <span className="font-mono font-bold text-emerald-700">A (Unggul)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 7. DASHBOARD WAKA KURIKULUM (WITH MODUL AJAR & BANK SOAL BARS)
+  // =========================================================================
+  return (
+    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+            Dashboard Waka Kurikulum
+          </h1>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Monitoring Kurikulum Merdeka, Pelaksanaan CBT & Bank Soal · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+          </p>
+        </div>
+
+        <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 h-9 shrink-0 shadow-xs" onClick={() => setActiveTab?.("cbt")}>
+          <MonitorCheck className="h-4 w-4" /> Monitoring CBT Live
+        </Button>
+      </div>
+
+      {/* 4 Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("cbt")}>
+          <div className="text-xs font-semibold text-slate-500">Monitoring CBT Online Live</div>
+          <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">2 Sesi Ujian</div>
+          <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">PAT Al-Quran Hadits & Math</div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("progress")}>
+          <div className="text-xs font-semibold text-slate-500">Progres Perangkat Ajar Guru</div>
+          <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">92.5%</div>
+          <div className="text-xs text-slate-500 font-medium">Modul Ajar & RPP Terupload</div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 font-sans">
+          <div className="text-xs font-semibold text-slate-500">Ketuntasan KKM Pembelajaran</div>
+          <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">95.8%</div>
+          <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Rata-rata Tingkat 7, 8, & 9</div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("cbt")}>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Bank Soal CBT Masuk</span>
+            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+          </div>
+          <div className="text-2xl font-extrabold text-amber-700 dark:text-amber-400">48 / 50 Mapel</div>
+          <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">2 Mapel Belum Upload →</div>
+        </div>
+      </div>
+
+      {/* 📊 BAR CHART / STATISTIK KHUSUS WAKA KURIKULUM */}
+      <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Analisis Kelengkapan Modul Ajar Guru & Readiness Ujian CBT PTS Ganjil
+          </h2>
+          <span className="text-xs text-slate-400 font-mono">Kurikulum Merdeka</span>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 text-xs">
+          {/* Visual Bar 1: Progress Modul Ajar per Tingkat */}
+          <div className="space-y-2.5">
+            <div className="font-semibold text-slate-700 dark:text-slate-300">Upload Modul Ajar CP/TP/ATP (Target 100%)</div>
+            
+            <div className="space-y-2">
+              <div>
+                <div className="flex justify-between font-medium mb-1">
+                  <span>Tingkat VII (9 Rombel)</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">100% (18/18 Modul)</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-600 rounded-full" style={{ width: "100%" }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between font-medium mb-1">
+                  <span>Tingkat VIII (9 Rombel)</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">88.8% (16/18 Modul)</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-600/80 rounded-full" style={{ width: "88.8%" }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between font-medium mb-1">
+                  <span>Tingkat IX (9 Rombel)</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">94.4% (17/18 Modul)</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-600/90 rounded-full" style={{ width: "94.4%" }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Visual Bar 2: Kelengkapan Bank Soal CBT */}
+          <div className="space-y-2.5">
+            <div className="font-semibold text-slate-700 dark:text-slate-300">Status Penyerahan Bank Soal CBT PTS Ganjil (50 Mapel)</div>
+            
+            <div className="space-y-2">
+              <div>
+                <div className="flex justify-between font-medium mb-1">
+                  <span>Soal Terverifikasi & Siap CBT</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">96.0% (48 Mapel)</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-emerald-600 rounded-full" style={{ width: "96.0%" }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between font-medium mb-1">
+                  <span>Menunggu Review / Upload Guru</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400">4.0% (2 Mapel)</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: "4.0%" }} />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Lencana Badge & Catatan Warning Pengingat Siswa */}
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* Card Lencana Apresiasi Guru */}
-        <Card className="border-border bg-amber-500/10 border-amber-500/30">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-700 dark:text-amber-400">
-              <Trophy className="h-4 w-4 text-amber-500" /> Lencana Badge Apresiasi Saya (3 Badge)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-1 space-y-2">
-            <div className="flex flex-wrap gap-2">
-              <Badge className="bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/30 p-2 text-xs font-bold gap-1">
-                ⭐ Siswa Aktif & Responsif
-              </Badge>
-              <Badge className="bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/30 p-2 text-xs font-bold gap-1">
-                🏆 Nilai Perfect 100
-              </Badge>
-              <Badge className="bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/30 p-2 text-xs font-bold gap-1">
-                🌟 Hafalan Mutqin Juz 30
-              </Badge>
-            </div>
-            <div className="text-[11px] text-muted-foreground italic pt-1">
-              "Pujian Dra. Hj. Siti Rahmah: Mas Ahmad sangat aktif bertanya dan hafalan Al-Qur'an lancar!"
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card Catatan Warning Pengingat */}
-        <Card className="border-border bg-destructive/10 border-destructive/30">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-4 w-4" /> Catatan Warning & Pengingat Tugas (1 Catatan)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-1 space-y-2">
-            <div className="p-2.5 rounded-lg bg-background/80 border border-destructive/20 text-xs">
-              <div className="font-bold text-destructive flex items-center justify-between">
-                <span>⚠️ Belum Mengumpulkan LKPD Pertemuan 15</span>
-                <Button size="sm" variant="ghost" className="h-6 text-[10px] text-destructive font-bold p-0" onClick={() => setActiveTab?.("tugas")}>
-                  Kirim Sekarang →
-                </Button>
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">
-                Catatan Ust. Abdul Halim: Harap segera mengumpulkan rangkuman Akidah Akhlak sebelum jam 15.00 WIB.
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Pengingat Jadwal Hari Ini & Tugas Baru */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Card 1: Pengingat Jadwal KBM Hari Ini */}
-        <Card className="border-border shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <CalendarClock className="h-5 w-5 text-blue-500" /> Pengingat Jadwal Pelajaran Hari Ini (Selasa)
-            </CardTitle>
-            <Button size="sm" variant="ghost" className="text-xs text-blue-500 font-bold" onClick={() => setActiveTab?.("jadwal")}>
-              Jadwal Lengkap →
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div
-              className="p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/15 transition cursor-pointer"
-              onClick={() => toast.info("Detail KBM: Al-Quran Hadits (Pertemuan 16: Tajwid Mad Silah) • Guru: Dra. Hj. Siti Rahmah • Ruang A.02")}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge className="bg-blue-600 text-white font-mono text-[10px] mb-1">⏰ 07:30 - 09:00 WIB (Jam 1-2)</Badge>
-                  <div className="font-bold text-sm text-foreground">{"Al-Quran Hadits (Kelas VIII A)"}</div>
-                  <div className="text-xs text-muted-foreground">Materi: Pertemuan 16 - Tajwid Mad Silah • Ruang A.02</div>
-                </div>
-                <Button size="sm" variant="outline" className="h-7 text-[10px] font-bold text-blue-500 border-blue-500/30">
-                  🔍 Detail KBM
-                </Button>
-              </div>
-            </div>
-
-            <div
-              className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 transition cursor-pointer"
-              onClick={() => toast.info("Detail KBM: IPA Terpadu (Pertemuan 14: Organ Pernapasan Manusia) • Guru: Ibu Ratna Dewi • Lab IPA")}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge className="bg-emerald-600 text-white font-mono text-[10px] mb-1">⏰ 09:15 - 10:45 WIB (Jam 3-4)</Badge>
-                  <div className="font-bold text-sm text-foreground">IPA Terpadu (Kelas VIII A)</div>
-                  <div className="text-xs text-muted-foreground">Materi: Pertemuan 14 - Sistem Pernapasan • Lab IPA</div>
-                </div>
-                <Button size="sm" variant="outline" className="h-7 text-[10px] font-bold text-emerald-500 border-emerald-500/30">
-                  🔍 Detail KBM
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 2: Tugas Baru yang Perlu Dikerjakan */}
-        <Card className="border-border shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <PencilLine className="h-5 w-5 text-amber-500" /> Tugas Baru & Kuis Belum Dikerjakan
-            </CardTitle>
-            <Button size="sm" variant="ghost" className="text-xs text-amber-500 font-bold" onClick={() => setActiveTab?.("tugas")}>
-              Semua Penugasan →
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 flex justify-between items-center">
+      {/* 3 Columns Supporting Info */}
+      <div className="grid md:grid-cols-3 gap-6 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Modul Ajar Kurikulum
+            </h3>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
               <div>
-                <Badge className="bg-amber-500 text-black text-[10px] font-bold mb-1">⏳ DEADLINE: 30 JULI 2026</Badge>
-                <div className="font-bold text-sm text-foreground">LKPD Pertemuan 16: Resume Tajwid Mad Silah</div>
-                <div className="text-xs text-muted-foreground">Al-Quran Hadits • 1 Submisi Berkas PDF</div>
+                <div className="font-bold text-slate-900 dark:text-slate-100">Tingkat VII (Kurikulum Merdeka)</div>
+                <div className="text-slate-500">18 Pertemuan CP/TP</div>
               </div>
-              <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0" onClick={() => setActiveTab?.("tugas")}>
-                Kerjakan →
-              </Button>
+              <span className="font-mono text-emerald-700 font-bold">100% OK</span>
             </div>
+          </div>
+        </div>
 
-            <div className="p-3 rounded-xl border border-purple-500/30 bg-purple-500/10 flex justify-between items-center">
-              <div>
-                <Badge className="bg-purple-500 text-white text-[10px] font-bold mb-1">📝 KUIS INTERAKTIF</Badge>
-                <div className="font-bold text-sm text-foreground">Kuis Bab 3: Sistem Pernapasan Manusia</div>
-                <div className="text-xs text-muted-foreground">IPA Terpadu • 10 Soal Pilihan Ganda (15 Menit)</div>
-              </div>
-              <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shrink-0" onClick={() => setActiveTab?.("quiz")}>
-                Mulai Kuis →
-              </Button>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Jadwal Ujian & CBT
+            </h3>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
+              <div className="font-bold text-slate-900 dark:text-slate-100">📌 Gladi Bersih Simulasi CBT PTS</div>
+              <p className="text-slate-500">Gladi bersih dilaksanakan tanggal 12-14 Agustus 2026.</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <FileCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Validasi Bank Soal
+            </h3>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+              <span className="font-bold text-slate-900 dark:text-slate-100">Soal Verifikasi Tim Editor</span>
+              <span className="font-mono font-bold text-emerald-700">48 Mapel Valid</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

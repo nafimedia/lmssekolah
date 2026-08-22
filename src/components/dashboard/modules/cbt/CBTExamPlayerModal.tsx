@@ -43,7 +43,7 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
   onClose,
   exam,
   questions,
-  studentName = "Muhammad Fairuz Maulana",
+  studentName = "ALIYA QIARA ABDULLAH",
   onExamComplete,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -112,8 +112,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
   const [gradeAnalysis, setGradeAnalysis] = useState<CBTGradeAnalysisItem[]>([
     {
       id: "1",
-      name: "Muhammad Fairuz Maulana",
-      nis: "2026001",
+      name: "ALIYA QIARA ABDULLAH",
+      nis: "12123301000288",
       classRombel: "VIII A",
       subjectName: "Matematika",
       pgScore: 85,
@@ -124,8 +124,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
     },
     {
       id: "2",
-      name: "Siti Aisyah Putri",
-      nis: "2026002",
+      name: "ABIGAIL HASAN YUSUF PRAYOGA",
+      nis: "0081928371",
       classRombel: "VIII A",
       subjectName: "Matematika",
       pgScore: 80,
@@ -136,8 +136,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
     },
     {
       id: "3",
-      name: "Ahmad Dani Prasetya",
-      nis: "2026003",
+      name: "ADITA AZ ZAHRA",
+      nis: "0081928372",
       classRombel: "VIII A",
       subjectName: "Matematika",
       pgScore: 55,
@@ -148,8 +148,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
     },
     {
       id: "4",
-      name: "Rizky Ramadhan",
-      nis: "2026004",
+      name: "AFRIZA RAHMA AZZAHRA",
+      nis: "0081928373",
       classRombel: "VIII A",
       subjectName: "Matematika",
       pgScore: 60,

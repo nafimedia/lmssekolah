@@ -636,7 +636,7 @@ export function BerandaModule({
             <div className="space-y-2 text-xs">
               <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-slate-900 dark:text-slate-100">Muhammad Rizky</div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">AHMAD ZULFIKAR</div>
                   <div className="text-slate-500">Status: <strong className="text-rose-600">Alpa</strong></div>
                 </div>
                 <Button size="sm" variant="outline" className="text-[11px] h-7 font-bold border-amber-500/40 text-amber-700" onClick={() => toast.success("WA Alert Dikirim!")}>
@@ -1493,7 +1493,7 @@ export function BerandaModule({
         <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("cbt")}>
           <div className="text-xs font-semibold text-slate-500">Monitoring CBT Online Live</div>
           <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">2 Sesi Ujian</div>
-          <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">PAT Al-Quran Hadits & Math</div>
+          <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">PAT Al Qur'an Hadis & Math</div>
         </div>
 
         <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("progress")}>

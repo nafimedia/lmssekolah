@@ -43,7 +43,7 @@ interface CBTGradeAnalysisProps {
 export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   grades,
   userRole = "guru",
-  studentName = "Muhammad Fairuz Maulana",
+  studentName = "ALIYA QIARA ABDULLAH",
   onSendRemedial,
   onSendEnrichment,
 }) => {
@@ -66,7 +66,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   const filteredGrades = grades.filter((g) => {
     // Siswa only sees their own grade
     if (isSiswa) {
-      return g.name.toLowerCase().includes(studentName.toLowerCase()) || g.name === "Muhammad Fairuz Maulana";
+      return g.name.toLowerCase().includes(studentName.toLowerCase()) || g.name === "ALIYA QIARA ABDULLAH";
     }
 
     const matchesSearch =

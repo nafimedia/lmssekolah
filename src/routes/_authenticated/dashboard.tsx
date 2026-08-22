@@ -2678,28 +2678,52 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
 
 function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
-  const rawClass = userProfile?.class_name || "VIII-A";
+  const me = MysqlAuthService.getActiveUser();
 
-  const getStudentGrade = (cName: string) => {
-    if (cName.includes("7") || cName.toUpperCase().includes("VII")) return "Kelas VII";
-    if (cName.includes("9") || cName.toUpperCase().includes("IX")) return "Kelas IX";
-    return "Kelas VIII";
-  };
+  const resolvedInitialRombel = useMemo(() => {
+    // 1. If Siswa, use student class
+    if (isSiswa) {
+      const raw = userProfile?.class_name || (me as any)?.class_name || "VIII-A";
+      const clean = raw.toUpperCase().replace("-", "").replace(/\s+/g, "");
+      if (clean.includes("7B") || clean.includes("VIIB")) return "Rombel 7B";
+      if (clean.includes("7A") || clean.includes("VIIA")) return "Rombel 7A";
+      if (clean.includes("8B") || clean.includes("VIIIB")) return "Rombel 8B";
+      if (clean.includes("8A") || clean.includes("VIIIA")) return "Rombel 8A";
+      if (clean.includes("9B") || clean.includes("IXB")) return "Rombel 9B";
+      if (clean.includes("9A") || clean.includes("IXA")) return "Rombel 9A";
+    }
 
-  const getStudentRombel = (cName: string) => {
-    const clean = (cName || "").toUpperCase().replace("-", "").replace(/\s+/g, "");
-    if (clean.includes("7B") || clean.includes("VIIB")) return "Rombel 7B";
-    if (clean.includes("7A") || clean.includes("VIIA")) return "Rombel 7A";
-    if (clean.includes("8B") || clean.includes("VIIIB")) return "Rombel 8B";
-    if (clean.includes("8A") || clean.includes("VIIIA")) return "Rombel 8A";
-    if (clean.includes("9B") || clean.includes("IXB")) return "Rombel 9B";
-    if (clean.includes("9A") || clean.includes("IXA")) return "Rombel 9A";
+    // 2. If Wali Kelas or Guru, resolve from logged in user name/nip/assigned_class
+    const cleanName = (me?.full_name || "").toLowerCase();
+    const cleanNip = (me?.nis_nip || "").trim();
+    const cleanAssigned = (userProfile?.assignedClass || (me as any)?.assigned_class || "").toUpperCase();
+
+    if (cleanAssigned.includes("7B")) return "Rombel 7B";
+    if (cleanAssigned.includes("7A")) return "Rombel 7A";
+    if (cleanAssigned.includes("8B")) return "Rombel 8B";
+    if (cleanAssigned.includes("8A")) return "Rombel 8A";
+    if (cleanAssigned.includes("9B")) return "Rombel 9B";
+    if (cleanAssigned.includes("9A")) return "Rombel 9A";
+
+    if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
+    if (cleanName.includes("misbah")) return "Rombel 7A";
+    if (cleanName.includes("endah")) return "Rombel 7B";
+    if (cleanName.includes("siti rahmah")) return "Rombel 8A";
+    if (cleanName.includes("sobiyati")) return "Rombel 9A";
+    if (cleanName.includes("sayono")) return "Rombel 9B";
+
     return "Rombel 8A";
-  };
+  }, [isSiswa, userProfile, me]);
+
+  const resolvedInitialGrade = useMemo(() => {
+    if (resolvedInitialRombel.includes("7")) return "Kelas VII";
+    if (resolvedInitialRombel.includes("9")) return "Kelas IX";
+    return "Kelas VIII";
+  }, [resolvedInitialRombel]);
 
   const hari = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const [filterKelas, setFilterKelas] = useState(isSiswa ? getStudentGrade(rawClass) : "Semua");
-  const [filterRombel, setFilterRombel] = useState(isSiswa ? getStudentRombel(rawClass) : "Semua");
+  const [filterKelas, setFilterKelas] = useState(resolvedInitialGrade);
+  const [filterRombel, setFilterRombel] = useState(resolvedInitialRombel);
 
   const [jadwal, setJadwal] = useState<
     Record<string, { j: string; m: string; tingkat: string; rombel: string; g: string }[]>
@@ -2958,39 +2982,58 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
       </div>
 
       {/* Filter Bar Kelas & Rombel */}
-      <div className="p-4 rounded-xl bg-card border border-border flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-muted-foreground mr-1">Filter Tingkat Kelas:</span>
-          {["Semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((k) => (
-            <Button
-              key={k}
-              size="sm"
-              variant={filterKelas === k ? "default" : "outline"}
-              className="text-xs h-7 font-semibold"
-              onClick={() => setFilterKelas(k)}
+      <div className="p-4 rounded-xl bg-card border border-border space-y-3 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground mr-1">Filter Tingkat Kelas:</span>
+            {["Semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((k) => (
+              <Button
+                key={k}
+                size="sm"
+                variant={filterKelas === k ? "default" : "outline"}
+                className="text-xs h-7 font-semibold"
+                onClick={() => setFilterKelas(k)}
+              >
+                {k}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground">Rombel:</span>
+            <select
+              className="h-8 rounded-md border border-border bg-background px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400"
+              value={filterRombel}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterRombel(val);
+                if (val.includes("7")) setFilterKelas("Kelas VII");
+                else if (val.includes("8")) setFilterKelas("Kelas VIII");
+                else if (val.includes("9")) setFilterKelas("Kelas IX");
+                else if (val === "Semua") setFilterKelas("Semua");
+              }}
             >
-              {k}
-            </Button>
-          ))}
+              <option value="Semua">Semua Rombel</option>
+              <option value="Rombel 7A">Rombel 7A</option>
+              <option value="Rombel 7B">Rombel 7B</option>
+              <option value="Rombel 8A">Rombel 8A</option>
+              <option value="Rombel 8B">Rombel 8B</option>
+              <option value="Rombel 9A">Rombel 9A</option>
+              <option value="Rombel 9B">Rombel 9B</option>
+            </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-muted-foreground">Rombel:</span>
-          <select
-            className="h-8 rounded-md border border-border bg-background px-3 text-xs font-semibold"
-            value={filterRombel}
-            onChange={(e) => setFilterRombel(e.target.value)}
-          >
-            <option value="Semua">Semua Rombel</option>
-            <option value="Rombel 7A">Rombel 7A</option>
-            <option value="Rombel 7B">Rombel 7B</option>
-            <option value="Rombel 7C">Rombel 7C</option>
-            <option value="Rombel 8A">Rombel 8A</option>
-            <option value="Rombel 8B">Rombel 8B</option>
-            <option value="Rombel 8C">Rombel 8C</option>
-            <option value="Rombel 9A">Rombel 9A</option>
-            <option value="Rombel 9C">Rombel 9C</option>
-          </select>
+        {/* Banner Info Schedule Filter */}
+        <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+          <span className="flex items-center gap-1.5">
+            <span className="text-sm">📍</span> Menampilkan Jadwal KBM Resmi: <strong className="underline decoration-emerald-500 font-extrabold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})
+          </span>
+          {filterRombel !== "Semua" && (
+            <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400 text-[10px]">
+              Tersaring Presisi
+            </Badge>
+          )}
         </div>
       </div>
 

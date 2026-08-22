@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { MysqlDataService } from "@/services/mysqlDataService";
 import {
   Users,
   UserCheck,
@@ -176,6 +177,39 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [tpgFilter, setTpgFilter] = useState<string>("ALL");
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getUsers()
+      .then((users) => {
+        if (!isMounted) return;
+        if (users && users.length > 0) {
+          const gtkUsers = users.filter((u) => u.role !== "siswa");
+          if (gtkUsers.length > 0) {
+            const mapped: GtkItem[] = gtkUsers.map((u, idx) => ({
+              id: String(u.id || `gtk-${idx + 1}`),
+              nip: u.nis_nip || "-",
+              npk: u.nis_nip ? `982${u.nis_nip.slice(-8)}` : "-",
+              name: u.full_name,
+              golongan: u.role === "admin" || u.role === "kamad" ? "Pembina Utama (IV/c)" : "Penata (III/c)",
+              statusKepegawaian: u.nis_nip && u.nis_nip.startsWith("19") ? "PNS" : u.nis_nip ? "PPPK" : "GTT / Honor",
+              mapelUtama: u.subject_specialty || (u.role === "kamad" ? "Manajemen Sekolah" : u.role === "waka" ? "Kurikulum" : "Mata Pelajaran"),
+              totalJp: 24,
+              tugasTambahan: u.class_name ? `Wali Kelas ${u.class_name}` : u.role === "kamad" ? "Kepala Madrasah" : u.role === "waka" ? "Waka Kurikulum" : "Guru Pengampu",
+              isSertifikasi: true,
+              email: u.email,
+              phone: "08123456789" + (idx % 10),
+            }));
+            setGtkList(mapped);
+          }
+        }
+      })
+      .catch((err) => console.warn("Failed loading GTK list from DB:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

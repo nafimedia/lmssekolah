@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { MysqlDataService } from "@/services/mysqlDataService";
 import {
   Sparkles,
   CheckCircle2,
@@ -39,6 +40,40 @@ export function SiakadMasterDataModule() {
   const [wizardStep, setWizardStep] = useState(1);
   const [selectedMapelForPerangkat, setSelectedMapelForPerangkat] = useState<MasterMapelItem | null>(null);
   const [selectedRombelJadwal, setSelectedRombelJadwal] = useState<string | null>(null);
+
+  const [dbTeachersList, setDbTeachersList] = useState<string[]>([
+    "H. SOLIHUN, S.Pd., M.Si",
+    "ALI MANSUR, S.Pd",
+    "SOBIYATI, S.Pd",
+    "UMI KHAFSOH, S.Pd",
+    "WAKHIBUN, S.P",
+    "SAYONO, S.Pd., M.Pd.",
+    "WAHYUDIN, S",
+    "NAZIHATUN ZUHRIYAH, S.Pd.",
+    "RIDHO ANSHORI, S.Pd., M.Pd",
+    "CARYATI,",
+    "DAISAH, S.Pd",
+    "H. ANI YULIANI, S.Pd",
+    "CETY MAHARSY, S.Pd",
+  ]);
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getUsers()
+      .then((users) => {
+        if (!isMounted) return;
+        if (users && users.length > 0) {
+          const teachers = users.filter((u) => u.role !== "siswa").map((u) => u.full_name);
+          if (teachers.length > 0) {
+            setDbTeachersList(teachers);
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Stepper Header Config (6 Kategori Master Data LMS MTsN 2 Cilacap)
   const steps = [
@@ -786,14 +821,11 @@ export function SiakadMasterDataModule() {
                 value={newRombelWali}
                 onChange={(e) => setNewRombelWali(e.target.value)}
               >
-                <option value="Ustadzah Nurul Hidayah, S.Pd.I">Ustadzah Nurul Hidayah, S.Pd.I</option>
-                <option value="Bpk. Slamet Riyadi, M.Pd">Bpk. Slamet Riyadi, M.Pd</option>
-                <option value="Dra. Hj. Siti Rahmah, M.Pd">Dra. Hj. Siti Rahmah, M.Pd</option>
-                <option value="Ibu Maryati, S.Pd">Ibu Maryati, S.Pd</option>
-                <option value="Ust. Ahmad Syukri, S.Kom">Ust. Ahmad Syukri, S.Kom</option>
-                <option value="Ibu Ratna Dewi, M.Pd">Ibu Ratna Dewi, M.Pd</option>
-                <option value="Bpk. Hendra Wijaya, M.Sc">Bpk. Hendra Wijaya, M.Sc</option>
-                <option value="Ust. H. Mohammad Fathoni, M.Pd">Ust. H. Mohammad Fathoni, M.Pd</option>
+                {dbTeachersList.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -844,14 +876,11 @@ export function SiakadMasterDataModule() {
                   value={editingRombel.wali}
                   onChange={(e) => setEditingRombel({ ...editingRombel, wali: e.target.value })}
                 >
-                  <option value="Ustadzah Nurul Hidayah, S.Pd.I">Ustadzah Nurul Hidayah, S.Pd.I</option>
-                  <option value="Bpk. Slamet Riyadi, M.Pd">Bpk. Slamet Riyadi, M.Pd</option>
-                  <option value="Dra. Hj. Siti Rahmah, M.Pd">Dra. Hj. Siti Rahmah, M.Pd</option>
-                  <option value="Ibu Maryati, S.Pd">Ibu Maryati, S.Pd</option>
-                  <option value="Ust. Ahmad Syukri, S.Kom">Ust. Ahmad Syukri, S.Kom</option>
-                  <option value="Ibu Ratna Dewi, M.Pd">Ibu Ratna Dewi, M.Pd</option>
-                  <option value="Bpk. Hendra Wijaya, M.Sc">Bpk. Hendra Wijaya, M.Sc</option>
-                  <option value="Ust. H. Mohammad Fathoni, M.Pd">Ust. H. Mohammad Fathoni, M.Pd</option>
+                {dbTeachersList.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
                 </select>
               </div>
 

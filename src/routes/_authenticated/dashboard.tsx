@@ -345,17 +345,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "mapel", label: "Materi & Modul Ajar", group: "Ruang Belajar" },
       { key: "jadwal", label: "Jadwal Pelajaran", group: "Ruang Belajar" },
       { key: "kehadiran", label: "Kehadiran Saya", group: "Ruang Belajar" },
-      { key: "tugas", label: "Tugas & LKPD", group: "Evaluasi & Ujian" },
-      { key: "quiz", label: "Kuis Interaktif", group: "Evaluasi & Ujian" },
-      { key: "cbt", label: "CBT Ujian Online", group: "Evaluasi & Ujian" },
-      { key: "nilai", label: "Rekap Nilai Saya", group: "Progress & Rapor" },
-      { key: "progress", label: "Progress Belajar", group: "Progress & Rapor" },
-      { key: "tahfidz", label: "Setoran Tahfidz", group: "Progress & Rapor" },
-      { key: "agenda", label: "Kalender Akademik", group: "Informasi & Media" },
-      { key: "mapel", label: "Materi & Modul (Pertemuan 1-18)", group: "Ruang Belajar" },
-      { key: "jadwal", label: "Jadwal Pelajaran Hari Ini", group: "Ruang Belajar" },
-      { key: "kehadiran", label: "Kehadiran & Rekap Presensi", group: "Ruang Belajar" },
-      { key: "tugas", label: "Tugas Baru & Submisi LKPD", group: "Evaluasi & Ujian" },
+      { key: "tugas", label: "Tugas & Submisi LKPD", group: "Evaluasi & Ujian" },
       { key: "quiz", label: "Kuis Interaktif Live", group: "Evaluasi & Ujian" },
       { key: "cbt", label: "CBT Ujian Online", group: "Evaluasi & Ujian" },
       { key: "nilai", label: "Rekap Nilai Saya", group: "Progress & Rapor" },
@@ -900,13 +890,12 @@ function DataUserRole() {
     }
 
     const defaultList = [
-      { id: "1", full_name: "Super Administrator MTsN 2", email: "admin@mail.com", nis: "NIP. 198501012010011001", class: "Semua", roles: ["admin"] },
-      { id: "2", full_name: "H. Ahmad Syukri, S.Kom", email: "admin.akademik@mtsn2cilacap.sch.id", nis: "NIP. 198802152012011002", class: "Semua", roles: ["admin_akademik"] },
-      { id: "3", full_name: "Drs. H. Hidayatullah, M.Ag", email: "kamad@mtsn2cilacap.sch.id", nis: "NIP. 197505102000031001", class: "Semua", roles: ["kamad"] },
-      { id: "4", full_name: "Dra. Hj. Maryam, M.Pd", email: "waka@mtsn2cilacap.sch.id", nis: "NIP. 197808202003122002", class: "Semua", roles: ["waka"] },
-      { id: "5", full_name: "Bpk. Hendra Wijaya, M.Sc", email: "walikelas@mtsn2cilacap.sch.id", nis: "NIP. 198203112008011005", class: "8A", roles: ["walikelas", "guru"] },
-      { id: "6", full_name: "Dra. Hj. Siti Rahmah, M.Pd", email: "guru@mtsn2cilacap.sch.id", nis: "NIP. 198004122006042003", class: "8A, 8B, 9C", roles: ["guru"] },
-      { id: "7", full_name: "Muhammad Fairuz Maulana", email: "siswa@mtsn2cilacap.sch.id", nis: "NISN. 0081234567", class: "8A", roles: ["siswa"] },
+      { id: "usr-admin-1", full_name: "Super Administrator MTsN 2", email: "admin@mail.com", nis: "NIP. 198501012010011001", class: "Semua", roles: ["admin"] },
+      { id: "usr-guru-1", full_name: "H. SOLIHUN, S.Pd., M.Si", email: "guru@mtsn2cilacap.sch.id", nis: "NIP. 198005122006042005", class: "Semua", roles: ["kamad"] },
+      { id: "usr-guru-21", full_name: "ALI MANSUR, S.Pd", email: "198302142023211010@guru.mtsn2cilacap.sch.id", nis: "NIP. 198302142023211010", class: "Semua", roles: ["waka"] },
+      { id: "usr-guru-17", full_name: "SOBIYATI, S.Pd", email: "197906142007102002@guru.mtsn2cilacap.sch.id", nis: "NIP. 197906142007102002", class: "VIII A", roles: ["walikelas"] },
+      { id: "usr-guru-10", full_name: "UMI KHAFSOH, S.Pd", email: "197509192009012008@guru.mtsn2cilacap.sch.id", nis: "NIP. 197509192009012008", class: "VIII A", roles: ["guru"] },
+      { id: "usr-siswa-1", full_name: "ALIYA QIARA ABDULLAH", email: "0127790481@siswa.mtsn2cilacap.sch.id", nis: "NISN. 0127790481", class: "VIII-A", roles: ["siswa"] },
     ];
 
     return defaultList.map((u) => ({

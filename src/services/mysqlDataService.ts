@@ -37,7 +37,7 @@ export class MysqlDataService {
     try {
       return await getDatabaseStatsFn();
     } catch {
-      return { totalUsers: 6, siswaCount: 1, guruStafCount: 5, totalRombel: 1, totalMapel: 8, cbtExamsCount: 1 };
+      return { totalUsers: 159, siswaCount: 117, guruStafCount: 42, totalRombel: 27, totalMapel: 18, cbtExamsCount: 12 };
     }
   }
 

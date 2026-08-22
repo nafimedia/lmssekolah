@@ -37,7 +37,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  
+
   // Registration Form States
   const [regRole, setRegRole] = useState<"siswa" | "guru">("siswa");
   const [fullName, setFullName] = useState("");
@@ -236,11 +236,10 @@ function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setRegRole("siswa")}
-                      className={`flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold border transition-all ${
-                        regRole === "siswa"
+                      className={`flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold border transition-all ${regRole === "siswa"
                           ? "bg-teal-950 border-teal-400 text-teal-300 shadow"
                           : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
-                      }`}
+                        }`}
                     >
                       <GraduationCap className="w-4 h-4" />
                       <span>Siswa MTsN 2</span>
@@ -249,11 +248,10 @@ function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setRegRole("guru")}
-                      className={`flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold border transition-all ${
-                        regRole === "guru"
+                      className={`flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold border transition-all ${regRole === "guru"
                           ? "bg-emerald-950 border-emerald-400 text-emerald-300 shadow"
                           : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
-                      }`}
+                        }`}
                     >
                       <BookOpen className="w-4 h-4" />
                       <span>Guru / Pendidik</span>
@@ -389,9 +387,8 @@ function AuthPage() {
                           {[1, 2, 3, 4].map((bar) => (
                             <div
                               key={bar}
-                              className={`h-full transition-all ${
-                                strength.score >= bar ? colorMap[strength.label].split(" ")[1] : "bg-transparent"
-                              }`}
+                              className={`h-full transition-all ${strength.score >= bar ? colorMap[strength.label].split(" ")[1] : "bg-transparent"
+                                }`}
                             />
                           ))}
                         </div>
@@ -418,8 +415,8 @@ function AuthPage() {
         </CardContent>
       </Card>
 
-      {/* Quick Demo Login Bar for 7 Roles (Di-hide otomatis saat mode Production) */}
-      {(import.meta.env.VITE_SHOW_QUICK_LOGIN !== "false" && import.meta.env.VITE_APP_ENV !== "production") && (
+      {/* Quick Demo Login Bar for 7 Roles (Bisa di-toggle via VITE_SHOW_QUICK_LOGIN di .env) */}
+      {(import.meta.env.VITE_SHOW_QUICK_LOGIN === "true" && import.meta.env.VITE_APP_ENV !== "production") && (
         <Card className="w-full max-w-md border-teal-900/50 bg-slate-900/80 backdrop-blur-md z-10">
           <CardHeader className="py-2.5 px-4">
             <div className="text-[11px] font-bold text-teal-300 uppercase tracking-wider text-center flex items-center justify-center gap-1.5">

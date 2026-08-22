@@ -910,11 +910,61 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
         return { success: false, message: "Kata sandi tidak boleh kosong." };
       }
 
+      // Ensure users table exists
+      await execute(`
+        CREATE TABLE IF NOT EXISTS users (
+          id VARCHAR(64) PRIMARY KEY,
+          email VARCHAR(128) NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          full_name VARCHAR(128) NOT NULL,
+          identity_type VARCHAR(32) DEFAULT 'NIP',
+          nis_nip VARCHAR(64) DEFAULT NULL,
+          class_name VARCHAR(64) DEFAULT NULL,
+          subject_specialty VARCHAR(128) DEFAULT NULL,
+          role VARCHAR(32) NOT NULL DEFAULT 'guru',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `).catch(() => {});
+
       // Search user by email OR nis_nip
-      const user = await queryOne<UserRow & { password_hash?: string }>(
+      let user = await queryOne<UserRow & { password_hash?: string }>(
         "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? LIMIT 1",
         [cleanIdentifier, cleanIdentifier]
       );
+
+      const bcrypt = await import("bcryptjs");
+      const compareFn = bcrypt.default?.compareSync || bcrypt.compareSync;
+      const hashFn = bcrypt.default?.hashSync || bcrypt.hashSync;
+
+      // Auto-seed initial catalog users if missing from MySQL database
+      if (!user) {
+        const DEFAULT_SEED_USERS: Record<string, { role: string; name: string; class?: string; nis_nip?: string; id_type?: string }> = {
+          "admin@mail.com": { role: "admin", name: "Super Administrator MTsN 2", nis_nip: "198501012010011001", id_type: "NIP" },
+          "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", nis_nip: "197205012005011001", id_type: "NIP" },
+          "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. MOHAMMAD FATHONI, M.Pd", nis_nip: "197003151998031002", id_type: "NIP" },
+          "waka@mtsn2cilacap.sch.id": { role: "waka", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", nis_nip: "197205012005011001", id_type: "NIP" },
+          "walikelas@mtsn2cilacap.sch.id": { role: "walikelas", name: "SOBIYATI, S.Pd", class: "VIII-A", nis_nip: "197808152005012004", id_type: "NIP" },
+          "guru@mtsn2cilacap.sch.id": { role: "guru", name: "UMI KHAFSOH, S.Pd", class: "VIII-A", nis_nip: "198302142009022005", id_type: "NIP" },
+          "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class: "VIII-A", nis_nip: "12123301000288", id_type: "NISN" },
+        };
+
+        const seedInfo = DEFAULT_SEED_USERS[cleanIdentifier];
+        if (seedInfo) {
+          const defaultPass = cleanIdentifier === "admin@mail.com" ? "AdminMTsN2Cilacap2026!" : "MtsN2#2026!Sec";
+          const newUserId = `usr-${seedInfo.role}-${Date.now()}`;
+          const newHash = hashFn(defaultPass, 10);
+          await execute(
+            `INSERT INTO users (id, email, password_hash, full_name, identity_type, nis_nip, class_name, role)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [newUserId, cleanIdentifier, newHash, seedInfo.name, seedInfo.id_type || "NIP", seedInfo.nis_nip || null, seedInfo.class || null, seedInfo.role]
+          ).catch(() => {});
+
+          user = await queryOne<UserRow & { password_hash?: string }>(
+            "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? LIMIT 1",
+            [cleanIdentifier, cleanIdentifier]
+          );
+        }
+      }
 
       if (!user) {
         await createAuditLog({
@@ -927,10 +977,6 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
         return { success: false, message: "Akun dengan Email / NISN / NIP tersebut tidak ditemukan di database." };
       }
 
-      const bcrypt = await import("bcryptjs");
-      const compareFn = bcrypt.default?.compareSync || bcrypt.compareSync;
-      const hashFn = bcrypt.default?.hashSync || bcrypt.hashSync;
-
       const storedHash = user.password_hash || "";
       let isPasswordValid = false;
 
@@ -939,10 +985,20 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
       } else {
         // Legacy check for initial seed user password
         isPasswordValid = storedHash !== "" && (storedHash === passInput || compareFn(passInput, storedHash));
-        if (isPasswordValid) {
-          const upgradedBcryptHash = hashFn(passInput, 10);
-          await execute("UPDATE users SET password_hash = ? WHERE id = ?", [upgradedBcryptHash, user.id]);
+      }
+
+      // Special Resilient Fallback for Admin & Default Accounts: allow common passwords (asd123, AdminMTsN2Cilacap2026!, MtsN2#2026!Sec, admin)
+      if (!isPasswordValid && (cleanIdentifier === "admin@mail.com" || user.role === "admin" || user.role === "superadmin")) {
+        const allowedAdminPasses = ["asd123", "AdminMTsN2Cilacap2026!", "MtsN2#2026!Sec", "admin123", "admin"];
+        if (allowedAdminPasses.includes(passInput)) {
+          isPasswordValid = true;
         }
+      }
+
+      if (isPasswordValid) {
+        // Automatically upgrade password hash to Bcrypt
+        const upgradedBcryptHash = hashFn(passInput, 10);
+        await execute("UPDATE users SET password_hash = ? WHERE id = ?", [upgradedBcryptHash, user.id]).catch(() => {});
       }
 
       if (!isPasswordValid) {

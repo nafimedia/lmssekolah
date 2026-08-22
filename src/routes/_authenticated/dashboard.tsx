@@ -379,9 +379,21 @@ function Dashboard() {
 
   const me = MysqlAuthService.getActiveUser();
 
-  // Multi-Role list allocated to currently logged-in user (Dynamic GTK Sync)
+  // Multi-Role list allocated to currently logged-in user (Superadmin All Roles Access)
   const myAssignedRoles = useMemo(() => {
     if (!me) return ["siswa"];
+    const cleanEmail = me.email ? me.email.toLowerCase() : "";
+    const isSuperAdminUser =
+      me.role === "admin" ||
+      me.role === "superadmin" ||
+      cleanEmail === "admin@mail.com" ||
+      cleanEmail.includes("superadmin");
+
+    // Superadmin has access to ALL 7 roles in the system
+    if (isSuperAdminUser) {
+      return ["admin", "admin_akademik", "kamad", "waka", "walikelas", "guru", "siswa"];
+    }
+
     let savedRolesMap: Record<string, string[]> = {};
     if (typeof window !== "undefined") {
       try {
@@ -389,7 +401,6 @@ function Dashboard() {
       } catch (e) {}
     }
 
-    const cleanEmail = me.email ? me.email.toLowerCase() : "";
     let roles: string[] = savedRolesMap[cleanEmail] || savedRolesMap[me.id] || [];
 
     if (!roles || roles.length === 0) {
@@ -405,8 +416,6 @@ function Dashboard() {
     const isGtk =
       cleanEmail.includes("@guru") ||
       cleanEmail.includes("admin") ||
-      me.role === "admin" ||
-      me.role === "superadmin" ||
       me.role === "guru" ||
       me.role === "walikelas" ||
       me.role === "admin_akademik" ||
@@ -416,21 +425,14 @@ function Dashboard() {
       const set = new Set<string>();
       roles.forEach((r: string) => {
         const lower = r.toLowerCase().trim();
-        if (lower === "admin" || lower === "superadmin" || lower === "admin_akademik") set.add("admin_akademik");
+        if (lower === "admin" || lower === "superadmin") set.add("admin");
+        else if (lower === "admin_akademik") set.add("admin_akademik");
         else if (lower === "guru" || lower === "guru_mapel") set.add("guru");
         else if (lower === "walikelas" || lower === "wali_kelas") set.add("walikelas");
         else if (lower !== "siswa") set.add(lower);
       });
 
-      // Default GTK role set if admin or specific GTK (e.g. Achmad Makmun Rosid 272005011001)
-      if (me.role === "admin" || me.role === "superadmin" || cleanEmail === "admin@mail.com" || cleanEmail.includes("272005011001")) {
-        set.add("admin_akademik");
-        set.add("guru");
-        set.add("walikelas");
-      } else if (set.size === 0) {
-        set.add("guru");
-      }
-
+      if (set.size === 0) set.add("guru");
       return Array.from(set);
     }
 

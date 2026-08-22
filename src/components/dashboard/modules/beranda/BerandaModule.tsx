@@ -1469,17 +1469,28 @@ export function BerandaModule({
   }
 
   // =========================================================================
-  // 7. DASHBOARD WAKA KURIKULUM (WITH MODUL AJAR & BANK SOAL BARS)
+  // 7. DASHBOARD ADMIN / ADMIN AKADEMIK / FALLBACK
   // =========================================================================
+  const isAdmin = role === "admin" || role === "superadmin";
+  const isAdminAkademik = role === "admin_akademik";
+
   return (
     <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-            Dashboard Waka Kurikulum
+            {isAdmin
+              ? "Dashboard Super Administrator"
+              : isAdminAkademik
+              ? "Dashboard Administrator Akademik"
+              : "Dashboard Waka Kurikulum"}
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Monitoring Kurikulum Merdeka, Pelaksanaan CBT & Bank Soal · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            {isAdmin
+              ? `Pusat Kontrol Sistem, Pengelolaan User, Data Master & Audit Log · ${currentDayName}, ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`
+              : isAdminAkademik
+              ? `Pengelolaan SIAKAD, Jadwal KBM, KKTP, & Penugasan Guru · ${currentDayName}, ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`
+              : `Monitoring Kurikulum Merdeka, Pelaksanaan CBT & Bank Soal · ${currentDayName}, ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`}
           </p>
         </div>
 

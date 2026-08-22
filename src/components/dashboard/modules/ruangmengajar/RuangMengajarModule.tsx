@@ -317,10 +317,63 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
     });
   }, []);
 
+  const isGuru = activeRole === "guru" || activeRole === "teacher";
+  const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
+  const isSiswa = activeRole === "siswa" || activeRole === "student";
+  const me = MysqlAuthService.getActiveUser();
+
+  const userSubject = useMemo(() => {
+    const s = userProfile?.subject_specialty || (me as any)?.subject_specialty || (me as any)?.assigned_mapel || userProfile?.assignedMapel || "";
+    if (s) return s;
+    const name = (me?.full_name || userProfile?.name || "").toLowerCase();
+    if (name.includes("syarif")) return "Al Qur'an Hadis";
+    if (name.includes("wakhibun")) return "Akidah Akhlak";
+    if (name.includes("caryati")) return "Fikih";
+    if (name.includes("dasirun")) return "Sejarah Kebudayaan Islam";
+    if (name.includes("endah")) return "Bahasa Arab";
+    if (name.includes("sobiyati")) return "Bahasa Indonesia";
+    if (name.includes("rosid")) return "Teknologi Informasi dan Komunikasi";
+    if (name.includes("sayono")) return "Matematika";
+    if (name.includes("novantya")) return "Ilmu Pendidikan Alam";
+    if (name.includes("khafsoh")) return "Ilmu Pendidikan Sosial";
+    if (name.includes("anggun")) return "Pendidikan Kewarganegaraan";
+    if (name.includes("shodiq")) return "PJOK";
+    if (name.includes("isnaeni")) return "Prakarya dan Seni Budaya";
+    if (name.includes("rindang")) return "Bahasa Jawa";
+    if (name.includes("asror")) return "Bimbingan dan Konseling";
+    return "Bahasa Indonesia";
+  }, [userProfile, me]);
+
+  const userClass = useMemo(() => {
+    const rawC = userProfile?.class_name || (me as any)?.class_name || (userProfile as any)?.assignedClass || "";
+    const clean = rawC.toUpperCase().replace("KELAS", "").replace("-", "").replace(/\s+/g, "");
+    if (clean.includes("7B") || clean.includes("VIIB")) return "Kelas VII B";
+    if (clean.includes("7C") || clean.includes("VIIC")) return "Kelas VII C";
+    if (clean.includes("7A") || clean.includes("VIIA")) return "Kelas VII A";
+    if (clean.includes("8B") || clean.includes("VIIIB")) return "Kelas VIII B";
+    if (clean.includes("8C") || clean.includes("VIIIC")) return "Kelas VIII C";
+    if (clean.includes("8A") || clean.includes("VIIIA")) return "Kelas VIII A";
+    if (clean.includes("9B") || clean.includes("IXB")) return "Kelas IX B";
+    if (clean.includes("9C") || clean.includes("IXC")) return "Kelas IX C";
+    if (clean.includes("9A") || clean.includes("IXA")) return "Kelas IX A";
+    return "Kelas VIII A";
+  }, [userProfile, me]);
+
   // State 1: Active Subject & Class Selector
-  const initialMapel = userProfile?.subject_specialty || userProfile?.mapelUtama || userProfile?.assignedMapel || "Al Qur'an Hadis";
-  const [selectedMapel, setSelectedMapel] = useState<string>(initialMapel);
-  const [selectedClass, setSelectedClass] = useState<string>("Kelas VIII A");
+  const [selectedMapel, setSelectedMapel] = useState<string>(isGuru ? userSubject : "Al Qur'an Hadis");
+  const [selectedClass, setSelectedClass] = useState<string>(isWaliKelas || isSiswa ? userClass : "Kelas VIII A");
+
+  useEffect(() => {
+    if (isGuru && userSubject) {
+      setSelectedMapel(userSubject);
+    }
+  }, [isGuru, userSubject]);
+
+  useEffect(() => {
+    if ((isWaliKelas || isSiswa) && userClass) {
+      setSelectedClass(userClass);
+    }
+  }, [isWaliKelas, isSiswa, userClass]);
 
   // State 2: Active Navigation Tab (8 Concise Tabs for Meja Kerja Guru)
   const [activeTab, setActiveTab] = useState<
@@ -697,40 +750,52 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
             <span className="text-xs font-semibold text-slate-500">Mapel:</span>
-            <select
-              className="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-100 cursor-pointer focus:outline-hidden"
-              value={selectedMapel}
-              onChange={(e) => setSelectedMapel(e.target.value)}
-            >
-              {INITIAL_MASTER_MAPEL.map((m) => (
-                <option key={m.code} value={m.name} className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium">
-                  {m.name} ({m.code})
-                </option>
-              ))}
-            </select>
+            {isGuru ? (
+              <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                🔒 {selectedMapel}
+              </span>
+            ) : (
+              <select
+                className="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-100 cursor-pointer focus:outline-hidden"
+                value={selectedMapel}
+                onChange={(e) => setSelectedMapel(e.target.value)}
+              >
+                {INITIAL_MASTER_MAPEL.map((m) => (
+                  <option key={m.code} value={m.name} className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium">
+                    {m.name} ({m.code})
+                  </option>
+                ))}
+              </select>
+            )}
 
             <span className="text-xs font-semibold text-slate-500 ml-2">Kelas:</span>
-            <select
-              className="bg-transparent text-xs font-bold text-emerald-700 dark:text-emerald-400 cursor-pointer focus:outline-hidden"
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-            >
-              <optgroup label="Tingkat VII" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-bold">
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VII A">Kelas VII A</option>
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VII B">Kelas VII B</option>
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VII C">Kelas VII C</option>
-              </optgroup>
-              <optgroup label="Tingkat VIII" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-bold">
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VIII A">Kelas VIII A</option>
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VIII B">Kelas VIII B</option>
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VIII C">Kelas VIII C</option>
-              </optgroup>
-              <optgroup label="Tingkat IX" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-bold">
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas IX A">Kelas IX A</option>
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas IX B">Kelas IX B</option>
-                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas IX C">Kelas IX C</option>
-              </optgroup>
-            </select>
+            {isWaliKelas || isSiswa ? (
+              <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                🔒 {selectedClass}
+              </span>
+            ) : (
+              <select
+                className="bg-transparent text-xs font-bold text-emerald-700 dark:text-emerald-400 cursor-pointer focus:outline-hidden"
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+              >
+                <optgroup label="Tingkat VII" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-bold">
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VII A">Kelas VII A</option>
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VII B">Kelas VII B</option>
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VII C">Kelas VII C</option>
+                </optgroup>
+                <optgroup label="Tingkat VIII" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-bold">
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VIII A">Kelas VIII A</option>
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VIII B">Kelas VIII B</option>
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas VIII C">Kelas VIII C</option>
+                </optgroup>
+                <optgroup label="Tingkat IX" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-bold">
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas IX A">Kelas IX A</option>
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas IX B">Kelas IX B</option>
+                  <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-medium" value="Kelas IX C">Kelas IX C</option>
+                </optgroup>
+              </select>
+            )}
           </div>
 
           <Button

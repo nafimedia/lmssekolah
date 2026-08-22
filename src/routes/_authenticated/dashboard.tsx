@@ -6910,9 +6910,9 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
     if (!isWaliKelas || isManagement) return null;
     const userName = (activeUserSession?.full_name || "").toLowerCase().trim();
     const userNip = (activeUserSession?.nis_nip || "").trim();
-    const userAssignedClass = (userProfile?.assignedClass || (activeUserSession as any)?.assigned_class || "").toUpperCase().trim();
+    const userAssignedClass = ((activeUserSession as any)?.assigned_class || "").toUpperCase().trim();
 
-    // 1. Try matching assignedClass from userProfile / database session
+    // 1. Try matching assignedClass from database session
     if (userAssignedClass) {
       const matchByClass = rombelList.find((r: any) => {
         const cleanName = (r.name || "").toUpperCase().replace("-", "").replace(/\s+/g, "");
@@ -6932,7 +6932,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
     }
 
     return rombelList[0] || null;
-  }, [isWaliKelas, isManagement, activeUserSession, userProfile, rombelList]);
+  }, [isWaliKelas, isManagement, activeUserSession, rombelList]);
 
   // Auto-expand Wali Kelas's own rombel on mount or mode change
   useEffect(() => {

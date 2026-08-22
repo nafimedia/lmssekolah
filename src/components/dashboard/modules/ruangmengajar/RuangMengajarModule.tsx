@@ -739,8 +739,6 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
           </h1>
 
           <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span>Guru Pengampu: <strong className="text-slate-900 dark:text-slate-100">{userProfile?.full_name || "Dra. Hj. Siti Rahmah, M.Pd"}</strong></span>
-            <span>·</span>
             <span>Tahun Ajaran 2026/2027 Ganjil</span>
             <span>·</span>
             <span>{activeClassData.ruang}</span>

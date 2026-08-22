@@ -2680,6 +2680,8 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
 
 function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
+  const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
+  const isRestrictedRole = isSiswa || isWaliKelas;
   const me = MysqlAuthService.getActiveUser();
 
   const resolvedInitialRombel = useMemo(() => {
@@ -2935,11 +2937,11 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
   });
 
   useEffect(() => {
-    if (isSiswa) {
+    if (isRestrictedRole) {
       setFilterRombel(resolvedInitialRombel);
       setFilterKelas(resolvedInitialGrade);
     }
-  }, [isSiswa, resolvedInitialRombel, resolvedInitialGrade]);
+  }, [isRestrictedRole, resolvedInitialRombel, resolvedInitialGrade]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedHari, setSelectedHari] = useState("Senin");
@@ -2970,10 +2972,10 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Jadwal Pelajaran {isSiswa && <Badge className="bg-primary text-primary-foreground font-bold text-xs">📍 {filterRombel}</Badge>}
+            Jadwal Pelajaran {isRestrictedRole && <Badge className="bg-primary text-primary-foreground font-bold text-xs">📍 {filterRombel}</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isSiswa
+            {isRestrictedRole
               ? `Jadwal alokasi jam tatap muka & pembelajaran khusus ${filterRombel} MTsN 2 Cilacap`
               : "Plotting alokasi jadwal mengajar & belajar per Tingkat Kelas dan Rombel MTsN 2 Cilacap"}
           </p>
@@ -2982,7 +2984,7 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
           <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
             <Download className="h-3.5 w-3.5" /> 🖨️ Cetak Jadwal KBM PDF
           </Button>
-          {!isSiswa && (
+          {!isRestrictedRole && (
             <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
               + Tambah Jadwal Pelajaran
             </Button>
@@ -2990,8 +2992,8 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
         </div>
       </div>
 
-      {/* Filter Bar Kelas & Rombel (Hidden & Locked for Siswa) */}
-      {!isSiswa ? (
+      {/* Filter Bar Kelas & Rombel (Hidden & Locked for Siswa & Wali Kelas) */}
+      {!isRestrictedRole ? (
         <div className="p-4 rounded-xl bg-card border border-border space-y-3 mb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -3050,10 +3052,10 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
         <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-xs">
           <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
             <span className="text-base">🔒</span>
-            <span>Jadwal Khusus Kelas Anda: <strong className="text-emerald-700 dark:text-emerald-400 text-sm font-black">{resolvedInitialRombel} ({resolvedInitialGrade})</strong></span>
+            <span>Jadwal Khusus Rombel Binaan Anda: <strong className="text-emerald-700 dark:text-emerald-400 text-sm font-black">{resolvedInitialRombel} ({resolvedInitialGrade})</strong></span>
           </div>
           <Badge className="bg-emerald-700 text-white font-extrabold text-[10px] px-2.5 py-0.5">
-            100% Presisi Kelas Siswa
+            100% Presisi {isWaliKelas ? "Wali Kelas" : "Siswa"}
           </Badge>
         </div>
       )}

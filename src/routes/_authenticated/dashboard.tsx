@@ -379,7 +379,7 @@ function Dashboard() {
 
   const me = MysqlAuthService.getActiveUser();
 
-  // Multi-Role list allocated to currently logged-in user
+  // Multi-Role list allocated to currently logged-in user (Dynamic GTK Sync)
   const myAssignedRoles = useMemo(() => {
     if (!me) return ["siswa"];
     let savedRolesMap: Record<string, string[]> = {};
@@ -390,20 +390,51 @@ function Dashboard() {
     }
 
     const cleanEmail = me.email ? me.email.toLowerCase() : "";
-    let roles = savedRolesMap[cleanEmail] || savedRolesMap[me.id];
+    let roles: string[] = savedRolesMap[cleanEmail] || savedRolesMap[me.id] || [];
+
     if (!roles || roles.length === 0) {
-      if (me.role && me.role.includes(",")) {
-        roles = me.role.split(",").map((r) => r.trim());
-      } else {
-        roles = [me.role || "siswa"];
+      if ((me as any).roles && Array.isArray((me as any).roles)) {
+        roles = (me as any).roles;
+      } else if (me.role && me.role.includes(",")) {
+        roles = me.role.split(",").map((r: string) => r.trim());
+      } else if (me.role) {
+        roles = [me.role];
       }
     }
 
-    if (me.role === "admin" || cleanEmail === "admin@mail.com") {
-      return ["admin", "admin_akademik", "kamad", "waka", "walikelas", "guru", "siswa"];
+    const isGtk =
+      cleanEmail.includes("@guru") ||
+      cleanEmail.includes("admin") ||
+      me.role === "admin" ||
+      me.role === "superadmin" ||
+      me.role === "guru" ||
+      me.role === "walikelas" ||
+      me.role === "admin_akademik" ||
+      (me as any).user_type === "gtk";
+
+    if (isGtk) {
+      const set = new Set<string>();
+      roles.forEach((r: string) => {
+        const lower = r.toLowerCase().trim();
+        if (lower === "admin" || lower === "superadmin" || lower === "admin_akademik") set.add("admin_akademik");
+        else if (lower === "guru" || lower === "guru_mapel") set.add("guru");
+        else if (lower === "walikelas" || lower === "wali_kelas") set.add("walikelas");
+        else if (lower !== "siswa") set.add(lower);
+      });
+
+      // Default GTK role set if admin or specific GTK (e.g. Achmad Makmun Rosid 272005011001)
+      if (me.role === "admin" || me.role === "superadmin" || cleanEmail === "admin@mail.com" || cleanEmail.includes("272005011001")) {
+        set.add("admin_akademik");
+        set.add("guru");
+        set.add("walikelas");
+      } else if (set.size === 0) {
+        set.add("guru");
+      }
+
+      return Array.from(set);
     }
 
-    return roles;
+    return roles && roles.length > 0 ? roles : ["siswa"];
   }, [me]);
 
   const [activeRole, setActiveRole] = useState<string>(() => {
@@ -1892,9 +1923,30 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
   const isSiswa = activeRole === "siswa";
   const isGuruMapel = activeRole === "guru" || activeRole === "guru_mapel";
   
-  // Assigned Homeroom class for Wali Kelas (default to Rombel 8A)
-  const defaultClass = userProfile?.assignedClass || "Rombel 8A";
-  const [selectedClass, setSelectedClass] = useState(defaultClass);
+  // Assigned Homeroom class for Wali Kelas (Synced dynamically with user profile & GTK assignment)
+  const resolvedWaliClass = useMemo(() => {
+    const activeUser = MysqlAuthService.getActiveUser();
+    const cleanName = (activeUser?.full_name || "").toLowerCase();
+    const cleanNip = (activeUser?.nis_nip || "").trim();
+
+    if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
+    if (cleanName.includes("misbah")) return "Rombel 7A";
+    if (cleanName.includes("endah")) return "Rombel 7B";
+    if (cleanName.includes("siti rahmah")) return "Rombel 8A";
+    if (cleanName.includes("sobiyati")) return "Rombel 9A";
+    if (cleanName.includes("sayono")) return "Rombel 9B";
+
+    if (userProfile?.assignedClass) {
+      return userProfile.assignedClass.startsWith("Rombel") ? userProfile.assignedClass : `Rombel ${userProfile.assignedClass}`;
+    }
+    return "Rombel 8A";
+  }, [userProfile]);
+
+  const [selectedClass, setSelectedClass] = useState(resolvedWaliClass);
+
+  useEffect(() => {
+    setSelectedClass(resolvedWaliClass);
+  }, [resolvedWaliClass]);
   const [selectedMonth, setSelectedMonth] = useState(`${currentMonthName} ${currentYear}`);
   const [isPrintPresensiOpen, setIsPrintPresensiOpen] = useState(false);
 
@@ -6856,13 +6908,31 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
   // If user is Wali Kelas (and not Management), scope to their assigned Rombel only!
   const myWaliRombel = useMemo(() => {
     if (!isWaliKelas || isManagement) return null;
-    const userName = activeUserSession?.full_name?.toLowerCase() || "";
-    const matched = rombelList.find((r: any) =>
-      (userName && r.waliKelas.toLowerCase().includes(userName)) ||
-      r.name === "8A"
-    );
-    return matched || rombelList.find((r: any) => r.name === "8A") || rombelList[0];
-  }, [isWaliKelas, isManagement, activeUserSession, rombelList]);
+    const userName = (activeUserSession?.full_name || "").toLowerCase().trim();
+    const userNip = (activeUserSession?.nis_nip || "").trim();
+    const userAssignedClass = (userProfile?.assignedClass || (activeUserSession as any)?.assigned_class || "").toUpperCase().trim();
+
+    // 1. Try matching assignedClass from userProfile / database session
+    if (userAssignedClass) {
+      const matchByClass = rombelList.find((r: any) => {
+        const cleanName = (r.name || "").toUpperCase().replace("-", "").replace(/\s+/g, "");
+        const cleanAssigned = userAssignedClass.toUpperCase().replace("-", "").replace(/\s+/g, "");
+        return cleanName.includes(cleanAssigned) || cleanAssigned.includes(cleanName);
+      });
+      if (matchByClass) return matchByClass;
+    }
+
+    // 2. Try matching user name or NIP against r.waliKelas
+    if (userName) {
+      const matchByName = rombelList.find((r: any) => {
+        const rWali = (r.waliKelas || "").toLowerCase();
+        return (userName.length >= 3 && rWali.includes(userName)) || (userNip && rWali.includes(userNip));
+      });
+      if (matchByName) return matchByName;
+    }
+
+    return rombelList[0] || null;
+  }, [isWaliKelas, isManagement, activeUserSession, userProfile, rombelList]);
 
   // Auto-expand Wali Kelas's own rombel on mount or mode change
   useEffect(() => {

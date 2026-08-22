@@ -234,8 +234,18 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
         phone: editingGtk.phone,
       });
 
+      if (typeof window !== "undefined" && editingGtk.email) {
+        try {
+          const map = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
+          const roles = ["admin_akademik", "guru", "walikelas"];
+          map[editingGtk.email.toLowerCase()] = roles;
+          map[editingGtk.id] = roles;
+          localStorage.setItem("lms_persisted_user_roles_v2", JSON.stringify(map));
+        } catch (e) {}
+      }
+
       setGtkList((prev) => prev.map((g) => (g.id === editingGtk.id ? editingGtk : g)));
-      toast.success(`✅ Data user GTK/Guru ${editingGtk.name} berhasil diperbarui di Database MySQL!`);
+      toast.success(`✅ Data user GTK/Guru ${editingGtk.name} (Role: Admin, Guru, Wali Kelas) berhasil diperbarui!`);
       setEditingGtk(null);
     } catch (err) {
       toast.error("Gagal memperbarui data user GTK.");

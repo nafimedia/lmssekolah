@@ -6395,7 +6395,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         ewsAlertCount: 0,
         students: [],
         teachers: [
-          { mapel: "Al-Qur'an Hadits", teacher: "AH. SYARIF HIDAYAH, S.Pd.I" },
+          { mapel: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I" },
           { mapel: "Bahasa Arab", teacher: "ENDAH SUPRIHATIN, S.Pd" },
           { mapel: "Matematika", teacher: "SAYONO, S.Pd., M.Pd." },
         ],

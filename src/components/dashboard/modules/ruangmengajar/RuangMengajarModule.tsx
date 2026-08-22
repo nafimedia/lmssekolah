@@ -156,7 +156,7 @@ const MAPEL_SPECIFIC_CONTENT: Record<
     reflection: { success: string; obstacle: string; action: string };
   }
 > = {
-  "Al-Quran Hadits": {
+  "Al Qur'an Hadis": {
     topic: "Tajwid Mad Silah & Hukum Bacaan Al-Quran",
     meetings: [
       { id: "m1", number: 1, title: "Pertemuan 1: Pengenalan Tajwid Mad Silah Qashirah", tp: "Memahami pengertian & hukum Mad Silah Qashirah.", time: "2 JP", status: "SELESAI", date: "10 Ags 2026" },
@@ -164,7 +164,7 @@ const MAPEL_SPECIFIC_CONTENT: Record<
       { id: "m3", number: 3, title: "Pertemuan 3: Praktik Pelafalan & Murojaah Surah", tp: "Menerapkan tajwid Mad Silah pada ayat-ayat Juz 30 secara tartil.", time: "2 JP", status: "MENDATANG", date: "24 Ags 2026" },
     ],
     modulDocs: [
-      { id: "doc1", title: "Capaian Pembelajaran (CP) Al-Quran Hadits Kurikulum Merdeka", type: "PDF Document", size: "1.2 MB", filename: "CP_AlQuran_Hadits_Kurikulum_Merdeka.pdf" },
+      { id: "doc1", title: "Capaian Pembelajaran (CP) Al Qur'an Hadis Kurikulum Merdeka", type: "PDF Document", size: "1.2 MB", filename: "CP_AlQuran_Hadits_Kurikulum_Merdeka.pdf" },
       { id: "doc2", title: "Alur Tujuan Pembelajaran (ATP) Sem 1 MTsN 2", type: "PDF Document", size: "850 KB", filename: "ATP_AlQuran_Hadits_Sem1.pdf" },
       { id: "doc3", title: "Modul Ajar Bab 1: Tajwid Mad Silah & Mad Badal", type: "PDF Module", size: "3.4 MB", filename: "Modul_Ajar_Tajwid_Mad_Silah.pdf" },
       { id: "doc4", title: "Buku Digital Tajwid Al-Quran Pertemuan 2", type: "PDF Book", size: "5.1 MB", filename: "Buku_Digital_Tajwid_Mad.pdf" },
@@ -175,7 +175,7 @@ const MAPEL_SPECIFIC_CONTENT: Record<
       { id: "t2", title: "Diskusi Forum: Perbedaan Mad Silah Qashirah vs Thawilah", type: "Forum Diskusi Kelas", deadline: "22 Ags 2026", count: "30 / 32 Submisi" },
     ],
     assessments: [
-      { id: "a1", title: "CBT Ujian Tengah Semester (PTS) Ganjil - Al-Quran Hadits", desc: "25 Soal PG & 5 Soal Uraian Tajwid", duration: "60 Menit", status: "Terbit", action: "Buka CBT Live" },
+      { id: "a1", title: "CBT Ujian Tengah Semester (PTS) Ganjil - Al Qur'an Hadis", desc: "25 Soal PG & 5 Soal Uraian Tajwid", duration: "60 Menit", status: "Terbit", action: "Buka CBT Live" },
       { id: "a2", title: "Kuis Formatif Exit Ticket Pertemuan 2 (Tajwid Mad)", desc: "5 Soal Kuis Cepat Pembuktian Pemahaman", duration: "15 Menit", status: "Selesai", action: "Lihat Hasil Kuis" },
     ],
     reflection: {
@@ -208,7 +208,7 @@ const MAPEL_SPECIFIC_CONTENT: Record<
       action: "Latihan pemantapan manipulasi aljabar dasar 15 menit awal KBM.",
     },
   },
-  "Fiqih Kebangsaan": {
+  Fikih: {
     topic: "Ketentuan Sembelihan Qurban & Muamalah Fiqih",
     meetings: [
       { id: "fm1", number: 1, title: "Pertemuan 1: Ketentuan & Syarat Sah Sembelihan Hewan Kurban", tp: "Memahami rukun & syarat sembelihan halal.", time: "2 JP", status: "SELESAI", date: "12 Ags 2026" },
@@ -318,7 +318,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
   }, []);
 
   // State 1: Active Subject & Class Selector
-  const initialMapel = userProfile?.assignedMapel || "Al-Quran Hadits";
+  const initialMapel = userProfile?.assignedMapel || "Al Qur'an Hadis";
   const [selectedMapel, setSelectedMapel] = useState<string>(initialMapel);
   const [selectedClass, setSelectedClass] = useState<string>("Kelas VIII A");
 
@@ -334,7 +334,11 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
 
   // Get active Mapel content
   const activeMapelContent = useMemo(() => {
-    return MAPEL_SPECIFIC_CONTENT[selectedMapel] || MAPEL_SPECIFIC_CONTENT["Al-Quran Hadits"];
+    return (
+      MAPEL_SPECIFIC_CONTENT[selectedMapel] ||
+      MAPEL_SPECIFIC_CONTENT["Al Qur'an Hadis"] ||
+      MAPEL_SPECIFIC_CONTENT["Matematika"]
+    );
   }, [selectedMapel]);
 
   // Attendance State

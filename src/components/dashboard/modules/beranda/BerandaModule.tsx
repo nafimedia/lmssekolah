@@ -190,7 +190,7 @@ export function BerandaModule({
               className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-600/60 transition cursor-pointer space-y-2"
               onClick={() => {
                 setSelectedJadwalModal({
-                  mapel: "Al-Quran Hadits",
+                  mapel: "Al Qur'an Hadis",
                   rombel: "Kelas VIII A",
                   jam: "07:30 - 09:00 WIB (Jam 1-2)",
                   ruang: "Ruang A.02",
@@ -203,7 +203,7 @@ export function BerandaModule({
                 <span className="font-bold text-emerald-700 dark:text-emerald-400">07:30 - 09:00 WIB · Jam 1-2</span>
                 <span className="text-slate-400 font-mono text-[11px]">Ruang A.02</span>
               </div>
-              <div className="font-extrabold text-base text-slate-900 dark:text-slate-100">Al-Quran Hadits (Kelas VIII A)</div>
+              <div className="font-extrabold text-base text-slate-900 dark:text-slate-100">Al Qur'an Hadis (Kelas VIII A)</div>
               <div className="text-xs text-slate-500">Materi: Pertemuan 2 — Tajwid Mad Silah Qashirah</div>
               <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 pt-1 flex items-center gap-1">Lihat detail <ArrowRight className="h-3 w-3" /></div>
             </div>
@@ -212,7 +212,7 @@ export function BerandaModule({
               className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-600/60 transition cursor-pointer space-y-2"
               onClick={() => {
                 setSelectedJadwalModal({
-                  mapel: "Fiqih Kebangsaan",
+                  mapel: "Fikih",
                   rombel: "Kelas IX C",
                   jam: "10:15 - 11:45 WIB (Jam 5-6)",
                   ruang: "Ruang C.04",
@@ -225,7 +225,7 @@ export function BerandaModule({
                 <span className="font-bold text-slate-600 dark:text-slate-400">10:15 - 11:45 WIB · Jam 5-6</span>
                 <span className="text-slate-400 font-mono text-[11px]">Ruang C.04</span>
               </div>
-              <div className="font-extrabold text-base text-slate-900 dark:text-slate-100">Fiqih Kebangsaan (Kelas IX C)</div>
+              <div className="font-extrabold text-base text-slate-900 dark:text-slate-100">Fikih (Kelas IX C)</div>
               <div className="text-xs text-slate-500">Materi: Pertemuan 2 — Ketentuan Qurban</div>
               <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 pt-1 flex items-center gap-1">Lihat detail <ArrowRight className="h-3 w-3" /></div>
             </div>
@@ -244,7 +244,7 @@ export function BerandaModule({
               onClick={() => {
                 setSelectedTugasModal({
                   title: "LKPD Pertemuan 2: Resume Tajwid Mad Silah (VIII A)",
-                  mapel: "Al-Quran Hadits",
+                  mapel: "Al Qur'an Hadis",
                   rombel: "VIII A",
                   deadline: "Hari ini, 23:59 WIB",
                   count: "26 / 26 Submisi Terkumpul",
@@ -282,9 +282,9 @@ export function BerandaModule({
             </div>
             <div className="space-y-2 text-xs">
               {[
-                { mapel: "Al-Quran Hadits", classCode: "Kelas VIII A", status: "16 Pertemuan", kkm: "95.2% KKM" },
-                { mapel: "Al-Quran Hadits", classCode: "Kelas VIII B", status: "15 Pertemuan", kkm: "92.0% KKM" },
-                { mapel: "Fiqih Kebangsaan", classCode: "Kelas IX C", status: "18 Pertemuan", kkm: "97.5% KKM" },
+                { mapel: "Al Qur'an Hadis", classCode: "Kelas VIII A", status: "16 Pertemuan", kkm: "95.2% KKM" },
+                { mapel: "Al Qur'an Hadis", classCode: "Kelas VIII B", status: "15 Pertemuan", kkm: "92.0% KKM" },
+                { mapel: "Fikih", classCode: "Kelas IX C", status: "18 Pertemuan", kkm: "97.5% KKM" },
               ].map((item, idx) => (
                 <div
                   key={idx}

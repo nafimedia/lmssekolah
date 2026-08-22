@@ -2934,6 +2934,13 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
     return OFFICIAL_SCHEDULE;
   });
 
+  useEffect(() => {
+    if (isSiswa) {
+      setFilterRombel(resolvedInitialRombel);
+      setFilterKelas(resolvedInitialGrade);
+    }
+  }, [isSiswa, resolvedInitialRombel, resolvedInitialGrade]);
+
   const [isOpen, setIsOpen] = useState(false);
   const [selectedHari, setSelectedHari] = useState("Senin");
   const [jam, setJam] = useState("07.30 - 09.00");
@@ -2983,61 +2990,73 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
         </div>
       </div>
 
-      {/* Filter Bar Kelas & Rombel */}
-      <div className="p-4 rounded-xl bg-card border border-border space-y-3 mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-muted-foreground mr-1">Filter Tingkat Kelas:</span>
-            {["Semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((k) => (
-              <Button
-                key={k}
-                size="sm"
-                variant={filterKelas === k ? "default" : "outline"}
-                className="text-xs h-7 font-semibold"
-                onClick={() => setFilterKelas(k)}
+      {/* Filter Bar Kelas & Rombel (Hidden & Locked for Siswa) */}
+      {!isSiswa ? (
+        <div className="p-4 rounded-xl bg-card border border-border space-y-3 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-muted-foreground mr-1">Filter Tingkat Kelas:</span>
+              {["Semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((k) => (
+                <Button
+                  key={k}
+                  size="sm"
+                  variant={filterKelas === k ? "default" : "outline"}
+                  className="text-xs h-7 font-semibold"
+                  onClick={() => setFilterKelas(k)}
+                >
+                  {k}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-muted-foreground">Rombel:</span>
+              <select
+                className="h-8 rounded-md border border-border bg-background px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400"
+                value={filterRombel}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFilterRombel(val);
+                  if (val.includes("7")) setFilterKelas("Kelas VII");
+                  else if (val.includes("8")) setFilterKelas("Kelas VIII");
+                  else if (val.includes("9")) setFilterKelas("Kelas IX");
+                  else if (val === "Semua") setFilterKelas("Semua");
+                }}
               >
-                {k}
-              </Button>
-            ))}
+                <option value="Semua">Semua Rombel</option>
+                <option value="Rombel 7A">Rombel 7A</option>
+                <option value="Rombel 7B">Rombel 7B</option>
+                <option value="Rombel 8A">Rombel 8A</option>
+                <option value="Rombel 8B">Rombel 8B</option>
+                <option value="Rombel 9A">Rombel 9A</option>
+                <option value="Rombel 9B">Rombel 9B</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-muted-foreground">Rombel:</span>
-            <select
-              className="h-8 rounded-md border border-border bg-background px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400"
-              value={filterRombel}
-              onChange={(e) => {
-                const val = e.target.value;
-                setFilterRombel(val);
-                if (val.includes("7")) setFilterKelas("Kelas VII");
-                else if (val.includes("8")) setFilterKelas("Kelas VIII");
-                else if (val.includes("9")) setFilterKelas("Kelas IX");
-                else if (val === "Semua") setFilterKelas("Semua");
-              }}
-            >
-              <option value="Semua">Semua Rombel</option>
-              <option value="Rombel 7A">Rombel 7A</option>
-              <option value="Rombel 7B">Rombel 7B</option>
-              <option value="Rombel 8A">Rombel 8A</option>
-              <option value="Rombel 8B">Rombel 8B</option>
-              <option value="Rombel 9A">Rombel 9A</option>
-              <option value="Rombel 9B">Rombel 9B</option>
-            </select>
+          {/* Banner Info Schedule Filter */}
+          <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">📍</span> Menampilkan Jadwal KBM Resmi: <strong className="underline decoration-emerald-500 font-extrabold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})
+            </span>
+            {filterRombel !== "Semua" && (
+              <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400 text-[10px]">
+                Tersaring Presisi
+              </Badge>
+            )}
           </div>
         </div>
-
-        {/* Banner Info Schedule Filter */}
-        <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-          <span className="flex items-center gap-1.5">
-            <span className="text-sm">📍</span> Menampilkan Jadwal KBM Resmi: <strong className="underline decoration-emerald-500 font-extrabold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})
-          </span>
-          {filterRombel !== "Semua" && (
-            <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400 text-[10px]">
-              Tersaring Presisi
-            </Badge>
-          )}
+      ) : (
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-xs">
+          <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
+            <span className="text-base">🔒</span>
+            <span>Jadwal Khusus Kelas Anda: <strong className="text-emerald-700 dark:text-emerald-400 text-sm font-black">{resolvedInitialRombel} ({resolvedInitialGrade})</strong></span>
+          </div>
+          <Badge className="bg-emerald-700 text-white font-extrabold text-[10px] px-2.5 py-0.5">
+            100% Presisi Kelas Siswa
+          </Badge>
         </div>
-      </div>
+      )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {hari.map((h) => {

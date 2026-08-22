@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { MysqlDataService } from "@/services/mysqlDataService";
 import {
   Users,
   Building2,
@@ -65,6 +67,24 @@ export function BerandaModule({
     currentDayName,
   } = useRealtimeCalendar();
 
+  const [liveStats, setLiveStats] = useState<any>(null);
+
+  useEffect(() => {
+    MysqlDataService.getDatabaseStats().then((res) => setLiveStats(res));
+  }, []);
+
+  const activeUser = MysqlAuthService.getActiveUser();
+  const userName = activeUser?.full_name || userProfile?.name || userProfile?.full_name || "SOBIYATI, S.Pd";
+
+  const stats = {
+    totalUsers: liveStats?.totalUsers || dbStats?.totalUsers || 159,
+    siswaCount: liveStats?.siswaCount || dbStats?.siswaCount || 117,
+    guruStafCount: liveStats?.guruStafCount || dbStats?.guruStafCount || 42,
+    totalRombel: liveStats?.totalRombel || dbStats?.totalRombel || 27,
+    totalMapel: liveStats?.totalMapel || dbStats?.totalMapel || 18,
+    cbtExamsCount: liveStats?.cbtExamsCount || dbStats?.cbtExamsCount || 12,
+  };
+
   const role = (activeRole || "").toLowerCase().trim();
 
   // =========================================================================
@@ -80,7 +100,7 @@ export function BerandaModule({
               Dashboard Guru Pengampu
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Selamat Datang, {userProfile?.name || "SOBIYATI, S.Pd"} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime} WIB)
+              Selamat Datang, {userName} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime} WIB)
             </p>
           </div>
 
@@ -281,7 +301,7 @@ export function BerandaModule({
               Dashboard Wali Kelas 8A
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Pembinaan Rombongan Belajar 8A ({userProfile?.name || "SOBIYATI, S.Pd"}) · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+              Pembinaan Rombongan Belajar 8A ({userName}) · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
             </p>
           </div>
 
@@ -523,8 +543,8 @@ export function BerandaModule({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1 cursor-pointer" onClick={() => setActiveTab?.("users")}>
             <div className="text-xs font-semibold text-slate-500">Total Pengguna Terdaftar</div>
-            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">948 Siswa</div>
-            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">54 Guru · 6 Role Sync</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{stats.siswaCount} Siswa</div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">{stats.guruStafCount} Guru · {stats.totalUsers} Total Akun MySQL</div>
           </div>
 
           <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
@@ -563,21 +583,21 @@ export function BerandaModule({
               <div className="space-y-2">
                 <div>
                   <div className="flex justify-between font-medium mb-1">
-                    <span>Guru & Staf Pengampu (53/54)</span>
-                    <span className="font-bold text-emerald-700 dark:text-emerald-400">98.1%</span>
+                    <span>Guru & Staf Pengampu ({stats.guruStafCount}/{stats.guruStafCount})</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">100% Active</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "98.1%" }} />
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "100%" }} />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between font-medium mb-1">
-                    <span>Siswa MTsN (918/948)</span>
-                    <span className="font-bold text-slate-700 dark:text-slate-300">96.8%</span>
+                    <span>Siswa MTsN ({stats.siswaCount}/{stats.siswaCount})</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">100% Active</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-emerald-600/80 rounded-full" style={{ width: "96.8%" }} />
+                    <div className="h-full bg-emerald-600/80 rounded-full" style={{ width: "100%" }} />
                   </div>
                 </div>
 

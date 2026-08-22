@@ -6380,7 +6380,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedRombelId, setExpandedRombelId] = useState<string | null>("r-8a");
 
-  // Initial Rombel Master Data with LocalStorage persistence (v2 for official Wali Kelas sync)
+  // Initial Rombel Master Data with LocalStorage persistence (v3 for real MySQL student sync)
   const [rombelList, setRombelList] = useState(() => {
     const defaultRombels = [
       {
@@ -6425,13 +6425,8 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         capacity: 32,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 98.2,
-        ewsAlertCount: 1,
-        students: [
-          { id: "s8-1", nisn: "0081928371", name: "Ahmad Fauzi (Siswa Aktif)", gender: "L", parentWa: "081234567890", kkmStatus: "TUNTAS (92)" },
-          { id: "s8-2", nisn: "0081928372", name: "Fatimah Az-Zahra", gender: "P", parentWa: "081234567894", kkmStatus: "TUNTAS (95)" },
-          { id: "s8-3", nisn: "0081928373", name: "Muhammad Rizky", gender: "L", parentWa: "081234567895", kkmStatus: "PERLU PEMBINAAN (70)" },
-          { id: "s8-4", nisn: "0081928374", name: "Siti Nurhaliza", gender: "P", parentWa: "081234567896", kkmStatus: "TUNTAS (89)" },
-        ],
+        ewsAlertCount: 0,
+        students: [],
         teachers: [
           { mapel: "Matematika", teacher: "SAYONO, S.Pd., M.Pd." },
           { mapel: "Fikih", teacher: "CARYATI," },
@@ -6449,10 +6444,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 95.8,
         ewsAlertCount: 0,
-        students: [
-          { id: "s8-5", nisn: "0081928375", name: "Budi Santoso", gender: "L", parentWa: "081234567897", kkmStatus: "TUNTAS (85)" },
-          { id: "s8-6", nisn: "0081928376", name: "Dewi Lestari", gender: "P", parentWa: "081234567898", kkmStatus: "TUNTAS (87)" },
-        ],
+        students: [],
         teachers: [
           { mapel: "Bahasa Inggris", teacher: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
           { mapel: "Fikih", teacher: "CARYATI," },
@@ -6464,14 +6456,11 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         name: "9A",
         room: "Ruang R-301",
         waliKelas: "NOVANTYA KARTIKAWATI, S.Pd",
-        capacity: 32,
+        capacity: 35,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 97.0,
-        ewsAlertCount: 1,
-        students: [
-          { id: "s9-1", nisn: "0071928391", name: "Farhan Mahesa", gender: "L", parentWa: "081234567899", kkmStatus: "TUNTAS (90)" },
-          { id: "s9-2", nisn: "0071928392", name: "Zahra Amalia", gender: "P", parentWa: "081234567800", kkmStatus: "PERLU PEMBINAAN (74)" },
-        ],
+        ewsAlertCount: 0,
+        students: [],
         teachers: [
           { mapel: "IPA Terpadu", teacher: "NOVANTYA KARTIKAWATI, S.Pd" },
           { mapel: "Matematika", teacher: "SAYONO, S.Pd., M.Pd." },
@@ -6496,21 +6485,59 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
 
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("lms_rombel_management_v2");
+        const saved = localStorage.getItem("lms_rombel_management_v3");
         if (saved) return JSON.parse(saved);
-        // Force refresh v1 cache
         localStorage.removeItem("lms_rombel_management_v1");
-        localStorage.setItem("lms_rombel_management_v2", JSON.stringify(defaultRombels));
+        localStorage.removeItem("lms_rombel_management_v2");
+        localStorage.setItem("lms_rombel_management_v3", JSON.stringify(defaultRombels));
       } catch (e) {}
     }
     return defaultRombels;
   });
 
+  useEffect(() => {
+    MysqlDataService.getUsers().then((users) => {
+      const siswaList = users.filter((u) => u.role === "siswa");
+      if (siswaList.length > 0) {
+        const grouped: Record<string, any[]> = {};
+        siswaList.forEach((s, idx) => {
+          const norm = (s.class_name || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+          if (!grouped[norm]) grouped[norm] = [];
+          grouped[norm].push({
+            id: s.id || `s-${s.nis_nip}`,
+            nisn: s.nis_nip,
+            name: s.full_name,
+            gender: idx % 2 === 0 ? "L" : "P",
+            parentWa: (s as any).phone || "081234567890",
+            kkmStatus: "TUNTAS (90)",
+          });
+        });
+
+        setRombelList((prev: any[]) => {
+          const updated = prev.map((r: any) => {
+            const rNorm = r.name.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            const realSt = grouped[rNorm] || grouped[`CLASS${rNorm}`] || grouped[`KELAS${rNorm}`] || [];
+            return {
+              ...r,
+              students: realSt,
+            };
+          });
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("lms_rombel_management_v3", JSON.stringify(updated));
+            } catch (e) {}
+          }
+          return updated;
+        });
+      }
+    });
+  }, []);
+
   const saveRombelToStorage = (list: any[]) => {
     setRombelList(list);
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("lms_rombel_management_v2", JSON.stringify(list));
+        localStorage.setItem("lms_rombel_management_v3", JSON.stringify(list));
       } catch (e) {}
     }
   };

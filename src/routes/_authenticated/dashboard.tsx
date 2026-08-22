@@ -2949,7 +2949,7 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
   const [mapel, setMapel] = useState("Matematika");
   const [inputTingkat, setInputTingkat] = useState("Kelas VIII");
   const [inputRombel, setInputRombel] = useState("Rombel 8A");
-  const [guru, setGuru] = useState("Bpk. Hendra Wijaya, M.Sc");
+  const [guru, setGuru] = useState("SAYONO, S.Pd., M.Pd.");
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -5109,12 +5109,12 @@ function Progress({ activeRole }: { activeRole?: string }) {
   ];
 
   const mapelProgressBreakdown = [
-    { mapel: "Al-Quran Hadits", teacher: "Dra. Hj. Siti Rahmah", cp: 100, tugas: 95, pertemuan: "18 dari 18 Pertemuan" },
-    { mapel: "Akidah Akhlak", teacher: "Ust. Abdul Halim", cp: 90, tugas: 88, pertemuan: "16 dari 18 Pertemuan" },
-    { mapel: "Fiqih", teacher: "Dra. Hj. Siti Rahmah", cp: 92, tugas: 90, pertemuan: "17 dari 18 Pertemuan" },
-    { mapel: "Matematika", teacher: "Bapak Hendra Wijaya", cp: 85, tugas: 80, pertemuan: "15 dari 18 Pertemuan" },
-    { mapel: "IPA", teacher: "Ibu Ratna Dewi", cp: 88, tugas: 85, pertemuan: "16 dari 18 Pertemuan" },
-    { mapel: "Informatika & Coding", teacher: "H. Ahmad Syukri", cp: 100, tugas: 96, pertemuan: "18 dari 18 Pertemuan" },
+    { mapel: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", cp: 100, tugas: 95, pertemuan: "18 dari 18 Pertemuan" },
+    { mapel: "Akidah Akhlak", teacher: "WAKHIBUN, S.P", cp: 90, tugas: 88, pertemuan: "16 dari 18 Pertemuan" },
+    { mapel: "Fikih", teacher: "CARYATI,", cp: 92, tugas: 90, pertemuan: "17 dari 18 Pertemuan" },
+    { mapel: "Matematika", teacher: "SAYONO, S.Pd., M.Pd.", cp: 85, tugas: 80, pertemuan: "15 dari 18 Pertemuan" },
+    { mapel: "Ilmu Pendidikan Alam", teacher: "NOVANTYA KARTIKAWATI, S.Pd", cp: 88, tugas: 85, pertemuan: "16 dari 18 Pertemuan" },
+    { mapel: "Teknologi Informasi dan Komunikasi", teacher: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", cp: 100, tugas: 96, pertemuan: "18 dari 18 Pertemuan" },
   ];
 
   if (!isExecutive && !isWaliKelas) {
@@ -6413,11 +6413,11 @@ function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
 function Tahfidz() {
   const [selectedJuz, setSelectedJuz] = useState("Juz 30");
   const [hafalanList, setHafalanList] = useState([
-    { id: "1", juz: "Juz 30", s: "An-Naba'", ayat: "1 - 40 (Lengkap)", status: "Mutqin", nilai: "98 (Mumtaz)", ustadz: "Ust. Abdul Halim, S.Ag", tgl: "22 Juli 2026", murojaah: "Mutqin 🔵" },
-    { id: "2", juz: "Juz 30", s: "An-Nazi'at", ayat: "1 - 25", status: "Lancar", nilai: "90 (Jayyid Jiddan)", ustadz: "Ust. Abdul Halim, S.Ag", tgl: "20 Juli 2026", murojaah: "Lancar 🟢" },
-    { id: "3", juz: "Juz 30", s: "'Abasa", ayat: "1 - 15", status: "Murojaah", nilai: "85 (Jayyid)", ustadz: "Ustadzah Nurul Hidayah", tgl: "18 Juli 2026", murojaah: "Perlu Murojaah 🟡" },
-    { id: "4", juz: "Juz 30", s: "At-Takwir", ayat: "1 - 29 (Lengkap)", status: "Mutqin", nilai: "95 (Mumtaz)", ustadz: "Ust. Abdul Halim, S.Ag", tgl: "15 Juli 2026", murojaah: "Mutqin 🔵" },
-    { id: "5", juz: "Juz 29", s: "Al-Mulk", ayat: "1 - 30 (Lengkap)", status: "Mutqin", nilai: "96 (Mumtaz)", ustadz: "Ust. Abdul Halim, S.Ag", tgl: "10 Juni 2026", murojaah: "Mutqin 🔵" },
+    { id: "1", juz: "Juz 30", s: "An-Naba'", ayat: "1 - 40 (Lengkap)", status: "Mutqin", nilai: "98 (Mumtaz)", ustadz: "AH. SYARIF HIDAYAH, S.Pd.I", tgl: "22 Juli 2026", murojaah: "Mutqin 🔵" },
+    { id: "2", juz: "Juz 30", s: "An-Nazi'at", ayat: "1 - 25", status: "Lancar", nilai: "90 (Jayyid Jiddan)", ustadz: "AH. SYARIF HIDAYAH, S.Pd.I", tgl: "20 Juli 2026", murojaah: "Lancar 🟢" },
+    { id: "3", juz: "Juz 30", s: "'Abasa", ayat: "1 - 15", status: "Murojaah", nilai: "85 (Jayyid)", ustadz: "ENDAH SUPRIHATIN, S.Pd", tgl: "18 Juli 2026", murojaah: "Perlu Murojaah 🟡" },
+    { id: "4", juz: "Juz 30", s: "At-Takwir", ayat: "1 - 29 (Lengkap)", status: "Mutqin", nilai: "95 (Mumtaz)", ustadz: "AH. SYARIF HIDAYAH, S.Pd.I", tgl: "15 Juli 2026", murojaah: "Mutqin 🔵" },
+    { id: "5", juz: "Juz 29", s: "Al-Mulk", ayat: "1 - 30 (Lengkap)", status: "Mutqin", nilai: "96 (Mumtaz)", ustadz: "AH. SYARIF HIDAYAH, S.Pd.I", tgl: "10 Juni 2026", murojaah: "Mutqin 🔵" },
   ]);
 
   // Modal Input Setoran State
@@ -6426,7 +6426,7 @@ function Tahfidz() {
   const [ayat, setAyat] = useState("1 - 20");
   const [status, setStatus] = useState("Lancar");
   const [nilai, setNilai] = useState("90 (Jayyid Jiddan)");
-  const [ustadz, setUstadz] = useState("Ust. Abdul Halim, S.Ag");
+  const [ustadz, setUstadz] = useState("AH. SYARIF HIDAYAH, S.Pd.I");
 
   // Modal Cetak Kartu Murojaah State
   const [isPrintCardOpen, setIsPrintCardOpen] = useState(false);
@@ -6692,7 +6692,7 @@ function Tahfidz() {
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, 11 Agustus 2026<br />Ustadz / Penguji Tahfidz</div>
-                <div className="font-bold underline text-slate-950">Ust. Abdul Halim, S.Ag</div>
+                <div className="font-bold underline text-slate-950">AH. SYARIF HIDAYAH, S.Pd.I</div>
               </div>
             </div>
           </div>
@@ -6892,7 +6892,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
   const [rombelNameInput, setRombelNameInput] = useState("");
   const [gradeInput, setGradeInput] = useState<"VII" | "VIII" | "IX">("VIII");
   const [roomInput, setRoomInput] = useState("Ruang R-203");
-  const [waliKelasInput, setWaliKelasInput] = useState("Bpk. Hendra Wijaya, M.Sc");
+  const [waliKelasInput, setWaliKelasInput] = useState("SOBIYATI, S.Pd");
   const [capacityInput, setCapacityInput] = useState(32);
 
   // Student Plotting Modal State
@@ -8290,7 +8290,7 @@ function Perpustakaan() {
 function Pengaturan() {
   const [logs] = useState([
     { id: "1", user: "Admin Akademik (Slamet Riyadi)", act: "Mengunggah Pengumuman Baru: Libur Maulid Nabi", tgl: "24 Juli 2026 14:20" },
-    { id: "2", user: "Guru (Hendra Wijaya, M.Sc)", act: "Input Nilai CBT PAS Matematika Kelas 8A", tgl: "24 Juli 2026 13:45" },
+    { id: "2", user: "Guru (SAYONO, S.Pd., M.Pd.)", act: "Input Nilai CBT PAS Matematika Kelas 8A", tgl: "24 Juli 2026 13:45" },
     { id: "3", user: "Super Admin (Ahmad Hidayat)", act: "Melakukan Backup Database System (.SQL)", tgl: "24 Juli 2026 10:15" },
     { id: "4", user: "System Auto Engine", act: "Mendeteksi Early Warning: 3 Siswa di bawah KKM", tgl: "24 Juli 2026 08:00" },
   ]);

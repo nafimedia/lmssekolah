@@ -1245,11 +1245,21 @@ export function SiakadMasterDataModule() {
                 value={selectedGuru}
                 onChange={(e) => setSelectedGuru(e.target.value)}
               >
-                <option value="Bpk. Hendra Wijaya, M.Sc">Bpk. Hendra Wijaya, M.Sc</option>
-                <option value="Dra. Hj. Siti Rahmah, M.Pd">Dra. Hj. Siti Rahmah, M.Pd</option>
-                <option value="Ustadzah Nurul Hidayah, S.Pd.I">Ustadzah Nurul Hidayah, S.Pd.I</option>
-                <option value="Ibu Ratna Dewi, M.Pd">Ibu Ratna Dewi, M.Pd</option>
-                <option value="H. Ahmad Syukri, S.Kom">H. Ahmad Syukri, S.Kom</option>
+                <option value="AH. SYARIF HIDAYAH, S.Pd.I">AH. SYARIF HIDAYAH, S.Pd.I</option>
+                <option value="WAKHIBUN, S.P">WAKHIBUN, S.P</option>
+                <option value="CARYATI,">CARYATI,</option>
+                <option value="H. DASIRUN, S.Ag., M.Pd.I">H. DASIRUN, S.Ag., M.Pd.I</option>
+                <option value="ENDAH SUPRIHATIN, S.Pd">ENDAH SUPRIHATIN, S.Pd</option>
+                <option value="SOBIYATI, S.Pd">SOBIYATI, S.Pd</option>
+                <option value="ACHMAD MAKMUN ROSID, S.Pd., M.Pd">ACHMAD MAKMUN ROSID, S.Pd., M.Pd</option>
+                <option value="SAYONO, S.Pd., M.Pd.">SAYONO, S.Pd., M.Pd.</option>
+                <option value="NOVANTYA KARTIKAWATI, S.Pd">NOVANTYA KARTIKAWATI, S.Pd</option>
+                <option value="UMI KHAFSOH, S.Pd">UMI KHAFSOH, S.Pd</option>
+                <option value="ANGGUN NOVTALIA BERLIAN, S.Pd">ANGGUN NOVTALIA BERLIAN, S.Pd</option>
+                <option value="NUR ROCHMAN SHODIQ, S.Pd.I">NUR ROCHMAN SHODIQ, S.Pd.I</option>
+                <option value="ISNAENI HASANAH, S.Pd.I">ISNAENI HASANAH, S.Pd.I</option>
+                <option value="RINDANG FARIHA IDANA, S.Pd">RINDANG FARIHA IDANA, S.Pd</option>
+                <option value="ASROR HIDAYAT, S.Pd">ASROR HIDAYAT, S.Pd</option>
               </select>
             </div>
 
@@ -1482,9 +1492,9 @@ export function SiakadMasterDataModule() {
           {selectedRombelJadwal && (
             <div className="space-y-3 py-2 text-xs">
               {(rombelJadwalMap[selectedRombelJadwal] || [
-                { hari: "Senin", jam: "07.30 - 09.00", mapel: "Al-Quran Hadits", guru: "Dra. Hj. Siti Rahmah, M.Pd" },
-                { hari: "Senin", jam: "09.15 - 10.45", mapel: "Matematika", guru: "Bpk. Hendra Wijaya, M.Sc" },
-                { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Bahasa Indonesia", guru: "Bpk. Slamet Riyadi, M.Pd" },
+                { hari: "Senin", jam: "07.30 - 09.00", mapel: "Al Qur'an Hadis", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
+                { hari: "Senin", jam: "09.15 - 10.45", mapel: "Matematika", guru: "SAYONO, S.Pd., M.Pd." },
+                { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Bahasa Indonesia", guru: "SOBIYATI, S.Pd" },
               ]).map((j, idx) => (
                 <div key={idx} className="p-3 rounded-lg border border-border bg-card flex items-center justify-between">
                   <div>

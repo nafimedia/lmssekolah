@@ -5358,18 +5358,53 @@ function Progress({ activeRole }: { activeRole?: string }) {
 /* ---------- 4. Menu Award/Badge & Warning untuk Guru ---------- */
 function ApresiasiGuru({ activeRole }: { activeRole?: string }) {
   const [teachersList, setTeachersList] = useState([
-    { id: "1", name: "Dra. Hj. Siti Rahmah, M.Pd", mapel: "Al-Quran Hadits & Fiqih", nip: "197804122002122001", badges: ["🏆 Guru Inovatif", "⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
-    { id: "2", name: "Ust. Abdul Halim, S.Ag", mapel: "Akidah Akhlak", nip: "198205102005011003", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
-    { id: "3", name: "Bapak Hendra Wijaya, M.Sc", mapel: "Matematika", nip: "198509202010011002", badges: ["🔥 Ketuntasan KKM Tinggi"], warningCount: 1, status: "Pembinaan Tambahan" },
-    { id: "4", name: "H. Ahmad Syukri, S.Kom", mapel: "Informatika & Coding", nip: "198811152014021001", badges: ["🏆 Guru Inovatif", "💡 Modul Inspiratif"], warningCount: 0, status: "Aktif Terpuji" },
-    { id: "5", name: "Ibu Ratna Dewi, M.Pd", mapel: "Ilmu Pengetahuan Alam", nip: "199003052016012004", badges: ["⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
-    { id: "6", name: "Ustadzah Nurul Hidayah, S.Pd.I", mapel: "Bahasa Arab", nip: "199207182018012002", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "1", name: "AH. SYARIF HIDAYAH, S.Pd.I", mapel: "Al Qur'an Hadis", nip: "199204042025051002", badges: ["🏆 Guru Inovatif", "⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "2", name: "WAKHIBUN, S.P", mapel: "Akidah Akhlak", nip: "197205122005011003", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "3", name: "CARYATI,", mapel: "Fikih", nip: "197807072007102001", badges: ["⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "4", name: "H. DASIRUN, S.Ag., M.Pd.I", mapel: "Sejarah Kebudayaan Islam", nip: "197311232005011004", badges: ["🏆 Guru Inovatif", "💡 Modul Inspiratif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "5", name: "ENDAH SUPRIHATIN, S.Pd", mapel: "Bahasa Arab", nip: "199405142019032021", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "6", name: "SOBIYATI, S.Pd", mapel: "Bahasa Indonesia", nip: "197808152005012004", badges: ["🔥 Ketuntasan KKM Tinggi"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "7", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", mapel: "Bahasa Inggris & TIK", nip: "197205012005011001", badges: ["🏆 Guru Inovatif", "⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "8", name: "SAYONO, S.Pd., M.Pd.", mapel: "Matematika", nip: "197409202003121002", badges: ["🔥 Ketuntasan KKM Tinggi"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "9", name: "NOVANTYA KARTIKAWATI, S.Pd", mapel: "Ilmu Pendidikan Alam", nip: "198603052011012008", badges: ["⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "10", name: "UMI KHAFSOH, S.Pd", mapel: "Ilmu Pendidikan Sosial", nip: "198302142009022005", badges: ["💡 Modul Inspiratif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "11", name: "ANGGUN NOVTALIA BERLIAN, S.Pd", mapel: "Pendidikan Kewarganegaraan", nip: "199011122019032012", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "12", name: "NUR ROCHMAN SHODIQ, S.Pd.I", mapel: "PJOK", nip: "198506182014021003", badges: ["⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "13", name: "ISNAENI HASANAH, S.Pd.I", mapel: "Prakarya dan Seni Budaya", nip: "198808252015032004", badges: ["💡 Modul Inspiratif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "14", name: "RINDANG FARIHA IDANA, S.Pd", mapel: "Bahasa Jawa", nip: "199204102020122009", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "15", name: "ASROR HIDAYAT, S.Pd", mapel: "Bimbingan dan Konseling", nip: "198701022012011004", badges: ["🏆 Guru Inovatif"], warningCount: 0, status: "Aktif Terpuji" },
   ]);
 
   const [historyList, setHistoryList] = useState([
-    { id: "h1", teacher: "Dra. Hj. Siti Rahmah, M.Pd", type: "award", title: "🏆 Guru Inovatif", emote: "🎉", comment: "Sangat inspiratif dalam pemanfaatan media digital Al-Quran Hadits Pertemuan 1-18.", date: "26 Juli 2026" },
-    { id: "h2", teacher: "Bapak Hendra Wijaya, M.Sc", type: "warning", title: "⚠️ Kelengkapan Modul Terlambat", emote: "⚠️", comment: "Mohon segera melengkapi unggahan LKPD Pertemuan 15 Matematika.", date: "24 Juli 2026" },
+    { id: "h1", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", type: "award", title: "🏆 Guru Inovatif", emote: "🎉", comment: "Sangat inspiratif dalam pemanfaatan media digital Al Qur'an Hadis Pertemuan 1-18.", date: "26 Juli 2026" },
+    { id: "h2", teacher: "SAYONO, S.Pd., M.Pd.", type: "award", title: "🔥 Ketuntasan KKM Tinggi", emote: "⭐", comment: "Apresiasi atas pencapaian rata-rata nilai Matematika 85+ di seluruh Rombel KBM.", date: "24 Juli 2026" },
   ]);
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getUsers()
+      .then((users) => {
+        if (!isMounted) return;
+        const guruUsers = users.filter((u) => u.role === "guru" || u.role === "walikelas" || u.role === "wali_kelas" || u.role === "waka" || u.role === "kamad");
+        if (guruUsers.length > 0) {
+          const mapped = guruUsers.map((g, idx) => ({
+            id: String(g.id || `g-${idx + 1}`),
+            name: g.full_name,
+            mapel: (g as any).assigned_mapel || (g as any).specialization || "Mata Pelajaran KBM",
+            nip: g.nis_nip || `1980010120050110${idx + 10}`,
+            badges: idx % 3 === 0 ? ["🏆 Guru Inovatif", "⭐ Presensi Presisi 100%"] : idx % 2 === 0 ? ["🌟 Media Ajar Terkreatif"] : ["🔥 Ketuntasan KKM Tinggi"],
+            warningCount: 0,
+            status: "Aktif Terpuji",
+          }));
+          setTeachersList(mapped);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
   const [actionType, setActionType] = useState<"award" | "warning">("award");

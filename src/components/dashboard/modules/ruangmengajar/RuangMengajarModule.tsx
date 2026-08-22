@@ -318,7 +318,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
   }, []);
 
   // State 1: Active Subject & Class Selector
-  const initialMapel = userProfile?.assignedMapel || "Al Qur'an Hadis";
+  const initialMapel = userProfile?.subject_specialty || userProfile?.mapelUtama || userProfile?.assignedMapel || "Al Qur'an Hadis";
   const [selectedMapel, setSelectedMapel] = useState<string>(initialMapel);
   const [selectedClass, setSelectedClass] = useState<string>("Kelas VIII A");
 
@@ -413,9 +413,10 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
     setNewTp("");
   };
 
-  // Modal State for New Task (Request #3)
+  // Modal State for New Task (Request #3: 5 Bentuk Tugas)
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskType, setNewTaskType] = useState<string>("Unggah Dokumen");
   const [newTaskDeadline, setNewTaskDeadline] = useState("Hari ini, 23:59 WIB");
   const [tasksList, setTasksList] = useState(activeMapelContent.tasks);
 
@@ -429,19 +430,21 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
     const t = {
       id: `t${Date.now()}`,
       title: newTaskTitle,
-      type: "Tugas Submisi PDF",
+      type: newTaskType,
       deadline: newTaskDeadline,
       count: `0 / ${activeClassData.siswaCount} Submisi`,
     };
     setTasksList([t, ...tasksList]);
-    toast.success(`📝 Tugas "${newTaskTitle}" berhasil dibuat!`);
+    toast.success(`📝 Tugas (${newTaskType}) "${newTaskTitle}" berhasil dibuat!`);
     setIsAddTaskOpen(false);
     setNewTaskTitle("");
   };
 
-  // Modal State for New Assessment / CBT (Request #4)
+  // Modal State for New Assessment / CBT (Request #4: Formatif vs Sumatif)
   const [isAddCbtOpen, setIsAddCbtOpen] = useState(false);
   const [newCbtTitle, setNewCbtTitle] = useState("");
+  const [newCbtJenis, setNewCbtJenis] = useState<"Formatif" | "Sumatif">("Formatif");
+  const [newCbtBentuk, setNewCbtBentuk] = useState<string>("Kuis");
   const [newCbtDuration, setNewCbtDuration] = useState("60 Menit");
   const [cbtList, setCbtList] = useState(activeMapelContent.assessments);
 
@@ -451,20 +454,33 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
 
   const handleAddCbt = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCbtTitle) return toast.error("Harap isi judul ujian CBT!");
+    if (!newCbtTitle) return toast.error("Harap isi judul ujian/asesmen!");
     const c = {
       id: `c${Date.now()}`,
-      title: newCbtTitle,
-      desc: `25 Soal Pilihan Ganda & 5 Uraian (${selectedMapel})`,
+      title: `${newCbtTitle} (${newCbtJenis} - ${newCbtBentuk})`,
+      desc: `Jenis: ${newCbtJenis} | Bentuk: ${newCbtBentuk} (${selectedMapel})`,
       duration: newCbtDuration,
       status: "Terbit" as const,
       action: "Buka CBT Live",
     };
     setCbtList([c, ...cbtList]);
-    toast.success(`🚀 Ujian CBT "${newCbtTitle}" diterbitkan!`);
+    toast.success(`🚀 Asesmen ${newCbtJenis} (${newCbtBentuk}) "${newCbtTitle}" berhasil diterbitkan!`);
     setIsAddCbtOpen(false);
     setNewCbtTitle("");
   };
+
+  // Preview Document Viewer State (Request #2)
+  const [selectedDocForPreview, setSelectedDocForPreview] = useState<{
+    id: string;
+    title: string;
+    type: string;
+    size: string;
+    filename: string;
+  } | null>(null);
+
+  // Integrated Jurnal KBM State (Request #5)
+  const [jurnalMateri, setJurnalMateri] = useState("Pertemuan 2 — Tajwid Mad Silah Qashirah & Mad Badal");
+  const [jurnalCatatan, setJurnalCatatan] = useState("KBM berlangsung tertib. Siswa aktif murojaah & tanya jawab.");
 
   // Request #2: Interactive Download Handler for Module Docs
   const handleDownloadDoc = (title: string, filename: string) => {
@@ -926,13 +942,18 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
         </div>
       )}
 
-      {/* TAB 2: ABSENSI SESI PERTEMUAN */}
+      {/* TAB 2: ABSENSI & JURNAL KBM HARIAN PERTEMUAN (Request #5) */}
       {activeTab === "absensi" && (
         <div className="space-y-6">
           <div className="p-6 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200/60 dark:border-slate-800">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Presensi Pertemuan KBM</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span>Presensi & Jurnal KBM Pertemuan</span>
+                  <Badge variant="outline" className="border-emerald-500 text-emerald-700 dark:text-emerald-400 font-bold text-[10px]">
+                    Integrated Meeting Journal
+                  </Badge>
+                </h2>
                 <div className="text-xs text-slate-500 font-medium">
                   {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} · Pertemuan ke-2 ({selectedMapel})
                 </div>
@@ -944,6 +965,37 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
                     {attendanceCounts.rate}%
                   </div>
                   <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Tingkat Kehadiran</div>
+                </div>
+              </div>
+            </div>
+
+            {/* CARD FORM JURNAL KEGIATAN KBM HARIAN (Attached with Presensi) */}
+            <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+              <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
+                <h3 className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                  <FileCode className="h-4 w-4 text-emerald-600" /> Jurnal Kegiatan KBM Pertemuan Ini ({selectedClass})
+                </h3>
+                <Badge className="bg-emerald-600 text-white font-bold text-[10px]">Diisi Setiap Pertemuan</Badge>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Materi / Pokok Bahasan Diajarkan Hari Ini</Label>
+                  <Input
+                    value={jurnalMateri}
+                    onChange={(e) => setJurnalMateri(e.target.value)}
+                    placeholder="Contoh: Pertemuan 2 — Tajwid Mad Silah"
+                    className="mt-1 text-xs font-bold bg-white dark:bg-slate-900 border-emerald-300/60"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Catatan KBM & Kejadian Penting Kelas</Label>
+                  <Input
+                    value={jurnalCatatan}
+                    onChange={(e) => setJurnalCatatan(e.target.value)}
+                    placeholder="Contoh: Siswa aktif, 26 siswa hadir tepat waktu..."
+                    className="mt-1 text-xs bg-white dark:bg-slate-900 border-emerald-300/60"
+                  />
                 </div>
               </div>
             </div>
@@ -967,9 +1019,9 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
                 <Button
                   size="sm"
                   className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 shadow-xs"
-                  onClick={() => toast.success(`💾 Presensi Sesi KBM (${selectedMapel} - ${selectedClass}) Tersimpan & Sync Jurnal!`)}
+                  onClick={() => toast.success(`💾 Presensi & Jurnal KBM Pertemuan Hari Ini (${selectedMapel} - ${selectedClass}) Berhasil Disimpan!`)}
                 >
-                  Simpan Absensi
+                  <CheckCircle2 className="h-4 w-4" /> Simpan Presensi & Jurnal KBM
                 </Button>
               </div>
             </div>
@@ -1107,14 +1159,25 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
                   <div className="text-xs text-slate-400 font-mono truncate">{doc.filename}</div>
                 </div>
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs font-bold gap-1.5 border-emerald-600/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 shrink-0"
-                  onClick={() => handleDownloadDoc(doc.title, doc.filename)}
-                >
-                  <Download className="h-3.5 w-3.5" /> Unduh
-                </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs font-bold gap-1.5 border-blue-600/40 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
+                      onClick={() => setSelectedDocForPreview(doc)}
+                    >
+                      <BookOpen className="h-3.5 w-3.5" /> Buka / Lihat Materi
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs font-bold gap-1.5 border-emerald-600/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                      onClick={() => handleDownloadDoc(doc.title, doc.filename)}
+                    >
+                      <Download className="h-3.5 w-3.5" /> Unduh
+                    </Button>
+                  </div>
               </div>
             ))}
           </div>
@@ -1457,7 +1520,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
         </DialogContent>
       </Dialog>
 
-      {/* MODAL TAMBAH TUGAS BARU (Request #3) */}
+      {/* MODAL TAMBAH TUGAS BARU (Request #3: 5 Bentuk Tugas) */}
       <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
         <DialogContent className="sm:max-w-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
           <DialogHeader>
@@ -1471,12 +1534,27 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
             <div>
               <Label className="text-xs font-semibold">Judul Tugas / LKPD</Label>
               <Input
-                placeholder="Contoh: LKPD Pertemuan 3 - Analisis Ayat"
+                placeholder="Contoh: LKPD Pertemuan 3 - Analisis Ayat Tajwid"
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 required
                 className="mt-1 text-xs"
               />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Bentuk Tugas (Resmi KBM)</Label>
+              <select
+                className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-semibold text-slate-900 dark:text-slate-100"
+                value={newTaskType}
+                onChange={(e) => setNewTaskType(e.target.value)}
+              >
+                <option value="Unggah Dokumen">📄 Unggah Dokumen (PDF / Word)</option>
+                <option value="Teks Online">✍️ Teks Online (Jawaban Esai Langsung)</option>
+                <option value="Kuis Interaktif">💡 Kuis Interaktif (Soal Cepat)</option>
+                <option value="Tautan Eksternal">🔗 Tautan Eksternal (Link Drive/Web)</option>
+                <option value="Forum Diskusi">💬 Forum Diskusi Kelas</option>
+              </select>
             </div>
 
             <div>
@@ -1497,26 +1575,69 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
         </DialogContent>
       </Dialog>
 
-      {/* MODAL TAMBAH UJIAN CBT BARU (Request #4) */}
+      {/* MODAL TAMBAH ASESMEN BARU (Request #4: Formatif vs Sumatif) */}
       <Dialog open={isAddCbtOpen} onOpenChange={setIsAddCbtOpen}>
         <DialogContent className="sm:max-w-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <MonitorCheck className="h-5 w-5 text-emerald-600" /> Terbitkan Ujian CBT Baru
+              <MonitorCheck className="h-5 w-5 text-emerald-600" /> Terbitkan Asesmen & CBT Baru
             </DialogTitle>
-            <DialogDescription>Input jadwal & durasi CBT Ujian Online ({selectedMapel} - {selectedClass}).</DialogDescription>
+            <DialogDescription>Pilih jenis & bentuk asesmen pembelajaran ({selectedMapel} - {selectedClass}).</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleAddCbt} className="space-y-4 py-2">
             <div>
-              <Label className="text-xs font-semibold">Judul Ujian / Kuis CBT</Label>
+              <Label className="text-xs font-semibold">Judul Asesmen / Kuis</Label>
               <Input
-                placeholder="Contoh: CBT Ujian Akhir Semester (PAS)"
+                placeholder="Contoh: Asesmen Bab 2 - Tajwid Mad Silah"
                 value={newCbtTitle}
                 onChange={(e) => setNewCbtTitle(e.target.value)}
                 required
                 className="mt-1 text-xs"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">Jenis Asesmen</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-bold text-emerald-700 dark:text-emerald-400"
+                  value={newCbtJenis}
+                  onChange={(e) => {
+                    const val = e.target.value as "Formatif" | "Sumatif";
+                    setNewCbtJenis(val);
+                    setNewCbtBentuk("Kuis");
+                  }}
+                >
+                  <option value="Formatif">🟢 Formatif</option>
+                  <option value="Sumatif">🔴 Sumatif</option>
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Bentuk Asesmen</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-semibold text-slate-900 dark:text-slate-100"
+                  value={newCbtBentuk}
+                  onChange={(e) => setNewCbtBentuk(e.target.value)}
+                >
+                  {newCbtJenis === "Formatif" ? (
+                    <>
+                      <option value="Unggah Dokumen">📄 Unggah Dokumen</option>
+                      <option value="Kuis">💡 Kuis</option>
+                      <option value="Kuisioner">📊 Kuisioner</option>
+                      <option value="Penilaian Antar Teman">👥 Penilaian Antar Teman</option>
+                      <option value="Sisipkan Tautan">🔗 Sisipkan Tautan</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Unggah Dokumen">📄 Unggah Dokumen</option>
+                      <option value="Kuis">💡 Kuis</option>
+                      <option value="Sisipkan Tautan">🔗 Sisipkan Tautan</option>
+                    </>
+                  )}
+                </select>
+              </div>
             </div>
 
             <div>
@@ -1531,9 +1652,94 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
 
             <DialogFooter>
               <Button type="button" variant="outline" size="sm" onClick={() => setIsAddCbtOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold">Terbitkan CBT</Button>
+              <Button type="submit" size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold">Terbitkan Asesmen</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 📖 MODAL PRATINJAU / VIEWER MATERI (Request #2) */}
+      <Dialog open={!!selectedDocForPreview} onOpenChange={(o) => !o && setSelectedDocForPreview(null)}>
+        <DialogContent className="sm:max-w-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center justify-between text-slate-900 dark:text-slate-100">
+              <span className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-blue-600" /> {selectedDocForPreview?.title}
+              </span>
+              <Badge variant="outline" className="border-blue-500 text-blue-700 font-mono text-xs">
+                {selectedDocForPreview?.type}
+              </Badge>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Pratinjau Berkas Dokumen Pembelajaran ({selectedMapel} - {selectedClass})
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDocForPreview && (
+            <div className="space-y-4 py-2">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-900 text-xs font-semibold">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-mono">Berkas: {selectedDocForPreview.filename}</span>
+                  <span className="text-slate-400">·</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">{selectedDocForPreview.size}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" className="h-7 text-xs font-bold" onClick={() => toast.info("Zoom In: 100%")}>100%</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs font-bold" onClick={() => toast.info("Halaman 1 / 12")}>Hal 1 dari 12</Button>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 min-h-[260px] space-y-3 font-sans">
+                <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-800 pb-3">
+                  <div>
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{selectedDocForPreview.title}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Mata Pelajaran: {selectedMapel} | MTsN 2 Cilacap</p>
+                  </div>
+                  <Badge className="bg-emerald-700 text-white font-bold text-[10px]">Tersinkronisasi Kemenag</Badge>
+                </div>
+
+                <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-2 py-2">
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">Ringkasan Isi Perangkat Ajar:</p>
+                  <p>
+                    Dokumen ini memuat Alur Tujuan Pembelajaran (ATP), Capaian Pembelajaran (CP), dan Modul Ajar Kurikulum Merdeka yang dirancang khusus untuk pembelajaran tatap muka dan digital di kelas.
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-600 dark:text-slate-400">
+                    <li>Pengenalan Alur Pembelajaran & Penguatan Karakter Profil Pelajar Rahmatan Lil Alamin.</li>
+                    <li>Langkah-langkah Kegiatan Inti KBM, Pemantik Diskusi, dan Penilaian Formatif.</li>
+                    <li>Glosarium Istilah & Lembar Kerja Peserta Didik (LKPD).</li>
+                  </ul>
+                </div>
+              </div>
+
+              <DialogFooter className="pt-2 flex justify-between items-center w-full">
+                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedDocForPreview(null)}>
+                  Tutup Reader
+                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs font-bold border-blue-500/40 text-blue-600 gap-1.5"
+                    onClick={() => {
+                      window.open("#", "_blank");
+                      toast.success(`🌐 Membuka ${selectedDocForPreview.filename} di tab baru!`);
+                    }}
+                  >
+                    Buka di Tab Baru ↗
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5"
+                    onClick={() => handleDownloadDoc(selectedDocForPreview.title, selectedDocForPreview.filename)}
+                  >
+                    <Download className="h-3.5 w-3.5" /> Unduh Dokumen
+                  </Button>
+                </div>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -206,25 +206,25 @@ export function SiakadMasterDataModule() {
     {
       tingkat: "Tingkat VII (Kelas 7)",
       rombels: [
-        { id: "r1", name: "VII A", wali: "SOBIYATI, S.Pd", siswaCount: 34 },
-        { id: "r2", name: "VII B", wali: "INDAH NURROHMAH, S.Pd", siswaCount: 35 },
-        { id: "r3", name: "VII C", wali: "MAULIDIA NURUL IZATI, S.Pd", siswaCount: 34 },
+        { id: "r1", name: "VII A", wali: "MAULIDIA NURUL IZATI, S.Pd", siswaCount: 0 },
+        { id: "r2", name: "VII B", wali: "RINDANG FARIHA IDANA, S.Pd", siswaCount: 0 },
+        { id: "r3", name: "VII C", wali: "CETY MAHARSY, S.Pd", siswaCount: 0 },
       ],
     },
     {
       tingkat: "Tingkat VIII (Kelas 8)",
       rombels: [
-        { id: "r4", name: "VIII A", wali: "NOVANTYA KARTIKAWATI, S.Pd", siswaCount: 32 },
-        { id: "r5", name: "VIII B", wali: "RINDANG FARIHA IDANA, S.Pd", siswaCount: 33 },
+        { id: "r4", name: "VIII A", wali: "SOBIYATI, S.Pd", siswaCount: 32 },
+        { id: "r5", name: "VIII B", wali: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", siswaCount: 32 },
         { id: "r6", name: "VIII C", wali: "H. SOLIHUN, S.Pd., M.Si", siswaCount: 32 },
       ],
     },
     {
       tingkat: "Tingkat IX (Kelas 9)",
       rombels: [
-        { id: "r7", name: "IX A", wali: "ALI MANSUR, S.Pd", siswaCount: 35 },
-        { id: "r8", name: "IX B", wali: "AH. SYARIF HIDAYAH, S.Pd.I", siswaCount: 34 },
-        { id: "r9", name: "IX C", wali: "UMI KHAFSOH, S.Pd", siswaCount: 31 },
+        { id: "r7", name: "IX A", wali: "NOVANTYA KARTIKAWATI, S.Pd", siswaCount: 34 },
+        { id: "r8", name: "IX B", wali: "INDAH NURROHMAH, S.Pd", siswaCount: 34 },
+        { id: "r9", name: "IX C", wali: "ALI MANSUR, S.Pd", siswaCount: 31 },
       ],
     },
   ]);
@@ -233,7 +233,7 @@ export function SiakadMasterDataModule() {
   const [isAddRombelOpen, setIsAddRombelOpen] = useState(false);
   const [newRombelTingkat, setNewRombelTingkat] = useState("Tingkat VII (Kelas 7)");
   const [newRombelName, setNewRombelName] = useState("");
-  const [newRombelWali, setNewRombelWali] = useState("SOBIYATI, S.Pd");
+  const [newRombelWali, setNewRombelWali] = useState("MAULIDIA NURUL IZATI, S.Pd");
   const [newRombelSiswaCount, setNewRombelSiswaCount] = useState(34);
 
   const [isEditRombelOpen, setIsEditRombelOpen] = useState(false);

@@ -206,25 +206,25 @@ export function SiakadMasterDataModule() {
     {
       tingkat: "Tingkat VII (Kelas 7)",
       rombels: [
-        { id: "r1", name: "VII A", wali: "Ustadzah Nurul Hidayah, S.Pd.I", siswaCount: 34 },
-        { id: "r2", name: "VII B", wali: "Bpk. Slamet Riyadi, M.Pd", siswaCount: 35 },
-        { id: "r3", name: "VII C", wali: "Ibu Maryati, S.Pd", siswaCount: 34 },
+        { id: "r1", name: "VII A", wali: "SOBIYATI, S.Pd", siswaCount: 34 },
+        { id: "r2", name: "VII B", wali: "INDAH NURROHMAH, S.Pd", siswaCount: 35 },
+        { id: "r3", name: "VII C", wali: "MAULIDIA NURUL IZATI, S.Pd", siswaCount: 34 },
       ],
     },
     {
       tingkat: "Tingkat VIII (Kelas 8)",
       rombels: [
-        { id: "r4", name: "VIII A", wali: "Dra. Hj. Siti Rahmah, M.Pd", siswaCount: 32 },
-        { id: "r5", name: "VIII B", wali: "Ust. Ahmad Syukri, S.Kom", siswaCount: 33 },
-        { id: "r6", name: "VIII C", wali: "Ibu Ratna Dewi, M.Pd", siswaCount: 32 },
+        { id: "r4", name: "VIII A", wali: "NOVANTYA KARTIKAWATI, S.Pd", siswaCount: 32 },
+        { id: "r5", name: "VIII B", wali: "RINDANG FARIHA IDANA, S.Pd", siswaCount: 33 },
+        { id: "r6", name: "VIII C", wali: "H. SOLIHUN, S.Pd., M.Si", siswaCount: 32 },
       ],
     },
     {
       tingkat: "Tingkat IX (Kelas 9)",
       rombels: [
-        { id: "r7", name: "IX A", wali: "Bpk. Hendra Wijaya, M.Sc", siswaCount: 35 },
-        { id: "r8", name: "IX B", wali: "Ust. H. Mohammad Fathoni, M.Pd", siswaCount: 34 },
-        { id: "r9", name: "IX C", wali: "Bpk. Budi Santoso, M.Pd", siswaCount: 31 },
+        { id: "r7", name: "IX A", wali: "ALI MANSUR, S.Pd", siswaCount: 35 },
+        { id: "r8", name: "IX B", wali: "AH. SYARIF HIDAYAH, S.Pd.I", siswaCount: 34 },
+        { id: "r9", name: "IX C", wali: "UMI KHAFSOH, S.Pd", siswaCount: 31 },
       ],
     },
   ]);
@@ -233,7 +233,7 @@ export function SiakadMasterDataModule() {
   const [isAddRombelOpen, setIsAddRombelOpen] = useState(false);
   const [newRombelTingkat, setNewRombelTingkat] = useState("Tingkat VII (Kelas 7)");
   const [newRombelName, setNewRombelName] = useState("");
-  const [newRombelWali, setNewRombelWali] = useState("Ustadzah Nurul Hidayah, S.Pd.I");
+  const [newRombelWali, setNewRombelWali] = useState("SOBIYATI, S.Pd");
   const [newRombelSiswaCount, setNewRombelSiswaCount] = useState(34);
 
   const [isEditRombelOpen, setIsEditRombelOpen] = useState(false);
@@ -321,32 +321,32 @@ export function SiakadMasterDataModule() {
   // Sample Data Jadwal di Dalam Rombel
   const rombelJadwalMap: Record<string, { hari: string; jam: string; mapel: string; guru: string }[]> = {
     "VII A": [
-      { hari: "Senin", jam: "07.30 - 09.00", mapel: "Bahasa Arab", guru: "Ustadzah Nurul Hidayah, S.Pd.I" },
-      { hari: "Senin", jam: "09.15 - 10.45", mapel: "Informatika & Coding AI", guru: "H. Ahmad Syukri, S.Kom" },
-      { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Bahasa Indonesia", guru: "Bpk. Slamet Riyadi, M.Pd" },
+      { hari: "Senin", jam: "07.30 - 09.00", mapel: "Bahasa Arab", guru: "ENDAH SUPRIHATIN, S.Pd" },
+      { hari: "Senin", jam: "09.15 - 10.45", mapel: "Informatika & Coding AI", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+      { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Bahasa Indonesia", guru: "SOBIYATI, S.Pd" },
     ],
     "VIII A": [
-      { hari: "Senin", jam: "07.30 - 09.00", mapel: "Matematika", guru: "Bpk. Hendra Wijaya, M.Sc" },
-      { hari: "Senin", jam: "09.15 - 10.45", mapel: "Fiqih Kebangsaan", guru: "Dra. Hj. Siti Rahmah, M.Pd" },
-      { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Ilmu Pengetahuan Alam (IPA)", guru: "Ibu Ratna Dewi, M.Pd" },
+      { hari: "Senin", jam: "07.30 - 09.00", mapel: "Matematika", guru: "SAYONO, S.Pd., M.Pd." },
+      { hari: "Senin", jam: "09.15 - 10.45", mapel: "Fiqih Kebangsaan", guru: "CARYATI," },
+      { hari: "Selasa", jam: "07.30 - 09.00", mapel: "Ilmu Pengetahuan Alam (IPA)", guru: "NOVANTYA KARTIKAWATI, S.Pd" },
     ],
     "IX A": [
-      { hari: "Rabu", jam: "07.30 - 09.00", mapel: "Al-Quran Hadits", guru: "Dra. Hj. Siti Rahmah, M.Pd" },
+      { hari: "Rabu", jam: "07.30 - 09.00", mapel: "Al-Quran Hadits", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
     ],
   };
 
   // TABEL PALING PENTING: Pengampu Mata Pelajaran (Guru + Mapel + Rombel)
   const [pengampuList, setPengampuList] = useState([
-    { id: "1", guru: "Bpk. Hendra Wijaya, M.Sc", mapel: "Matematika", rombel: "VIII A", jam: "4 JP / mgg" },
-    { id: "2", guru: "Dra. Hj. Siti Rahmah, M.Pd", mapel: "Fiqih Kebangsaan", rombel: "VIII A", jam: "2 JP / mgg" },
-    { id: "3", guru: "Dra. Hj. Siti Rahmah, M.Pd", mapel: "Al-Quran Hadits", rombel: "IX A", jam: "2 JP / mgg" },
-    { id: "4", guru: "Ustadzah Nurul Hidayah, S.Pd.I", mapel: "Bahasa Arab", rombel: "VII A", jam: "3 JP / mgg" },
-    { id: "5", guru: "Ibu Ratna Dewi, M.Pd", mapel: "Ilmu Pengetahuan Alam (IPA)", rombel: "VIII A", jam: "4 JP / mgg" },
-    { id: "6", guru: "H. Ahmad Syukri, S.Kom", mapel: "Informatika & Coding AI", rombel: "VII A", jam: "2 JP / mgg" },
+    { id: "1", guru: "SAYONO, S.Pd., M.Pd.", mapel: "Matematika", rombel: "VIII A", jam: "4 JP / mgg" },
+    { id: "2", guru: "CARYATI,", mapel: "Fiqih Kebangsaan", rombel: "VIII A", jam: "2 JP / mgg" },
+    { id: "3", guru: "AH. SYARIF HIDAYAH, S.Pd.I", mapel: "Al-Quran Hadits", rombel: "IX A", jam: "2 JP / mgg" },
+    { id: "4", guru: "ENDAH SUPRIHATIN, S.Pd", mapel: "Bahasa Arab", rombel: "VII A", jam: "3 JP / mgg" },
+    { id: "5", guru: "NOVANTYA KARTIKAWATI, S.Pd", mapel: "Ilmu Pengetahuan Alam (IPA)", rombel: "VIII A", jam: "4 JP / mgg" },
+    { id: "6", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", mapel: "Informatika & Coding AI", rombel: "VII A", jam: "2 JP / mgg" },
   ]);
 
   const [isAddPengampuOpen, setIsAddPengampuOpen] = useState(false);
-  const [selectedGuru, setSelectedGuru] = useState("Bpk. Hendra Wijaya, M.Sc");
+  const [selectedGuru, setSelectedGuru] = useState("SAYONO, S.Pd., M.Pd.");
   const [selectedMapel, setSelectedMapel] = useState("Matematika");
   const [selectedRombel, setSelectedRombel] = useState("VIII A");
 

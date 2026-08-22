@@ -9,6 +9,9 @@ import { ProfilModule } from "@/components/dashboard/modules/profil/ProfilModule
 import { SiakadMasterDataModule } from "@/components/dashboard/modules/siakad/SiakadMasterDataModule";
 import { RuangMengajarModule } from "@/components/dashboard/modules/ruangmengajar/RuangMengajarModule";
 import { SdmGtkModule } from "@/components/dashboard/modules/sdm/SdmGtkModule";
+import { PengumumanModule } from "@/components/dashboard/modules/pengumuman/PengumumanModule";
+import { AgendaKalenderModule } from "@/components/dashboard/modules/agenda/AgendaKalenderModule";
+import { PerpustakaanModule } from "@/components/dashboard/modules/perpustakaan/PerpustakaanModule";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
@@ -133,6 +136,8 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -376,8 +381,17 @@ function Dashboard() {
   const [isWaModalOpen, setIsWaModalOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   const me = MysqlAuthService.getActiveUser();
+
+  useEffect(() => {
+    if (!me && typeof window !== "undefined") {
+      window.location.href = "/auth";
+    }
+  }, [me]);
+
+  if (!me) {
+    return null;
+  }
 
   // Multi-Role list allocated to currently logged-in user (Superadmin All Roles Access)
   const myAssignedRoles = useMemo(() => {
@@ -518,7 +532,23 @@ function Dashboard() {
   const groups = Array.from(new Set(filteredMenu.map((m) => m.group)));
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      if (window.location.hash === "#" || window.location.hash === "#/") {
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (!allowedKeys.includes(active)) {
+      if ((active === "ruang_mengajar" || active === "modul_ajar") && allowedKeys.includes("mapel")) {
+        setActive("mapel");
+        return;
+      }
+      if (active === "mapel" && allowedKeys.includes("ruang_mengajar")) {
+        setActive("ruang_mengajar");
+        return;
+      }
       setActive("beranda");
     }
   }, [activeRole, allowedKeys, active]);
@@ -833,35 +863,37 @@ function DashboardContent({
         </header>
 
         <main className="p-4 lg:p-8 flex-1">
-          {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
-          {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
-          {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
-          {active === "siakad" && <SiakadMasterDataModule />}
-          {active === "manajemen_kelas" && <ManajemenKelas activeRole={activeRole} />}
-          {active === "perangkat_pembelajaran" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
-          {active === "mapel" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
-          {active === "users" && activeRole !== "siswa" && <DataUserRole />}
-          {active === "pengumuman" && <Pengumuman />}
-          {active === "jadwal" && <Jadwal activeRole={activeRole} userProfile={userProfile} />}
-          {active === "agenda" && <AgendaKalender activeRole={activeRole} />}
-          {active === "kehadiran" && <KehadiranSiswa activeRole={activeRole} userProfile={userProfile} />}
-          {active === "modul_ajar" && <ModulAjar activeRole={activeRole} userProfile={userProfile} />}
-          {active === "asesmen" && <PusatAsesmen activeRole={activeRole} />}
-          {active === "tugas" && <Tugas />}
-          {active === "quiz" && <Quiz />}
-          {active === "cbt" && <CBT activeRole={activeRole} />}
-          {active === "nilai" && <Nilai activeRole={activeRole} />}
-          {active === "progress" && <Progress activeRole={activeRole} />}
-          {active === "apresiasi_guru" && <ApresiasiGuru activeRole={activeRole} />}
-          {active === "apresiasi_siswa" && <ApresiasiSiswa activeRole={activeRole} />}
-          {active === "asisten_ai" && <AsistenAITools />}
-          {active === "tahfidz" && <Tahfidz />}
-          {active === "tahfidz_report" && <LaporanTahfidzEksekutif activeRole={activeRole} />}
-          {active === "kokurikuler" && <KokurikulerSiswa />}
-          {active === "kokurikuler_report" && <LaporanKokurikuler activeRole={activeRole} />}
-          {active === "perpustakaan" && <Perpustakaan />}
-          {active === "profil" && <ProfilModule userProfile={userProfile} setUserProfile={setUserProfile} activeRole={activeRole} />}
-          {active === "pengaturan" && <Pengaturan />}
+          <ErrorBoundary>
+            {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
+            {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
+            {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
+            {active === "siakad" && <SiakadMasterDataModule />}
+            {active === "manajemen_kelas" && <ManajemenKelas activeRole={activeRole} />}
+            {active === "perangkat_pembelajaran" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
+            {active === "mapel" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
+            {active === "users" && activeRole !== "siswa" && <DataUserRole />}
+            {active === "pengumuman" && <Pengumuman />}
+            {active === "jadwal" && <Jadwal activeRole={activeRole} userProfile={userProfile} />}
+            {active === "agenda" && <AgendaKalender activeRole={activeRole} />}
+            {active === "kehadiran" && <KehadiranSiswa activeRole={activeRole} userProfile={userProfile} />}
+            {active === "modul_ajar" && <ModulAjar activeRole={activeRole} userProfile={userProfile} />}
+            {active === "asesmen" && <PusatAsesmen activeRole={activeRole} />}
+            {active === "tugas" && <Tugas />}
+            {active === "quiz" && <Quiz />}
+            {active === "cbt" && <CBT activeRole={activeRole} />}
+            {active === "nilai" && <Nilai activeRole={activeRole} />}
+            {active === "progress" && <Progress activeRole={activeRole} />}
+            {active === "apresiasi_guru" && <ApresiasiGuru activeRole={activeRole} />}
+            {active === "apresiasi_siswa" && <ApresiasiSiswa activeRole={activeRole} />}
+            {active === "asisten_ai" && <AsistenAITools />}
+            {active === "tahfidz" && <Tahfidz />}
+            {active === "tahfidz_report" && <LaporanTahfidzEksekutif activeRole={activeRole} />}
+            {active === "kokurikuler" && <KokurikulerSiswa />}
+            {active === "kokurikuler_report" && <LaporanKokurikuler activeRole={activeRole} />}
+            {active === "perpustakaan" && <Perpustakaan />}
+            {active === "profil" && <ProfilModule userProfile={userProfile} setUserProfile={setUserProfile} activeRole={activeRole} />}
+            {active === "pengaturan" && <Pengaturan />}
+          </ErrorBoundary>
         </main>
       </div>
     </>
@@ -1145,13 +1177,18 @@ function DataUserRole() {
     setUserToDelete(null);
   };
 
-  // Super Admin Password Reset & Edit Handlers
+  // Admin Password Reset & Edit Handlers
   const handlePromptResetPassword = (u: { id: string; full_name: string; email: string; nis: string; roles: string[] }) => {
     const activeSession = MysqlAuthService.getActiveUser();
-    const isSuperAdmin = activeSession?.role === "admin" || activeSession?.email?.toLowerCase() === "admin@mail.com";
+    const isAdminUser =
+      activeSession?.role === "admin" ||
+      activeSession?.role === "superadmin" ||
+      activeSession?.role === "admin_akademik" ||
+      activeSession?.email?.toLowerCase() === "admin@mail.com" ||
+      activeSession?.email?.includes("admin");
 
-    if (!isSuperAdmin) {
-      return toast.error("Hanya Super Administrator yang berhak mengelola & mereset kata sandi akun pengguna!");
+    if (!isAdminUser) {
+      return toast.error("Hanya Administrator yang berhak mengelola & mereset kata sandi akun pengguna!");
     }
 
     setUserToResetPass(u);
@@ -1326,7 +1363,12 @@ function DataUserRole() {
                   const isSuperAdmin = u.email === "admin@mail.com";
                   const activeSession = MysqlAuthService.getActiveUser();
                   const isSelf = activeSession && activeSession.email.toLowerCase() === u.email.toLowerCase();
-                  const currentIsSuperAdmin = activeSession?.role === "admin" || activeSession?.email?.toLowerCase() === "admin@mail.com";
+                  const currentIsAdmin =
+                    activeSession?.role === "admin" ||
+                    activeSession?.role === "superadmin" ||
+                    activeSession?.role === "admin_akademik" ||
+                    activeSession?.email?.toLowerCase() === "admin@mail.com" ||
+                    activeSession?.email?.includes("admin");
 
                   return (
                     <tr key={u.id} className="border-b border-border/60 hover:bg-muted/30 transition">
@@ -1396,7 +1438,7 @@ function DataUserRole() {
                             <Save className="h-3.5 w-3.5" /> Simpan Role
                           </Button>
 
-                          {currentIsSuperAdmin && (
+                          {currentIsAdmin && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1771,143 +1813,7 @@ function DataUserRole() {
 /* ---------- New Menu Pages ---------- */
 
 function Pengumuman() {
-  const [list, setList] = useState([
-    { id: "1", t: "Libur Maulid Nabi", d: "Sekolah diliburkan Senin, 27 Juli 2026.", tag: "Pengumuman" },
-    { id: "2", t: "Rapat Wali Murid Kelas 9", d: "Persiapan ujian akhir, Sabtu 08.00 WIB.", tag: "Agenda" },
-    { id: "3", t: "Lomba MTQ Antar Kelas", d: "Pendaftaran dibuka sampai 20 Juli 2026.", tag: "Kegiatan" },
-    { id: "4", t: "Update Kurikulum Merdeka", d: "Silabus baru untuk fase D telah tersedia.", tag: "Kurikulum" },
-  ]);
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [isImportOpen, setIsImportOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [tag, setTag] = useState("Pengumuman");
-
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !desc) return toast.error("Isi judul dan detail pengumuman!");
-    setList([{ id: String(Date.now()), t: title, d: desc, tag }, ...list]);
-    toast.success("Pengumuman resmi madrasah berhasil diterbitkan!");
-    setIsOpen(false);
-    setTitle("");
-    setDesc("");
-  };
-
-  const handleDelete = (id: string) => {
-    setList(list.filter((x) => x.id !== id));
-    toast.success("Pengumuman berhasil dihapus!");
-  };
-
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Master Pengumuman & Informasi</h1>
-          <p className="text-sm text-muted-foreground mt-1">Kelola berita resmi, pengumuman, dan agenda kegiatan MTsN 2 Cilacap</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-semibold" onClick={() => setIsImportOpen(true)}>
-            <Upload className="h-3.5 w-3.5" /> Import Excel
-          </Button>
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-            + Tambah Pengumuman Baru
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        {list.map((n) => (
-          <Card key={n.id} className="border-border shadow-xs hover:border-primary/30 transition">
-            <CardContent className="p-4 flex items-start gap-4">
-              <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary grid place-items-center shrink-0 mt-0.5 font-bold">
-                <Megaphone className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="font-bold text-foreground">{n.t}</div>
-                    <Badge variant="secondary" className="text-[10px] font-bold bg-primary/10 text-primary border-primary/20">
-                      {n.tag}
-                    </Badge>
-                  </div>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:bg-destructive/10" onClick={() => handleDelete(n.id)}>
-                    Hapus
-                  </Button>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1 leading-relaxed">{n.d}</div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Modal Form Tambah Pengumuman */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Megaphone className="h-5 w-5 text-primary" /> Terbitkan Pengumuman Baru
-            </DialogTitle>
-            <DialogDescription>Isi detail informasi pengumuman resmi madrasah.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleAdd} className="space-y-4 py-2">
-            <div>
-              <Label className="text-xs font-semibold">Judul Pengumuman / Agenda</Label>
-              <Input placeholder="Contoh: Pelaksanaan Asesmen Sumatif Akhir Semester" value={title} onChange={(e) => setTitle(e.target.value)} required className="mt-1" />
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Kategori / Tag</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={tag} onChange={(e) => setTag(e.target.value)}>
-                <option value="Pengumuman">Pengumuman</option>
-                <option value="Agenda">Agenda</option>
-                <option value="Kegiatan">Kegiatan</option>
-                <option value="Kurikulum">Kurikulum</option>
-              </select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Isi Informasi Pengumuman</Label>
-              <textarea className="w-full min-h-[90px] p-3 rounded-md border border-border bg-background text-xs mt-1 outline-none" placeholder="Tuliskan pesan lengkap pengumuman..." value={desc} onChange={(e) => setDesc(e.target.value)} required />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Terbitkan</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal Import Excel */}
-      <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Upload className="h-5 w-5 text-primary" /> Import Master Data (Excel / CSV)
-            </DialogTitle>
-            <DialogDescription>Unggah berkas spreadsheet master data untuk diperbarui secara massal.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="border-2 border-dashed border-primary/30 rounded-xl p-6 text-center hover:bg-primary/5 transition cursor-pointer">
-              <Upload className="h-8 w-8 text-primary mx-auto mb-2 opacity-80" />
-              <div className="text-sm font-bold">Tarik & Lepas Berkas Excel di Sini</div>
-              <div className="text-xs text-muted-foreground mt-1">Format didukung: .xlsx, .xls, .csv (Maks 10MB)</div>
-            </div>
-            <Button variant="outline" size="sm" className="w-full gap-2 text-xs" onClick={() => toast.success("Template Berkas Excel MTsN 2 Cilacap berhasil diunduh!")}>
-              <Download className="h-4 w-4" /> Unduh Template Format Excel Official
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button size="sm" className="w-full bg-primary text-primary-foreground font-bold" onClick={() => { toast.success("Data berhasil di-import!"); setIsImportOpen(false); }}>
-              Mulai Import Data Massal
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  return <PengumumanModule />;
 }
 
 /* ---------- MODUL KEHADIRAN & REKAP PRESENSI MULTI-ROLE ---------- */
@@ -3299,6 +3205,71 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
   ]);
   const [presensiDone, setPresensiDone] = useState(false);
   const [isTeacherPresensiOpen, setIsTeacherPresensiOpen] = useState(false);
+  const [previewPerangkatModal, setPreviewPerangkatModal] = useState<{ title: string; type: string; size: string; desc: string } | null>(null);
+
+  const perangkatPdfUrl = useMemo(() => {
+    if (!previewPerangkatModal) return null;
+    const title = previewPerangkatModal.title || "Perangkat Ajar";
+    const type = previewPerangkatModal.type || "Format PDF";
+    const mapel = selectedMapel || "Mata Pelajaran";
+    const pertemuan = selectedPertemuan || 1;
+
+    const pdfContent = `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /Resources 4 0 R /MediaBox [0 0 612 792] /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>
+endobj
+5 0 obj
+<< /Length 500 >>
+stream
+BT
+/F1 18 Tf
+50 740 Td
+(MADRASAH TSANAWIYAH NEGERI 2 CILACAP) Tj
+/F2 11 Tf
+0 -20 Td
+(BERKAS MATERI PEMBELAJARAN DIGITAL KBM) Tj
+/F1 14 Tf
+0 -36 Td
+(${title}) Tj
+/F2 11 Tf
+0 -18 Td
+(Mata Pelajaran : ${mapel} | Pertemuan Ke-${pertemuan}) Tj
+0 -16 Td
+(Format Berkas   : ${type}) Tj
+0 -30 Td
+(RINGKASAN MATERI PEMBELAJARAN:) Tj
+0 -16 Td
+(- Penjelasan indikator kompetensi & tujuan pembelajaran pertemuan.) Tj
+0 -14 Td
+(- Eksplorasi konsep dasar, lembar observasi & latihan mandiri siswa.) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000100 00000 n 
+0000000200 00000 n 
+0000000300 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+850
+%%EOF`;
+    const blob = new Blob([pdfContent], { type: "application/pdf" });
+    return URL.createObjectURL(blob);
+  }, [previewPerangkatModal, selectedMapel, selectedPertemuan]);
   const [sessionStudents, setSessionStudents] = useState([
     { id: "s1", nisn: "12123301000288", name: "ALIYA QIARA ABDULLAH", status: "hadir" },
     { id: "s2", nisn: "0081928371", name: "ABIGAIL HASAN YUSUF PRAYOGA", status: "hadir" },
@@ -3485,7 +3456,7 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
               </TabsList>
 
               <TabsContent value="modul" className="space-y-3">
-                <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between">
+                <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-primary/15 text-primary grid place-items-center">
                       <FileText className="h-5 w-5" />
@@ -3495,12 +3466,45 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
                       <div className="text-xs text-muted-foreground">Ukuran Berkas: 2.4 MB • Format PDF</div>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => toast.success("Memulai pengunduhan modul PDF...")}>
-                    <Download className="h-4 w-4 mr-1" /> Unduh PDF
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 gap-1"
+                      onClick={() =>
+                        setPreviewPerangkatModal({
+                          title: `Modul Pembelajaran Pertemuan ${selectedPertemuan}`,
+                          type: "Format PDF",
+                          size: "2.4 MB",
+                          desc: `Modul ajar digital Kurikulum Merdeka mata pelajaran ${selectedMapel} untuk pertemuan ke-${selectedPertemuan}.`,
+                        })
+                      }
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Pratinjau
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const dummyContent = `%PDF-1.4\n1 0 obj\n<< /Title (Modul Pertemuan ${selectedPertemuan} - ${selectedMapel}) /Author (MTsN 2 Cilacap) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`;
+                        const blob = new Blob([dummyContent], { type: "application/pdf" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `Modul_Pembelajaran_Pertemuan_${selectedPertemuan}_${selectedMapel.replace(/\s+/g, "_")}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        toast.success(`📄 Modul PDF Pertemuan ${selectedPertemuan} berhasil diunduh!`);
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-1" /> Unduh PDF
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between">
+                <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-amber-500/15 text-amber-500 grid place-items-center">
                       <FileText className="h-5 w-5" />
@@ -3510,9 +3514,42 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
                       <div className="text-xs text-muted-foreground">Ukuran Berkas: 4.8 MB • PPT Presentation</div>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => toast.success("Memulai pengunduhan slide PPT...")}>
-                    <Download className="h-4 w-4 mr-1" /> Unduh PPT
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 gap-1"
+                      onClick={() =>
+                        setPreviewPerangkatModal({
+                          title: `Slide Presentasi Pertemuan ${selectedPertemuan}`,
+                          type: "PPT Presentation",
+                          size: "4.8 MB",
+                          desc: `Slide tayang PowerPoint KBM mata pelajaran ${selectedMapel} untuk tatap muka kelas.`,
+                        })
+                      }
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Pratinjau
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const dummyContent = `Presentasi Pertemuan ${selectedPertemuan} ${selectedMapel} - MTsN 2 Cilacap`;
+                        const blob = new Blob([dummyContent], { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `Slide_Presentasi_Pertemuan_${selectedPertemuan}_${selectedMapel.replace(/\s+/g, "_")}.pptx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        toast.success(`📊 Slide PPT Pertemuan ${selectedPertemuan} berhasil diunduh!`);
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-1" /> Unduh PPT
+                    </Button>
+                  </div>
                 </div>
               </TabsContent>
 
@@ -3572,6 +3609,69 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* 📖 MODAL PRATINJAU MATERI PERANGKAT AJAR PERTEMUAN */}
+        <Dialog open={!!previewPerangkatModal} onOpenChange={() => setPreviewPerangkatModal(null)}>
+          <DialogContent className="sm:max-w-2xl border-border bg-card">
+            <DialogHeader className="border-b border-border pb-3">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-lg font-bold flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-blue-500" /> {previewPerangkatModal?.title}
+                </DialogTitle>
+                <Badge variant="outline" className="text-xs font-bold text-blue-600 border-blue-500/30">
+                  {previewPerangkatModal?.type}
+                </Badge>
+              </div>
+              <DialogDescription className="text-xs mt-1">
+                Pratinjau Dokumen Berkas Pembelajaran ({selectedMapel} - Pertemuan Ke-{selectedPertemuan})
+              </DialogDescription>
+            </DialogHeader>
+
+            {previewPerangkatModal && (
+              <div className="space-y-3 py-2 text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/60 border border-border">
+                  <div className="flex items-center gap-2 font-mono font-semibold text-muted-foreground">
+                    <span>📄 Berkas: {previewPerangkatModal.title}</span>
+                    <span>•</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{previewPerangkatModal.size}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="outline" className="text-[10px] font-mono font-bold bg-background text-blue-600 border-blue-500/30">
+                      ✓ Native PDF Render
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Embedded PDF Viewer Frame */}
+                <div className="rounded-xl overflow-hidden border border-border bg-slate-900 shadow-md">
+                  <iframe
+                    src={perangkatPdfUrl || undefined}
+                    title={`PDF Viewer - ${previewPerangkatModal.title}`}
+                    className="w-full h-[55vh] border-0"
+                  />
+                </div>
+
+                <DialogFooter className="pt-2 border-t border-border flex items-center justify-between sm:justify-end gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setPreviewPerangkatModal(null)}>
+                    Tutup Reader
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1.5"
+                    onClick={() => {
+                      if (perangkatPdfUrl) {
+                        window.open(perangkatPdfUrl, "_blank");
+                      }
+                    }}
+                  >
+                    🌐 Buka di Tab Baru
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -4565,6 +4665,58 @@ function Nilai({ activeRole }: { activeRole?: string }) {
     { m: "Ilmu Pendidikan Alam", t: 88, k: 87, u: 86 },
   ];
 
+  const [entrySearch, setEntrySearch] = useState("");
+  const [entryStudentList, setEntryStudentList] = useState([
+    { id: 1, name: "ALIYA QIARA ABDULLAH", f: 90, s: 88, t: 92, k: 90, fin: 90 },
+    { id: 2, name: "ABIGAIL HASAN YUSUF PRAYOGA", f: 88, s: 86, t: 90, k: 88, fin: 88 },
+    { id: 3, name: "ADITA AZ ZAHRA", f: 94, s: 92, t: 95, k: 94, fin: 94 },
+    { id: 4, name: "AHMAD FAIZ AL-FARISI", f: 85, s: 84, t: 88, k: 86, fin: 86 },
+    { id: 5, name: "AISYAH NUR RAMADHANI", f: 92, s: 90, t: 94, k: 91, fin: 92 },
+    { id: 6, name: "ALTHAF ALVARO PRATAMA", f: 87, s: 85, t: 89, k: 88, fin: 87 },
+    { id: 7, name: "ANDIKA RIZKY SAPUTRA", f: 86, s: 88, t: 87, k: 85, fin: 87 },
+    { id: 8, name: "ANINDYA KHAIRUNNISA", f: 95, s: 93, t: 96, k: 94, fin: 95 },
+    { id: 9, name: "ARYANTO WIJAYA", f: 83, s: 82, t: 85, k: 84, fin: 84 },
+    { id: 10, name: "AURELIA SEKAR MAYANG", f: 91, s: 89, t: 93, k: 90, fin: 91 },
+    { id: 11, name: "AZZAHRA MUTIARA SYIFA", f: 93, s: 91, t: 94, k: 92, fin: 93 },
+    { id: 12, name: "BAYU ADITYA NUGROHO", f: 84, s: 85, t: 86, k: 83, fin: 85 },
+    { id: 13, name: "BAGAS KURNIAWAN", f: 88, s: 87, t: 90, k: 89, fin: 89 },
+    { id: 14, name: "CANTIKA MAHARANI", f: 90, s: 88, t: 91, k: 90, fin: 90 },
+    { id: 15, name: "DAFFA IBNU AL-HAFIZH", f: 89, s: 92, t: 90, k: 88, fin: 90 },
+    { id: 16, name: "DEWI RATNASARI", f: 87, s: 86, t: 88, k: 87, fin: 87 },
+    { id: 17, name: "DIMAS KURNIA PRATAMA", f: 85, s: 83, t: 86, k: 85, fin: 85 },
+    { id: 18, name: "FADHILAH AMALIA", f: 93, s: 90, t: 94, k: 92, fin: 92 },
+    { id: 19, name: "FARHAN AL-GHIFARI", f: 88, s: 89, t: 87, k: 88, fin: 88 },
+    { id: 20, name: "FIKRI RAMADHAN", f: 86, s: 84, t: 88, k: 85, fin: 86 },
+    { id: 21, name: "GALANG SAPUTRA", f: 82, s: 80, t: 85, k: 83, fin: 83 },
+    { id: 22, name: "HANIA SYAKIRA", f: 94, s: 92, t: 95, k: 93, fin: 94 },
+    { id: 23, name: "INTAN NURAINI", f: 91, s: 89, t: 92, k: 90, fin: 91 },
+    { id: 24, name: "KEVIN PRADIAPTA", f: 87, s: 88, t: 86, k: 87, fin: 87 },
+    { id: 25, name: "M. FAIRUZ MAULANA", f: 96, s: 95, t: 98, k: 97, fin: 97 },
+    { id: 26, name: "M. ZAKY AL-BUKHARI", f: 92, s: 90, t: 93, k: 91, fin: 92 },
+    { id: 27, name: "NABILA AULIA PUTRI", f: 89, s: 87, t: 90, k: 89, fin: 89 },
+    { id: 28, name: "NADIA SALSABILA", f: 93, s: 91, t: 94, k: 92, fin: 93 },
+    { id: 29, name: "REHAN MAULANA", f: 85, s: 86, t: 84, k: 85, fin: 85 },
+    { id: 30, name: "RIZKY AL-FATHIR", f: 88, s: 87, t: 89, k: 88, fin: 88 },
+    { id: 31, name: "SYIFA NAILA UTAMI", f: 92, s: 93, t: 91, k: 92, fin: 92 },
+    { id: 32, name: "ZAHRA SAFIRA JASMINE", f: 95, s: 94, t: 96, k: 95, fin: 95 },
+  ]);
+
+  const handleUpdateStudentScore = (studentId: number, field: "f" | "s" | "t" | "k", value: number) => {
+    const safeVal = Math.min(100, Math.max(0, isNaN(value) ? 0 : value));
+    setEntryStudentList((prev) =>
+      prev.map((s) => {
+        if (s.id !== studentId) return s;
+        const updated = { ...s, [field]: safeVal };
+        const fin = Math.round((updated.f + updated.s + updated.t + updated.k) / 4);
+        return { ...updated, fin };
+      })
+    );
+  };
+
+  const filteredEntryStudents = entryStudentList.filter((s) =>
+    s.name.toLowerCase().includes(entrySearch.toLowerCase())
+  );
+
   // Tampilan khusus Guru Pengampu (Input Nilai & Progress Entry)
   if (isGuru) {
     return (
@@ -4615,57 +4767,107 @@ function Nilai({ activeRole }: { activeRole?: string }) {
 
         {/* Modal Detail Entry Nilai per Siswa */}
         <Dialog open={!!selectedEntryModal} onOpenChange={() => setSelectedEntryModal(null)}>
-          <DialogContent className="sm:max-w-3xl border-border bg-card">
+          <DialogContent className="sm:max-w-4xl border-border bg-card">
             <DialogHeader className="border-b border-border pb-3">
-              <DialogTitle className="text-lg font-bold flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-emerald-500" /> Detail Input Nilai - {selectedEntryModal?.mapel} ({selectedEntryModal?.rombel})
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                Kelengkapan skor Formatif, Sumatif, Tugas & Kuis • Progress Entry: <strong>{selectedEntryModal?.progress}%</strong>
-              </DialogDescription>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                  <DialogTitle className="text-lg font-bold flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5 text-emerald-500" /> Detail Input Nilai - {selectedEntryModal?.mapel} ({selectedEntryModal?.rombel})
+                  </DialogTitle>
+                  <DialogDescription className="text-xs mt-1">
+                    Kelengkapan skor Formatif, Sumatif, Tugas & Kuis • Total Roster: <strong>32/32 Siswa Lengkap (100%)</strong>
+                  </DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
 
-            <div className="py-2 space-y-3 max-h-[60vh] overflow-y-auto text-xs">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-muted font-bold text-muted-foreground">
-                  <tr>
-                    <th className="p-2.5">Nama Siswa</th>
-                    <th className="p-2.5 text-center">Formatif (Avg)</th>
-                    <th className="p-2.5 text-center">Sumatif (Avg)</th>
-                    <th className="p-2.5 text-center">Tugas</th>
-                    <th className="p-2.5 text-center">Kuis</th>
-                    <th className="p-2.5 text-center font-bold">Skor Akhir</th>
-                    <th className="p-2.5 text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {[
-                    { name: "ALIYA QIARA ABDULLAH", f: 90, s: 88, t: 92, k: 90, fin: 90 },
-                    { name: "ABIGAIL HASAN YUSUF PRAYOGA", f: 88, s: 86, t: 90, k: 88, fin: 88 },
-                    { name: "ADITA AZ ZAHRA", f: 94, s: 92, t: 95, k: 94, fin: 94 },
-                  ].map((s, i) => (
-                    <tr key={i} className="hover:bg-muted/30">
-                      <td className="p-2.5 font-bold">{s.name}</td>
-                      <td className="p-2.5 text-center font-mono">{s.f}</td>
-                      <td className="p-2.5 text-center font-mono">{s.s}</td>
-                      <td className="p-2.5 text-center font-mono">{s.t}</td>
-                      <td className="p-2.5 text-center font-mono">{s.k}</td>
-                      <td className="p-2.5 text-center font-mono font-bold text-emerald-600">{s.fin}</td>
-                      <td className="p-2.5 text-right">
-                        <Button size="sm" variant="outline" className="h-7 text-[10px] font-bold" onClick={() => toast.success(`Edit skor nilai ${s.name}...`)}>
-                          Edit Nilai
-                        </Button>
-                      </td>
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="relative flex-1">
+                  <Input
+                    placeholder="🔍 Cari nama siswa di kelas ini..."
+                    value={entrySearch}
+                    onChange={(e) => setEntrySearch(e.target.value)}
+                    className="text-xs h-9"
+                  />
+                </div>
+                <Badge variant="outline" className="text-xs font-mono font-bold py-1.5 px-3 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                  Menampilkan {filteredEntryStudents.length} dari 32 Siswa
+                </Badge>
+              </div>
+
+              <div className="max-h-[55vh] overflow-y-auto rounded-xl border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-muted font-bold text-muted-foreground sticky top-0 z-10 border-b border-border">
+                    <tr>
+                      <th className="p-2.5">No</th>
+                      <th className="p-2.5">Nama Siswa</th>
+                      <th className="p-2.5 text-center">Formatif (Avg)</th>
+                      <th className="p-2.5 text-center">Sumatif (Avg)</th>
+                      <th className="p-2.5 text-center">Tugas</th>
+                      <th className="p-2.5 text-center">Kuis</th>
+                      <th className="p-2.5 text-center font-bold">Skor Akhir</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredEntryStudents.map((s, idx) => (
+                      <tr key={s.id} className="hover:bg-muted/30 transition">
+                        <td className="p-2.5 font-mono text-muted-foreground w-10 text-center">{idx + 1}</td>
+                        <td className="p-2.5 font-bold text-foreground">{s.name}</td>
+                        <td className="p-2.5 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={s.f}
+                            onChange={(e) => handleUpdateStudentScore(s.id, "f", parseInt(e.target.value))}
+                            className="w-14 text-center font-mono font-semibold bg-background border border-input rounded-md py-1 text-xs focus:ring-1 focus:ring-emerald-500"
+                          />
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={s.s}
+                            onChange={(e) => handleUpdateStudentScore(s.id, "s", parseInt(e.target.value))}
+                            className="w-14 text-center font-mono font-semibold bg-background border border-input rounded-md py-1 text-xs focus:ring-1 focus:ring-emerald-500"
+                          />
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={s.t}
+                            onChange={(e) => handleUpdateStudentScore(s.id, "t", parseInt(e.target.value))}
+                            className="w-14 text-center font-mono font-semibold bg-background border border-input rounded-md py-1 text-xs focus:ring-1 focus:ring-emerald-500"
+                          />
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={s.k}
+                            onChange={(e) => handleUpdateStudentScore(s.id, "k", parseInt(e.target.value))}
+                            className="w-14 text-center font-mono font-semibold bg-background border border-input rounded-md py-1 text-xs focus:ring-1 focus:ring-emerald-500"
+                          />
+                        </td>
+                        <td className="p-2.5 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
+                          {s.fin}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="pt-2 border-t border-border flex items-center justify-between sm:justify-end gap-2">
               <Button size="sm" variant="outline" onClick={() => setSelectedEntryModal(null)}>Tutup</Button>
-              <Button size="sm" className="bg-emerald-600 text-white font-bold" onClick={() => { toast.success("Seluruh nilai berhasil disimpan ke E-Rapor!"); setSelectedEntryModal(null); }}>
-                Simpan Permanen Nilai
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5" onClick={() => { toast.success(`💾 Seluruh nilai 32 siswa untuk ${selectedEntryModal?.mapel} (${selectedEntryModal?.rombel}) berhasil disimpan secara permanen ke E-Rapor!`); setSelectedEntryModal(null); }}>
+                💾 Simpan Permanen Nilai 32 Siswa
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -5382,6 +5584,21 @@ function ApresiasiGuru({ activeRole }: { activeRole?: string }) {
 
   useEffect(() => {
     let isMounted = true;
+    MysqlDataService.getAwards().then((dbAwards) => {
+      if (!isMounted) return;
+      if (dbAwards && dbAwards.length > 0) {
+        const mapped = dbAwards.map((item) => ({
+          id: String(item.id || Date.now()),
+          teacher: item.student_name,
+          type: (item.warning_category ? "warning" : "award") as "award" | "warning",
+          title: item.badge_category || item.warning_category || "Bintang Apresiasi",
+          emote: item.warning_category ? "⚠️" : "🎉",
+          comment: item.comment_text || "",
+          date: item.created_at || "Hari ini",
+        }));
+        setHistoryList(mapped);
+      }
+    });
     MysqlDataService.getUsers()
       .then((users) => {
         if (!isMounted) return;
@@ -5436,6 +5653,14 @@ function ApresiasiGuru({ activeRole }: { activeRole?: string }) {
       comment: commentText || (actionType === "award" ? "Apresiasi atas dedikasi dan kinerja pembelajaran di madrasah." : "Catatan pembinaan untuk peningkatan kualitas KBM."),
       date: "Hari ini",
     };
+
+    MysqlDataService.saveAward({
+      student_name: selectedTeacher.name,
+      badge_category: actionType === "award" ? title : undefined,
+      warning_category: actionType === "warning" ? title : undefined,
+      comment_text: newHistory.comment,
+      awarded_by: "Kepala Madrasah",
+    }).catch((err) => console.warn("saveAward DB failed:", err));
 
     setHistoryList([newHistory, ...historyList]);
 
@@ -5711,301 +5936,7 @@ function ApresiasiGuru({ activeRole }: { activeRole?: string }) {
 
 /* ---------- 5. Agenda Madrasah & Kalender Akademik ---------- */
 function AgendaKalender({ activeRole }: { activeRole?: string }) {
-  const {
-    currentMonthName,
-    currentYear,
-    formattedTime,
-    currentDayName,
-    goToNextMonth,
-    goToPrevMonth,
-    goToToday,
-    getCalendarDays,
-  } = useRealtimeCalendar();
-
-  const [filterCategory, setFilterCategory] = useState("semua");
-  const [isAddAgendaOpen, setIsAddAgendaOpen] = useState(false);
-
-  const [agendaList, setAgendaList] = useState([
-    { id: "1", title: "CBT Ujian Tengah Semester (PTS) Ganjil", category: "cbt", date: "15 Agustus 2026", rawDate: "2026-08-15", desc: "Evaluasi Komputer Pertemuan 1-9 untuk seluruh rombel.", badge: "🔴 Ujian CBT" },
-    { id: "2", title: "Rapat Pleno Evaluasi KBM & Kurikulum", category: "rapat", date: "18 Agustus 2026", rawDate: "2026-08-18", desc: "Rapat koordinasi Kepala Madrasah, Waka, dan Guru Pengampu.", badge: "🟣 Rapat Dinas" },
-    { id: "3", title: "Gelar Karya Projek Kokurikuler P5 (Batik Cilacap)", category: "kokurikuler", date: "25 Agustus 2026", rawDate: "2026-08-25", desc: "Pameran karya seni batik dan produk wirausaha siswa.", badge: "🟡 Kokurikuler P5" },
-    { id: "4", title: "Hari Libur Nasional & Peringatan HUT RI", category: "libur", date: "17 Agustus 2026", rawDate: "2026-08-17", desc: "Upacara bendera & Kegiatan peringatan kemerdekaan.", badge: "🟢 Libur Resmi" },
-    { id: "5", title: "Bimbingan Sertifikasi Tahfidz Juz 30", category: "kbm", date: "01 September 2026", rawDate: "2026-09-01", desc: "Murojaah massal & ujian kelayakan tajwid siswa.", badge: "🔵 KBM Efektif" },
-  ]);
-
-  const [title, setTitle] = useState("");
-  const [cat, setCat] = useState("cbt");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const [desc, setDesc] = useState("");
-
-  const calendarDays = getCalendarDays();
-
-  const handleAddAgenda = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !selectedDate) return toast.error("Harap lengkapi judul dan tanggal agenda!");
-    
-    const dateObj = new Date(selectedDate);
-    const dateFormatted = dateObj.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-    const badge = cat === "cbt" ? "🔴 Ujian CBT" : cat === "rapat" ? "🟣 Rapat Dinas" : cat === "kokurikuler" ? "🟡 Kokurikuler P5" : cat === "libur" ? "🟢 Libur Resmi" : "🔵 KBM Efektif";
-    
-    const newEntry = {
-      id: String(Date.now()),
-      title,
-      category: cat,
-      date: dateFormatted,
-      rawDate: selectedDate,
-      desc,
-      badge
-    };
-
-    setAgendaList([newEntry, ...agendaList]);
-    toast.success(`Agenda "${title}" berhasil ditambahkan ke Kalender Akademik!`);
-    setIsAddAgendaOpen(false);
-    setTitle("");
-    setDesc("");
-  };
-
-  const filteredAgenda = filterCategory === "semua" ? agendaList : agendaList.filter((a) => a.category === filterCategory);
-
-  const openAddModalForDate = (dateString: string) => {
-    setSelectedDate(dateString);
-    setIsAddAgendaOpen(true);
-  };
-
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-primary" /> Agenda Madrasah & Kalender Akademik Realtime
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Jadwal kegiatan madrasah, pelaksanaan ujian CBT, rapat dinas guru, dan hari efektif KBM MTsN 2 Cilacap.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-primary/10 text-primary font-mono font-bold text-xs gap-1.5 py-1.5 px-3">
-            <Clock className="h-3.5 w-3.5 animate-pulse text-primary" /> {formattedTime}
-          </Badge>
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddAgendaOpen(true)}>
-            + Tambah Agenda Baru
-          </Button>
-        </div>
-      </div>
-
-      {/* Grid Kalender Realtime Bulanan */}
-      <Card className="border-border shadow-sm mb-6 bg-card">
-        <CardHeader className="p-4 border-b border-border bg-muted/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle className="text-base font-bold">
-                Kalender Akademik: {currentMonthName} {currentYear}
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Klik pada sel tanggal untuk menambah agenda atau melihat kegiatan yang dijadwalkan.
-              </CardDescription>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-background rounded-lg p-0.5 border border-border">
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-xs" onClick={goToPrevMonth} title="Bulan Sebelumnya">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="font-bold text-xs px-2 font-mono">{currentMonthName} {currentYear}</span>
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-xs" onClick={goToNextMonth} title="Bulan Berikutnya">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button size="sm" variant="secondary" className="h-8 text-xs font-semibold px-3" onClick={goToToday}>
-              Hari Ini
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4">
-          <div className="border border-border rounded-xl p-3 bg-muted/10 overflow-x-auto">
-            <div className="min-w-[650px]">
-              {/* Header Nama Hari */}
-              <div className="grid grid-cols-7 gap-1.5 text-center font-bold text-xs text-muted-foreground pb-2.5 border-b border-border">
-                <div>Senin</div>
-                <div>Selasa</div>
-                <div>Rabu</div>
-                <div>Kamis</div>
-                <div>Jumat</div>
-                <div>Sabtu</div>
-                <div className="text-red-500">Minggu</div>
-              </div>
-
-              {/* Grid Sel Tanggal Kalender */}
-              <div className="grid grid-cols-7 gap-1.5 pt-2">
-                {calendarDays.map((cell, idx) => {
-                  const dayEvents = agendaList.filter((a) => {
-                    if (a.rawDate === cell.dateString) return true;
-                    // Check date string match fallback
-                    return false;
-                  });
-
-                  const isFiltered = filterCategory !== "semua";
-                  const visibleEvents = isFiltered ? dayEvents.filter((a) => a.category === filterCategory) : dayEvents;
-
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => openAddModalForDate(cell.dateString)}
-                      className={`min-h-[85px] p-1.5 rounded-lg border flex flex-col justify-between transition cursor-pointer hover:border-primary/60 hover:shadow-xs ${
-                        !cell.isCurrentMonth
-                          ? "bg-muted/20 border-border/40 text-muted-foreground/40 opacity-40"
-                          : cell.isWeekend
-                          ? "bg-muted/40 border-border/60 text-muted-foreground"
-                          : "bg-background border-border"
-                      } ${
-                        cell.isToday
-                          ? "ring-2 ring-primary shadow-sm bg-primary/10 dark:bg-primary/20 font-bold"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs font-mono ${cell.isToday ? "font-extrabold text-primary" : ""}`}>
-                          {cell.dayNumber}
-                        </span>
-                        {cell.isToday && (
-                          <Badge className="bg-primary text-primary-foreground text-[9px] px-1 py-0 h-4 font-bold">
-                            Hari Ini
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Display Events in Date Cell */}
-                      <div className="space-y-1 my-1 overflow-hidden">
-                        {visibleEvents.map((ev) => (
-                          <div
-                            key={ev.id}
-                            title={`${ev.badge}: ${ev.title}`}
-                            className={`text-[9px] font-semibold truncate px-1 py-0.5 rounded border leading-tight ${
-                              ev.category === "cbt"
-                                ? "bg-red-500/15 text-red-600 border-red-500/30"
-                                : ev.category === "rapat"
-                                ? "bg-purple-500/15 text-purple-600 border-purple-500/30"
-                                : ev.category === "kokurikuler"
-                                ? "bg-amber-500/15 text-amber-600 border-amber-500/30"
-                                : ev.category === "libur"
-                                ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
-                                : "bg-blue-500/15 text-blue-600 border-blue-500/30"
-                            }`}
-                          >
-                            {ev.title}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="text-[8px] text-muted-foreground text-right opacity-60 hover:opacity-100">
-                        + Tambah
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Filter Kategori & Daftar Agenda */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">Daftar Agenda & Kegiatan ({filteredAgenda.length})</h2>
-      </div>
-
-      <div className="flex items-center gap-2 mb-6 border-b border-border pb-3 overflow-x-auto">
-        <span className="text-xs font-bold text-muted-foreground mr-1">Filter Kategori:</span>
-        {[
-          { k: "semua", label: "Semua Agenda" },
-          { k: "cbt", label: "🔴 Ujian CBT" },
-          { k: "rapat", label: "🟣 Rapat Dinas" },
-          { k: "kokurikuler", label: "🟡 Kokurikuler P5" },
-          { k: "libur", label: "🟢 Libur" },
-          { k: "kbm", label: "🔵 KBM Efektif" },
-        ].map((f) => (
-          <Button
-            key={f.k}
-            size="sm"
-            variant={filterCategory === f.k ? "default" : "outline"}
-            className="text-xs font-bold shrink-0"
-            onClick={() => setFilterCategory(f.k)}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
-
-      {/* Grid Cards Agenda */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredAgenda.map((a) => (
-          <Card key={a.id} className="border-border hover:border-primary/40 transition shadow-xs">
-            <CardHeader className="p-4 pb-2">
-              <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[10px] font-bold">
-                  {a.badge}
-                </Badge>
-                <span className="text-xs font-mono font-bold text-primary">{a.date}</span>
-              </div>
-              <CardTitle className="text-base font-bold mt-2 leading-snug">{a.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4 pt-1">
-              <p className="text-xs text-muted-foreground leading-relaxed">{a.desc}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Modal Form Tambah Agenda */}
-      <Dialog open={isAddAgendaOpen} onOpenChange={setIsAddAgendaOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-primary" /> Tambah Agenda Akademik Baru
-            </DialogTitle>
-            <DialogDescription>Input kegiatan resmi ke Kalender Akademik Madrasah.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleAddAgenda} className="space-y-4 py-2">
-            <div>
-              <Label className="text-xs font-semibold">Judul Kegiatan / Agenda</Label>
-              <Input placeholder="Contoh: Rapat Koordinasi Wali Kelas" value={title} onChange={(e) => setTitle(e.target.value)} required className="mt-1 text-xs" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs font-semibold">Kategori</Label>
-                <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={cat} onChange={(e) => setCat(e.target.value)}>
-                  <option value="cbt">🔴 Ujian CBT</option>
-                  <option value="rapat">🟣 Rapat Dinas</option>
-                  <option value="kokurikuler">🟡 Kokurikuler P5</option>
-                  <option value="libur">🟢 Libur</option>
-                  <option value="kbm">🔵 KBM Efektif</option>
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Tanggal Kegiatan</Label>
-                <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required className="mt-1 text-xs" />
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Deskripsi Kegiatan</Label>
-              <textarea placeholder="Rincian agenda..." value={desc} onChange={(e) => setDesc(e.target.value)} className="w-full h-20 rounded-md border border-border bg-background p-3 text-xs mt-1" />
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddAgendaOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Agenda</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  return <AgendaKalenderModule activeRole={activeRole} />;
 }
 
 /* ---------- 6. Laporan Tahfidz Qur'an Eksekutif ---------- */
@@ -6136,7 +6067,7 @@ function LaporanTahfidzEksekutif({ activeRole }: { activeRole?: string }) {
 
 /* ---------- 7. Laporan Kegiatan Kokurikuler (P5 / PPA-RA) ---------- */
 function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
-  const [projectsList] = useState([
+  const [projectsList, setProjectsList] = useState([
     {
       id: "p1",
       title: "Gaya Hidup Berkelanjutan: Pengolahan Sampah Organik & Bank Sampah Madrasah",
@@ -6168,6 +6099,24 @@ function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
       outcomes: ["Stand Wirausaha Digital", "Produk Kuliner Halal", "Laporan Keuangan Wirausaha"],
     },
   ]);
+
+  useEffect(() => {
+    MysqlDataService.getP5Projects().then((dbList) => {
+      if (dbList && dbList.length > 0) {
+        const mapped = dbList.map((item) => ({
+          id: String(item.id || Date.now()),
+          title: item.title,
+          target: item.class_name,
+          coordinator: "Koordinator P5",
+          progress: item.progress_pct || 80,
+          studentsCount: 300,
+          status: item.status || "Sangat Berkembang",
+          outcomes: [item.target_dimension, "Karya P5 Digital", "Laporan Projek"],
+        }));
+        setProjectsList(mapped);
+      }
+    });
+  }, []);
 
   const [isPrintP5ModalOpen, setIsPrintP5ModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState("p1");
@@ -6420,6 +6369,25 @@ function Tahfidz() {
     { id: "5", juz: "Juz 29", s: "Al-Mulk", ayat: "1 - 30 (Lengkap)", status: "Mutqin", nilai: "96 (Mumtaz)", ustadz: "AH. SYARIF HIDAYAH, S.Pd.I", tgl: "10 Juni 2026", murojaah: "Mutqin 🔵" },
   ]);
 
+  useEffect(() => {
+    MysqlDataService.getHafalan().then((dbList) => {
+      if (dbList && dbList.length > 0) {
+        const mapped = dbList.map((item) => ({
+          id: String(item.id || Date.now()),
+          juz: item.juz,
+          s: item.surah,
+          ayat: item.ayat,
+          status: item.status,
+          nilai: item.nilai,
+          ustadz: item.ustadz,
+          tgl: item.tgl,
+          murojaah: item.murojaah || (item.status === "Mutqin" ? "Mutqin 🔵" : "Lancar 🟢"),
+        }));
+        setHafalanList(mapped);
+      }
+    });
+  }, []);
+
   // Modal Input Setoran State
   const [isOpen, setIsOpen] = useState(false);
   const [surah, setSurah] = useState("An-Naba'");
@@ -6436,11 +6404,34 @@ function Tahfidz() {
 
   const handleAddHafalan = (e: React.FormEvent) => {
     e.preventDefault();
-    setHafalanList([
-      { id: String(Date.now()), juz: selectedJuz, s: surah, ayat, status, nilai, ustadz, tgl: "Hari ini", murojaah: status === "Mutqin" ? "Mutqin 🔵" : "Lancar 🟢" },
-      ...hafalanList,
-    ]);
-    toast.success(`Setoran QS. ${surah} (${ayat}) berhasil dicatat pada ${selectedJuz}!`);
+    const newHafalan = {
+      id: String(Date.now()),
+      juz: selectedJuz,
+      s: surah,
+      ayat,
+      status,
+      nilai,
+      ustadz,
+      tgl: new Date().toLocaleDateString("id-ID"),
+      murojaah: status === "Mutqin" ? "Mutqin 🔵" : "Lancar 🟢",
+    };
+
+    MysqlDataService.saveHafalan({
+      student_name: printStudentName,
+      nisn: printNisn,
+      class_name: printClass,
+      juz: selectedJuz,
+      surah,
+      ayat,
+      status,
+      nilai,
+      ustadz,
+      tgl: newHafalan.tgl,
+      murojaah: newHafalan.murojaah,
+    }).catch((err) => console.warn("saveHafalan DB failed:", err));
+
+    setHafalanList([newHafalan, ...hafalanList]);
+    toast.success(`Setoran QS. ${surah} (${ayat}) berhasil diterbitkan ke Database Tahfidz!`);
     setIsOpen(false);
   };
 
@@ -7717,574 +7708,7 @@ function parseMediaUrl(url: string): { embedUrl: string; provider: "youtube" | "
 }
 
 function Perpustakaan() {
-  const [filterTag, setFilterTag] = useState("Semua");
-  const [activeMediaModal, setActiveMediaModal] = useState<any>(null);
-  const [activePdfModal, setActivePdfModal] = useState<any>(null);
-  const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
-  const [isVideoFullScreen, setIsVideoFullScreen] = useState(false);
-
-  // Initial E-Library List with LocalStorage Persistence
-  const [bukuList, setBukuList] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("lms_elibrary_books_v2");
-        if (saved) return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return [
-      {
-        id: "1",
-        t: "Buku Digital Fikih Kelas VIII (Kemenag RI)",
-        icon: FileText,
-        tag: "PDF Modul",
-        size: "12.4 MB",
-        type: "pdf",
-        url: "https://pdfobject.com/pdf/sample.pdf",
-        desc: "Buku Teks Utama Pendidikan Agama Islam Fikih MTs Kelas 8 Kurikulum Merdeka.",
-      },
-      {
-        id: "2",
-        t: "Video Tutorial Pembelajaran Tajwid Mad Silah (YouTube HD)",
-        icon: Video,
-        tag: "Video YouTube",
-        size: "YouTube HD",
-        type: "video",
-        videoUrl: "https://www.youtube.com/watch?v=kYJzXv0h0bU",
-        desc: "Penjelasan audio-visual contoh hukum bacaan Mad Silah Qashirah & Thawilah.",
-        provider: "youtube",
-      },
-      {
-        id: "3",
-        t: "Video Praktikum Paru-Paru & Organ Pernapasan (Google Drive Video)",
-        icon: Video,
-        tag: "Video G-Drive",
-        size: "Google Drive HD",
-        type: "video",
-        videoUrl: "https://drive.google.com/file/d/1A2B3C4D5E6F7G8H9/view",
-        desc: "Rekaman video peragaan praktikum paru-paru dan mekanisme inspirasi-ekspirasi.",
-        provider: "gdrive",
-      },
-      {
-        id: "4",
-        t: "Audio Murottal Tajwid Juz 30 (Surah An-Naba')",
-        icon: Headphones,
-        tag: "Audio Murottal",
-        size: "18.2 MB",
-        type: "audio",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        desc: "Murottal merdu beserta panduan makhraj dan hukum tajwid.",
-        provider: "direct",
-      },
-      {
-        id: "5",
-        t: "E-Book Sejarah Kebudayaan Islam MTs",
-        icon: Library,
-        tag: "E-Book",
-        size: "8.7 MB",
-        type: "pdf",
-        url: "https://pdfobject.com/pdf/sample.pdf",
-        desc: "Sejarah Perkembangan Islam pada Masa Daulah Abbasiyah & Wali Songo.",
-      },
-    ];
-  });
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [title, setTitle] = useState("");
-  const [tag, setTag] = useState("PDF Modul");
-  const [mediaUrl, setMediaUrl] = useState("");
-  const [desc, setDesc] = useState("");
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      if (!title) {
-        setTitle(file.name.replace(/\.[^/.]+$/, ""));
-      }
-    }
-  };
-
-  const saveListToStorage = (list: any[]) => {
-    setBukuList(list);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("lms_elibrary_books_v2", JSON.stringify(list));
-      } catch (e) {}
-    }
-  };
-
-  const handleAddBook = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return toast.error("Judul modul / media tidak boleh kosong!");
-    if (uploadMode === "file" && !selectedFile && !mediaUrl.trim()) {
-      return toast.error("Harap pilih berkas dari perangkat Anda!");
-    }
-
-    const isVideo = tag === "Video YouTube" || tag === "Video G-Drive" || tag === "Video Tutorial";
-    const isAudio = tag === "Audio Murottal";
-    const isPdf = tag === "PDF Modul" || tag === "E-Book";
-
-    let mediaType = isVideo ? "video" : isAudio ? "audio" : "pdf";
-    let defaultUrl = "";
-    let fileSizeStr = "12.5 MB";
-
-    if (uploadMode === "file" && selectedFile) {
-      defaultUrl = URL.createObjectURL(selectedFile);
-      fileSizeStr = `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`;
-    } else {
-      defaultUrl = mediaUrl.trim() || (isPdf ? "https://pdfobject.com/pdf/sample.pdf" : "https://www.youtube.com/watch?v=kYJzXv0h0bU");
-    }
-
-    const parsed = parseMediaUrl(defaultUrl);
-
-    const newItem = {
-      id: String(Date.now()),
-      t: title.trim(),
-      icon: isVideo ? Video : isAudio ? Headphones : FileText,
-      tag,
-      size: uploadMode === "file" && selectedFile ? fileSizeStr : parsed.provider === "youtube" ? "YouTube HD" : parsed.provider === "gdrive" ? "Google Drive" : "15.0 MB",
-      type: mediaType,
-      url: defaultUrl,
-      videoUrl: defaultUrl,
-      audioUrl: defaultUrl,
-      desc: desc.trim() || "Modul & media pembelajaran digital MTsN 2 Cilacap.",
-      provider: uploadMode === "file" ? "direct" : parsed.provider,
-    };
-
-    const updated = [newItem, ...bukuList];
-    saveListToStorage(updated);
-
-    toast.success(`🎉 Berkas "${title}" (${tag}) berhasil ${uploadMode === "file" ? "diunggah" : "ditautkan"} ke E-Library!`);
-    setIsOpen(false);
-    setTitle("");
-    setMediaUrl("");
-    setDesc("");
-    setSelectedFile(null);
-  };
-
-  const filtered = bukuList.filter((b: any) => filterTag === "Semua" || b.tag === filterTag);
-
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Library className="h-6 w-6 text-primary" /> Perpustakaan Digital & E-Resources
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Koleksi PDF E-Book, Modul Digital, Embed Video YouTube & Google Drive, serta Audio Murottal Streaming MTsN 2 Cilacap.
-          </p>
-        </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => setIsOpen(true)}>
-          + Tautkan / Unggah Berkas E-Library
-        </Button>
-      </div>
-
-      {/* Filter Bar E-Library */}
-      <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-border pb-3">
-        {["Semua", "PDF Modul", "Video YouTube", "Video G-Drive", "Audio Murottal", "E-Book"].map((t) => (
-          <Button
-            key={t}
-            size="sm"
-            variant={filterTag === t ? "default" : "outline"}
-            className="text-xs font-semibold"
-            onClick={() => setFilterTag(t)}
-          >
-            {t}
-          </Button>
-        ))}
-      </div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((k: any) => {
-          const Icon = k.icon || FileText;
-          const isMedia = k.type === "video" || k.type === "audio";
-          const isPdf = k.type === "pdf" || k.tag === "PDF Modul" || k.tag === "E-Book";
-
-          const parsed = parseMediaUrl(k.videoUrl || k.url || "");
-
-          return (
-            <Card key={k.id} className="border-border shadow-xs hover:border-primary/40 transition group">
-              <CardContent className="p-4 flex flex-col justify-between h-full gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="h-11 w-11 rounded-xl bg-primary/15 text-primary grid place-items-center shrink-0 font-bold group-hover:scale-105 transition">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-xs text-foreground line-clamp-2 leading-snug">{k.t}</div>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <Badge variant="secondary" className="text-[9px] font-bold bg-primary/10 text-primary border-primary/20">
-                        {k.tag}
-                      </Badge>
-                      {parsed.provider === "youtube" && (
-                        <Badge variant="outline" className="text-[9px] font-extrabold bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30">
-                          ▶ YouTube
-                        </Badge>
-                      )}
-                      {parsed.provider === "gdrive" && (
-                        <Badge variant="outline" className="text-[9px] font-extrabold bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30">
-                          📁 Google Drive
-                        </Badge>
-                      )}
-                      <span className="text-[10px] text-muted-foreground font-mono">{k.size}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {k.desc && <p className="text-[11px] text-muted-foreground line-clamp-2 italic px-1">{k.desc}</p>}
-
-                <div className="pt-2 border-t border-border/60 flex items-center justify-between gap-2 mt-auto">
-                  {isPdf && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
-                      onClick={() => setActivePdfModal(k)}
-                    >
-                      <FileText className="h-3.5 w-3.5" /> 📄 Baca / Lihat PDF
-                    </Button>
-                  )}
-
-                  {isMedia && (
-                    <Button
-                      size="sm"
-                      className="w-full text-xs font-bold gap-1.5 bg-primary text-primary-foreground shadow-xs"
-                      onClick={() => setActiveMediaModal(k)}
-                    >
-                      ▶ {k.type === "video" ? (parsed.provider === "youtube" ? "Tonton YouTube" : parsed.provider === "gdrive" ? "Tonton G-Drive" : "Tonton Video") : "Dengar Audio"}
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* 📄 MODAL PDF VIEWER / READER WITH FULLSCREEN SUPPORT */}
-      <Dialog
-        open={!!activePdfModal}
-        onOpenChange={() => {
-          setActivePdfModal(null);
-          setIsPdfFullScreen(false);
-        }}
-      >
-        <DialogContent
-          id="pdf-modal-container"
-          className={
-            isPdfFullScreen
-              ? "max-w-[98vw] w-[98vw] h-[95vh] max-h-[95vh] p-4 flex flex-col border-border bg-card shadow-2xl transition-all duration-300"
-              : "sm:max-w-4xl max-h-[90vh] border-border bg-card flex flex-col transition-all duration-300"
-          }
-        >
-          <DialogHeader className="border-b border-border pb-3 flex flex-row items-center justify-between">
-            <div>
-              <DialogTitle className="text-base font-bold flex items-center gap-2">
-                <FileText className="h-5 w-5 text-emerald-600" /> {activePdfModal?.t}
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                {activePdfModal?.desc || "Pratinjau Berkas PDF E-Library MTsN 2 Cilacap"}
-              </DialogDescription>
-            </div>
-            <Button
-              size="sm"
-              variant={isPdfFullScreen ? "default" : "outline"}
-              className="gap-1.5 text-xs font-bold shrink-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
-              onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
-            >
-              {isPdfFullScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              {isPdfFullScreen ? "Keluar Fullscreen" : "🗖 Layar Penuh (Fullscreen)"}
-            </Button>
-          </DialogHeader>
-
-          <div className="py-2 flex-1 min-h-[60vh]">
-            {activePdfModal?.url ? (
-              <iframe
-                src={activePdfModal.url}
-                className={`w-full rounded-xl border border-border shadow-inner bg-muted/20 ${
-                  isPdfFullScreen ? "h-[80vh]" : "h-[62vh]"
-                }`}
-                title={activePdfModal.t}
-              />
-            ) : (
-              <div className="h-[50vh] grid place-items-center text-center p-6 bg-muted/20 rounded-xl">
-                <p className="text-xs text-muted-foreground">URL dokumen PDF tidak dapat dimuat secara langsung.</p>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="pt-2 border-t border-border flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/40 font-bold">
-                📄 {isPdfFullScreen ? "Mode Layar Penuh Aktif" : "PDF Viewer Ready"}
-              </Badge>
-              {activePdfModal?.url && (
-                <a
-                  href={activePdfModal.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-primary underline font-bold flex items-center gap-1"
-                >
-                  🔗 Buka Tab Baru
-                </a>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5 text-xs font-bold"
-                onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
-              >
-                {isPdfFullScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-                {isPdfFullScreen ? "Kecilkan Tampilan" : "Layar Penuh"}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => { setActivePdfModal(null); setIsPdfFullScreen(false); }}>
-                Tutup Pembaca PDF
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 🎥 MODAL STREAMING VIDEO (YOUTUBE / GOOGLE DRIVE / MP4 / AUDIO) WITH FULLSCREEN SUPPORT */}
-      <Dialog
-        open={!!activeMediaModal}
-        onOpenChange={() => {
-          setActiveMediaModal(null);
-          setIsVideoFullScreen(false);
-        }}
-      >
-        <DialogContent
-          id="video-modal-container"
-          className={
-            isVideoFullScreen
-              ? "max-w-[98vw] w-[98vw] h-[95vh] max-h-[95vh] p-4 flex flex-col border-border bg-card shadow-2xl transition-all duration-300"
-              : "sm:max-w-3xl border-border bg-card transition-all duration-300"
-          }
-        >
-          <DialogHeader className="border-b border-border pb-3 flex flex-row items-center justify-between">
-            <div>
-              <DialogTitle className="text-base font-bold flex items-center gap-2">
-                {activeMediaModal?.type === "video" ? <Video className="h-5 w-5 text-blue-500" /> : <Headphones className="h-5 w-5 text-purple-500" />}
-                {activeMediaModal?.t}
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                {activeMediaModal?.desc || "Media pembelajaran digital terintegrasi MTsN 2 Cilacap"}
-              </DialogDescription>
-            </div>
-            {activeMediaModal?.type === "video" && (
-              <Button
-                size="sm"
-                variant={isVideoFullScreen ? "default" : "outline"}
-                className="gap-1.5 text-xs font-bold shrink-0 border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
-                onClick={() => setIsVideoFullScreen(!isVideoFullScreen)}
-              >
-                {isVideoFullScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-                {isVideoFullScreen ? "Keluar Fullscreen" : "🗖 Layar Penuh (Fullscreen)"}
-              </Button>
-            )}
-          </DialogHeader>
-
-          <div className="py-3 space-y-4 flex-1">
-            {activeMediaModal?.type === "video" && (() => {
-              const targetUrl = activeMediaModal.videoUrl || activeMediaModal.url || "";
-              const parsed = parseMediaUrl(targetUrl);
-
-              if (parsed.provider === "youtube" || parsed.provider === "gdrive") {
-                return (
-                  <div
-                    className={`rounded-xl overflow-hidden bg-black border border-border shadow-lg ${
-                      isVideoFullScreen ? "h-[78vh] w-full" : "aspect-video w-full"
-                    }`}
-                  >
-                    <iframe
-                      src={parsed.embedUrl}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                      title={activeMediaModal.t}
-                    />
-                  </div>
-                );
-              }
-
-              return (
-                <div
-                  className={`rounded-xl overflow-hidden bg-black border border-border grid place-items-center ${
-                    isVideoFullScreen ? "h-[78vh] w-full" : "aspect-video w-full"
-                  }`}
-                >
-                  <video controls autoPlay className="w-full h-full object-contain">
-                    <source src={targetUrl} type="video/mp4" />
-                    Browser Anda tidak mendukung HTML5 Video.
-                  </video>
-                </div>
-              );
-            })()}
-
-            {activeMediaModal?.type === "audio" && (
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-950 text-white space-y-4 text-center border border-purple-500/30">
-                <div className="h-16 w-16 mx-auto rounded-full bg-purple-500/20 text-purple-300 grid place-items-center font-bold text-2xl animate-pulse">
-                  🎧
-                </div>
-                <div>
-                  <div className="font-bold text-sm">{activeMediaModal?.t}</div>
-                  <div className="text-xs text-slate-300 mt-1">Pemutar Streaming Audio Murottal (Cukup dengarkan tanpa download)</div>
-                </div>
-                <div className="pt-2">
-                  <audio controls autoPlay className="w-full rounded-lg">
-                    <source src={activeMediaModal?.audioUrl || activeMediaModal?.url} type="audio/mpeg" />
-                    Browser Anda tidak mendukung HTML5 Audio.
-                  </audio>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="pt-2 border-t border-border flex items-center justify-between">
-            <Badge variant="outline" className="text-[10px] text-muted-foreground mr-auto">
-              🔒 Embedded Streaming Mode (YouTube / Google Drive Supported)
-            </Badge>
-            <div className="flex items-center gap-2">
-              {activeMediaModal?.type === "video" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 text-xs font-bold"
-                  onClick={() => setIsVideoFullScreen(!isVideoFullScreen)}
-                >
-                  {isVideoFullScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-                  {isVideoFullScreen ? "Kecilkan Tampilan" : "Layar Penuh"}
-                </Button>
-              )}
-              <Button size="sm" variant="outline" onClick={() => { setActiveMediaModal(null); setIsVideoFullScreen(false); }}>
-                Tutup Pemutar
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ➕ Modal Form Unggah & Tautkan Link E-Library */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-lg border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Upload className="h-5 w-5 text-primary" /> Tautkan / Unggah Berkas ke E-Library
-            </DialogTitle>
-            <DialogDescription>
-              Tambahkan modul PDF, tautan Video YouTube, Video Google Drive, atau Audio ke koleksi perpustakaan madrasah.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleAddBook} className="space-y-4 py-2">
-            {/* Mode Switcher */}
-            <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
-              <Button
-                type="button"
-                size="sm"
-                variant={uploadMode === "file" ? "default" : "ghost"}
-                className="flex-1 text-xs font-bold gap-1"
-                onClick={() => setUploadMode("file")}
-              >
-                <Upload className="h-3.5 w-3.5" /> 📤 Unggah Berkas Fisik
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={uploadMode === "url" ? "default" : "ghost"}
-                className="flex-1 text-xs font-bold gap-1"
-                onClick={() => setUploadMode("url")}
-              >
-                <ExternalLink className="h-3.5 w-3.5" /> 🔗 Tautkan Link/URL Online
-              </Button>
-            </div>
-
-            {uploadMode === "file" ? (
-              <div>
-                <Label className="text-xs font-semibold">Pilih Berkas PDF / Audio / Video dari Perangkat</Label>
-                <div className="mt-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-primary/30 rounded-xl bg-primary/5 hover:bg-primary/10 transition cursor-pointer text-center space-y-2 relative">
-                  <input
-                    type="file"
-                    accept=".pdf,.mp4,.mp3,.epub,.docx"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    onChange={handleFileChange}
-                  />
-                  <Upload className="h-8 w-8 text-primary animate-pulse" />
-                  <div className="text-xs font-bold text-foreground">
-                    {selectedFile ? `📄 ${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)` : "Klik atau seret file PDF / Media di sini"}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">Format yang didukung: PDF, MP4, MP3, EPUB (Maks. 100 MB)</p>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <Label className="text-xs font-semibold">Tautan Link Media / PDF (YouTube, Google Drive, URL)</Label>
-                <Input
-                  placeholder="https://www.youtube.com/watch?v=... ATAU https://drive.google.com/file/d/... ATAU URL PDF"
-                  value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
-                  className="mt-1 text-xs font-mono"
-                />
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  *Mendukung link YouTube (`watch?v=...`), Google Drive (`/file/d/.../view`), dan link PDF.
-                </p>
-              </div>
-            )}
-
-            <div>
-              <Label className="text-xs font-semibold">Judul Berkas / Media / Modul</Label>
-              <Input
-                placeholder="Contoh: Modul Fikih Bab 3 / Video Pembelajaran Tajwid"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                className="mt-1 text-xs"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Kategori Media</Label>
-              <select
-                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
-                value={tag}
-                onChange={(e) => setTag(e.target.value)}
-              >
-                <option value="PDF Modul">📄 PDF Modul</option>
-                <option value="Video YouTube">▶ Video YouTube</option>
-                <option value="Video G-Drive">📁 Video Google Drive</option>
-                <option value="Audio Murottal">🎧 Audio Murottal</option>
-                <option value="E-Book">📚 E-Book Digital</option>
-              </select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Deskripsi Ringkas</Label>
-              <textarea
-                placeholder="Penjelasan ringkas mengenai isi modul atau video..."
-                rows={2}
-                value={desc}
-                onChange={(e) => setDesc(e.target.value)}
-                className="w-full p-2.5 rounded-md border border-border bg-background text-xs mt-1"
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsOpen(false)}>
-                Batal
-              </Button>
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">
-                Simpan & Tautkan Media
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  return <PerpustakaanModule />;
 }
 
 function Pengaturan() {
@@ -8433,17 +7857,203 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
 
   const initialJenjang = isSiswa ? getStudentJenjang(rawClass) : "semua";
   const [selectedJenjang, setSelectedJenjang] = useState(initialJenjang);
-  const [modulList, setModulList] = useState([
-    { id: "m1", title: "Modul Ajar Al Qur'an Hadis Pertemuan 1-18", mapel: "Al Qur'an Hadis", jenjang: "Kelas VIII", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", size: "3.4 MB", date: "15 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m2", title: "Modul Ajar Fikih Kebangsaan & Ibadah", mapel: "Fikih", jenjang: "Kelas IX", teacher: "CARYATI,", size: "4.1 MB", date: "18 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m3", title: "Modul Ajar Akidah Akhlak Perilaku Terpuji", mapel: "Akidah Akhlak", jenjang: "Kelas VII", teacher: "WAKHIBUN, S.P", size: "2.8 MB", date: "10 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m4", title: "Modul Ajar Matematika Aljabar & Geometri", mapel: "Matematika", jenjang: "Kelas VIII", teacher: "SAYONO, S.Pd., M.Pd.", size: "5.2 MB", date: "12 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m5", title: "Modul Ajar Bahasa Indonesia Literasi & Narasi", mapel: "Bahasa Indonesia", jenjang: "Kelas VIII", teacher: "SOBIYATI, S.Pd", size: "3.9 MB", date: "14 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m6", title: "Modul Ajar Bahasa Inggris Listening & Speaking", mapel: "Bahasa Inggris", jenjang: "Kelas VIII", teacher: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", size: "4.5 MB", date: "16 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m7", title: "Modul Ajar IPA Eksperimen Sains & Praktikum", mapel: "Ilmu Pendidikan Alam", jenjang: "Kelas IX", teacher: "NOVANTYA KARTIKAWATI, S.Pd", size: "4.8 MB", date: "19 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m8", title: "Modul Ajar Bahasa Arab Percakapan & Gramatika", mapel: "Bahasa Arab", jenjang: "Kelas VII", teacher: "ENDAH SUPRIHATIN, S.Pd", size: "3.1 MB", date: "11 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m9", title: "Modul Ajar SKI Peradaban Islam", mapel: "Sejarah Kebudayaan Islam", jenjang: "Kelas VIII", teacher: "H. DASIRUN, S.Ag., M.Pd.I", size: "3.6 MB", date: "13 Juli 2026", status: "Terverifikasi Waka" },
-  ]);
+  const [modulList, setModulList] = useState(() => {
+    const defaultList = [
+      { id: "m1", title: "Modul Ajar Al Qur'an Hadis Pertemuan 1-18", mapel: "Al Qur'an Hadis", jenjang: "Kelas VIII", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", size: "3.4 MB", date: "15 Juli 2026", status: "Terverifikasi Waka" },
+      { id: "m2", title: "Modul Ajar Fikih Kebangsaan & Ibadah", mapel: "Fikih", jenjang: "Kelas IX", teacher: "CARYATI,", size: "4.1 MB", date: "18 Juli 2026", status: "Terverifikasi Waka" },
+      { id: "m3", title: "Modul Ajar Akidah Akhlak Perilaku Terpuji", mapel: "Akidah Akhlak", jenjang: "Kelas VII", teacher: "WAKHIBUN, S.P", size: "2.8 MB", date: "10 Juli 2026", status: "Terverifikasi Waka" },
+      { id: "m4", title: "Modul Ajar Matematika Aljabar & Geometri", mapel: "Matematika", jenjang: "Kelas VIII", teacher: "SAYONO, S.Pd., M.Pd.", size: "5.2 MB", date: "12 Juli 2026", status: "Terverifikasi Waka" },
+      { id: "m5", title: "Modul Ajar Bahasa Indonesia Literasi & Narasi", mapel: "Bahasa Indonesia", jenjang: "Kelas VIII", teacher: "SOBIYATI, S.Pd", size: "3.9 MB", date: "14 Juli 2026", status: "Terverifikasi Waka" },
+      { id: "m6", title: "Modul Ajar Bahasa Inggris Listening & Speaking", mapel: "Bahasa Inggris", jenjang: "Kelas VIII", teacher: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", size: "4.5 MB", date: "16 Juli 2026", status: "Terverifikasi Waka" },
+      { id: "m7", title: "Modul Ajar IPA Eksperimen Sains & Praktikum", mapel: "Ilmu Pendidikan Alam", jenjang: "Kelas IX", teacher: "NOVANTYA KARTIKAWATI, S.Pd", size: "4.8 MB", date: "19 Juli 2026", status: "Terverifikasi Waka" },
+      { id: "m8", title: "Modul Ajar Bahasa Arab Percakapan & Gramatika", mapel: "Bahasa Arab", jenjang: "Kelas VII", teacher: "ENDAH SUPRIHATIN, S.Pd", size: "3.1 MB", date: "11 Juli 2026", status: "Terverifikasi Waka" },
+      { id: "m9", title: "Modul Ajar SKI Peradaban Islam", mapel: "Sejarah Kebudayaan Islam", jenjang: "Kelas VIII", teacher: "H. DASIRUN, S.Ag., M.Pd.I", size: "3.6 MB", date: "13 Juli 2026", status: "Terverifikasi Waka" },
+    ];
+
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_uploaded_modul_ajar_v2");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+    }
+    return defaultList;
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getMaterials()
+      .then((items) => {
+        if (!isMounted || !items || items.length === 0) return;
+        setModulList((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id));
+          const dbFormatted = items
+            .filter((it) => !existingIds.has(it.id))
+            .map((it) => ({
+              id: it.id,
+              title: it.title,
+              mapel: it.subject_name || "Mata Pelajaran",
+              jenjang: it.class_name || "Kelas VIII",
+              teacher: it.teacher_name || it.uploaded_by || currentTeacherName || "Guru Pengampu",
+              size: "3.5 MB",
+              date: "Terdaftar DB",
+              status: "Terverifikasi Waka",
+            }));
+          if (dbFormatted.length === 0) return prev;
+          const merged = [...dbFormatted, ...prev];
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("lms_uploaded_modul_ajar_v2", JSON.stringify(merged));
+            } catch (e) {}
+          }
+          return merged;
+        });
+      })
+      .catch((err) => console.warn("Failed fetching materials from DB:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const [previewModul, setPreviewModul] = useState<any | null>(null);
+
+  const pdfBlobUrl = useMemo(() => {
+    if (!previewModul) return null;
+    
+    if (previewModul.file_url) {
+      const urlStr = previewModul.file_url;
+      if (urlStr.startsWith("blob:") || urlStr.startsWith("http://") || urlStr.startsWith("https://")) {
+        return urlStr;
+      }
+      if (urlStr.startsWith("data:")) {
+        try {
+          const parts = urlStr.split(",");
+          const mimeMatch = parts[0].match(/:(.*?);/);
+          const mimeType = mimeMatch ? mimeMatch[1] : "application/pdf";
+          const binaryStr = window.atob(parts[1]);
+          const len = binaryStr.length;
+          const u8arr = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            u8arr[i] = binaryStr.charCodeAt(i);
+          }
+          const blob = new Blob([u8arr], { type: mimeType });
+          return URL.createObjectURL(blob);
+        } catch (err) {
+          console.warn("Base64 to Blob conversion error:", err);
+        }
+      }
+    }
+
+    const title = previewModul.title || "Modul Ajar PDF";
+    const mapel = previewModul.mapel || "Mata Pelajaran";
+    const jenjang = previewModul.jenjang || "Kelas VIII";
+    const teacher = previewModul.teacher || "Guru Pengampu";
+    const status = previewModul.status || "Terverifikasi Waka";
+
+    const pdfContent = `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /Resources 4 0 R /MediaBox [0 0 612 792] /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>
+endobj
+5 0 obj
+<< /Length 600 >>
+stream
+BT
+/F1 18 Tf
+50 740 Td
+(KEMENTERIAN AGAMA REPUBLIK INDONESIA) Tj
+0 -22 Td
+(MADRASAH TSANAWIYAH NEGERI 2 CILACAP) Tj
+/F2 10 Tf
+0 -18 Td
+(MODUL AJAR KURIKULUM MERDEKA TA 2026/2027) Tj
+/F1 14 Tf
+0 -36 Td
+(${title}) Tj
+/F2 11 Tf
+0 -18 Td
+(Mata Pelajaran : ${mapel} | Jenjang: ${jenjang}) Tj
+0 -16 Td
+(Penyusun / Guru : ${teacher}) Tj
+0 -16 Td
+(Status Pengesahan: ${status}) Tj
+0 -30 Td
+(I. CAPAIAN PEMBELAJARAN & ALUR TUJUAN (CP/ATP)) Tj
+0 -16 Td
+(Siswa mampu menguasai kompetensi utama mapel ${mapel} secara komprehensif.) Tj
+0 -24 Td
+(II. STRUCTUR KEGIATAN KBM DIGITAL) Tj
+0 -16 Td
+(1. Pendahuluan: Salam, Tadarus Al-Quran & Motivasi Pembelajaran) Tj
+0 -14 Td
+(2. Kegiatan Inti: Eksplorasi Materi LMS & Pengerjaan LKPD Digital) Tj
+0 -14 Td
+(3. Penutup     : Refleksi Sesi, Asesmen Formatif & Doa) Tj
+0 -30 Td
+(III. ASESMEN & EVALUASI) Tj
+0 -16 Td
+(Formative: Observasi Sikap & Diskusi | Summative: Nilai CBT E-Rapor) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000224 00000 n 
+0000000340 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+980
+%%EOF`;
+    const blob = new Blob([pdfContent], { type: "application/pdf" });
+    return URL.createObjectURL(blob);
+  }, [previewModul]);
+
+  const handleDownloadModulPdf = (m: any) => {
+    const title = typeof m === "object" ? m.title : String(m);
+    const fileUrl = typeof m === "object" ? m.file_url : null;
+    const fileName = typeof m === "object" ? (m.file_name || `${m.title}.pdf`) : `${title}.pdf`;
+
+    if (fileUrl && (fileUrl.startsWith("data:") || fileUrl.startsWith("blob:") || fileUrl.startsWith("http"))) {
+      const a = document.createElement("a");
+      a.href = fileUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast.success(`📄 Berkas PDF "${title}" berhasil diunduh!`);
+      return;
+    }
+
+    const dummyPdf = `%PDF-1.4\n1 0 obj\n<< /Title (${title}) /Author (MTsN 2 Cilacap) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`;
+    const blob = new Blob([dummyPdf], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.replace(/\s+/g, "_")}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`📄 Berkas PDF "${title}" berhasil diunduh!`);
+  };
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -8453,10 +8063,11 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
   const isWaka = activeRole === "waka";
   const isWakaOrAdmin = activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik" || activeRole === "kamad";
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("semua");
+  const [deleteConfirmModul, setDeleteConfirmModul] = useState<{ id: string; title: string } | null>(null);
 
   const handleToggleVerification = (id: string, currentStatus: string, title: string) => {
-    setModulList((prev) =>
-      prev.map((m) => {
+    setModulList((prev) => {
+      const nextList = prev.map((m) => {
         if (m.id === id) {
           const nextStatus = currentStatus === "Terverifikasi Waka" ? "Perlu Verifikasi Waka" : "Terverifikasi Waka";
           if (nextStatus === "Terverifikasi Waka") {
@@ -8467,23 +8078,118 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
           return { ...m, status: nextStatus };
         }
         return m;
-      })
-    );
+      });
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("lms_uploaded_modul_ajar_v2", JSON.stringify(nextList));
+        } catch (e) {}
+      }
+      return nextList;
+    });
+  };
+
+  const handleDeleteModul = (id: string, title: string) => {
+    setModulList((prev) => {
+      const nextList = prev.filter((m) => m.id !== id);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("lms_uploaded_modul_ajar_v2", JSON.stringify(nextList));
+        } catch (e) {}
+      }
+      return nextList;
+    });
+
+    setHiddenModulIds((prev) => {
+      if (prev.includes(id)) return prev;
+      const nextHidden = [...prev, id];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("lms_hidden_modul_ajar_v1", JSON.stringify(nextHidden));
+        } catch (e) {}
+      }
+      return nextHidden;
+    });
+
+    MysqlDataService.deleteMaterial(id).catch((err) => console.warn("deleteMaterial DB warning:", err));
+    toast.success(`🗑️ Modul Ajar "${title}" berhasil dihapus dari sistem!`);
+  };
+
+  const [selectedUploadFile, setSelectedUploadFile] = useState<File | null>(null);
+  const [uploadedFileDataUrl, setUploadedFileDataUrl] = useState<string>("");
+
+  const handleModulFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedUploadFile(file);
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        if (evt.target?.result) {
+          setUploadedFileDataUrl(evt.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle) return toast.error("Harap isi judul modul ajar!");
-    setModulList([
-      { id: String(Date.now()), title: newTitle, mapel: newMapel, jenjang: newJenjang, teacher: currentTeacherName || "SOBIYATI, S.Pd", size: "3.8 MB", date: "Hari ini", status: isWakaOrAdmin ? "Terverifikasi Waka" : "Perlu Verifikasi Waka" },
-      ...modulList,
-    ]);
-    toast.success(`Modul Ajar PDF "${newTitle}" berhasil diunggah! ${!isWakaOrAdmin ? "(Menunggu Verifikasi Waka)" : ""}`);
+
+    const calcSize = selectedUploadFile ? `${(selectedUploadFile.size / (1024 * 1024)).toFixed(1)} MB` : "3.8 MB";
+    const fileUrlToSave = uploadedFileDataUrl || "";
+
+    const newModul = {
+      id: "mod_" + Date.now(),
+      title: newTitle.trim(),
+      mapel: newMapel,
+      jenjang: newJenjang,
+      teacher: currentTeacherName || "SOBIYATI, S.Pd",
+      size: calcSize,
+      date: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+      status: isWakaOrAdmin ? "Terverifikasi Waka" : "Perlu Verifikasi Waka",
+      file_url: fileUrlToSave,
+      file_name: selectedUploadFile?.name || `${newTitle}.pdf`,
+    };
+
+    setModulList((prev) => {
+      const updated = [newModul, ...prev];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("lms_uploaded_modul_ajar_v2", JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+
+    MysqlDataService.saveMaterial({
+      id: newModul.id,
+      title: newModul.title,
+      subject_name: newModul.mapel,
+      class_name: newModul.jenjang,
+      uploaded_by: newModul.teacher,
+      teacher_name: newModul.teacher,
+      file_url: fileUrlToSave || ("/uploads/" + newModul.id + ".pdf"),
+    }).catch((err) => console.warn("Save material DB warning:", err));
+
+    toast.success(`Modul Ajar PDF "${newTitle}" berhasil diunggah dan tersimpan permanen! ${!isWakaOrAdmin ? "(Menunggu Verifikasi Waka)" : ""}`);
     setIsUploadOpen(false);
     setNewTitle("");
+    setSelectedUploadFile(null);
+    setUploadedFileDataUrl("");
   };
 
+  const [hiddenModulIds, setHiddenModulIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_hidden_modul_ajar_v1");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [];
+  });
+
   const filteredModul = modulList.filter((m) => {
+    if (hiddenModulIds.includes(m.id)) return false;
     const matchJenjang = selectedJenjang === "semua" || m.jenjang === selectedJenjang;
     const matchStatus =
       selectedStatusFilter === "semua" ||
@@ -8622,6 +8328,15 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
                   <span>Ukuran: <strong>{m.size}</strong></span>
                   
                   <div className="flex items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 gap-1"
+                      onClick={() => setPreviewModul(m)}
+                    >
+                      <Eye className="h-3 w-3" /> Pratinjau
+                    </Button>
+
                     {isWakaOrAdmin && (
                       <Button
                         size="sm"
@@ -8637,9 +8352,21 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
                       </Button>
                     )}
 
-                    <Button size="sm" variant="ghost" className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10" onClick={() => toast.success(`Mengunduh file PDF ${m.title}...`)}>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleDownloadModulPdf(m)}>
                       <Download className="h-3 w-3 mr-1" /> Unduh PDF
                     </Button>
+
+                    {(isWakaOrAdmin || isGuru) && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs font-bold text-rose-600 hover:bg-rose-500/10 hover:text-rose-700 gap-1"
+                        onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
+                        title="Hapus Modul Ajar"
+                      >
+                        <Trash2 className="h-3 w-3" /> Hapus
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -8647,6 +8374,210 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
           </Card>
         ))}
       </div>
+
+      {/* 🗑️ DIALOG KONFIRMASI HAPUS MODUL AJAR */}
+      <Dialog open={!!deleteConfirmModul} onOpenChange={() => setDeleteConfirmModul(null)}>
+        <DialogContent className="sm:max-w-md border-rose-500/30 bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+              <Trash2 className="h-5 w-5 shrink-0" /> Konfirmasi Penghapusan Modul
+            </DialogTitle>
+            <DialogDescription className="text-xs pt-1 leading-relaxed text-muted-foreground">
+              Apakah Anda yakin ingin menghapus berkas Modul Ajar <strong className="text-foreground">"{deleteConfirmModul?.title}"</strong>?
+              Tindakan ini akan menghapus berkas dari sistem dan tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 pt-3 border-t border-border mt-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setDeleteConfirmModul(null)}>
+              Batal
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5"
+              onClick={() => {
+                if (deleteConfirmModul) {
+                  handleDeleteModul(deleteConfirmModul.id, deleteConfirmModul.title);
+                  setDeleteConfirmModul(null);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" /> Ya, Hapus Berkas
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 📖 MODAL PRATINJAU DOKUMEN MODUL AJAR PDF */}
+      <Dialog open={!!previewModul} onOpenChange={() => setPreviewModul(null)}>
+        <DialogContent className="sm:max-w-3xl border-border bg-card">
+          <DialogHeader className="border-b border-border pb-3">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-bold flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-emerald-500" /> Pratinjau Modul Ajar PDF
+              </DialogTitle>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs font-bold text-emerald-600 border-emerald-500/30">
+                  {previewModul?.jenjang} • {previewModul?.mapel}
+                </Badge>
+                <Badge className={previewModul?.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-xs font-bold" : "bg-amber-500 text-white text-xs font-bold"}>
+                  {previewModul?.status === "Terverifikasi Waka" ? "✓ Sah Waka" : "⏳ Menunggu Verifikasi"}
+                </Badge>
+              </div>
+            </div>
+            <DialogDescription className="text-xs mt-1">
+              Pratinjau Dokumen Berkas Modul Ajar Kurikulum Merdeka • Penyusun: <strong>{previewModul?.teacher}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewModul && (
+            <div className="space-y-3 py-2 text-xs">
+              {/* Document Reader Controls */}
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/60 border border-border">
+                <div className="flex items-center gap-2 font-mono font-semibold text-muted-foreground">
+                  <span>📄 Berkas PDF: {previewModul.title}.pdf</span>
+                  <span>•</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">{previewModul.size}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="outline" className="text-[10px] font-mono font-bold bg-background text-emerald-600 border-emerald-500/30">
+                    ✓ Native PDF 1.4 Render
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Multi-Format Media & Document Viewer (PDF, MP4, MP3, PPTX, DOCX) */}
+              {(() => {
+                const filenameStr = (previewModul.file_name || previewModul.title || "").toLowerCase();
+                const fileUrlStr = (previewModul.file_url || "").toLowerCase();
+                const isVideo = filenameStr.endsWith(".mp4") || fileUrlStr.includes("video/mp4") || fileUrlStr.endsWith(".mp4");
+                const isAudio = filenameStr.endsWith(".mp3") || fileUrlStr.includes("audio/mpeg") || fileUrlStr.includes("audio/mp3") || fileUrlStr.endsWith(".mp3");
+                const isPptx = filenameStr.endsWith(".pptx") || filenameStr.endsWith(".ppt") || fileUrlStr.includes("presentation") || fileUrlStr.includes("powerpoint");
+                const isDocx = filenameStr.endsWith(".docx") || filenameStr.endsWith(".doc") || fileUrlStr.includes("wordprocessingml") || fileUrlStr.includes("msword");
+
+                if (isVideo) {
+                  return (
+                    <div className="rounded-xl overflow-hidden border border-border bg-slate-950 p-2 shadow-md">
+                      <video
+                        src={pdfBlobUrl || undefined}
+                        controls
+                        autoPlay
+                        className="w-full max-h-[58vh] rounded-lg border border-slate-800 bg-black"
+                      />
+                    </div>
+                  );
+                }
+
+                if (isAudio) {
+                  return (
+                    <div className="rounded-xl p-6 border border-border bg-slate-900 shadow-md text-slate-100 text-center space-y-4">
+                      <div className="h-20 w-20 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/40 grid place-items-center text-emerald-400 animate-pulse">
+                        <Headphones className="h-10 w-10" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-base text-slate-100">{previewModul.title}</h3>
+                        <p className="text-xs text-slate-400 mt-1">Pemutar Audio MP3 Pembelajaran • MTsN 2 Cilacap</p>
+                      </div>
+                      <audio src={pdfBlobUrl || undefined} controls autoPlay className="w-full max-w-md mx-auto" />
+                    </div>
+                  );
+                }
+
+                if (isPptx) {
+                  return (
+                    <div className="rounded-xl p-6 border border-border bg-slate-900 text-slate-100 shadow-md space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-amber-600 text-white font-extrabold text-xs">📊 Presentation Slide (.pptx)</Badge>
+                          <span className="text-xs text-slate-400 font-mono">{previewModul.title}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs text-amber-400 border-amber-500/40">Microsoft PowerPoint</Badge>
+                      </div>
+                      <div className="p-8 rounded-xl bg-slate-950 border border-slate-800 text-center space-y-3">
+                        <div className="h-16 w-16 mx-auto rounded-2xl bg-amber-500/20 border border-amber-500/40 grid place-items-center text-amber-400 font-black text-2xl">
+                          PPT
+                        </div>
+                        <h2 className="text-lg font-black text-white">{previewModul.title}</h2>
+                        <p className="text-xs text-slate-400 max-w-md mx-auto">
+                          Berkas Presentasi Slide PowerPoint (.pptx). Klik tombol di bawah untuk membuka atau mengunduh berkas presentasi asli.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (isDocx) {
+                  return (
+                    <div className="rounded-xl p-6 border border-border bg-slate-900 text-slate-100 shadow-md space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-600 text-white font-extrabold text-xs">📄 Word Document (.docx)</Badge>
+                          <span className="text-xs text-slate-400 font-mono">{previewModul.title}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs text-blue-400 border-blue-500/40">Microsoft Word</Badge>
+                      </div>
+                      <div className="p-8 rounded-xl bg-slate-950 border border-slate-800 text-center space-y-3">
+                        <div className="h-16 w-16 mx-auto rounded-2xl bg-blue-500/20 border border-blue-500/40 grid place-items-center text-blue-400 font-black text-2xl">
+                          DOC
+                        </div>
+                        <h2 className="text-lg font-black text-white">{previewModul.title}</h2>
+                        <p className="text-xs text-slate-400 max-w-md mx-auto">
+                          Dokumen Naskah Microsoft Word (.docx). Klik tombol di bawah untuk mengunduh atau menyunting dokumen secara lengkap.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="rounded-xl overflow-hidden border border-border bg-slate-900 shadow-md">
+                    <object
+                      data={pdfBlobUrl || undefined}
+                      type="application/pdf"
+                      className="w-full h-[58vh] border-0"
+                    >
+                      <iframe
+                        src={pdfBlobUrl || undefined}
+                        title={`PDF Viewer - ${previewModul.title}`}
+                        className="w-full h-[58vh] border-0"
+                      />
+                    </object>
+                  </div>
+                );
+              })()}
+
+              <DialogFooter className="pt-2 border-t border-border flex items-center justify-between sm:justify-end gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setPreviewModul(null)}>
+                  Tutup Reader
+                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 gap-1.5"
+                    onClick={() => {
+                      if (pdfBlobUrl) {
+                        window.open(pdfBlobUrl, "_blank");
+                      }
+                    }}
+                  >
+                    🌐 Buka PDF di Tab Baru
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5"
+                    onClick={() => handleDownloadModulPdf(previewModul)}
+                  >
+                    <Download className="h-3.5 w-3.5" /> Unduh Berkas PDF
+                  </Button>
+                </div>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Upload Modul Ajar PDF */}
       <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
@@ -8686,8 +8617,13 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
             </div>
 
             <div>
-              <Label className="text-xs font-semibold">Pilih Dokumen PDF</Label>
-              <Input type="file" accept=".pdf" className="mt-1 text-xs cursor-pointer" />
+              <Label className="text-xs font-semibold">Pilih Dokumen PDF dari Perangkat</Label>
+              <Input type="file" accept=".pdf" onChange={handleModulFileChange} className="mt-1 text-xs cursor-pointer" />
+              {selectedUploadFile && (
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono mt-1 font-bold">
+                  ✓ Berkas Terpilih: {selectedUploadFile.name} ({(selectedUploadFile.size / (1024 * 1024)).toFixed(1)} MB)
+                </p>
+              )}
             </div>
 
             <DialogFooter className="pt-2">

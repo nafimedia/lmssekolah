@@ -1,6 +1,7 @@
 import {
   getDatabaseStatsFn,
   getUsersFn,
+  getUsersPaginatedFn,
   deleteUserFn,
   updateUserRoleFn,
   updateUserProfileFn,
@@ -9,9 +10,12 @@ import {
   deleteSubjectFn,
   getAnnouncementsFn,
   saveAnnouncementFn,
+  deleteAnnouncementFn,
   getAgendasFn,
   saveAgendaFn,
+  deleteAgendaFn,
   getAttendancesFn,
+  getAttendancesPaginatedFn,
   recordAttendanceFn,
   getAwardsFn,
   saveAwardFn,
@@ -19,6 +23,18 @@ import {
   saveWaLogFn,
   getCbtExamsFn,
   saveCbtExamFn,
+  getMaterialsFn,
+  getMaterialsPaginatedFn,
+  saveMaterialFn,
+  deleteMaterialFn,
+  getHafalanFn,
+  saveHafalanFn,
+  getElibraryBooksFn,
+  saveElibraryBookFn,
+  deleteElibraryBookFn,
+  getP5ProjectsFn,
+  saveP5ProjectFn,
+  getHealthStatusFn,
   DatabaseStats,
   UserRow,
   SubjectRow,
@@ -28,12 +44,32 @@ import {
   StudentAwardRow,
   WaLogRow,
   CbtExamRow,
+  MaterialRow,
+  HafalanRow,
+  ElibraryBookRow,
+  P5ProjectRow,
+  PaginatedParams,
+  PaginatedResult,
+  HealthStatusResponse,
 } from "./mysqlServerFns";
-import fallbackUsersCatalog from "./fallbackUsersCatalog.json";
 
-export type { DatabaseStats, UserRow, SubjectRow, AnnouncementRow, AgendaRow, AttendanceRow, StudentAwardRow, WaLogRow, CbtExamRow };
+export type { DatabaseStats, UserRow, SubjectRow, AnnouncementRow, AgendaRow, AttendanceRow, StudentAwardRow, WaLogRow, CbtExamRow, MaterialRow, HafalanRow, ElibraryBookRow, P5ProjectRow, PaginatedParams, PaginatedResult, HealthStatusResponse };
 
 export class MysqlDataService {
+  static async getHealthStatus(): Promise<HealthStatusResponse> {
+    try {
+      return await getHealthStatusFn();
+    } catch {
+      return {
+        status: "error",
+        timestamp: new Date().toISOString(),
+        uptimeSeconds: 0,
+        database: "disconnected",
+        version: "2.5.0-production",
+      };
+    }
+  }
+
   static async getDatabaseStats(): Promise<DatabaseStats> {
     try {
       return await getDatabaseStatsFn();
@@ -46,11 +82,37 @@ export class MysqlDataService {
   static async getUsers(): Promise<UserRow[]> {
     try {
       const res = await getUsersFn();
-      if (res && res.length > 0) return res;
-      return fallbackUsersCatalog as UserRow[];
+      return res || [];
     } catch (e) {
-      console.warn("getUsersFn failed, using fallbackUsersCatalog:", e);
-      return fallbackUsersCatalog as UserRow[];
+      console.error("getUsersFn failed:", e);
+      return [];
+    }
+  }
+
+  static async getUsersPaginated(params: PaginatedParams): Promise<PaginatedResult<UserRow>> {
+    try {
+      return await getUsersPaginatedFn({ data: params });
+    } catch (e) {
+      console.error("getUsersPaginatedFn failed:", e);
+      return { data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 1 } };
+    }
+  }
+
+  static async getAttendancesPaginated(params: PaginatedParams): Promise<PaginatedResult<AttendanceRow>> {
+    try {
+      return await getAttendancesPaginatedFn({ data: params });
+    } catch (e) {
+      console.error("getAttendancesPaginatedFn failed:", e);
+      return { data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 1 } };
+    }
+  }
+
+  static async getMaterialsPaginated(params: PaginatedParams): Promise<PaginatedResult<MaterialRow>> {
+    try {
+      return await getMaterialsPaginatedFn({ data: params });
+    } catch (e) {
+      console.error("getMaterialsPaginatedFn failed:", e);
+      return { data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 1 } };
     }
   }
 
@@ -139,6 +201,15 @@ export class MysqlDataService {
     }
   }
 
+  static async deleteAnnouncement(id: number): Promise<boolean> {
+    try {
+      return await deleteAnnouncementFn({ data: { id } });
+    } catch (e) {
+      console.warn("deleteAnnouncementFn failed:", e);
+      return false;
+    }
+  }
+
   // Agendas
   static async getAgendas(): Promise<AgendaRow[]> {
     try {
@@ -154,6 +225,15 @@ export class MysqlDataService {
       return await saveAgendaFn({ data });
     } catch (e) {
       console.warn("saveAgendaFn failed:", e);
+      return false;
+    }
+  }
+
+  static async deleteAgenda(id: number): Promise<boolean> {
+    try {
+      return await deleteAgendaFn({ data: { id } });
+    } catch (e) {
+      console.warn("deleteAgendaFn failed:", e);
       return false;
     }
   }
@@ -248,6 +328,106 @@ export class MysqlDataService {
       return await saveCbtExamFn({ data });
     } catch (e) {
       console.warn("saveCbtExamFn failed:", e);
+      return false;
+    }
+  }
+
+  // Materials / Modul Ajar
+  static async getMaterials(): Promise<MaterialRow[]> {
+    try {
+      return await getMaterialsFn();
+    } catch (e) {
+      console.warn("getMaterialsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveMaterial(data: MaterialRow): Promise<boolean> {
+    try {
+      const res = await saveMaterialFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("saveMaterialFn failed:", e);
+      return false;
+    }
+  }
+
+  static async deleteMaterial(id: string): Promise<boolean> {
+    try {
+      const res = await deleteMaterialFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteMaterialFn failed:", e);
+      return false;
+    }
+  }
+
+  // Tahfidz Hafalan
+  static async getHafalan(): Promise<HafalanRow[]> {
+    try {
+      return await getHafalanFn();
+    } catch (e) {
+      console.warn("getHafalanFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveHafalan(data: HafalanRow): Promise<boolean> {
+    try {
+      const res = await saveHafalanFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("saveHafalanFn failed:", e);
+      return false;
+    }
+  }
+
+  // E-Library Books
+  static async getElibraryBooks(): Promise<ElibraryBookRow[]> {
+    try {
+      return await getElibraryBooksFn();
+    } catch (e) {
+      console.warn("getElibraryBooksFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveElibraryBook(data: ElibraryBookRow): Promise<boolean> {
+    try {
+      const res = await saveElibraryBookFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("saveElibraryBookFn failed:", e);
+      return false;
+    }
+  }
+
+  static async deleteElibraryBook(id: string): Promise<boolean> {
+    try {
+      const res = await deleteElibraryBookFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteElibraryBookFn failed:", e);
+      return false;
+    }
+  }
+
+  // P5 Projects
+  static async getP5Projects(): Promise<P5ProjectRow[]> {
+    try {
+      return await getP5ProjectsFn();
+    } catch (e) {
+      console.warn("getP5ProjectsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveP5Project(data: P5ProjectRow): Promise<boolean> {
+    try {
+      const res = await saveP5ProjectFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("saveP5ProjectFn failed:", e);
       return false;
     }
   }

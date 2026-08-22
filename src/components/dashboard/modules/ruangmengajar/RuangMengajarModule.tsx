@@ -28,6 +28,8 @@ import {
   AlertCircle,
   FileCode,
   CheckCircle2,
+  Trash2,
+  Headphones,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -151,7 +153,7 @@ const MAPEL_SPECIFIC_CONTENT: Record<
   {
     topic: string;
     meetings: { id: string; number: number; title: string; tp: string; time: string; status: "SELESAI" | "AKTIF_HARI_INI" | "MENDATANG"; date: string }[];
-    modulDocs: { id: string; title: string; type: string; size: string; filename: string }[];
+    modulDocs: { id: string; title: string; type: string; size: string; filename: string; isTeacherUpload?: boolean }[];
     tasks: { id: string; title: string; type: string; deadline: string; count: string }[];
     assessments: { id: string; title: string; desc: string; duration: string; status: "Terbit" | "Draft" | "Selesai"; action: string }[];
     reflection: { success: string; obstacle: string; action: string };
@@ -502,9 +504,21 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
   const [newCbtDuration, setNewCbtDuration] = useState("60 Menit");
   const [cbtList, setCbtList] = useState(activeMapelContent.assessments);
 
-  useMemo(() => {
-    setCbtList(activeMapelContent.assessments);
-  }, [activeMapelContent]);
+  useEffect(() => {
+    MysqlDataService.getCbtExams().then((dbExams) => {
+      if (dbExams && dbExams.length > 0) {
+        const mapped = dbExams.map((e) => ({
+          id: String(e.id || Date.now()),
+          title: e.title,
+          desc: `Mata Pelajaran: ${e.subject_name || selectedMapel} | Token: ${e.token}`,
+          duration: `${e.duration_minutes || 60} Menit`,
+          status: "Terbit" as const,
+          action: "Buka CBT Live",
+        }));
+        setCbtList(mapped);
+      }
+    });
+  }, [selectedMapel]);
 
   const handleAddCbt = (e: React.FormEvent) => {
     e.preventDefault();
@@ -517,8 +531,20 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
       status: "Terbit" as const,
       action: "Buka CBT Live",
     };
+
+    const token = `KUIS-${selectedMapel.substring(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+    const durMinutes = parseInt(newCbtDuration) || 60;
+
+    MysqlDataService.saveCbtExam({
+      title: c.title,
+      subject_name: selectedMapel,
+      token,
+      duration_minutes: durMinutes,
+      passing_score: 75,
+    }).catch((err) => console.warn("saveCbtExam DB failed:", err));
+
     setCbtList([c, ...cbtList]);
-    toast.success(`🚀 Asesmen ${newCbtJenis} (${newCbtBentuk}) "${newCbtTitle}" berhasil diterbitkan!`);
+    toast.success(`🚀 Asesmen/Kuis "${newCbtTitle}" berhasil diterbitkan ke Database Kuis! Token: ${token}`);
     setIsAddCbtOpen(false);
     setNewCbtTitle("");
   };
@@ -530,26 +556,293 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
     type: string;
     size: string;
     filename: string;
+    file_url?: string;
   } | null>(null);
 
-  // Integrated Jurnal KBM State (Request #5)
-  const [jurnalMateri, setJurnalMateri] = useState("Pertemuan 2 — Tajwid Mad Silah Qashirah & Mad Badal");
-  const [jurnalCatatan, setJurnalCatatan] = useState("KBM berlangsung tertib. Siswa aktif murojaah & tanya jawab.");
+  const [deleteConfirmDoc, setDeleteConfirmDoc] = useState<{ id: string; title: string } | null>(null);
 
-  // Request #2: Interactive Download Handler for Module Docs
-  const handleDownloadDoc = (title: string, filename: string) => {
+  const previewDocBlobUrl = useMemo(() => {
+    if (!selectedDocForPreview) return null;
+
+    if (selectedDocForPreview.file_url) {
+      const urlStr = selectedDocForPreview.file_url;
+      if (urlStr.startsWith("blob:") || urlStr.startsWith("http://") || urlStr.startsWith("https://")) {
+        return urlStr;
+      }
+      if (urlStr.startsWith("data:")) {
+        try {
+          const parts = urlStr.split(",");
+          const mimeMatch = parts[0].match(/:(.*?);/);
+          const mimeType = mimeMatch ? mimeMatch[1] : "application/pdf";
+          const binaryStr = window.atob(parts[1]);
+          const len = binaryStr.length;
+          const u8arr = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            u8arr[i] = binaryStr.charCodeAt(i);
+          }
+          const blob = new Blob([u8arr], { type: mimeType });
+          return URL.createObjectURL(blob);
+        } catch (err) {
+          console.warn("Base64 to Blob conversion error:", err);
+        }
+      }
+    }
+
+    const title = selectedDocForPreview.title || "Perangkat Ajar";
+    const mapel = selectedMapel || "Mata Pelajaran";
+    const kelas = selectedClass || "Kelas VIII";
+
+    const pdfContent = `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /Resources 4 0 R /MediaBox [0 0 612 792] /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>
+endobj
+5 0 obj
+<< /Length 600 >>
+stream
+BT
+/F1 18 Tf
+50 740 Td
+(KEMENTERIAN AGAMA REPUBLIK INDONESIA) Tj
+0 -22 Td
+(MADRASAH TSANAWIYAH NEGERI 2 CILACAP) Tj
+/F2 10 Tf
+0 -18 Td
+(PERANGKAT AJAR KURIKULUM MERDEKA TA 2026/2027) Tj
+/F1 14 Tf
+0 -36 Td
+(${title}) Tj
+/F2 11 Tf
+0 -18 Td
+(Mata Pelajaran : ${mapel} | Kelas: ${kelas}) Tj
+0 -16 Td
+(Satuan Pendidikan: MTs Negeri 2 Cilacap) Tj
+0 -30 Td
+(I. CAPAIAN PEMBELAJARAN & ALUR TUJUAN (CP/ATP)) Tj
+0 -16 Td
+(Dokumen perangkat ajar ini memuat ATP, Modul Ajar, & LKPD Digital.) Tj
+0 -24 Td
+(II. LANGKAH PENGGUNAAN KBM DIGITAL) Tj
+0 -16 Td
+(1. Salam, Tadarus Al-Quran & Motivasi Pembelajaran) Tj
+0 -14 Td
+(2. Kegiatan Inti: Eksplorasi Materi LMS & Pengerjaan LKPD Digital) Tj
+0 -14 Td
+(3. Penutup: Refleksi Sesi & Asesmen Formatif) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000224 00000 n 
+0000000340 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+980
+%%EOF`;
+    const blob = new Blob([pdfContent], { type: "application/pdf" });
+    return URL.createObjectURL(blob);
+  }, [selectedDocForPreview, selectedMapel, selectedClass]);
+
+  const handleDownloadDoc = (doc: any) => {
+    const title = typeof doc === "object" ? doc.title : doc;
+    const fileUrl = typeof doc === "object" ? doc.file_url : null;
+    const filename = typeof doc === "object" ? (doc.filename || `${title}.pdf`) : `${title}.pdf`;
+
+    if (fileUrl && (fileUrl.startsWith("data:") || fileUrl.startsWith("blob:") || fileUrl.startsWith("http"))) {
+      const a = document.createElement("a");
+      a.href = fileUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast.success(`📄 Berkas "${title}" berhasil diunduh!`);
+      return;
+    }
+
     const dummyContent = `%PDF-1.4\n1 0 obj\n<< /Title (${title}) /Author (MTsN 2 Cilacap) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`;
     const blob = new Blob([dummyContent], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename || `${title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success(`📥 Document "${title}" berhasil diunduh!`);
+    toast.success(`📄 Berkas "${title}" berhasil diunduh!`);
   };
+
+  // Dynamic Teacher Modul Docs State with LocalStorage & MySQL Persistence
+  const [dynamicDocs, setDynamicDocs] = useState<
+    Record<string, { id: string; title: string; type: string; size: string; filename: string; isTeacherUpload?: boolean }[]>
+  >(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_teacher_modul_docs_v1");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {};
+  });
+
+  // Fetch materials live from MySQL Database
+  useEffect(() => {
+    MysqlDataService.getMaterials().then((dbMaterials) => {
+      if (dbMaterials && dbMaterials.length > 0) {
+        const grouped: Record<string, any[]> = {};
+        dbMaterials.forEach((m) => {
+          if (!grouped[m.subject_name]) grouped[m.subject_name] = [];
+          grouped[m.subject_name].push({
+            id: m.id,
+            title: m.title,
+            type: m.type,
+            size: m.size,
+            filename: m.filename,
+            isTeacherUpload: true,
+          });
+        });
+        setDynamicDocs((prev) => ({ ...prev, ...grouped }));
+      }
+    });
+  }, []);
+
+  const [hiddenDocIds, setHiddenDocIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_hidden_teacher_modul_docs_v1");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [];
+  });
+
+  const activeMapelDocs = useMemo(() => {
+    const defaultList = (
+      MAPEL_SPECIFIC_CONTENT[selectedMapel] ||
+      MAPEL_SPECIFIC_CONTENT["Al Qur'an Hadis"] ||
+      MAPEL_SPECIFIC_CONTENT["Matematika"]
+    ).modulDocs;
+    const customList = dynamicDocs[selectedMapel] || [];
+    const combined = [...customList, ...defaultList];
+    return combined.filter((d) => !hiddenDocIds.includes(d.id));
+  }, [selectedMapel, dynamicDocs, hiddenDocIds]);
+
+  // Teacher Upload Modul State
+  const [isAddDocOpen, setIsAddDocOpen] = useState(false);
+  const [newDocTitle, setNewDocTitle] = useState("");
+  const [newDocType, setNewDocType] = useState("PDF Module");
+  const [newDocFile, setNewDocFile] = useState<File | null>(null);
+  const [newDocUrl, setNewDocUrl] = useState("");
+  const [newDocDataUrl, setNewDocDataUrl] = useState("");
+
+  const handleAddDocSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDocTitle.trim()) return toast.error("Judul materi/modul tidak boleh kosong!");
+
+    let calculatedSize = "2.5 MB";
+    let calculatedFilename = "";
+
+    if (newDocFile) {
+      calculatedSize = `${(newDocFile.size / (1024 * 1024)).toFixed(1)} MB`;
+      calculatedFilename = newDocFile.name;
+    } else if (newDocUrl.trim()) {
+      calculatedSize = "Tautan Web / Drive";
+      calculatedFilename = newDocUrl.trim();
+    } else {
+      const ext = newDocType.toLowerCase().includes("ppt") ? "pptx" : newDocType.toLowerCase().includes("video") ? "mp4" : "pdf";
+      calculatedFilename = `${newDocTitle.replace(/[^a-zA-Z0-9]/g, "_")}.${ext}`;
+    }
+
+    const newDocObj = {
+      id: `doc_custom_${Date.now()}`,
+      title: newDocTitle.trim(),
+      type: newDocType,
+      size: calculatedSize,
+      filename: calculatedFilename,
+      file_url: newDocDataUrl || newDocUrl || undefined,
+      isTeacherUpload: true,
+    };
+
+    // Save to MySQL Server DB
+    MysqlDataService.saveMaterial({
+      id: newDocObj.id,
+      title: newDocObj.title,
+      subject_name: selectedMapel,
+      class_name: selectedClass,
+      type: newDocObj.type,
+      size: newDocObj.size,
+      filename: newDocObj.filename,
+      file_url: newDocDataUrl || newDocUrl || undefined,
+      uploaded_by: me?.full_name || "Guru Pengampu",
+    }).catch((err) => console.warn("saveMaterial DB warning:", err));
+
+    setDynamicDocs((prev) => {
+      const currentList = prev[selectedMapel] || [];
+      const updated = [newDocObj, ...currentList];
+      const nextState = { ...prev, [selectedMapel]: updated };
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("lms_teacher_modul_docs_v1", JSON.stringify(nextState));
+        } catch (err) {}
+      }
+      return nextState;
+    });
+
+    toast.success(`🎉 Berkas Modul "${newDocTitle}" (${newDocType}) berhasil diterbitkan ke Database ${selectedMapel}!`);
+    setIsAddDocOpen(false);
+    setNewDocTitle("");
+    setNewDocFile(null);
+    setNewDocUrl("");
+    setNewDocDataUrl("");
+  };
+
+  const handleDeleteDoc = (id: string, title: string) => {
+    // Delete from MySQL Server DB
+    MysqlDataService.deleteMaterial(id).catch((err) => console.warn("deleteMaterial DB warning:", err));
+
+    setDynamicDocs((prev) => {
+      const currentList = prev[selectedMapel] || [];
+      const updated = currentList.filter((d) => d.id !== id);
+      const nextState = { ...prev, [selectedMapel]: updated };
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("lms_teacher_modul_docs_v1", JSON.stringify(nextState));
+        } catch (err) {}
+      }
+      return nextState;
+    });
+
+    setHiddenDocIds((prev) => {
+      if (prev.includes(id)) return prev;
+      const nextHidden = [...prev, id];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("lms_hidden_teacher_modul_docs_v1", JSON.stringify(nextHidden));
+        } catch (err) {}
+      }
+      return nextHidden;
+    });
+
+    toast.success(`🗑️ Modul/Dokumen "${title}" berhasil dihapus dari sistem!`);
+  };
+
+  // Integrated Jurnal KBM State (Request #5)
+  const [jurnalMateri, setJurnalMateri] = useState("Pertemuan 2 — Tajwid Mad Silah Qashirah & Mad Badal");
+  const [jurnalCatatan, setJurnalCatatan] = useState("KBM berlangsung tertib. Siswa aktif murojaah & tanya jawab.");
 
   // Request #5: Interactive Export Excel for Grades
   const handleExportExcelGrades = () => {
@@ -1189,61 +1482,128 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
 
       {/* TAB 3: MATERI & MODUL AJAR */}
       {activeTab === "materi" && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 Modul & Perangkat Ajar ({selectedMapel} - {selectedClass})
               </h2>
-              <p className="text-xs text-slate-500">Kumpulan CP, ATP, Modul Ajar PDF, Buku Digital, & Video KBM.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Kumpulan CP, ATP, Modul Ajar PDF, Buku Digital, & Video KBM Kurikulum Merdeka.
+              </p>
             </div>
 
-            <Button
-              size="sm"
-              className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 shrink-0"
-              onClick={() => {
-                toast.success(`📦 Mengunduh Semua Perangkat Ajar ${selectedMapel} (${selectedClass}) .ZIP...`);
-              }}
-            >
-              <FolderArchive className="h-4 w-4" /> Unduh Paket Perangkat (ZIP)
-            </Button>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              {isGuru && (
+                <Button
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs gap-1.5 shadow-sm"
+                  onClick={() => setIsAddDocOpen(true)}
+                >
+                  <Plus className="h-4 w-4" /> + Unggah Materi / Modul
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs font-bold gap-1.5 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                onClick={() => {
+                  toast.success(`📦 Mengunduh Semua Perangkat Ajar ${selectedMapel} (${selectedClass}) .ZIP...`);
+                }}
+              >
+                <FolderArchive className="h-4 w-4 text-emerald-600" /> Unduh Paket (ZIP)
+              </Button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {activeMapelContent.modulDocs.map((doc) => (
-              <div key={doc.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-start justify-between gap-3 hover:border-slate-400/50 transition">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-md">
-                      {doc.type}
-                    </span>
-                    <span className="text-xs text-slate-400 font-mono">{doc.size}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeMapelDocs.map((doc) => {
+              const t = (doc.type || "").toLowerCase();
+              const isVideo = t.includes("video") || t.includes("mp4");
+              const isPpt = t.includes("ppt") || t.includes("slide");
+              const isBook = t.includes("book") || t.includes("buku");
+              const isLkpd = t.includes("lkpd");
+
+              const badgeColor = isVideo
+                ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30"
+                : isPpt
+                ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                : isBook
+                ? "bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/30"
+                : isLkpd
+                ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
+
+              return (
+                <div
+                  key={doc.id}
+                  className="group relative p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-950 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 shadow-xs hover:shadow-md hover:border-emerald-500/50 dark:hover:border-emerald-500/40 transition-all duration-200 flex flex-col justify-between gap-4 overflow-hidden"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md border ${badgeColor}`}>
+                          {doc.type}
+                        </span>
+                        {doc.isTeacherUpload && (
+                          <span className="text-[10px] font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/30">
+                            ✨ Unggahan Guru
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-mono font-bold text-slate-400 bg-slate-100 dark:bg-slate-900 px-2.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-800">
+                        {doc.size}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100 leading-snug group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                        {doc.title}
+                      </h3>
+                      <div className="text-xs text-slate-400 font-mono truncate flex items-center gap-1.5">
+                        <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span>{doc.filename}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="font-bold text-sm text-slate-900 dark:text-slate-100 leading-snug">{doc.title}</div>
-                  <div className="text-xs text-slate-400 font-mono truncate">{doc.filename}</div>
+
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 mt-auto">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs font-bold gap-1.5 border-emerald-600/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 dark:hover:text-white transition shadow-2xs h-9"
+                        onClick={() => setSelectedDocForPreview(doc)}
+                      >
+                        <BookOpen className="h-3.5 w-3.5 shrink-0" /> Buka / Lihat Materi
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs font-bold gap-1.5 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-2xs h-9"
+                        onClick={() => handleDownloadDoc(doc)}
+                      >
+                        <Download className="h-3.5 w-3.5 shrink-0" /> Unduh
+                      </Button>
+                    </div>
+
+                    {isGuru && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 h-9 w-9 p-0 shrink-0 rounded-xl"
+                        onClick={() => setDeleteConfirmDoc({ id: doc.id, title: doc.title })}
+                        title="Hapus Perangkat Ajar Ini"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs font-bold gap-1.5 border-blue-600/40 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
-                      onClick={() => setSelectedDocForPreview(doc)}
-                    >
-                      <BookOpen className="h-3.5 w-3.5" /> Buka / Lihat Materi
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs font-bold gap-1.5 border-emerald-600/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950"
-                      onClick={() => handleDownloadDoc(doc.title, doc.filename)}
-                    >
-                      <Download className="h-3.5 w-3.5" /> Unduh
-                    </Button>
-                  </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -1753,27 +2113,106 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
                 </div>
               </div>
 
-              <div className="p-6 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 min-h-[260px] space-y-3 font-sans">
-                <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{selectedDocForPreview.title}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Mata Pelajaran: {selectedMapel} | MTsN 2 Cilacap</p>
-                  </div>
-                  <Badge className="bg-emerald-700 text-white font-bold text-[10px]">Tersinkronisasi Kemenag</Badge>
-                </div>
+              {(() => {
+                const filenameStr = (selectedDocForPreview.filename || selectedDocForPreview.title || "").toLowerCase();
+                const fileUrlStr = (selectedDocForPreview.file_url || "").toLowerCase();
+                const typeStr = (selectedDocForPreview.type || "").toLowerCase();
 
-                <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-2 py-2">
-                  <p className="font-semibold text-slate-900 dark:text-slate-100">Ringkasan Isi Perangkat Ajar:</p>
-                  <p>
-                    Dokumen ini memuat Alur Tujuan Pembelajaran (ATP), Capaian Pembelajaran (CP), dan Modul Ajar Kurikulum Merdeka yang dirancang khusus untuk pembelajaran tatap muka dan digital di kelas.
-                  </p>
-                  <ul className="list-disc pl-5 space-y-1 text-slate-600 dark:text-slate-400">
-                    <li>Pengenalan Alur Pembelajaran & Penguatan Karakter Profil Pelajar Rahmatan Lil Alamin.</li>
-                    <li>Langkah-langkah Kegiatan Inti KBM, Pemantik Diskusi, dan Penilaian Formatif.</li>
-                    <li>Glosarium Istilah & Lembar Kerja Peserta Didik (LKPD).</li>
-                  </ul>
-                </div>
-              </div>
+                const isVideo = filenameStr.endsWith(".mp4") || fileUrlStr.includes("video/mp4") || typeStr.includes("video");
+                const isAudio = filenameStr.endsWith(".mp3") || fileUrlStr.includes("audio/mpeg") || typeStr.includes("audio");
+                const isPptx = filenameStr.endsWith(".pptx") || filenameStr.endsWith(".ppt") || typeStr.includes("powerpoint") || typeStr.includes("slide");
+                const isDocx = filenameStr.endsWith(".docx") || filenameStr.endsWith(".doc") || typeStr.includes("word") || typeStr.includes("document");
+
+                if (isVideo) {
+                  return (
+                    <div className="rounded-xl overflow-hidden border border-slate-300 dark:border-slate-800 bg-black p-2 shadow-md">
+                      <video
+                        src={previewDocBlobUrl || undefined}
+                        controls
+                        autoPlay
+                        className="w-full max-h-[55vh] rounded-lg bg-black"
+                      />
+                    </div>
+                  );
+                }
+
+                if (isAudio) {
+                  return (
+                    <div className="rounded-xl p-6 border border-slate-300 dark:border-slate-800 bg-slate-900 shadow-md text-slate-100 text-center space-y-4">
+                      <div className="h-20 w-20 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/40 grid place-items-center text-emerald-400 animate-pulse">
+                        <Headphones className="h-10 w-10" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-base text-slate-100">{selectedDocForPreview.title}</h3>
+                        <p className="text-xs text-slate-400 mt-1">Pemutar Audio MP3 Pembelajaran • MTsN 2 Cilacap</p>
+                      </div>
+                      <audio src={previewDocBlobUrl || undefined} controls autoPlay className="w-full max-w-md mx-auto" />
+                    </div>
+                  );
+                }
+
+                if (isPptx) {
+                  return (
+                    <div className="rounded-xl p-6 border border-slate-300 dark:border-slate-800 bg-slate-900 text-slate-100 shadow-md space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-amber-600 text-white font-extrabold text-xs">📊 Presentation Slide (.pptx)</Badge>
+                          <span className="text-xs text-slate-400 font-mono">{selectedDocForPreview.filename}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs text-amber-400 border-amber-500/40">PowerPoint</Badge>
+                      </div>
+                      <div className="p-8 rounded-xl bg-slate-950 border border-slate-800 text-center space-y-3">
+                        <div className="h-16 w-16 mx-auto rounded-2xl bg-amber-500/20 border border-amber-500/40 grid place-items-center text-amber-400 font-black text-2xl">
+                          PPT
+                        </div>
+                        <h2 className="text-lg font-black text-white">{selectedDocForPreview.title}</h2>
+                        <p className="text-xs text-slate-400 max-w-md mx-auto">
+                          Berkas Presentasi Slide PowerPoint (.pptx). Klik tombol unduh di bawah untuk menjalankan atau menyimpan berkas presentasi asli.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (isDocx) {
+                  return (
+                    <div className="rounded-xl p-6 border border-slate-300 dark:border-slate-800 bg-slate-900 text-slate-100 shadow-md space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-600 text-white font-extrabold text-xs">📄 Word Document (.docx)</Badge>
+                          <span className="text-xs text-slate-400 font-mono">{selectedDocForPreview.filename}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs text-blue-400 border-blue-500/40">Microsoft Word</Badge>
+                      </div>
+                      <div className="p-8 rounded-xl bg-slate-950 border border-slate-800 text-center space-y-3">
+                        <div className="h-16 w-16 mx-auto rounded-2xl bg-blue-500/20 border border-blue-500/40 grid place-items-center text-blue-400 font-black text-2xl">
+                          DOC
+                        </div>
+                        <h2 className="text-lg font-black text-white">{selectedDocForPreview.title}</h2>
+                        <p className="text-xs text-slate-400 max-w-md mx-auto">
+                          Dokumen Naskah Microsoft Word (.docx). Klik tombol di bawah untuk mengunduh atau menyunting dokumen secara penuh.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="rounded-xl overflow-hidden border border-slate-300 dark:border-slate-800 bg-slate-900 shadow-md">
+                    <object
+                      data={previewDocBlobUrl || undefined}
+                      type="application/pdf"
+                      className="w-full h-[55vh] border-0"
+                    >
+                      <iframe
+                        src={previewDocBlobUrl || undefined}
+                        title={`Viewer - ${selectedDocForPreview.title}`}
+                        className="w-full h-[55vh] border-0"
+                      />
+                    </object>
+                  </div>
+                );
+              })()}
 
               <DialogFooter className="pt-2 flex justify-between items-center w-full">
                 <Button type="button" variant="outline" size="sm" onClick={() => setSelectedDocForPreview(null)}>
@@ -1786,8 +2225,10 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
                     size="sm"
                     className="text-xs font-bold border-blue-500/40 text-blue-600 gap-1.5"
                     onClick={() => {
-                      window.open("#", "_blank");
-                      toast.success(`🌐 Membuka ${selectedDocForPreview.filename} di tab baru!`);
+                      if (previewDocBlobUrl) {
+                        window.open(previewDocBlobUrl, "_blank");
+                        toast.success(`🌐 Membuka ${selectedDocForPreview.filename} di tab baru!`);
+                      }
                     }}
                   >
                     Buka di Tab Baru ↗
@@ -1796,7 +2237,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
                     type="button"
                     size="sm"
                     className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5"
-                    onClick={() => handleDownloadDoc(selectedDocForPreview.title, selectedDocForPreview.filename)}
+                    onClick={() => handleDownloadDoc(selectedDocForPreview)}
                   >
                     <Download className="h-3.5 w-3.5" /> Unduh Dokumen
                   </Button>
@@ -1807,6 +2248,137 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
         </DialogContent>
       </Dialog>
 
+      {/* 🗑️ DIALOG KONFIRMASI HAPUS PERANGKAT AJAR GURU */}
+      <Dialog open={!!deleteConfirmDoc} onOpenChange={() => setDeleteConfirmDoc(null)}>
+        <DialogContent className="sm:max-w-md border-rose-500/30 bg-white dark:bg-slate-950">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+              <Trash2 className="h-5 w-5 shrink-0" /> Konfirmasi Hapus Perangkat Ajar
+            </DialogTitle>
+            <DialogDescription className="text-xs pt-1 leading-relaxed text-slate-600 dark:text-slate-400">
+              Apakah Anda yakin ingin menghapus berkas perangkat/modul <strong className="text-slate-900 dark:text-slate-100">"{deleteConfirmDoc?.title}"</strong>?
+              Tindakan ini akan menghapus dokumen dari Database Perangkat Ajar MTsN 2 Cilacap.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 pt-3 border-t border-slate-200 dark:border-slate-800 mt-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setDeleteConfirmDoc(null)}>
+              Batal
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5"
+              onClick={() => {
+                if (deleteConfirmDoc) {
+                  handleDeleteDoc(deleteConfirmDoc.id, deleteConfirmDoc.title);
+                  setDeleteConfirmDoc(null);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" /> Ya, Hapus Dokumen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 📤 MODAL UNGGAH MATERI / MODUL GURU */}
+      <Dialog open={isAddDocOpen} onOpenChange={setIsAddDocOpen}>
+        <DialogContent className="sm:max-w-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+          <DialogHeader>
+            <DialogTitle className="text-base font-extrabold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+              <Upload className="h-5 w-5 text-emerald-600" /> Unggah Materi / Modul Pembelajaran Baru
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Terbitkan modul PDF, PPT, Video KBM, atau Buku Digital untuk mata pelajaran <span className="font-bold text-emerald-600">{selectedMapel} ({selectedClass})</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleAddDocSubmit} className="space-y-4 py-2 text-xs">
+            <div>
+              <Label className="text-xs font-bold">Judul Materi / Modul Ajar</Label>
+              <Input
+                placeholder="Contoh: Modul Ajar Bab 2: Hukum Bacaan Mad Thabi'i"
+                value={newDocTitle}
+                onChange={(e) => setNewDocTitle(e.target.value)}
+                required
+                className="mt-1 text-xs"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold">Tipe Berkas / Dokumen</Label>
+              <select
+                value={newDocType}
+                onChange={(e) => setNewDocType(e.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="PDF Module">📄 PDF Module (Modul Ajar PDF)</option>
+                <option value="PDF Document">📑 PDF Document (Dokumen CP / ATP)</option>
+                <option value="PDF Book">📚 PDF Book (Buku Digital PDF)</option>
+                <option value="PPT Presentation">📊 PPT Presentation (Slide Presentasi PPTX)</option>
+                <option value="MP4 Video">🎥 MP4 Video (Video Pembelajaran KBM)</option>
+                <option value="LKPD Digital">📝 LKPD Digital (Lembar Kerja Siswa)</option>
+                <option value="Word Document">📝 Word Document (Dokumen DOCX)</option>
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold">Pilih Berkas dari Perangkat (Lokal)</Label>
+              <Input
+                type="file"
+                accept=".pdf,.pptx,.ppt,.mp4,.docx,.doc"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    setNewDocFile(file);
+                    if (!newDocTitle) {
+                      setNewDocTitle(file.name.replace(/\.[^/.]+$/, ""));
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                      if (evt.target?.result) {
+                        setNewDocDataUrl(evt.target.result as string);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="mt-1 text-xs cursor-pointer"
+              />
+              {newDocFile && (
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono mt-1 font-bold">
+                  ✓ Terpilih: {newDocFile.name} ({(newDocFile.size / (1024 * 1024)).toFixed(1)} MB)
+                </p>
+              )}
+            </div>
+
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+              <span className="shrink-0 mx-2 text-[10px] uppercase font-bold text-slate-400">Atau Tautan Web / G-Drive</span>
+              <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold">Tautan URL Berkas (Google Drive / Cloud)</Label>
+              <Input
+                placeholder="https://drive.google.com/file/d/..."
+                value={newDocUrl}
+                onChange={(e) => setNewDocUrl(e.target.value)}
+                className="mt-1 text-xs font-mono"
+              />
+            </div>
+
+            <DialogFooter className="pt-2 gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddDocOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs gap-1.5">
+                <Upload className="h-4 w-4" /> Simpan & Terbitkan Modul
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

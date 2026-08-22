@@ -14,10 +14,16 @@ import { Lock, UserCheck, ShieldCheck, GraduationCap, BookOpen, KeyRound, Eye, E
 export const Route = createFileRoute("/auth")({
   ssr: false,
   beforeLoad: async () => {
-    const user = MysqlAuthService.getActiveUser();
-    if (user) {
-      const isAdmin = user.role === "admin";
-      throw redirect({ to: (isAdmin ? "/admin" : "/dashboard") as any });
+    try {
+      const user = await MysqlAuthService.getValidSession();
+      if (user) {
+        const isAdmin = user.role === "admin";
+        throw redirect({ to: (isAdmin ? "/admin" : "/dashboard") as any });
+      }
+    } catch (err: any) {
+      if (err?.isRedirect || err?.to || err?.statusCode || err?.name === "Redirect" || String(err).includes("Redirect")) {
+        throw err;
+      }
     }
   },
   head: () => ({
@@ -107,7 +113,7 @@ function AuthPage() {
   };
 
   const handleQuickLogin = (demoEmail: string) => {
-    const demoPass = demoEmail.toLowerCase() === "admin@mail.com" ? "4dminGanteng" : "asd123";
+    const demoPass = demoEmail.toLowerCase() === "admin@mail.com" ? "AdminMTsN2Cilacap2026!" : "MtsN2#2026!Sec";
     setEmail(demoEmail);
     setPassword(demoPass);
     setLoading(true);

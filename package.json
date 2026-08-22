@@ -9,6 +9,7 @@
     "start": "node app.js",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "test": "node tests/run_tests.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { MysqlDataService } from "@/services/mysqlDataService";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MonitorCheck, Brain, BarChart3, Download, ShieldCheck } from "lucide-react";
@@ -59,6 +60,26 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
       status: "Terjadwal",
     },
   ]);
+
+  React.useEffect(() => {
+    MysqlDataService.getCbtExams().then((dbExams) => {
+      if (dbExams && dbExams.length > 0) {
+        const mapped = dbExams.map((e) => ({
+          id: String(e.id || Date.now()),
+          title: e.title,
+          mapel: e.subject_name || "Mata Pelajaran",
+          kelas: "VIII A",
+          durasi: String(e.duration_minutes || 90),
+          durationMinutes: e.duration_minutes || 90,
+          soalCount: 20,
+          token: e.token,
+          passingScore: e.passing_score || 75,
+          status: "Dibuka" as const,
+        }));
+        setExams(mapped);
+      }
+    });
+  }, []);
 
   // State Bank Soal
   const [questions, setQuestions] = useState<CBTQuestion[]>([

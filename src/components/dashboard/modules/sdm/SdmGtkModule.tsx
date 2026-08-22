@@ -17,7 +17,6 @@ import {
   ShieldCheck,
   Edit,
   Trash2,
-  Key,
   BookOpen,
   Calendar,
 } from "lucide-react";
@@ -599,7 +598,7 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
                     )}
                   </td>
                   <td className="py-3 px-4 text-center">
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-center">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -608,15 +607,6 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
                         onClick={() => setEditingGtk({ ...item })}
                       >
                         <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0 text-amber-600 hover:bg-amber-50"
-                        title="Reset Akun Login"
-                        onClick={() => toast.success(`🔑 Password Akun ${item.name} berhasil di-reset!`)}
-                      >
-                        <Key className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </td>

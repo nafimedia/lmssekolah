@@ -12,6 +12,22 @@ if (typeof window === 'undefined') {
     connectionLimit: 10,
     queueLimit: 0,
   });
+
+  // Graceful shutdown: close MySQL pool connections on termination signals
+  const closePool = async (signal: string) => {
+    if (pool) {
+      console.log(`[Graceful Shutdown] Received ${signal}. Closing MySQL connection pool...`);
+      try {
+        await pool.end();
+        console.log('[Graceful Shutdown] MySQL connection pool closed cleanly.');
+      } catch (err) {
+        console.error('[Graceful Shutdown Error]:', err);
+      }
+    }
+  };
+
+  process.once('SIGTERM', () => closePool('SIGTERM'));
+  process.once('SIGINT', () => closePool('SIGINT'));
 }
 
 export async function query<T = any[]>(sql: string, params?: any[]): Promise<T> {
@@ -41,6 +57,22 @@ export async function execute(sql: string, params?: any[]): Promise<any> {
   } catch (err: any) {
     console.error(`[MySQL Execute Error]: ${err?.message || err}`);
     throw err;
+  }
+}
+
+export async function withTransaction<T>(callback: (conn: any) => Promise<T>): Promise<T> {
+  if (!pool) throw new Error("Koneksi database tidak tersedia");
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const result = await callback(conn);
+    await conn.commit();
+    return result;
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
   }
 }
 

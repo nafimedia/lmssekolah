@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import appCss from "../styles.css?url";
 
@@ -36,6 +37,27 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error("Root Route Error Caught:", error);
   const router = useRouter();
+
+  const errStr = String(error?.message || error || "");
+  const isRedirectOrAuthErr =
+    (error as any)?.isRedirect ||
+    (error as any)?.to ||
+    (error as any)?.statusCode === 307 ||
+    (error as any)?.statusCode === 302 ||
+    errStr.includes("Redirect") ||
+    errStr.includes("401") ||
+    errStr.includes("Unauthenticated") ||
+    errStr.includes("Sesi");
+
+  useEffect(() => {
+    if (isRedirectOrAuthErr && typeof window !== "undefined") {
+      window.location.href = "/auth";
+    }
+  }, [isRedirectOrAuthErr]);
+
+  if (isRedirectOrAuthErr) {
+    return null;
+  }
 
   const isChunkError =
     error?.message?.includes("Failed to fetch dynamically imported module") ||
@@ -81,10 +103,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             Muat Ulang Halaman (Try Again)
           </button>
           <a
-            href="/"
+            href="/auth"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Kembali ke Beranda
+            Halaman Login
           </a>
         </div>
       </div>
@@ -168,7 +190,6 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );

@@ -178,14 +178,56 @@ export function SiakadMasterDataModule() {
       jp: newMapelJp,
       target: newMapelTarget,
     };
-
     setMasterMapel((prev) => [newItem, ...prev]);
-    toast.success(`🎉 Mata Pelajaran "${newMapelName}" (${code}) berhasil ditambahkan ke Katalog SIAKAD!`);
+    toast.success(`✅ Mata Pelajaran ${newMapelName} (${code}) berhasil ditambahkan!`);
     setIsAddMapelOpen(false);
     setNewMapelCode("");
     setNewMapelName("");
   };
 
+  // KKTP & Skema Penilaian Configuration State
+  const [kktpConfig, setKktpConfig] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_kktp_config_v1");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      kktpStandar: 75.0,
+      bobotFormatif: 60,
+      bobotSumatif: 40,
+      sangatBaik: 90.0,
+      baik: 80.0,
+      cukup: 75.0,
+    };
+  });
+
+  const [isEditKktpOpen, setIsEditKktpOpen] = useState(false);
+  const [editKktpStandar, setEditKktpStandar] = useState(kktpConfig.kktpStandar);
+  const [editBobotFormatif, setEditBobotFormatif] = useState(kktpConfig.bobotFormatif);
+  const [editBobotSumatif, setEditBobotSumatif] = useState(kktpConfig.bobotSumatif);
+  const [editSangatBaik, setEditSangatBaik] = useState(kktpConfig.sangatBaik);
+  const [editBaik, setEditBaik] = useState(kktpConfig.baik);
+  const [editCukup, setEditCukup] = useState(kktpConfig.cukup);
+
+  const handleSaveKktpConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = {
+      kktpStandar: Number(editKktpStandar) || 75.0,
+      bobotFormatif: Number(editBobotFormatif) || 60,
+      bobotSumatif: Number(editBobotSumatif) || 40,
+      sangatBaik: Number(editSangatBaik) || 90.0,
+      baik: Number(editBaik) || 80.0,
+      cukup: Number(editCukup) || 75.0,
+    };
+    setKktpConfig(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("lms_kktp_config_v1", JSON.stringify(updated));
+    }
+    toast.success("✅ Ambang Batas KKTP & Skema Penilaian berhasil diperbarui oleh Admin Akademik!");
+    setIsEditKktpOpen(false);
+  };
   const handleDeleteMapel = (code: string, name: string) => {
     setMasterMapel((prev) => prev.filter((m) => m.code !== code));
     toast.success(`🗑️ Mapel "${name}" (${code}) berhasil dihapus dari Katalog.`);
@@ -803,35 +845,52 @@ export function SiakadMasterDataModule() {
       {/* TAB 7: KKTP & SKEMA PENILAIAN */}
       {activeTab === "penilaian_config" && (
         <Card className="border-border shadow-xs">
-          <CardHeader>
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-primary" /> Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Konfigurasi ambang batas KKM/KKTP dan bobot penilaian Kurikulum Merdeka.
-            </CardDescription>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-primary" /> Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)
+              </CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Konfigurasi ambang batas KKM/KKTP dan bobot penilaian Kurikulum Merdeka.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shrink-0"
+              onClick={() => {
+                setEditKktpStandar(kktpConfig.kktpStandar);
+                setEditBobotFormatif(kktpConfig.bobotFormatif);
+                setEditBobotSumatif(kktpConfig.bobotSumatif);
+                setEditSangatBaik(kktpConfig.sangatBaik);
+                setEditBaik(kktpConfig.baik);
+                setEditCukup(kktpConfig.cukup);
+                setIsEditKktpOpen(true);
+              }}
+            >
+              ⚙️ Atur / Edit KKTP & Skema Nilai
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-xl border border-border bg-card space-y-1">
                 <div className="text-xs font-semibold text-muted-foreground">KKTP Standar Madrasah</div>
-                <div className="text-2xl font-black text-emerald-600">75.0</div>
+                <div className="text-2xl font-black text-emerald-600">{Number(kktpConfig.kktpStandar).toFixed(1)}</div>
                 <div className="text-[11px] text-muted-foreground">Batas Minimal Kelulusan TP</div>
               </div>
 
               <div className="p-4 rounded-xl border border-border bg-card space-y-1">
                 <div className="text-xs font-semibold text-muted-foreground">Bobot Formatif vs Sumatif</div>
-                <div className="text-2xl font-black text-primary">60% / 40%</div>
+                <div className="text-2xl font-black text-primary">{kktpConfig.bobotFormatif}% / {kktpConfig.bobotSumatif}%</div>
                 <div className="text-[11px] text-muted-foreground">Skema Bobot Nilai E-Rapor</div>
               </div>
 
               <div className="p-4 rounded-xl border border-border bg-card space-y-1">
                 <div className="text-xs font-semibold text-muted-foreground">Predikat Kelulusan</div>
                 <div className="text-xs font-bold text-foreground mt-1 space-y-1">
-                  <div>≥ 90.0 : <span className="text-emerald-600 font-bold">Sangat Baik</span></div>
-                  <div>≥ 80.0 : <span className="text-emerald-600 font-bold">Baik</span></div>
-                  <div>≥ 75.0 : <span className="text-emerald-600 font-bold">Cukup</span></div>
-                  <div>&lt; 75.0 : <span className="text-rose-600 font-bold">Perlu Bimbingan</span></div>
+                  <div>≥ {Number(kktpConfig.sangatBaik).toFixed(1)} : <span className="text-emerald-600 font-bold">Sangat Baik</span></div>
+                  <div>≥ {Number(kktpConfig.baik).toFixed(1)} : <span className="text-emerald-600 font-bold">Baik</span></div>
+                  <div>≥ {Number(kktpConfig.cukup).toFixed(1)} : <span className="text-emerald-600 font-bold">Cukup</span></div>
+                  <div>&lt; {Number(kktpConfig.cukup).toFixed(1)} : <span className="text-rose-600 font-bold">Perlu Bimbingan</span></div>
                 </div>
               </div>
             </div>
@@ -1446,6 +1505,114 @@ export function SiakadMasterDataModule() {
               </DialogFooter>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      {/* MODAL: EDIT KKTP & SKEMA PENILAIAN */}
+      <Dialog open={isEditKktpOpen} onOpenChange={setIsEditKktpOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" /> Pengaturan KKTP & Skema Penilaian
+            </DialogTitle>
+            <DialogDescription>Atur ambang batas KKTP standar madrasah dan skema bobot Kurikulum Merdeka.</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveKktpConfig} className="space-y-4 py-2 text-xs">
+            <div>
+              <Label className="text-xs font-semibold">KKTP Standar Minimal Kelulusan</Label>
+              <Input
+                type="number"
+                step="0.5"
+                min="50"
+                max="100"
+                value={editKktpStandar}
+                onChange={(e) => setEditKktpStandar(Number(e.target.value))}
+                required
+                className="mt-1 text-xs font-bold"
+              />
+              <span className="text-[10px] text-muted-foreground">Nilai minimal yang harus dicapai siswa untuk dinyatakan Tuntas (TP).</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">Bobot Formatif (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editBobotFormatif}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setEditBobotFormatif(val);
+                    setEditBobotSumatif(100 - val);
+                  }}
+                  required
+                  className="mt-1 text-xs font-bold"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Bobot Sumatif (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editBobotSumatif}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setEditBobotSumatif(val);
+                    setEditBobotFormatif(100 - val);
+                  }}
+                  required
+                  className="mt-1 text-xs font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-3 space-y-3">
+              <span className="text-xs font-bold text-foreground">Batas Predikat Nilai</span>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label className="text-[11px]">Sangat Baik (≥)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={editSangatBaik}
+                    onChange={(e) => setEditSangatBaik(Number(e.target.value))}
+                    className="mt-1 text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px]">Baik (≥)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={editBaik}
+                    onChange={(e) => setEditBaik(Number(e.target.value))}
+                    className="mt-1 text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px]">Cukup (≥)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={editCukup}
+                    onChange={(e) => setEditCukup(Number(e.target.value))}
+                    className="mt-1 text-xs font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-3 border-t border-border">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsEditKktpOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">
+                💾 Simpan Pengaturan KKTP
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

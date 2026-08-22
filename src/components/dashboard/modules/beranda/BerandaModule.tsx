@@ -44,6 +44,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useRealtimeCalendar } from "@/hooks/useRealtimeCalendar";
 
@@ -68,6 +76,11 @@ export function BerandaModule({
   } = useRealtimeCalendar();
 
   const [liveStats, setLiveStats] = useState<any>(null);
+
+  // Modals for Teacher Dashboard Interactive Details
+  const [selectedJadwalModal, setSelectedJadwalModal] = useState<any>(null);
+  const [selectedTugasModal, setSelectedTugasModal] = useState<any>(null);
+  const [selectedCapaianModal, setSelectedCapaianModal] = useState<any>(null);
 
   useEffect(() => {
     MysqlDataService.getDatabaseStats().then((res) => setLiveStats(res));
@@ -175,7 +188,16 @@ export function BerandaModule({
 
             <div
               className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-600/60 transition cursor-pointer space-y-2"
-              onClick={() => { setActiveTab?.("ruang_mengajar"); toast.info("Masuk Ruang Mengajar: Al-Quran Hadits 8A"); }}
+              onClick={() => {
+                setSelectedJadwalModal({
+                  mapel: "Al-Quran Hadits",
+                  rombel: "Kelas VIII A",
+                  jam: "07:30 - 09:00 WIB (Jam 1-2)",
+                  ruang: "Ruang A.02",
+                  materi: "Pertemuan 2 — Tajwid Mad Silah Qashirah",
+                  statusSiswa: "26 Siswa Terdaftar (26 Hadir, 0 Alpa)",
+                });
+              }}
             >
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-emerald-700 dark:text-emerald-400">07:30 - 09:00 WIB · Jam 1-2</span>
@@ -188,7 +210,16 @@ export function BerandaModule({
 
             <div
               className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-emerald-600/60 transition cursor-pointer space-y-2"
-              onClick={() => { setActiveTab?.("ruang_mengajar"); toast.info("Masuk Ruang Mengajar: Fiqih IX C"); }}
+              onClick={() => {
+                setSelectedJadwalModal({
+                  mapel: "Fiqih Kebangsaan",
+                  rombel: "Kelas IX C",
+                  jam: "10:15 - 11:45 WIB (Jam 5-6)",
+                  ruang: "Ruang C.04",
+                  materi: "Pertemuan 2 — Ketentuan & Syarat Sah Sembelihan Qurban",
+                  statusSiswa: "31 Siswa Terdaftar (31 Hadir, 0 Alpa)",
+                });
+              }}
             >
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-600 dark:text-slate-400">10:15 - 11:45 WIB · Jam 5-6</span>
@@ -208,7 +239,18 @@ export function BerandaModule({
               </button>
             </div>
 
-            <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 hover:border-amber-500/70 transition cursor-pointer space-y-2" onClick={() => setActiveTab?.("tugas")}>
+            <div
+              className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 hover:border-amber-500/70 transition cursor-pointer space-y-2"
+              onClick={() => {
+                setSelectedTugasModal({
+                  title: "LKPD Pertemuan 2: Resume Tajwid Mad Silah (VIII A)",
+                  mapel: "Al-Quran Hadits",
+                  rombel: "VIII A",
+                  deadline: "Hari ini, 23:59 WIB",
+                  count: "26 / 26 Submisi Terkumpul",
+                });
+              }}
+            >
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-amber-700 dark:text-amber-400">⚠️ PERLU KOREKSI SEGERA</span>
                 <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400">12 Submisi</span>
@@ -244,7 +286,11 @@ export function BerandaModule({
                 { mapel: "Al-Quran Hadits", classCode: "Kelas VIII B", status: "15 Pertemuan", kkm: "92.0% KKM" },
                 { mapel: "Fiqih Kebangsaan", classCode: "Kelas IX C", status: "18 Pertemuan", kkm: "97.5% KKM" },
               ].map((item, idx) => (
-                <div key={idx} className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center">
+                <div
+                  key={idx}
+                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-between items-center hover:border-emerald-500/60 cursor-pointer transition"
+                  onClick={() => setSelectedCapaianModal(item)}
+                >
                   <div>
                     <div className="font-bold text-slate-900 dark:text-slate-100">{item.mapel}</div>
                     <div className="text-[11px] text-slate-500">{item.classCode} · {item.status}</div>
@@ -285,6 +331,169 @@ export function BerandaModule({
             </div>
           </div>
         </div>
+
+        {/* 1. DIALOG INTERAKTIF: DETAIL JADWAL KBM */}
+        <Dialog open={!!selectedJadwalModal} onOpenChange={(o) => !o && setSelectedJadwalModal(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-extrabold flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-emerald-600" /> Detail KBM & Rincian Pertemuan
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Informasi jadwal KBM, lokasi kelas, materi pembelajaran, dan presensi.
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedJadwalModal && (
+              <div className="space-y-3 text-xs">
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-1">
+                  <Badge className="bg-emerald-600 text-white font-mono text-[10px]">{selectedJadwalModal.rombel}</Badge>
+                  <div className="font-bold text-base text-slate-900 dark:text-slate-100 mt-1">{selectedJadwalModal.mapel}</div>
+                  <div className="text-slate-600 dark:text-slate-400 font-mono">🕒 {selectedJadwalModal.jam} · 🏫 {selectedJadwalModal.ruang}</div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="font-semibold text-slate-700 dark:text-slate-300">Pokok Bahasan Materi:</div>
+                  <p className="p-2.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium">
+                    {selectedJadwalModal.materi}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="font-semibold text-slate-700 dark:text-slate-300">Status Presensi Rombel:</div>
+                  <div className="font-mono text-emerald-600 font-bold">{selectedJadwalModal.statusSiswa}</div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => setSelectedJadwalModal(null)}>
+                Tutup
+              </Button>
+              <Button
+                size="sm"
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold gap-1.5"
+                onClick={() => {
+                  setSelectedJadwalModal(null);
+                  setActiveTab?.("ruang_mengajar");
+                  toast.success(`🚀 Masuk ke Ruang Mengajar: ${selectedJadwalModal?.mapel}`);
+                }}
+              >
+                <BookOpen className="h-4 w-4" /> Masuk Ruang Mengajar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 2. DIALOG INTERAKTIF: DETAIL KOREKSI TUGAS */}
+        <Dialog open={!!selectedTugasModal} onOpenChange={(o) => !o && setSelectedTugasModal(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-extrabold flex items-center gap-2">
+                <PencilLine className="h-5 w-5 text-amber-500" /> Detail & Rincian Submisi Tugas
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Informasi pengumpulan tugas LKPD dan penugasan siswa.
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedTugasModal && (
+              <div className="space-y-3 text-xs">
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-1">
+                  <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{selectedTugasModal.title}</div>
+                  <div className="text-amber-800 dark:text-amber-300 font-medium">📌 Batas: {selectedTugasModal.deadline}</div>
+                  <div className="text-slate-600 dark:text-slate-400 font-mono font-bold pt-1">📊 {selectedTugasModal.count}</div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="font-semibold text-slate-700 dark:text-slate-300">Submisi Terbaru Masuk:</div>
+                  <div className="space-y-1 font-mono text-[11px]">
+                    <div className="p-2 rounded bg-slate-100 dark:bg-slate-900 flex justify-between">
+                      <span>1. ALIYA QIARA ABDULLAH</span>
+                      <Badge variant="outline" className="text-emerald-600 bg-emerald-50 text-[10px]">Terubah ke PDF (95)</Badge>
+                    </div>
+                    <div className="p-2 rounded bg-slate-100 dark:bg-slate-900 flex justify-between">
+                      <span>2. CITRA FEBI HASIFA</span>
+                      <Badge variant="outline" className="text-amber-600 bg-amber-50 text-[10px]">Perlu Koreksi</Badge>
+                    </div>
+                    <div className="p-2 rounded bg-slate-100 dark:bg-slate-900 flex justify-between">
+                      <span>3. AQILAA AAMIRATUL YUMNA</span>
+                      <Badge variant="outline" className="text-amber-600 bg-amber-50 text-[10px]">Perlu Koreksi</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => setSelectedTugasModal(null)}>
+                Tutup
+              </Button>
+              <Button
+                size="sm"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5"
+                onClick={() => {
+                  setSelectedTugasModal(null);
+                  setActiveTab?.("tugas");
+                  toast.success("📝 Buka Halaman Penilaian & Koreksi Tugas");
+                }}
+              >
+                <PencilLine className="h-4 w-4" /> Buka Koreksi Tugas
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 3. DIALOG INTERAKTIF: DETAIL CAPAIAN ROMBEL */}
+        <Dialog open={!!selectedCapaianModal} onOpenChange={(o) => !o && setSelectedCapaianModal(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-extrabold flex items-center gap-2">
+                <LineChart className="h-5 w-5 text-emerald-600" /> Detail Capaian KKM Rombel
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Rincian persentase ketuntasan KKM dan pertemuan KBM rombel.
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedCapaianModal && (
+              <div className="space-y-3 text-xs">
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-1">
+                  <div className="font-bold text-base text-slate-900 dark:text-slate-100">{selectedCapaianModal.mapel} ({selectedCapaianModal.classCode})</div>
+                  <div className="text-emerald-700 dark:text-emerald-400 font-mono font-bold text-sm">🏆 Ketuntasan: {selectedCapaianModal.kkm}</div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-center font-mono">
+                  <div className="p-2.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="text-[10px] text-slate-500">Rata-rata Formatif</div>
+                    <div className="font-extrabold text-sm text-slate-900 dark:text-slate-100">88.5</div>
+                  </div>
+                  <div className="p-2.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="text-[10px] text-slate-500">Rata-rata Sumatif</div>
+                    <div className="font-extrabold text-sm text-emerald-600">92.0</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => setSelectedCapaianModal(null)}>
+                Tutup
+              </Button>
+              <Button
+                size="sm"
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold gap-1.5"
+                onClick={() => {
+                  setSelectedCapaianModal(null);
+                  setActiveTab?.("ruang_mengajar");
+                  toast.success("📊 Buka Rekap E-Rapor Rombel");
+                }}
+              >
+                <LineChart className="h-4 w-4" /> Buka Rekap E-Rapor
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

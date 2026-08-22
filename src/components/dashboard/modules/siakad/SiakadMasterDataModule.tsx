@@ -229,6 +229,30 @@ export function SiakadMasterDataModule() {
     },
   ]);
 
+  useEffect(() => {
+    MysqlDataService.getUsers().then((users) => {
+      const siswaList = users.filter((u) => u.role === "siswa");
+      if (siswaList.length > 0) {
+        const counts: Record<string, number> = {};
+        siswaList.forEach((s) => {
+          const c = (s.class_name || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+          counts[c] = (counts[c] || 0) + 1;
+        });
+
+        setKelasTingkat((prev) =>
+          prev.map((kt) => ({
+            ...kt,
+            rombels: kt.rombels.map((r) => {
+              const normName = r.name.toUpperCase().replace(/[^A-Z0-9]/g, "");
+              const realCount = counts[normName] ?? 0;
+              return { ...r, siswaCount: realCount };
+            }),
+          }))
+        );
+      }
+    });
+  }, []);
+
   // Modal State Form Tambah & Edit Rombel
   const [isAddRombelOpen, setIsAddRombelOpen] = useState(false);
   const [newRombelTingkat, setNewRombelTingkat] = useState("Tingkat VII (Kelas 7)");

@@ -6569,6 +6569,46 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
   const [waSubject, setWaSubject] = useState("Pengumuman Rapat Orang Tua & Rekap Presensi");
   const [waMessage, setWaMessage] = useState("Assalamu'alaikum Wr. Wb. Bpk/Ibu Orang Tua Siswa, kami sampaikan rekapitulasi presensi & kegiatan KBM siswa di rombel ini.");
 
+  // Edit Student User Modal State
+  const [editingStudent, setEditingStudent] = useState<{
+    rombelId: string;
+    id: string;
+    nisn: string;
+    name: string;
+    gender: "L" | "P";
+    parentWa: string;
+    kkmStatus: string;
+  } | null>(null);
+
+  const handleSaveEditStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+
+    try {
+      await MysqlDataService.updateUserProfile({
+        id: editingStudent.id,
+        fullName: editingStudent.name,
+        email: `${editingStudent.nisn}@siswa.mtsn2cilacap.sch.id`,
+        nipNis: editingStudent.nisn,
+        phone: editingStudent.parentWa,
+      });
+
+      const updated = rombelList.map((r: any) => {
+        if (r.id !== editingStudent.rombelId) return r;
+        return {
+          ...r,
+          students: r.students.map((s: any) => (s.id === editingStudent.id ? { ...s, ...editingStudent } : s)),
+        };
+      });
+
+      saveRombelToStorage(updated);
+      toast.success(`✅ Data user siswa ${editingStudent.name} (NISN: ${editingStudent.nisn}) berhasil disimpan ke Database MySQL!`);
+      setEditingStudent(null);
+    } catch (err) {
+      toast.error("Gagal memperbarui data user siswa.");
+    }
+  };
+
   // Add Rombel Handler
   const handleCreateRombel = (e: React.FormEvent) => {
     e.preventDefault();
@@ -7036,15 +7076,35 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
                                                       )}
                                                     </td>
                                                     <td className="py-2 px-3 text-right">
-                                                      <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-6 text-[10px] text-red-600 hover:bg-red-500/10 font-bold"
-                                                        onClick={() => handleRemoveStudent(r.id, s.id, s.name)}
-                                                      >
-                                                        Keluarkan
-                                                      </Button>
-                                                    </td>
+                                                       <div className="flex items-center justify-end gap-1">
+                                                         <Button
+                                                           size="sm"
+                                                           variant="ghost"
+                                                           className="h-6 text-[10px] text-emerald-600 hover:bg-emerald-500/10 font-bold gap-1"
+                                                           onClick={() =>
+                                                             setEditingStudent({
+                                                               rombelId: r.id,
+                                                               id: s.id,
+                                                               nisn: s.nisn,
+                                                               name: s.name,
+                                                               gender: s.gender || "L",
+                                                               parentWa: s.parentWa || "081234567890",
+                                                               kkmStatus: s.kkmStatus || "TUNTAS (85)",
+                                                             })
+                                                           }
+                                                         >
+                                                           <PencilLine className="h-3 w-3" /> Edit User Siswa
+                                                         </Button>
+                                                         <Button
+                                                           size="sm"
+                                                           variant="ghost"
+                                                           className="h-6 text-[10px] text-red-600 hover:bg-red-500/10 font-bold"
+                                                           onClick={() => handleRemoveStudent(r.id, s.id, s.name)}
+                                                         >
+                                                           Keluarkan
+                                                         </Button>
+                                                       </div>
+                                                     </td>
                                                   </tr>
                                                 ))}
                                               </tbody>

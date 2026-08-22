@@ -218,6 +218,30 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
   const [isSkModalOpen, setIsSkModalOpen] = useState(false);
   const [selectedGtkForDetail, setSelectedGtkForDetail] = useState<GtkItem | null>(null);
 
+  // Edit GTK User State
+  const [editingGtk, setEditingGtk] = useState<GtkItem | null>(null);
+
+  const handleSaveEditGtk = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingGtk) return;
+
+    try {
+      await MysqlDataService.updateUserProfile({
+        id: editingGtk.id,
+        email: editingGtk.email,
+        fullName: editingGtk.name,
+        nipNis: editingGtk.nip,
+        phone: editingGtk.phone,
+      });
+
+      setGtkList((prev) => prev.map((g) => (g.id === editingGtk.id ? editingGtk : g)));
+      toast.success(`✅ Data user GTK/Guru ${editingGtk.name} berhasil diperbarui di Database MySQL!`);
+      setEditingGtk(null);
+    } catch (err) {
+      toast.error("Gagal memperbarui data user GTK.");
+    }
+  };
+
   // Form States for New GTK
   const [formName, setFormName] = useState("");
   const [formNip, setFormNip] = useState("");
@@ -471,9 +495,9 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900"
-                        title="Detail SDM GTK"
-                        onClick={() => setSelectedGtkForDetail(item)}
+                        className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50"
+                        title="Edit Data User GTK/Guru"
+                        onClick={() => setEditingGtk({ ...item })}
                       >
                         <Edit className="h-3.5 w-3.5" />
                       </Button>
@@ -633,6 +657,119 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
               <Button type="submit" size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold">Simpan SDM GTK</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL EDIT DATA USER GTK / GURU (ADMIN/SUPERADMIN) */}
+      <Dialog open={!!editingGtk} onOpenChange={(o) => !o && setEditingGtk(null)}>
+        <DialogContent className="sm:max-w-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Edit className="h-5 w-5 text-emerald-600" /> Edit Data User GTK / Guru (MySQL DB)
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Perbarui profil, NIP, status kepegawaian, mapel, dan kontak login user.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingGtk && (
+            <form onSubmit={handleSaveEditGtk} className="space-y-3 py-2 text-xs">
+              <div>
+                <Label className="text-xs font-semibold">Nama Lengkap & Gelar</Label>
+                <Input
+                  value={editingGtk.name}
+                  onChange={(e) => setEditingGtk({ ...editingGtk, name: e.target.value })}
+                  required
+                  className="mt-1 text-xs font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold">NIP (Pegawai / SIMPATIKA)</Label>
+                  <Input
+                    value={editingGtk.nip}
+                    onChange={(e) => setEditingGtk({ ...editingGtk, nip: e.target.value })}
+                    className="mt-1 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Email Login System</Label>
+                  <Input
+                    type="email"
+                    value={editingGtk.email}
+                    onChange={(e) => setEditingGtk({ ...editingGtk, email: e.target.value })}
+                    required
+                    className="mt-1 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold">Status Kepegawaian</Label>
+                  <select
+                    className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-semibold"
+                    value={editingGtk.statusKepegawaian}
+                    onChange={(e) => setEditingGtk({ ...editingGtk, statusKepegawaian: e.target.value as any })}
+                  >
+                    <option value="PNS">PNS</option>
+                    <option value="PPPK">PPPK</option>
+                    <option value="GTT / Honor">GTT / Honor</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Pangkat / Golongan</Label>
+                  <Input
+                    value={editingGtk.golongan}
+                    onChange={(e) => setEditingGtk({ ...editingGtk, golongan: e.target.value })}
+                    className="mt-1 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold">Mapel Utama Pengampu</Label>
+                  <select
+                    className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-semibold"
+                    value={editingGtk.mapelUtama}
+                    onChange={(e) => setEditingGtk({ ...editingGtk, mapelUtama: e.target.value })}
+                  >
+                    {INITIAL_MASTER_MAPEL.map((m) => (
+                      <option key={m.code} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">No. WhatsApp / Telepon</Label>
+                  <Input
+                    value={editingGtk.phone}
+                    onChange={(e) => setEditingGtk({ ...editingGtk, phone: e.target.value })}
+                    className="mt-1 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Penugasan / Tugas Tambahan</Label>
+                <Input
+                  value={editingGtk.tugasTambahan}
+                  onChange={(e) => setEditingGtk({ ...editingGtk, tugasTambahan: e.target.value })}
+                  className="mt-1 text-xs"
+                />
+              </div>
+
+              <DialogFooter className="pt-2 gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setEditingGtk(null)}>Batal</Button>
+                <Button type="submit" size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold gap-1.5">
+                  <CheckCircle2 className="h-4 w-4" /> Simpan Perubahan User GTK
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

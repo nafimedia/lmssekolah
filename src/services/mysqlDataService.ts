@@ -29,6 +29,7 @@ import {
   WaLogRow,
   CbtExamRow,
 } from "./mysqlServerFns";
+import fallbackUsersCatalog from "./fallbackUsersCatalog.json";
 
 export type { DatabaseStats, UserRow, SubjectRow, AnnouncementRow, AgendaRow, AttendanceRow, StudentAwardRow, WaLogRow, CbtExamRow };
 
@@ -44,10 +45,12 @@ export class MysqlDataService {
   // Users
   static async getUsers(): Promise<UserRow[]> {
     try {
-      return await getUsersFn();
+      const res = await getUsersFn();
+      if (res && res.length > 0) return res;
+      return fallbackUsersCatalog as UserRow[];
     } catch (e) {
-      console.warn("getUsersFn failed:", e);
-      return [];
+      console.warn("getUsersFn failed, using fallbackUsersCatalog:", e);
+      return fallbackUsersCatalog as UserRow[];
     }
   }
 

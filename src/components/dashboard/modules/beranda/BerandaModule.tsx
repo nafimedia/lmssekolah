@@ -80,7 +80,7 @@ export function BerandaModule({
               Dashboard Guru Pengampu
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Selamat Datang, {userProfile?.name || "Dra. Hj. Siti Rahmah, M.Pd"} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime} WIB)
+              Selamat Datang, {userProfile?.name || "SOBIYATI, S.Pd"} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime} WIB)
             </p>
           </div>
 
@@ -281,7 +281,7 @@ export function BerandaModule({
               Dashboard Wali Kelas 8A
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Pembinaan Rombongan Belajar 8A ({userProfile?.name || "Dra. Hj. Siti Rahmah, M.Pd"}) · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+              Pembinaan Rombongan Belajar 8A ({userProfile?.name || "SOBIYATI, S.Pd"}) · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
             </p>
           </div>
 

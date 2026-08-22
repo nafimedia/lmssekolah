@@ -23,7 +23,7 @@ const waLogsStore: WaLogEntry[] = [
     recipientName: "Bpk. Suryanto (Wali Ahmad Fauzi)",
     studentName: "Ahmad Fauzi",
     category: "AWARD_APRESIASI",
-    messageText: "Yth. Bpk. Suryanto, Selamat! Ananda Ahmad Fauzi (8A) telah menerima Lencana Apresiasi '⭐ Siswa Aktif & Responsif' dari Dra. Hj. Siti Rahmah. Terima kasih atas dukungannya! - LMS MTsN 2 Cilacap",
+    messageText: "Yth. Bpk. Suryanto, Selamat! Ananda Ahmad Fauzi (8A) telah menerima Lencana Apresiasi '⭐ Siswa Aktif & Responsif' dari SOBIYATI, S.Pd. Terima kasih atas dukungannya! - LMS MTsN 2 Cilacap",
     sentAt: "2026-07-27 10:15 WIB",
     status: "DELIVERED",
   },

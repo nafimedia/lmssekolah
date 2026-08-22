@@ -270,7 +270,7 @@ function AuthPage() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder={regRole === "siswa" ? "mis. Muhammad Fairuz" : "mis. Dra. Hj. Siti Rahmah"}
+                    placeholder={regRole === "siswa" ? "mis. ALIYA QIARA ABDULLAH" : "mis. SOBIYATI, S.Pd"}
                     className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
                   />
                 </div>

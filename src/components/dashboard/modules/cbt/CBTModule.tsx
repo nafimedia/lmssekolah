@@ -104,7 +104,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
       points: 15,
       difficulty: "Sukar",
       mapel: "Fiqih",
-      author: "Bu Siti Rahmah",
+      author: "CARYATI,",
     },
   ]);
 

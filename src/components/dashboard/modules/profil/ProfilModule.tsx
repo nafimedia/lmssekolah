@@ -707,9 +707,9 @@ export function ProfilModule({
           <CardContent className="p-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { title: "⭐ Siswa Aktif & Responsif", desc: "Sangat aktif berdiskusi dan bertanya dalam KBM", date: "15 Juli 2026", guru: "Dra. Hj. Siti Rahmah" },
-                { title: "🏆 Nilai Perfect 100", desc: "Mendapatkan nilai sempurna 100 pada Asesmen PAS", date: "20 Juli 2026", guru: "Bpk. Hendra Wijaya" },
-                { title: "🌟 Hafalan Mutqin Juz 30", desc: "Menyetorkan hafalan Juz 30 tajwid mumtaz", date: "24 Juli 2026", guru: "Ust. Abdul Halim" },
+                { title: "⭐ Siswa Aktif & Responsif", desc: "Sangat aktif berdiskusi dan bertanya dalam KBM", date: "15 Juli 2026", guru: "SOBIYATI, S.Pd" },
+                { title: "🏆 Nilai Perfect 100", desc: "Mendapatkan nilai sempurna 100 pada Asesmen PAS", date: "20 Juli 2026", guru: "SAYONO, S.Pd., M.Pd." },
+                { title: "🌟 Hafalan Mutqin Juz 30", desc: "Menyetorkan hafalan Juz 30 tajwid mumtaz", date: "24 Juli 2026", guru: "WAKHIBUN, S.P" },
               ].map((badge, idx) => (
                 <div key={idx} className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-2 hover:border-amber-500/60 transition">
                   <div className="font-extrabold text-sm text-amber-800 dark:text-amber-300">{badge.title}</div>

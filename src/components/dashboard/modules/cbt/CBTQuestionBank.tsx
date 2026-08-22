@@ -90,7 +90,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
       points: parseInt(qPoints, 10) || 5,
       difficulty: qDifficulty,
       mapel: "Matematika",
-      author: "Dra. Hj. Siti Rahmah",
+      author: "SAYONO, S.Pd., M.Pd.",
     };
 
     onAddQuestion?.(newQuestion);

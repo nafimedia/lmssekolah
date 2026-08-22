@@ -55,6 +55,8 @@ export interface GtkItem {
   isSertifikasi: boolean; // TPG Status
   email: string;
   phone: string;
+  mapel?: string;
+  jabatan?: string;
 }
 
 const INITIAL_GTK_LIST: GtkItem[] = [
@@ -518,7 +520,7 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
                   if (selectedUser) {
                     setFormName(selectedUser.name);
                     setFormNip(selectedUser.nip);
-                    setFormMapel(selectedUser.mapel || "Pendidik MTsN 2");
+                    setFormMapel(selectedUser.mapelUtama || selectedUser.mapel || "Pendidik MTsN 2");
                     toast.info(`✓ Data terhubung dengan akun user: ${selectedUser.name}`);
                   }
                 }}
@@ -526,7 +528,7 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
                 <option value="MANUAL">-- (Pilih Akun Guru / GTK dari Database MySQL) --</option>
                 {gtkList.map((g) => (
                   <option key={g.id} value={g.name}>
-                    {g.name} ({g.jabatan} - {g.mapel || "GTK"})
+                    {g.name} ({g.tugasTambahan || g.jabatan || g.statusKepegawaian} - {g.mapelUtama || g.mapel || "GTK"})
                   </option>
                 ))}
               </select>

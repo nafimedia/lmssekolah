@@ -2961,11 +2961,11 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Jadwal Pelajaran {isSiswa && <Badge className="bg-primary text-primary-foreground font-bold text-xs">📍 Kelas {rawClass}</Badge>}
+            Jadwal Pelajaran {isSiswa && <Badge className="bg-primary text-primary-foreground font-bold text-xs">📍 {filterRombel}</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isSiswa
-              ? `Jadwal alokasi jam tatap muka & pembelajaran khusus Kelas ${rawClass} MTsN 2 Cilacap`
+              ? `Jadwal alokasi jam tatap muka & pembelajaran khusus ${filterRombel} MTsN 2 Cilacap`
               : "Plotting alokasi jadwal mengajar & belajar per Tingkat Kelas dan Rombel MTsN 2 Cilacap"}
           </p>
         </div>

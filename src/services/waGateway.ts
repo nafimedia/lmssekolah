@@ -20,10 +20,10 @@ const waLogsStore: WaLogEntry[] = [
   {
     id: "wa-101",
     recipientPhone: "081234567890",
-    recipientName: "Bpk. Suryanto (Wali Ahmad Fauzi)",
-    studentName: "Ahmad Fauzi",
+    recipientName: "Wali ABIGAIL HASAN YUSUF PRAYOGA",
+    studentName: "ABIGAIL HASAN YUSUF PRAYOGA",
     category: "AWARD_APRESIASI",
-    messageText: "Yth. Bpk. Suryanto, Selamat! Ananda Ahmad Fauzi (8A) telah menerima Lencana Apresiasi '⭐ Siswa Aktif & Responsif' dari SOBIYATI, S.Pd. Terima kasih atas dukungannya! - LMS MTsN 2 Cilacap",
+    messageText: "Yth. Wali Siswa, Selamat! Ananda ABIGAIL HASAN YUSUF PRAYOGA (8A) telah menerima Lencana Apresiasi '⭐ Siswa Aktif & Responsif' dari SOBIYATI, S.Pd. Terima kasih atas dukungannya! - LMS MTsN 2 Cilacap",
     sentAt: "2026-07-27 10:15 WIB",
     status: "DELIVERED",
   },

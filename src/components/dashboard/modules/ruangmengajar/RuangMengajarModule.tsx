@@ -637,8 +637,8 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
             <div class="sign-box">
               Mengetahui,<br/>
               Waka Kurikulum MTsN 2 Cilacap<br/><br/><br/><br/>
-              <strong>Drs. H. Ahmad Fauzi, M.Pd.I</strong><br/>
-              NIP. 19750412 200312 1 002
+              <strong>ACHMAD MAKMUN ROSID, S.Pd., M.Pd</strong><br/>
+              NIP. 19720501 200501 1 001
             </div>
             <div class="sign-box">
               Cilacap, ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}<br/>

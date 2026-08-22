@@ -10,11 +10,11 @@ import { waGatewayService, WaLogEntry } from "@/services/waGateway";
 export function WAGatewayLogModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [logs, setLogs] = useState<WaLogEntry[]>(waGatewayService.getLogs());
   const [phone, setPhone] = useState("081234567890");
-  const [name, setName] = useState("Bpk. Suryanto");
-  const [student, setStudent] = useState("Ahmad Fauzi");
+  const [name, setName] = useState("Wali Siswa");
+  const [student, setStudent] = useState("ABIGAIL HASAN YUSUF PRAYOGA");
   const [category, setCategory] = useState<"ABSENSI_ALPHA" | "WARNING_PEMBINAAN" | "AWARD_APRESIASI" | "ERAPOR_PUBLISHED">("ABSENSI_ALPHA");
   const [message, setMessage] = useState(
-    waGatewayService.buildAbsensiAlert("Ahmad Fauzi", "Selasa, 28 Juli 2026", "Alpha (Belum Check-In)")
+    waGatewayService.buildAbsensiAlert("ABIGAIL HASAN YUSUF PRAYOGA", "Selasa, 28 Juli 2026", "Alpha (Belum Check-In)")
   );
 
   const handleCategoryChange = (cat: any) => {

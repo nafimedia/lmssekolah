@@ -690,7 +690,7 @@ export function BerandaModule({
               Dashboard Siswa (Kelas VIII A)
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Selamat Datang, {userProfile?.name || "Ahmad Fauzi"} · MTsN 2 Cilacap ({currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })})
+              Selamat Datang, {userProfile?.name || "ABIGAIL HASAN YUSUF PRAYOGA"} · MTsN 2 Cilacap ({currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })})
             </p>
           </div>
           <Badge variant="outline" className="border-emerald-600 text-emerald-800 dark:text-emerald-300 font-bold text-xs py-1.5 px-3">

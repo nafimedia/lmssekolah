@@ -598,8 +598,8 @@ function DashboardContent({
 }: any) {
   const { setOpenMobile } = useSidebar();
 
-  const rawDisplayName = me?.full_name || userProfile?.name || "Ahmad Fauzi";
-  const displayName = !rawDisplayName || /^\d+$/.test(rawDisplayName.trim()) ? (userProfile?.name && !/^\d+$/.test(userProfile.name) ? userProfile.name : "Ahmad Fauzi") : rawDisplayName;
+  const rawDisplayName = me?.full_name || userProfile?.name || "ABIGAIL HASAN YUSUF PRAYOGA";
+  const displayName = !rawDisplayName || /^\d+$/.test(rawDisplayName.trim()) ? (userProfile?.name && !/^\d+$/.test(userProfile.name) ? userProfile.name : "ABIGAIL HASAN YUSUF PRAYOGA") : rawDisplayName;
 
   const roleInfo = ROLE_PERMISSIONS[activeRole] || ROLE_PERMISSIONS.siswa;
   const allowedKeys = roleInfo.allowedMenus.map((x) => x.key);
@@ -1653,7 +1653,7 @@ function DataUserRole() {
               <Label htmlFor="add-name" className="text-xs font-semibold">Nama Lengkap & Gelar</Label>
               <Input
                 id="add-name"
-                placeholder="Contoh: Drs. H. Ahmad Fauzi, M.Pd"
+                placeholder="Contoh: AH. SYARIF HIDAYAH, S.Pd.I"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
@@ -1961,11 +1961,11 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
   const activeSession = kbmSessions.find((s) => s.id === selectedKbmSession) || kbmSessions[0];
 
   const [attendanceData, setAttendanceData] = useState([
-    { id: "s1", nisn: "0081928371", name: "Ahmad Fauzi", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567890", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
-    { id: "s2", nisn: "0081928372", name: "Fatimah Az-Zahra", class: "Rombel 8A", hadir: 21, izin: 0, sakit: 0, alpa: 0, pct: 100.0, parentWa: "081234567894", status: "Sempurna (100%)", today: "hadir", sessionStatus: "hadir" },
-    { id: "s3", nisn: "0081928373", name: "Muhammad Rizky", class: "Rombel 8A", hadir: 16, izin: 2, sakit: 1, alpa: 2, pct: 76.2, parentWa: "081234567895", status: "⚠️ Perlu Alert Pembinaan", today: "alpa", sessionStatus: "alpa" },
-    { id: "s4", nisn: "0081928374", name: "Siti Nurhaliza", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567896", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
-    { id: "s5", nisn: "0081928375", name: "Budi Santoso", class: "Rombel 8B", hadir: 19, izin: 1, sakit: 1, alpa: 0, pct: 90.5, parentWa: "081234567897", status: "Baik (B)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s1", nisn: "12123301000288", name: "ALIYA QIARA ABDULLAH", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567890", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s2", nisn: "0081928371", name: "ABIGAIL HASAN YUSUF PRAYOGA", class: "Rombel 8A", hadir: 21, izin: 0, sakit: 0, alpa: 0, pct: 100.0, parentWa: "081234567894", status: "Sempurna (100%)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s3", nisn: "0081928372", name: "ADITA AZ ZAHRA", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567895", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s4", nisn: "0081928373", name: "AFRIZA RAHMA AZZAHRA", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567896", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s5", nisn: "0081928374", name: "AHMAD ZULFIKAR", class: "Rombel 8B", hadir: 19, izin: 1, sakit: 1, alpa: 0, pct: 90.5, parentWa: "081234567897", status: "Baik (B)", today: "hadir", sessionStatus: "hadir" },
   ]);
 
   const filteredAttendance = attendanceData.filter((a) => selectedClass === "Semua" || a.class === selectedClass);
@@ -3300,11 +3300,11 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
   const [presensiDone, setPresensiDone] = useState(false);
   const [isTeacherPresensiOpen, setIsTeacherPresensiOpen] = useState(false);
   const [sessionStudents, setSessionStudents] = useState([
-    { id: "s1", nisn: "0081928371", name: "Ahmad Fauzi", status: "hadir" },
-    { id: "s2", nisn: "0081928372", name: "Fatimah Az-Zahra", status: "hadir" },
-    { id: "s3", nisn: "0081928373", name: "Muhammad Rizky", status: "hadir" },
-    { id: "s4", nisn: "0081928374", name: "Siti Nurhaliza", status: "hadir" },
-    { id: "s5", nisn: "0081928375", name: "Budi Santoso", status: "hadir" },
+    { id: "s1", nisn: "12123301000288", name: "ALIYA QIARA ABDULLAH", status: "hadir" },
+    { id: "s2", nisn: "0081928371", name: "ABIGAIL HASAN YUSUF PRAYOGA", status: "hadir" },
+    { id: "s3", nisn: "0081928372", name: "ADITA AZ ZAHRA", status: "hadir" },
+    { id: "s4", nisn: "0081928373", name: "AFRIZA RAHMA AZZAHRA", status: "hadir" },
+    { id: "s5", nisn: "0081928374", name: "AHMAD ZULFIKAR", status: "hadir" },
   ]);
 
   const handleSetStudentStatus = (id: string, st: string) => {
@@ -4513,8 +4513,8 @@ function Nilai({ activeRole }: { activeRole?: string }) {
 
   // E-Rapor Print State
   const [isPrintRaporOpen, setIsPrintRaporOpen] = useState(false);
-  const [raporStudentName, setRaporStudentName] = useState("Ahmad Fauzi");
-  const [raporNisn, setRaporNisn] = useState("0081928371");
+  const [raporStudentName, setRaporStudentName] = useState("ALIYA QIARA ABDULLAH");
+  const [raporNisn, setRaporNisn] = useState("12123301000288");
   const [raporClass, setRaporClass] = useState("8A (VIII A)");
 
   const handlePrintRapor = () => {
@@ -4640,9 +4640,9 @@ function Nilai({ activeRole }: { activeRole?: string }) {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {[
-                    { name: "Ahmad Fauzi", f: 90, s: 88, t: 92, k: 90, fin: 90 },
-                    { name: "Anisa Rahma", f: 88, s: 86, t: 90, k: 88, fin: 88 },
-                    { name: "Muhammad Fairuz", f: 94, s: 92, t: 95, k: 94, fin: 94 },
+                    { name: "ALIYA QIARA ABDULLAH", f: 90, s: 88, t: 92, k: 90, fin: 90 },
+                    { name: "ABIGAIL HASAN YUSUF PRAYOGA", f: 88, s: 86, t: 90, k: 88, fin: 88 },
+                    { name: "ADITA AZ ZAHRA", f: 94, s: 92, t: 95, k: 94, fin: 94 },
                   ].map((s, i) => (
                     <tr key={i} className="hover:bg-muted/30">
                       <td className="p-2.5 font-bold">{s.name}</td>
@@ -4970,9 +4970,9 @@ function Nilai({ activeRole }: { activeRole?: string }) {
                   else setRaporNisn("0081928371");
                 }}
               >
-                <option value="Ahmad Fauzi">Ahmad Fauzi (8A)</option>
-                <option value="Fatimah Az-Zahra">Fatimah Az-Zahra (8A)</option>
-                <option value="Anisa Rahma">Anisa Rahma (7A)</option>
+                <option value="ALIYA QIARA ABDULLAH">ALIYA QIARA ABDULLAH (8A)</option>
+                <option value="ABIGAIL HASAN YUSUF PRAYOGA">ABIGAIL HASAN YUSUF PRAYOGA (8A)</option>
+                <option value="ADITA AZ ZAHRA">ADITA AZ ZAHRA (8A)</option>
               </select>
             </div>
 
@@ -5091,12 +5091,12 @@ function Progress({ activeRole }: { activeRole?: string }) {
   const [selectedStudentModal, setSelectedStudentModal] = useState<any>(null);
 
   const studentsList8A = [
-    { name: "Ahmad Fauzi", nis: "0081928371", cp: 95, tugas: 92, status: "Mutqin & Tuntas" },
-    { name: "Anisa Rahma", nis: "0081928372", cp: 90, tugas: 88, status: "Tuntas KKM" },
-    { name: "Fatimah Az-Zahra", nis: "0081928373", cp: 96, tugas: 94, status: "Sangat Baik" },
-    { name: "Muhammad Fairuz", nis: "0081928374", cp: 98, tugas: 95, status: "Sangat Baik" },
-    { name: "Zaid bin Tsabit", nis: "0081928375", cp: 100, tugas: 98, status: "Sangat Baik" },
-    { name: "Aisyah Humaira", nis: "0081928376", cp: 94, tugas: 91, status: "Tuntas KKM" },
+    { name: "ALIYA QIARA ABDULLAH", nis: "12123301000288", cp: 95, tugas: 92, status: "Mutqin & Tuntas" },
+    { name: "ABIGAIL HASAN YUSUF PRAYOGA", nis: "0081928371", cp: 96, tugas: 94, status: "Sangat Baik" },
+    { name: "ADITA AZ ZAHRA", nis: "0081928372", cp: 90, tugas: 88, status: "Tuntas KKM" },
+    { name: "AFRIZA RAHMA AZZAHRA", nis: "0081928373", cp: 98, tugas: 95, status: "Sangat Baik" },
+    { name: "AHMAD ZULFIKAR", nis: "0081928374", cp: 100, tugas: 98, status: "Sangat Baik" },
+    { name: "AILEEN CALISTA SELENA", nis: "0081928375", cp: 94, tugas: 91, status: "Tuntas KKM" },
   ];
 
   const rombelProgressList = [
@@ -5978,12 +5978,12 @@ function LaporanTahfidzEksekutif({ activeRole }: { activeRole?: string }) {
   const [selectedJuz, setSelectedJuz] = useState("Juz 30");
 
   const tahfidzClassSummary = [
-    { class: "Kelas VII A", total: 32, mutqin: "28 Siswa (87.5%)", avgScore: 92.4, status: "Sangat Baik", topStudent: "Ahmad Fauzi" },
-    { class: "Kelas VII B", total: 32, mutqin: "26 Siswa (81.2%)", avgScore: 89.8, status: "Baik", topStudent: "Siti Nurhaliza" },
-    { class: "Kelas VIII A", total: 32, mutqin: "30 Siswa (93.7%)", avgScore: 95.1, status: "Sangat Baik", topStudent: "Muhammad Rayhan" },
-    { class: "Kelas VIII B", total: 31, mutqin: "27 Siswa (87.0%)", avgScore: 91.2, status: "Sangat Baik", topStudent: "Fatimah Az-Zahra" },
-    { class: "Kelas IX A", total: 32, mutqin: "32 Siswa (100%)", avgScore: 97.5, status: "Sangat Baik", topStudent: "Zaid bin Tsabit" },
-    { class: "Kelas IX B", total: 31, mutqin: "29 Siswa (93.5%)", avgScore: 93.8, status: "Sangat Baik", topStudent: "Aisyah Humaira" },
+    { class: "Kelas VII A", total: 32, mutqin: "28 Siswa (87.5%)", avgScore: 92.4, status: "Sangat Baik", topStudent: "ALIYA QIARA ABDULLAH" },
+    { class: "Kelas VII B", total: 32, mutqin: "26 Siswa (81.2%)", avgScore: 89.8, status: "Baik", topStudent: "ADITA AZ ZAHRA" },
+    { class: "Kelas VIII A", total: 32, mutqin: "30 Siswa (93.7%)", avgScore: 95.1, status: "Sangat Baik", topStudent: "ABIGAIL HASAN YUSUF PRAYOGA" },
+    { class: "Kelas VIII B", total: 31, mutqin: "27 Siswa (87.0%)", avgScore: 91.2, status: "Sangat Baik", topStudent: "AFRIZA RAHMA AZZAHRA" },
+    { class: "Kelas IX A", total: 32, mutqin: "32 Siswa (100%)", avgScore: 97.5, status: "Sangat Baik", topStudent: "AHMAD ZULFIKAR" },
+    { class: "Kelas IX B", total: 31, mutqin: "29 Siswa (93.5%)", avgScore: 93.8, status: "Sangat Baik", topStudent: "AILEEN CALISTA SELENA" },
   ];
 
   return (
@@ -6395,8 +6395,8 @@ function Tahfidz() {
 
   // Modal Cetak Kartu Murojaah State
   const [isPrintCardOpen, setIsPrintCardOpen] = useState(false);
-  const [printStudentName, setPrintStudentName] = useState("Ahmad Fauzi");
-  const [printNisn, setPrintNisn] = useState("0081928371");
+  const [printStudentName, setPrintStudentName] = useState("ALIYA QIARA ABDULLAH");
+  const [printNisn, setPrintNisn] = useState("12123301000288");
   const [printClass, setPrintClass] = useState("8A (VIII A)");
 
   const handleAddHafalan = (e: React.FormEvent) => {
@@ -6573,9 +6573,9 @@ function Tahfidz() {
                   else setPrintNisn("0081928371");
                 }}
               >
-                <option value="Ahmad Fauzi">Ahmad Fauzi (8A)</option>
-                <option value="Fatimah Az-Zahra">Fatimah Az-Zahra (8A)</option>
-                <option value="Anisa Rahma">Anisa Rahma (7A)</option>
+                <option value="ALIYA QIARA ABDULLAH">ALIYA QIARA ABDULLAH (8A)</option>
+                <option value="ABIGAIL HASAN YUSUF PRAYOGA">ABIGAIL HASAN YUSUF PRAYOGA (8A)</option>
+                <option value="ADITA AZ ZAHRA">ADITA AZ ZAHRA (8A)</option>
               </select>
             </div>
 
@@ -6929,7 +6929,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
       presensiPct: 98.0,
       ewsAlertCount: 0,
       students: [],
-      teachers: [{ mapel: "Fikih", teacher: "Ahmad Fauzi, S.Ag" }],
+      teachers: [{ mapel: "Fikih", teacher: "CARYATI," }],
     };
 
     const updated = [...rombelList, newRombel];
@@ -8856,10 +8856,10 @@ function AsistenAITools() {
 /* ---------- Award Badge & Warning untuk Siswa ---------- */
 function ApresiasiSiswa({ activeRole }: { activeRole?: string }) {
   const [studentsList, setStudentsList] = useState([
-    { id: "1", name: "Ahmad Fauzi", rombel: "Kelas VIII A", nis: "0081928371", badges: ["⭐ Siswa Aktif", "🏆 Nilai Perfect 100"], warningCount: 0 },
-    { id: "2", name: "Anisa Rahma", rombel: "Kelas VIII A", nis: "0081928372", badges: ["🌟 Hafalan Mutqin"], warningCount: 0 },
-    { id: "3", name: "Budi Santoso", rombel: "Kelas VIII A", nis: "0081928373", badges: [], warningCount: 1 },
-    { id: "4", name: "Fatimah Az-Zahra", rombel: "Kelas VIII A", nis: "0081928374", badges: ["💡 Solutif & Kreatif"], warningCount: 0 },
+    { id: "1", name: "ALIYA QIARA ABDULLAH", rombel: "Kelas VIII A", nis: "12123301000288", badges: ["⭐ Siswa Aktif", "🏆 Nilai Perfect 100"], warningCount: 0 },
+    { id: "2", name: "ABIGAIL HASAN YUSUF PRAYOGA", rombel: "Kelas VIII A", nis: "0081928371", badges: ["🌟 Hafalan Mutqin"], warningCount: 0 },
+    { id: "3", name: "ADITA AZ ZAHRA", rombel: "Kelas VIII A", nis: "0081928372", badges: ["💡 Solutif & Kreatif"], warningCount: 0 },
+    { id: "4", name: "AFRIZA RAHMA AZZAHRA", rombel: "Kelas VIII A", nis: "0081928373", badges: ["⭐ Siswa Aktif"], warningCount: 0 },
   ]);
 
   const [selectedStudent, setSelectedStudent] = useState<any>(null);

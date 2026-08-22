@@ -34,17 +34,17 @@ export function ProfilModule({
   const [updateNotification, setUpdateNotification] = useState<string | null>(null);
 
   // Form states for biodata & motto
-  const [name, setName] = useState(userProfile?.name || "Ahmad Fauzi");
+  const [name, setName] = useState(userProfile?.name || "ABIGAIL HASAN YUSUF PRAYOGA");
   const [nipNis, setNipNis] = useState(userProfile?.nipNis || "0081928371");
-  const [email, setEmail] = useState(userProfile?.email || "ahmad.fauzi@mtsn2cilacap.sch.id");
+  const [email, setEmail] = useState(userProfile?.email || "abigail@siswa.mtsn2cilacap.sch.id");
   const [phone, setPhone] = useState(userProfile?.phone || "081234567890");
-  const [address, setAddress] = useState(userProfile?.address || "Jl. Masjid No. 12, Cilacap Tengah");
+  const [address, setAddress] = useState(userProfile?.address || "Jl. Raya Cilacap No. 12, Karangpucung");
   const [tagline, setTagline] = useState(
     userProfile?.tagline || "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀"
   );
   const [classNameState, setClassNameState] = useState(userProfile?.className || "VIII (Delapan)");
   const [rombelName, setRombelName] = useState(userProfile?.rombelName || "VIII A (Rombel 8A)");
-  const [waliKelas, setWaliKelas] = useState(userProfile?.waliKelas || "Bpk. Hendra Wijaya, M.Sc");
+  const [waliKelas, setWaliKelas] = useState(userProfile?.waliKelas || "Dra. Hj. Siti Rahmah, M.Pd");
 
   // Avatar upload states
   const [previewAvatar, setPreviewAvatar] = useState<string | null>(userProfile?.avatarUrl || null);
@@ -66,18 +66,18 @@ export function ProfilModule({
       } catch (e) {}
     }
 
-    const currentEmail = activeUser?.email || userProfile?.email || "ahmad.fauzi@mtsn2cilacap.sch.id";
+    const currentEmail = activeUser?.email || userProfile?.email || "abigail@siswa.mtsn2cilacap.sch.id";
     const userBio = savedBio[currentEmail.toLowerCase()] || {};
 
-    setName(userBio.name || userProfile?.name || activeUser?.full_name || "Ahmad Fauzi");
-    setEmail(userBio.email || userProfile?.email || activeUser?.email || "ahmad.fauzi@mtsn2cilacap.sch.id");
+    setName(userBio.name || userProfile?.name || activeUser?.full_name || "ABIGAIL HASAN YUSUF PRAYOGA");
+    setEmail(userBio.email || userProfile?.email || activeUser?.email || "abigail@siswa.mtsn2cilacap.sch.id");
     setNipNis(userBio.nipNis || userProfile?.nipNis || activeUser?.nis_nip || "0081928371");
     setPhone(userBio.phone || userProfile?.phone || "081234567890");
-    setAddress(userBio.address || userProfile?.address || "Jl. Masjid No. 12, Cilacap Tengah");
+    setAddress(userBio.address || userProfile?.address || "Jl. Raya Cilacap No. 12, Karangpucung");
     setTagline(userBio.tagline || userProfile?.tagline || "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀");
     setClassNameState(userBio.className || userProfile?.className || "VIII (Delapan)");
     setRombelName(userBio.rombelName || userProfile?.rombelName || "VIII A (Rombel 8A)");
-    setWaliKelas(userBio.waliKelas || userProfile?.waliKelas || "Bpk. Hendra Wijaya, M.Sc");
+    setWaliKelas(userBio.waliKelas || userProfile?.waliKelas || "Dra. Hj. Siti Rahmah, M.Pd");
   }, [userProfile]);
 
   const handleSaveBiodata = async (e: React.FormEvent) => {

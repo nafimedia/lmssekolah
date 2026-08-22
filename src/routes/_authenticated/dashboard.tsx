@@ -6485,11 +6485,12 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
 
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("lms_rombel_management_v3");
+        const saved = localStorage.getItem("lms_rombel_management_v4");
         if (saved) return JSON.parse(saved);
         localStorage.removeItem("lms_rombel_management_v1");
         localStorage.removeItem("lms_rombel_management_v2");
-        localStorage.setItem("lms_rombel_management_v3", JSON.stringify(defaultRombels));
+        localStorage.removeItem("lms_rombel_management_v3");
+        localStorage.setItem("lms_rombel_management_v4", JSON.stringify(defaultRombels));
       } catch (e) {}
     }
     return defaultRombels;
@@ -6499,9 +6500,14 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
     MysqlDataService.getUsers().then((users) => {
       const siswaList = users.filter((u) => u.role === "siswa");
       if (siswaList.length > 0) {
+        const normalizeClassKey = (str: string) => {
+          let c = (str || "").toUpperCase().replace("KELAS", "").replace("-", "").replace(/\s+/g, "").trim();
+          return c.replace("VIII", "8").replace("IX", "9").replace("VII", "7");
+        };
+
         const grouped: Record<string, any[]> = {};
         siswaList.forEach((s, idx) => {
-          const norm = (s.class_name || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+          const norm = normalizeClassKey(s.class_name || "");
           if (!grouped[norm]) grouped[norm] = [];
           grouped[norm].push({
             id: s.id || `s-${s.nis_nip}`,
@@ -6515,8 +6521,8 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
 
         setRombelList((prev: any[]) => {
           const updated = prev.map((r: any) => {
-            const rNorm = r.name.toUpperCase().replace(/[^A-Z0-9]/g, "");
-            const realSt = grouped[rNorm] || grouped[`CLASS${rNorm}`] || grouped[`KELAS${rNorm}`] || [];
+            const rNorm = normalizeClassKey(r.name || "");
+            const realSt = grouped[rNorm] || [];
             return {
               ...r,
               students: realSt,
@@ -6524,7 +6530,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
           });
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem("lms_rombel_management_v3", JSON.stringify(updated));
+              localStorage.setItem("lms_rombel_management_v4", JSON.stringify(updated));
             } catch (e) {}
           }
           return updated;
@@ -6537,7 +6543,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
     setRombelList(list);
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("lms_rombel_management_v3", JSON.stringify(list));
+        localStorage.setItem("lms_rombel_management_v4", JSON.stringify(list));
       } catch (e) {}
     }
   };

@@ -4521,35 +4521,46 @@ function Nilai({ activeRole }: { activeRole?: string }) {
   };
 
   const teacherEntryList = [
-    { code: "AGM-01", mapel: "Al-Quran Hadits", rombel: "Kelas VIII A", totalSiswa: 32, entered: 32, progress: 100, status: "Lengkap 100%", c: "text-emerald-500" },
-    { code: "AGM-01", mapel: "Al-Quran Hadits", rombel: "Kelas VIII B", totalSiswa: 32, entered: 28, progress: 87.5, status: "Entry 87.5%", c: "text-blue-500" },
-    { code: "AGM-03", mapel: "Fiqih Kebangsaan", rombel: "Kelas IX C", totalSiswa: 31, entered: 20, progress: 64.5, status: "Entry 64.5%", c: "text-amber-500" },
+    { code: "AGM-01", mapel: "Al Qur'an Hadis", rombel: "Kelas VIII A", totalSiswa: 32, entered: 32, progress: 100, status: "Lengkap 100%", c: "text-emerald-500" },
+    { code: "AGM-01", mapel: "Al Qur'an Hadis", rombel: "Kelas VIII B", totalSiswa: 32, entered: 28, progress: 87.5, status: "Entry 87.5%", c: "text-blue-500" },
+    { code: "AGM-03", mapel: "Fikih", rombel: "Kelas IX A", totalSiswa: 32, entered: 32, progress: 100, status: "Lengkap 100%", c: "text-emerald-500" },
   ];
 
   const classesList = [
-    { name: "Kelas VII A", wali: "MAULIDIA NURUL IZATI, S.Pd", siswa: 0, avg: 0.0, icon: "🏫", mapelsCount: 8, tuntas: "0 Siswa Tuntas" },
-    { name: "Kelas VII B", wali: "RINDANG FARIHA IDANA, S.Pd", siswa: 0, avg: 0.0, icon: "🏫", mapelsCount: 8, tuntas: "0 Siswa Tuntas" },
-    { name: "Kelas VIII A", wali: "SOBIYATI, S.Pd", siswa: 32, avg: 91.0, icon: "🏫", mapelsCount: 8, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas VIII B", wali: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", siswa: 31, avg: 87.4, icon: "🏫", mapelsCount: 8, tuntas: "29 Siswa Tuntas" },
-    { name: "Kelas IX A", wali: "NOVANTYA KARTIKAWATI, S.Pd", siswa: 32, avg: 92.8, icon: "🎓", mapelsCount: 8, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas IX B", wali: "INDAH NURROHMAH, S.Pd", siswa: 31, avg: 89.1, icon: "🎓", mapelsCount: 8, tuntas: "30 Siswa Tuntas" },
+    { name: "Kelas VII A", wali: "MISBAH AHMAD DANI, S.Pd", siswa: 32, avg: 86.4, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
+    { name: "Kelas VII B", wali: "ENDAH SUPRIHATIN, S.Pd", siswa: 32, avg: 85.8, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
+    { name: "Kelas VIII A", wali: "Dra. Hj. Siti Rahmah, M.Pd", siswa: 32, avg: 88.2, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
+    { name: "Kelas VIII B", wali: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", siswa: 32, avg: 87.4, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
+    { name: "Kelas IX A", wali: "SOBIYATI, S.Pd", siswa: 32, avg: 89.1, icon: "🎓", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
+    { name: "Kelas IX B", wali: "SAYONO, S.Pd., M.Pd.", siswa: 32, avg: 88.5, icon: "🎓", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
   ];
 
   const mapelDetails = [
-    { code: "AGM-01", mapel: "Al-Quran Hadits", teacher: "Dra. Hj. Siti Rahmah, M.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "95% Tuntas", tugas: 90, kuis: 92, cbt: 88, avg: 90, kkm: "Tuntas (≥75)" },
-    { code: "AGM-02", mapel: "Akidah Akhlak", teacher: "Ust. Abdul Halim, S.Ag", pertemuan: "16/18 Pertemuan (88%)", cp: "90% Tuntas", tugas: 88, kuis: 86, cbt: 85, avg: 86, kkm: "Tuntas (≥75)" },
-    { code: "AGM-03", mapel: "Fiqih", teacher: "Dra. Hj. Siti Rahmah, M.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "92% Tuntas", tugas: 92, kuis: 90, cbt: 89, avg: 90, kkm: "Tuntas (≥75)" },
-    { code: "UMM-01", mapel: "Matematika", teacher: "Bapak Hendra Wijaya, M.Sc", pertemuan: "15/18 Pertemuan (83%)", cp: "85% Tuntas", tugas: 82, kuis: 85, cbt: 80, avg: 82, kkm: "Tuntas (≥75)" },
-    { code: "UMM-02", mapel: "Ilmu Pengetahuan Alam", teacher: "Ibu Ratna Dewi, M.Pd", pertemuan: "16/18 Pertemuan (88%)", cp: "88% Tuntas", tugas: 88, kuis: 87, cbt: 86, avg: 87, kkm: "Tuntas (≥75)" },
-    { code: "UMM-06", mapel: "Informatika & Coding", teacher: "H. Ahmad Syukri, S.Kom", pertemuan: "18/18 Pertemuan (100%)", cp: "100% Tuntas", tugas: 95, kuis: 96, cbt: 94, avg: 95, kkm: "Tuntas (≥75)" },
+    { code: "AGM-01", mapel: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", pertemuan: "18/18 Pertemuan (100%)", cp: "95% Tuntas", tugas: 90, kuis: 92, cbt: 88, avg: 90, kkm: "Tuntas (≥75)" },
+    { code: "AGM-02", mapel: "Akidah Akhlak", teacher: "WAKHIBUN, S.P", pertemuan: "16/18 Pertemuan (88%)", cp: "90% Tuntas", tugas: 88, kuis: 86, cbt: 85, avg: 86, kkm: "Tuntas (≥75)" },
+    { code: "AGM-03", mapel: "Fikih", teacher: "CARYATI,", pertemuan: "17/18 Pertemuan (94%)", cp: "92% Tuntas", tugas: 92, kuis: 90, cbt: 89, avg: 90, kkm: "Tuntas (≥75)" },
+    { code: "AGM-04", mapel: "Sejarah Kebudayaan Islam", teacher: "H. DASIRUN, S.Ag., M.Pd.I", pertemuan: "16/18 Pertemuan (88%)", cp: "90% Tuntas", tugas: 88, kuis: 88, cbt: 86, avg: 87, kkm: "Tuntas (≥75)" },
+    { code: "AGM-05", mapel: "Bahasa Arab", teacher: "ENDAH SUPRIHATIN, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "96% Tuntas", tugas: 92, kuis: 94, cbt: 90, avg: 92, kkm: "Tuntas (≥75)" },
+    { code: "UMM-01", mapel: "Bahasa Indonesia", teacher: "SOBIYATI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "94% Tuntas", tugas: 89, kuis: 91, cbt: 88, avg: 89, kkm: "Tuntas (≥75)" },
+    { code: "UMM-02", mapel: "Bahasa Inggris", teacher: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "95% Tuntas", tugas: 90, kuis: 93, cbt: 91, avg: 91, kkm: "Tuntas (≥75)" },
+    { code: "UMM-03", mapel: "Matematika", teacher: "SAYONO, S.Pd., M.Pd.", pertemuan: "15/18 Pertemuan (83%)", cp: "85% Tuntas", tugas: 82, kuis: 85, cbt: 80, avg: 82, kkm: "Tuntas (≥75)" },
+    { code: "UMM-04", mapel: "Ilmu Pendidikan Alam", teacher: "NOVANTYA KARTIKAWATI, S.Pd", pertemuan: "16/18 Pertemuan (88%)", cp: "88% Tuntas", tugas: 88, kuis: 87, cbt: 86, avg: 87, kkm: "Tuntas (≥75)" },
+    { code: "UMM-05", mapel: "Ilmu Pendidikan Sosial", teacher: "UMI KHAFSOH, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "91% Tuntas", tugas: 86, kuis: 88, cbt: 85, avg: 86, kkm: "Tuntas (≥75)" },
+    { code: "UMM-06", mapel: "Pendidikan Kewarganegaraan", teacher: "ANGGUN NOVTALIA BERLIAN, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "94% Tuntas", tugas: 89, kuis: 90, cbt: 88, avg: 89, kkm: "Tuntas (≥75)" },
+    { code: "UMM-07", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", teacher: "NUR ROCHMAN SHODIQ, S.Pd.I", pertemuan: "18/18 Pertemuan (100%)", cp: "98% Tuntas", tugas: 94, kuis: 95, cbt: 92, avg: 94, kkm: "Tuntas (≥75)" },
+    { code: "UMM-08", mapel: "Prakarya dan Seni Budaya", teacher: "ISNAENI HASANAH, S.Pd.I", pertemuan: "16/18 Pertemuan (88%)", cp: "90% Tuntas", tugas: 88, kuis: 89, cbt: 87, avg: 88, kkm: "Tuntas (≥75)" },
+    { code: "MLK-01", mapel: "Bahasa Jawa", teacher: "RINDANG FARIHA IDANA, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "92% Tuntas", tugas: 88, kuis: 90, cbt: 86, avg: 88, kkm: "Tuntas (≥75)" },
+    { code: "PGB-01", mapel: "Bimbingan dan Konseling", teacher: "ASROR HIDAYAT, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "100% Tuntas", tugas: 95, kuis: 95, cbt: 95, avg: 95, kkm: "Tuntas (≥75)" },
   ];
 
   const studentSelfNilai = [
-    { m: "Matematika", t: 85, k: 88, u: 82 },
-    { m: "B. Indonesia", t: 90, k: 87, u: 85 },
-    { m: "B. Inggris", t: 78, k: 80, u: 75 },
-    { m: "IPA", t: 88, k: 90, u: 86 },
-    { m: "Fikih", t: 92, k: 95, u: 90 },
+    { m: "Al Qur'an Hadis", t: 90, k: 92, u: 88 },
+    { m: "Akidah Akhlak", t: 88, k: 86, u: 85 },
+    { m: "Fikih", t: 92, k: 90, u: 89 },
+    { m: "Bahasa Indonesia", t: 89, k: 91, u: 88 },
+    { m: "Bahasa Inggris", t: 90, k: 93, u: 91 },
+    { m: "Matematika", t: 82, k: 85, u: 80 },
+    { m: "Ilmu Pendidikan Alam", t: 88, k: 87, u: 86 },
   ];
 
   // Tampilan khusus Guru Pengampu (Input Nilai & Progress Entry)
@@ -4817,9 +4828,12 @@ function Nilai({ activeRole }: { activeRole?: string }) {
                       <tr><th>No</th><th>Rombel</th><th>Wali Kelas</th><th>Jumlah Siswa</th><th>Rata-rata Nilai</th><th>Status KKM</th></tr>
                     </thead>
                     <tbody>
-                      <tr><td>1</td><td>Kelas VII A</td><td>Ustadzah Nurul Hidayah, S.Pd.I</td><td>34 Siswa</td><td>86.4</td><td>100% Tuntas</td></tr>
-                      <tr><td>2</td><td>Kelas VIII A</td><td>Dra. Hj. Siti Rahmah, M.Pd</td><td>32 Siswa</td><td>88.2</td><td>100% Tuntas</td></tr>
-                      <tr><td>3</td><td>Kelas IX A</td><td>Bapak Hendra Wijaya, M.Sc</td><td>35 Siswa</td><td>87.5</td><td>100% Tuntas</td></tr>
+                      <tr><td>1</td><td>Kelas VII A</td><td>Misbah Ahmad Dani, S.Pd</td><td>32 Siswa</td><td>86.4</td><td>100% Tuntas</td></tr>
+                      <tr><td>2</td><td>Kelas VII B</td><td>Endah Suprihatin, S.Pd</td><td>32 Siswa</td><td>85.8</td><td>100% Tuntas</td></tr>
+                      <tr><td>3</td><td>Kelas VIII A</td><td>Dra. Hj. Siti Rahmah, M.Pd</td><td>32 Siswa</td><td>88.2</td><td>100% Tuntas</td></tr>
+                      <tr><td>4</td><td>Kelas VIII B</td><td>Achmad Makmun Rosid, S.Pd., M.Pd</td><td>32 Siswa</td><td>87.4</td><td>100% Tuntas</td></tr>
+                      <tr><td>5</td><td>Kelas IX A</td><td>Sobiyati, S.Pd</td><td>32 Siswa</td><td>89.1</td><td>100% Tuntas</td></tr>
+                      <tr><td>6</td><td>Kelas IX B</td><td>Sayono, S.Pd., M.Pd.</td><td>32 Siswa</td><td>88.5</td><td>100% Tuntas</td></tr>
                     </tbody>
                   </table>
                 </body>

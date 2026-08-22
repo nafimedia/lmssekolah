@@ -8535,18 +8535,6 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
         )}
       </div>
 
-      {/* Banner Khusus Guru */}
-      {isGuru && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-xs">
-          <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
-            <span className="text-base">🔒</span>
-            <span>Modul Ajar Terkunci Khusus Milik Anda: <strong className="text-emerald-700 dark:text-emerald-400 text-sm font-black">{currentTeacherName || "Guru Pengampu"}</strong></span>
-          </div>
-          <Badge className="bg-emerald-700 text-white font-extrabold text-[10px] px-2.5 py-0.5">
-            100% Berkas Dokumen Sendiri
-          </Badge>
-        </div>
-      )}
 
       {/* Metrics Summary for Waka */}
       {isWakaOrAdmin && (

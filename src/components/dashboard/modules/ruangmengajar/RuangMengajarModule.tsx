@@ -750,8 +750,8 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
             <span className="text-xs font-semibold text-slate-500">Mapel:</span>
             {isGuru ? (
-              <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
-                🔒 {selectedMapel}
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                {selectedMapel}
               </span>
             ) : (
               <select
@@ -769,8 +769,8 @@ export function RuangMengajarModule({ activeRole, userProfile }: RuangMengajarMo
 
             <span className="text-xs font-semibold text-slate-500 ml-2">Kelas:</span>
             {isWaliKelas || isSiswa ? (
-              <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
-                🔒 {selectedClass}
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                {selectedClass}
               </span>
             ) : (
               <select

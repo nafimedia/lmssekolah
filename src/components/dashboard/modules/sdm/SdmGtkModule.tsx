@@ -513,34 +513,22 @@ export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === "MANUAL") return;
-                  const selectedUser = [
-                    { name: "Dra. Hj. Siti Rahmah, M.Pd", nip: "197204151998032001", email: "siti.rahmah@mtsn2cilacap.sch.id", mapel: "Al-Quran Hadits" },
-                    { name: "Bpk. Hendra Wijaya, M.Sc", nip: "198008122006041003", email: "hendra.wijaya@mtsn2cilacap.sch.id", mapel: "Matematika" },
-                    { name: "Ust. Ahmad Syukri, S.Kom", nip: "198503202010011015", email: "ahmad.syukri@mtsn2cilacap.sch.id", mapel: "Informatika & Keterampilan" },
-                    { name: "Ustadzah Nurul Hidayah, S.Pd.I", nip: "199001152023212008", email: "nurul.hidayah@mtsn2cilacap.sch.id", mapel: "Fiqih Kebangsaan" },
-                    { name: "Ibu Ratna Dewi, M.Pd", nip: "198811052014022004", email: "ratna.dewi@mtsn2cilacap.sch.id", mapel: "Bahasa Indonesia" },
-                    { name: "Ust. Abdul Halim, S.Ag", nip: "-", email: "abdul.halim@mtsn2cilacap.sch.id", mapel: "Akidah Akhlak" },
-                    { name: "H. Mohammad Fathoni, M.Pd", nip: "196805101994031002", email: "kamad@mtsn2cilacap.sch.id", mapel: "Manajemen Kepemimpinan" },
-                    { name: "Bpk. Slamet Riyadi, M.Pd", nip: "197509182002121004", email: "waka.kurikulum@mtsn2cilacap.sch.id", mapel: "IPA Terpadu" },
-                  ].find((u) => u.name === val);
+                  const selectedUser = gtkList.find((u) => u.name === val);
 
                   if (selectedUser) {
                     setFormName(selectedUser.name);
                     setFormNip(selectedUser.nip);
-                    setFormMapel(selectedUser.mapel);
+                    setFormMapel(selectedUser.mapel || "Pendidik MTsN 2");
                     toast.info(`✓ Data terhubung dengan akun user: ${selectedUser.name}`);
                   }
                 }}
               >
-                <option value="MANUAL">-- (Sinkronisasi dari Database User Akun) --</option>
-                <option value="Dra. Hj. Siti Rahmah, M.Pd">Dra. Hj. Siti Rahmah, M.Pd (Guru Al-Quran Hadits)</option>
-                <option value="Bpk. Hendra Wijaya, M.Sc">Bpk. Hendra Wijaya, M.Sc (Guru Matematika)</option>
-                <option value="Ust. Ahmad Syukri, S.Kom">Ust. Ahmad Syukri, S.Kom (Guru Informatika)</option>
-                <option value="Ustadzah Nurul Hidayah, S.Pd.I">Ustadzah Nurul Hidayah, S.Pd.I (Guru Fiqih)</option>
-                <option value="Ibu Ratna Dewi, M.Pd">Ibu Ratna Dewi, M.Pd (Guru B. Indonesia)</option>
-                <option value="Ust. Abdul Halim, S.Ag">Ust. Abdul Halim, S.Ag (Guru Akidah)</option>
-                <option value="H. Mohammad Fathoni, M.Pd">H. Mohammad Fathoni, M.Pd (Kepala Madrasah)</option>
-                <option value="Bpk. Slamet Riyadi, M.Pd">Bpk. Slamet Riyadi, M.Pd (Waka Kurikulum)</option>
+                <option value="MANUAL">-- (Pilih Akun Guru / GTK dari Database MySQL) --</option>
+                {gtkList.map((g) => (
+                  <option key={g.id} value={g.name}>
+                    {g.name} ({g.jabatan} - {g.mapel || "GTK"})
+                  </option>
+                ))}
               </select>
             </div>
 

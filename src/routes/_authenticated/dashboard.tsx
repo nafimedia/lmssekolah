@@ -6380,34 +6380,40 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedRombelId, setExpandedRombelId] = useState<string | null>("r-8a");
 
-  // Initial Rombel Master Data with LocalStorage persistence
+  // Initial Rombel Master Data with LocalStorage persistence (v2 for official Wali Kelas sync)
   const [rombelList, setRombelList] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("lms_rombel_management_v1");
-        if (saved) return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return [
+    const defaultRombels = [
       {
         id: "r-7a",
         grade: "VII",
         name: "7A",
         room: "Ruang R-101",
-        waliKelas: "Slamet Riyadi, S.Pd",
+        waliKelas: "MAULIDIA NURUL IZATI, S.Pd",
         capacity: 32,
         tahunAjaran: "2025/2026 Ganjil",
-        presensiPct: 96.5,
-        ewsAlertCount: 2,
-        students: [
-          { id: "s7-1", nisn: "0081234001", name: "Ahmad Dani", gender: "L", parentWa: "081234567891", kkmStatus: "TUNTAS (82)" },
-          { id: "s7-2", nisn: "0081234002", name: "Anisa Rahma", gender: "P", parentWa: "081234567892", kkmStatus: "TUNTAS (88)" },
-          { id: "s7-3", nisn: "0081234003", name: "Bagus Setiawan", gender: "L", parentWa: "081234567893", kkmStatus: "PERLU PEMBINAAN (72)" },
-        ],
+        presensiPct: 0.0,
+        ewsAlertCount: 0,
+        students: [],
         teachers: [
-          { mapel: "Fikih", teacher: "Ahmad Fauzi, S.Ag" },
-          { mapel: "Al-Qur'an Hadits", teacher: "Ustadz H. Abdullah, M.Pd" },
-          { mapel: "Matematika", teacher: "Hendra Wijaya, M.Sc" },
+          { mapel: "Al-Qur'an Hadits", teacher: "AH. SYARIF HIDAYAH, S.Pd.I" },
+          { mapel: "Bahasa Arab", teacher: "ENDAH SUPRIHATIN, S.Pd" },
+          { mapel: "Matematika", teacher: "SAYONO, S.Pd., M.Pd." },
+        ],
+      },
+      {
+        id: "r-7b",
+        grade: "VII",
+        name: "7B",
+        room: "Ruang R-102",
+        waliKelas: "RINDANG FARIHA IDANA, S.Pd",
+        capacity: 32,
+        tahunAjaran: "2025/2026 Ganjil",
+        presensiPct: 0.0,
+        ewsAlertCount: 0,
+        students: [],
+        teachers: [
+          { mapel: "Bahasa Jawa", teacher: "RINDANG FARIHA IDANA, S.Pd" },
+          { mapel: "Bahasa Indonesia", teacher: "DAISAH, S.Pd" },
         ],
       },
       {
@@ -6415,7 +6421,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         grade: "VIII",
         name: "8A",
         room: "Ruang R-201",
-        waliKelas: "Bpk. Hendra Wijaya, M.Sc",
+        waliKelas: "SOBIYATI, S.Pd",
         capacity: 32,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 98.2,
@@ -6427,10 +6433,10 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
           { id: "s8-4", nisn: "0081928374", name: "Siti Nurhaliza", gender: "P", parentWa: "081234567896", kkmStatus: "TUNTAS (89)" },
         ],
         teachers: [
-          { mapel: "Matematika", teacher: "Hendra Wijaya, M.Sc" },
-          { mapel: "Fikih", teacher: "Ahmad Fauzi, S.Ag" },
-          { mapel: "IPA Terpadu", teacher: "Dr. Tri Nugroho, M.Pd" },
-          { mapel: "Bahasa Inggris", teacher: "Siti Rahmawati, S.Pd" },
+          { mapel: "Matematika", teacher: "SAYONO, S.Pd., M.Pd." },
+          { mapel: "Fikih", teacher: "CARYATI," },
+          { mapel: "IPA Terpadu", teacher: "NOVANTYA KARTIKAWATI, S.Pd" },
+          { mapel: "Bahasa Inggris", teacher: "RIDHO ANSHORI, S.Pd., M.Pd" },
         ],
       },
       {
@@ -6438,7 +6444,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         grade: "VIII",
         name: "8B",
         room: "Ruang R-202",
-        waliKelas: "Siti Rahmawati, S.Pd",
+        waliKelas: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd",
         capacity: 32,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 95.8,
@@ -6448,8 +6454,8 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
           { id: "s8-6", nisn: "0081928376", name: "Dewi Lestari", gender: "P", parentWa: "081234567898", kkmStatus: "TUNTAS (87)" },
         ],
         teachers: [
-          { mapel: "Bahasa Inggris", teacher: "Siti Rahmawati, S.Pd" },
-          { mapel: "Fikih", teacher: "Ahmad Fauzi, S.Ag" },
+          { mapel: "Bahasa Inggris", teacher: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+          { mapel: "Fikih", teacher: "CARYATI," },
         ],
       },
       {
@@ -6457,7 +6463,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         grade: "IX",
         name: "9A",
         room: "Ruang R-301",
-        waliKelas: "Dr. Tri Nugroho, M.Pd",
+        waliKelas: "NOVANTYA KARTIKAWATI, S.Pd",
         capacity: 32,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 97.0,
@@ -6467,18 +6473,44 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
           { id: "s9-2", nisn: "0071928392", name: "Zahra Amalia", gender: "P", parentWa: "081234567800", kkmStatus: "PERLU PEMBINAAN (74)" },
         ],
         teachers: [
-          { mapel: "IPA Terpadu", teacher: "Dr. Tri Nugroho, M.Pd" },
-          { mapel: "Matematika", teacher: "Hendra Wijaya, M.Sc" },
+          { mapel: "IPA Terpadu", teacher: "NOVANTYA KARTIKAWATI, S.Pd" },
+          { mapel: "Matematika", teacher: "SAYONO, S.Pd., M.Pd." },
+        ],
+      },
+      {
+        id: "r-9b",
+        grade: "IX",
+        name: "9B",
+        room: "Ruang R-302",
+        waliKelas: "INDAH NURROHMAH, S.Pd",
+        capacity: 32,
+        tahunAjaran: "2025/2026 Ganjil",
+        presensiPct: 96.0,
+        ewsAlertCount: 0,
+        students: [],
+        teachers: [
+          { mapel: "Bahasa Inggris", teacher: "INDAH NURROHMAH, S.Pd" },
         ],
       },
     ];
+
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_rombel_management_v2");
+        if (saved) return JSON.parse(saved);
+        // Force refresh v1 cache
+        localStorage.removeItem("lms_rombel_management_v1");
+        localStorage.setItem("lms_rombel_management_v2", JSON.stringify(defaultRombels));
+      } catch (e) {}
+    }
+    return defaultRombels;
   });
 
   const saveRombelToStorage = (list: any[]) => {
     setRombelList(list);
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("lms_rombel_management_v1", JSON.stringify(list));
+        localStorage.setItem("lms_rombel_management_v2", JSON.stringify(list));
       } catch (e) {}
     }
   };

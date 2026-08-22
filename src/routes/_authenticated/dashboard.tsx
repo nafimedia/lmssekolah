@@ -2635,14 +2635,13 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
   };
 
   const getStudentRombel = (cName: string) => {
-    const clean = cName.replace(/[^0-9A-C]/gi, "").toUpperCase();
-    if (clean.includes("7A")) return "Rombel 7A";
-    if (clean.includes("7B")) return "Rombel 7B";
-    if (clean.includes("7C")) return "Rombel 7C";
-    if (clean.includes("8B")) return "Rombel 8B";
-    if (clean.includes("8C")) return "Rombel 8C";
-    if (clean.includes("9A")) return "Rombel 9A";
-    if (clean.includes("9C")) return "Rombel 9C";
+    const clean = (cName || "").toUpperCase().replace("-", "").replace(/\s+/g, "");
+    if (clean.includes("7B") || clean.includes("VIIB")) return "Rombel 7B";
+    if (clean.includes("7A") || clean.includes("VIIA")) return "Rombel 7A";
+    if (clean.includes("8B") || clean.includes("VIIIB")) return "Rombel 8B";
+    if (clean.includes("8A") || clean.includes("VIIIA")) return "Rombel 8A";
+    if (clean.includes("9B") || clean.includes("IXB")) return "Rombel 9B";
+    if (clean.includes("9A") || clean.includes("IXA")) return "Rombel 9A";
     return "Rombel 8A";
   };
 
@@ -2652,36 +2651,209 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
 
   const [jadwal, setJadwal] = useState<
     Record<string, { j: string; m: string; tingkat: string; rombel: string; g: string }[]>
-  >({
-    Senin: [
-      { j: "07.30 - 09.00", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Bpk. Hendra Wijaya, M.Sc" },
-      { j: "09.15 - 10.45", m: "Al-Quran Hadits", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Dra. Hj. Siti Rahmah, M.Pd" },
-      { j: "09.15 - 10.45", m: "Bahasa Arab", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "Ustadzah Nurul Hidayah, S.Pd.I" },
-      { j: "10.45 - 12.15", m: "Fiqih", tingkat: "Kelas IX", rombel: "Rombel 9C", g: "Dra. Hj. Siti Rahmah, M.Pd" },
-    ],
-    Selasa: [
-      { j: "07.30 - 09.00", m: "IPA Terpadu", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Ibu Ratna Dewi, M.Pd" },
-      { j: "09.15 - 10.45", m: "Fiqih", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Dra. Hj. Siti Rahmah, M.Pd" },
-      { j: "09.15 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "Bpk. Slamet Riyadi, M.Pd" },
-    ],
-    Rabu: [
-      { j: "07.30 - 09.00", m: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Achmad Makmun Rosid, S.Pd., M.Pd" },
-      { j: "09.15 - 10.45", m: "Informatika & Coding", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "H. Ahmad Syukri, S.Kom" },
-      { j: "07.30 - 09.00", m: "Al-Quran Hadits", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "Dra. Hj. Siti Rahmah, M.Pd" },
-    ],
-    Kamis: [
-      { j: "07.30 - 09.00", m: "Akidah Akhlak", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Ust. Abdul Halim, S.Ag" },
-      { j: "09.15 - 10.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Drs. KH. Mahmud Ridwan" },
-      { j: "07.30 - 09.00", m: "IPS", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "Ibu Maryati, S.Pd" },
-    ],
-    Jumat: [
-      { j: "07.30 - 09.00", m: "PJOK", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Bpk. Agus Santoso, S.Pd" },
-      { j: "07.30 - 09.00", m: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7C", g: "Bpk. Agus Santoso, S.Pd" },
-    ],
-    Sabtu: [
-      { j: "07.30 - 09.00", m: "Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "Ibu Rina Indriani, S.Sn" },
-      { j: "07.30 - 09.00", m: "Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8C", g: "Ibu Rina Indriani, S.Sn" },
-    ],
+  >(() => {
+    const OFFICIAL_SCHEDULE = {
+      Senin: [
+        // 7A
+        { j: "07.30 - 08.15", m: "Matematika", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "08.15 - 09.00", m: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
+        { j: "09.15 - 10.00", m: "Bahasa Jawa", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "RINDANG FARIHA IDANA, S.Pd" },
+        { j: "10.00 - 10.45", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "10.45 - 11.30", m: "Prakarya dan Seni Budaya", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ISNAENI HASANAH, S.Pd.I" },
+        // 7B
+        { j: "07.30 - 08.15", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "SOBIYATI, S.Pd" },
+        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "10.00 - 10.45", m: "Bahasa Jawa", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "RINDANG FARIHA IDANA, S.Pd" },
+        { j: "10.45 - 11.30", m: "Bimbingan dan Konseling", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ASROR HIDAYAT, S.Pd" },
+        // 8A
+        { j: "07.30 - 08.30", m: "PJOK", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
+        { j: "08.30 - 09.30", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "H. DASIRUN, S.Ag., M.Pd.I" },
+        { j: "09.45 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "SOBIYATI, S.Pd" },
+        { j: "10.45 - 11.45", m: "Bimbingan dan Konseling", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ASROR HIDAYAT, S.Pd" },
+        // 8B
+        { j: "07.30 - 08.15", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
+        { j: "08.15 - 09.00", m: "Bahasa Arab", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ENDAH SUPRIHATIN, S.Pd" },
+        { j: "09.15 - 10.00", m: "Fikih", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "CARYATI," },
+        { j: "10.00 - 10.45", m: "Prakarya dan Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ISNAENI HASANAH, S.Pd.I" },
+        { j: "10.45 - 11.30", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SOBIYATI, S.Pd" },
+        // 9A
+        { j: "07.30 - 08.30", m: "Bahasa Jawa", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "RINDANG FARIHA IDANA, S.Pd" },
+        { j: "08.30 - 09.30", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { j: "09.45 - 10.45", m: "Bahasa Inggris", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { j: "10.45 - 11.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "H. DASIRUN, S.Ag., M.Pd.I" },
+        // 9B
+        { j: "07.30 - 08.15", m: "Ilmu Pendidikan Alam", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Bimbingan dan Konseling", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ASROR HIDAYAT, S.Pd" },
+        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "10.00 - 10.45", m: "Prakarya dan Seni Budaya", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ISNAENI HASANAH, S.Pd.I" },
+        { j: "10.45 - 11.30", m: "Akidah Akhlak", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "WAKHIBUN, S.P" },
+      ],
+      Selasa: [
+        // 7A
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Matematika", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "09.15 - 10.00", m: "Akidah Akhlak", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "WAKHIBUN, S.P" },
+        { j: "10.00 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "SOBIYATI, S.Pd" },
+        { j: "10.45 - 11.30", m: "Bimbingan dan Konseling", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ASROR HIDAYAT, S.Pd" },
+        // 7B
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Bahasa Arab", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ENDAH SUPRIHATIN, S.Pd" },
+        { j: "09.45 - 10.45", m: "Bahasa Inggris", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { j: "10.45 - 11.45", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
+        // 8A
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "09.45 - 10.45", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "10.45 - 11.45", m: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        // 8B
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Bahasa Jawa", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "RINDANG FARIHA IDANA, S.Pd" },
+        { j: "09.15 - 10.00", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SOBIYATI, S.Pd" },
+        { j: "10.00 - 10.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "UMI KHAFSOH, S.Pd" },
+        { j: "10.45 - 11.30", m: "Al Qur'an Hadis", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        // 9A
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "09.15 - 10.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "10.00 - 10.45", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
+        { j: "10.45 - 11.30", m: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SOBIYATI, S.Pd" },
+        // 9B
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { j: "09.15 - 10.00", m: "Bahasa Jawa", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "RINDANG FARIHA IDANA, S.Pd" },
+        { j: "10.00 - 10.45", m: "Al Qur'an Hadis", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        { j: "10.45 - 11.30", m: "Bahasa Arab", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ENDAH SUPRIHATIN, S.Pd" },
+      ],
+      Rabu: [
+        // 7A
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Al Qur'an Hadis", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        { j: "09.45 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "SOBIYATI, S.Pd" },
+        { j: "10.45 - 11.45", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        // 7B
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "09.15 - 10.00", m: "Prakarya dan Seni Budaya", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ISNAENI HASANAH, S.Pd.I" },
+        { j: "10.00 - 10.45", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { j: "10.45 - 11.30", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "H. DASIRUN, S.Ag., M.Pd.I" },
+        // 8A
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Bahasa Jawa", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "RINDANG FARIHA IDANA, S.Pd" },
+        { j: "09.15 - 10.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "10.00 - 10.45", m: "Fikih", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "CARYATI," },
+        { j: "10.45 - 11.30", m: "Bahasa Arab", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ENDAH SUPRIHATIN, S.Pd" },
+        // 8B
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { j: "09.45 - 10.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "H. DASIRUN, S.Ag., M.Pd.I" },
+        { j: "10.45 - 11.45", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SOBIYATI, S.Pd" },
+        // 9A
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SOBIYATI, S.Pd" },
+        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "10.00 - 10.45", m: "Prakarya dan Seni Budaya", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ISNAENI HASANAH, S.Pd.I" },
+        { j: "10.45 - 11.30", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "UMI KHAFSOH, S.Pd" },
+        // 9B
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Bahasa Inggris", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { j: "09.45 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SOBIYATI, S.Pd" },
+        { j: "10.45 - 11.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "H. DASIRUN, S.Ag., M.Pd.I" },
+      ],
+      Kamis: [
+        // 7A
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
+        { j: "09.45 - 10.45", m: "Bahasa Inggris", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { j: "10.45 - 11.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "UMI KHAFSOH, S.Pd" },
+        // 7B
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Fikih", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "CARYATI," },
+        { j: "09.45 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "SOBIYATI, S.Pd" },
+        { j: "10.45 - 11.45", m: "Al Qur'an Hadis", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        // 8A
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "09.15 - 10.00", m: "Prakarya dan Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ISNAENI HASANAH, S.Pd.I" },
+        { j: "10.00 - 10.45", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
+        { j: "10.45 - 11.30", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "SOBIYATI, S.Pd" },
+        // 8B
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "10.00 - 10.45", m: "Akidah Akhlak", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "WAKHIBUN, S.P" },
+        { j: "10.45 - 11.30", m: "Bimbingan dan Konseling", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ASROR HIDAYAT, S.Pd" },
+        // 9A
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Al Qur'an Hadis", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        { j: "09.15 - 10.00", m: "Bahasa Arab", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ENDAH SUPRIHATIN, S.Pd" },
+        { j: "10.00 - 10.45", m: "Bimbingan dan Konseling", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ASROR HIDAYAT, S.Pd" },
+        { j: "10.45 - 11.30", m: "Fikih", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "CARYATI," },
+        // 9B
+        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.15 - 09.00", m: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SOBIYATI, S.Pd" },
+        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "10.00 - 10.45", m: "Ilmu Pendidikan Alam", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "10.45 - 11.30", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
+      ],
+      Jumat: [
+        // 7A
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Bahasa Arab", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ENDAH SUPRIHATIN, S.Pd" },
+        { j: "09.45 - 10.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "H. DASIRUN, S.Ag., M.Pd.I" },
+        // 7B
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
+        { j: "09.45 - 10.45", m: "Akidah Akhlak", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "WAKHIBUN, S.P" },
+        // 8A
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Al Qur'an Hadis", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        { j: "09.45 - 10.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "UMI KHAFSOH, S.Pd" },
+        // 8B
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "09.45 - 10.45", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        // 9A
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "Akidah Akhlak", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "WAKHIBUN, S.P" },
+        { j: "09.45 - 10.45", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SAYONO, S.Pd., M.Pd." },
+        // 9B
+        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "MISBAH AHMAD DANI, S.Pd" },
+        { j: "08.30 - 09.30", m: "PJOK", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
+        { j: "09.45 - 10.45", m: "Fikih", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "CARYATI," },
+      ],
+      Sabtu: [
+        // 7A
+        { j: "07.30 - 09.00", m: "Fikih", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "CARYATI," },
+        { j: "09.15 - 10.45", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        // 7B
+        { j: "07.30 - 09.00", m: "Matematika", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "09.15 - 10.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "UMI KHAFSOH, S.Pd" },
+        // 8A
+        { j: "07.30 - 09.00", m: "Akidah Akhlak", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "WAKHIBUN, S.P" },
+        { j: "09.15 - 10.45", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        // 8B
+        { j: "07.30 - 09.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { j: "09.15 - 10.45", m: "PJOK", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
+        // 9A
+        { j: "07.30 - 09.00", m: "PJOK", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
+        { j: "09.15 - 10.45", m: "Ilmu Pendidikan Alam", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
+        // 9B
+        { j: "07.30 - 09.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SAYONO, S.Pd., M.Pd." },
+        { j: "09.15 - 10.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "UMI KHAFSOH, S.Pd" },
+      ],
+    };
+
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("lms_schedule_v3");
+        if (saved) return JSON.parse(saved);
+        localStorage.removeItem("lms_schedule_v1");
+        localStorage.removeItem("lms_schedule_v2");
+        localStorage.setItem("lms_schedule_v3", JSON.stringify(OFFICIAL_SCHEDULE));
+      } catch (e) {}
+    }
+    return OFFICIAL_SCHEDULE;
   });
 
   const [isOpen, setIsOpen] = useState(false);

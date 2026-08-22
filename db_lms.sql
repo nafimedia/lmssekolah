@@ -208,7 +208,7 @@ INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `nis_nip`, `cl
 ('usr-waka-1', 'waka@mtsn2cilacap.sch.id', '$2a$10$wE99Y0M0W0v4eF3n7S8sO.V3d0T5yA0uF7rL1oN6pM2iK4j8H0g6a', 'Dra. Hj. Maryam, M.Pd', '197508202002122001', NULL, 'waka'),
 ('usr-walikelas-1', 'walikelas@mtsn2cilacap.sch.id', '$2a$10$wE99Y0M0W0v4eF3n7S8sO.V3d0T5yA0uF7rL1oN6pM2iK4j8H0g6a', 'Bpk. Hendra Wijaya, M.Sc', '198211102009041003', 'VIII A', 'walikelas'),
 ('usr-guru-1', 'guru@mtsn2cilacap.sch.id', '$2a$10$wE99Y0M0W0v4eF3n7S8sO.V3d0T5yA0uF7rL1oN6pM2iK4j8H0g6a', 'Dra. Hj. Siti Rahmah, M.Pd', '198005122006042005', 'VIII A', 'guru'),
-('usr-siswa-1', 'siswa@mtsn2cilacap.sch.id', '$2a$10$wE99Y0M0W0v4eF3n7S8sO.V3d0T5yA0uF7rL1oN6pM2iK4j8H0g6a', 'Muhammad Fairuz Maulana', '12123301000288', 'VIII A', 'siswa')
+('usr-siswa-1', 'siswa@mtsn2cilacap.sch.id', '$2a$10$wE99Y0M0W0v4eF3n7S8sO.V3d0T5yA0uF7rL1oN6pM2iK4j8H0g6a', 'ALIYA QIARA ABDULLAH', '0127790481', 'VIII-A', 'siswa')
 ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 
 INSERT INTO `user_roles` (`user_id`, `role`) VALUES

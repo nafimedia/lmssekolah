@@ -4239,12 +4239,12 @@ function Nilai({ activeRole }: { activeRole?: string }) {
   ];
 
   const classesList = [
-    { name: "Kelas VII A", wali: "Ibu Ratna Dewi, M.Pd", siswa: 32, avg: 88.5, icon: "🏫", mapelsCount: 8, tuntas: "30 Siswa Tuntas" },
-    { name: "Kelas VII B", wali: "Ust. Abdul Halim, S.Ag", siswa: 32, avg: 86.2, icon: "🏫", mapelsCount: 8, tuntas: "28 Siswa Tuntas" },
-    { name: "Kelas VIII A", wali: "Dra. Hj. Siti Rahmah", siswa: 32, avg: 91.0, icon: "🏫", mapelsCount: 8, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas VIII B", wali: "Bapak Hendra Wijaya, M.Sc", siswa: 31, avg: 87.4, icon: "🏫", mapelsCount: 8, tuntas: "29 Siswa Tuntas" },
-    { name: "Kelas IX A", wali: "H. Ahmad Syukri, S.Kom", siswa: 32, avg: 92.8, icon: "🎓", mapelsCount: 8, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas IX B", wali: "Ustadzah Nurul Hidayah, S.Pd.I", siswa: 31, avg: 89.1, icon: "🎓", mapelsCount: 8, tuntas: "30 Siswa Tuntas" },
+    { name: "Kelas VII A", wali: "MAULIDIA NURUL IZATI, S.Pd", siswa: 0, avg: 0.0, icon: "🏫", mapelsCount: 8, tuntas: "0 Siswa Tuntas" },
+    { name: "Kelas VII B", wali: "RINDANG FARIHA IDANA, S.Pd", siswa: 0, avg: 0.0, icon: "🏫", mapelsCount: 8, tuntas: "0 Siswa Tuntas" },
+    { name: "Kelas VIII A", wali: "SOBIYATI, S.Pd", siswa: 32, avg: 91.0, icon: "🏫", mapelsCount: 8, tuntas: "32 Siswa Tuntas" },
+    { name: "Kelas VIII B", wali: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", siswa: 31, avg: 87.4, icon: "🏫", mapelsCount: 8, tuntas: "29 Siswa Tuntas" },
+    { name: "Kelas IX A", wali: "NOVANTYA KARTIKAWATI, S.Pd", siswa: 32, avg: 92.8, icon: "🎓", mapelsCount: 8, tuntas: "32 Siswa Tuntas" },
+    { name: "Kelas IX B", wali: "INDAH NURROHMAH, S.Pd", siswa: 31, avg: 89.1, icon: "🎓", mapelsCount: 8, tuntas: "30 Siswa Tuntas" },
   ];
 
   const mapelDetails = [
@@ -4796,12 +4796,12 @@ function Progress({ activeRole }: { activeRole?: string }) {
   ];
 
   const rombelProgressList = [
-    { name: "Kelas VII A", cp: 92, tugas: 88, walikelas: "Ibu Ratna Dewi, M.Pd", total: 32 },
-    { name: "Kelas VII B", cp: 85, tugas: 82, walikelas: "Ust. Abdul Halim, S.Ag", total: 32 },
-    { name: "Kelas VIII A", cp: 95, tugas: 90, walikelas: "Dra. Hj. Siti Rahmah", total: 32 },
-    { name: "Kelas VIII B", cp: 88, tugas: 84, walikelas: "Bapak Hendra Wijaya, M.Sc", total: 31 },
-    { name: "Kelas IX A", cp: 98, tugas: 94, walikelas: "H. Ahmad Syukri, S.Kom", total: 32 },
-    { name: "Kelas IX B", cp: 90, tugas: 86, walikelas: "Ustadzah Nurul Hidayah, S.Pd.I", total: 31 },
+    { name: "Kelas VII A", cp: 0, tugas: 0, walikelas: "MAULIDIA NURUL IZATI, S.Pd", total: 0 },
+    { name: "Kelas VII B", cp: 0, tugas: 0, walikelas: "RINDANG FARIHA IDANA, S.Pd", total: 0 },
+    { name: "Kelas VIII A", cp: 95, tugas: 90, walikelas: "SOBIYATI, S.Pd", total: 32 },
+    { name: "Kelas VIII B", cp: 88, tugas: 84, walikelas: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", total: 31 },
+    { name: "Kelas IX A", cp: 98, tugas: 94, walikelas: "NOVANTYA KARTIKAWATI, S.Pd", total: 32 },
+    { name: "Kelas IX B", cp: 90, tugas: 86, walikelas: "INDAH NURROHMAH, S.Pd", total: 31 },
   ];
 
   const mapelProgressBreakdown = [

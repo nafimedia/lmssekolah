@@ -8418,6 +8418,11 @@ function Pengaturan() {
 /* ---------- Modul Ajar PDF per Jenjang ---------- */
 function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
+  const isGuru = activeRole === "guru" || activeRole === "walikelas" || activeRole === "wali_kelas";
+  const me = MysqlAuthService.getActiveUser();
+  const currentTeacherName = me?.full_name || userProfile?.name || userProfile?.full_name || "";
+  const currentSubject = (userProfile?.subject_specialty || (me as any)?.subject_specialty || (me as any)?.assigned_mapel || "").trim();
+
   const rawClass = userProfile?.class_name || "VIII-A";
 
   const getStudentJenjang = (cName: string) => {
@@ -8429,15 +8434,20 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
   const initialJenjang = isSiswa ? getStudentJenjang(rawClass) : "semua";
   const [selectedJenjang, setSelectedJenjang] = useState(initialJenjang);
   const [modulList, setModulList] = useState([
-    { id: "m1", title: "Modul Ajar Al-Quran Hadits Pertemuan 1-18", mapel: "Al-Quran Hadits", jenjang: "Kelas VIII", teacher: "Dra. Hj. Siti Rahmah, M.Pd", size: "3.4 MB", date: "15 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m2", title: "Modul Ajar Fiqih Kebangsaan & Ibadah", mapel: "Fiqih", jenjang: "Kelas IX", teacher: "Dra. Hj. Siti Rahmah, M.Pd", size: "4.1 MB", date: "18 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m3", title: "Modul Ajar Akidah Akhlak Perilaku Terpuji", mapel: "Akidah Akhlak", jenjang: "Kelas VII", teacher: "Ust. Abdul Halim, S.Ag", size: "2.8 MB", date: "10 Juli 2026", status: "Terverifikasi Waka" },
-    { id: "m4", title: "Modul Ajar Matematika Aljabar & Geometri", mapel: "Matematika", jenjang: "Kelas VIII", teacher: "Bapak Hendra Wijaya, M.Sc", size: "5.2 MB", date: "12 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m1", title: "Modul Ajar Al Qur'an Hadis Pertemuan 1-18", mapel: "Al Qur'an Hadis", jenjang: "Kelas VIII", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", size: "3.4 MB", date: "15 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m2", title: "Modul Ajar Fikih Kebangsaan & Ibadah", mapel: "Fikih", jenjang: "Kelas IX", teacher: "CARYATI,", size: "4.1 MB", date: "18 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m3", title: "Modul Ajar Akidah Akhlak Perilaku Terpuji", mapel: "Akidah Akhlak", jenjang: "Kelas VII", teacher: "WAKHIBUN, S.P", size: "2.8 MB", date: "10 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m4", title: "Modul Ajar Matematika Aljabar & Geometri", mapel: "Matematika", jenjang: "Kelas VIII", teacher: "SAYONO, S.Pd., M.Pd.", size: "5.2 MB", date: "12 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m5", title: "Modul Ajar Bahasa Indonesia Literasi & Narasi", mapel: "Bahasa Indonesia", jenjang: "Kelas VIII", teacher: "SOBIYATI, S.Pd", size: "3.9 MB", date: "14 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m6", title: "Modul Ajar Bahasa Inggris Listening & Speaking", mapel: "Bahasa Inggris", jenjang: "Kelas VIII", teacher: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", size: "4.5 MB", date: "16 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m7", title: "Modul Ajar IPA Eksperimen Sains & Praktikum", mapel: "Ilmu Pendidikan Alam", jenjang: "Kelas IX", teacher: "NOVANTYA KARTIKAWATI, S.Pd", size: "4.8 MB", date: "19 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m8", title: "Modul Ajar Bahasa Arab Percakapan & Gramatika", mapel: "Bahasa Arab", jenjang: "Kelas VII", teacher: "ENDAH SUPRIHATIN, S.Pd", size: "3.1 MB", date: "11 Juli 2026", status: "Terverifikasi Waka" },
+    { id: "m9", title: "Modul Ajar SKI Peradaban Islam", mapel: "Sejarah Kebudayaan Islam", jenjang: "Kelas VIII", teacher: "H. DASIRUN, S.Ag., M.Pd.I", size: "3.6 MB", date: "13 Juli 2026", status: "Terverifikasi Waka" },
   ]);
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  const [newMapel, setNewMapel] = useState("Al-Quran Hadits");
+  const [newMapel, setNewMapel] = useState(currentSubject || "Al Qur'an Hadis");
   const [newJenjang, setNewJenjang] = useState("Kelas VIII");
 
   const isWaka = activeRole === "waka";
@@ -8465,7 +8475,7 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
     e.preventDefault();
     if (!newTitle) return toast.error("Harap isi judul modul ajar!");
     setModulList([
-      { id: String(Date.now()), title: newTitle, mapel: newMapel, jenjang: newJenjang, teacher: userProfile?.full_name || "Dra. Hj. Siti Rahmah, M.Pd", size: "3.8 MB", date: "Hari ini", status: isWakaOrAdmin ? "Terverifikasi Waka" : "Perlu Verifikasi Waka" },
+      { id: String(Date.now()), title: newTitle, mapel: newMapel, jenjang: newJenjang, teacher: currentTeacherName || "SOBIYATI, S.Pd", size: "3.8 MB", date: "Hari ini", status: isWakaOrAdmin ? "Terverifikasi Waka" : "Perlu Verifikasi Waka" },
       ...modulList,
     ]);
     toast.success(`Modul Ajar PDF "${newTitle}" berhasil diunggah! ${!isWakaOrAdmin ? "(Menunggu Verifikasi Waka)" : ""}`);
@@ -8479,6 +8489,22 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
       selectedStatusFilter === "semua" ||
       (selectedStatusFilter === "pending" && m.status !== "Terverifikasi Waka") ||
       (selectedStatusFilter === "verified" && m.status === "Terverifikasi Waka");
+
+    // Strictly for Guru accounts: show ONLY teaching modules belonging to this teacher!
+    if (isGuru) {
+      const cleanTeacher = (currentTeacherName || "").toLowerCase().trim();
+      const cleanMTeacher = m.teacher.toLowerCase().trim();
+
+      const cleanSubject = (currentSubject || "").toLowerCase().trim();
+      const cleanMMapel = m.mapel.toLowerCase().trim();
+
+      const isNameMatch = cleanTeacher && (cleanMTeacher.includes(cleanTeacher) || cleanTeacher.includes(cleanMTeacher));
+      const isSubjectMatch = cleanSubject && (cleanMMapel.includes(cleanSubject) || cleanSubject.includes(cleanMMapel));
+
+      const isMine = isNameMatch || isSubjectMatch;
+      return matchJenjang && matchStatus && isMine;
+    }
+
     return matchJenjang && matchStatus;
   });
 
@@ -8508,6 +8534,19 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
           </Button>
         )}
       </div>
+
+      {/* Banner Khusus Guru */}
+      {isGuru && (
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-xs">
+          <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
+            <span className="text-base">🔒</span>
+            <span>Modul Ajar Terkunci Khusus Milik Anda: <strong className="text-emerald-700 dark:text-emerald-400 text-sm font-black">{currentTeacherName || "Guru Pengampu"}</strong></span>
+          </div>
+          <Badge className="bg-emerald-700 text-white font-extrabold text-[10px] px-2.5 py-0.5">
+            100% Berkas Dokumen Sendiri
+          </Badge>
+        </div>
+      )}
 
       {/* Metrics Summary for Waka */}
       {isWakaOrAdmin && (

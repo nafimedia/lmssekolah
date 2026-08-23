@@ -16,6 +16,7 @@ import { UserManagementModule } from "@/components/dashboard/modules/user/UserMa
 import { KehadiranModule } from "@/components/dashboard/modules/kehadiran/KehadiranModule";
 import { JadwalModule } from "@/components/dashboard/modules/jadwal/JadwalModule";
 import { ModulAjarModule } from "@/components/dashboard/modules/modulajar/ModulAjarModule";
+import { ManajemenKelasModule } from "@/components/dashboard/modules/manajemenkelas/ManajemenKelasModule";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
@@ -220,7 +221,7 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Superadmin", group: "Utama & Kontrol" },
       { key: "sdm_gtk", label: "Manajemen SDM GTK", group: "Utama & Kontrol" },
-      { key: "manajemen_kelas", label: "Manajemen Rombel", group: "Utama & Kontrol" },
+      { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Utama & Kontrol" },
       { key: "users", label: "Data User & Role", group: "Utama & Kontrol" },
       { key: "siakad", label: "Akademik Madrasah", group: "Akademik" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Akademik" },
@@ -243,7 +244,7 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Akademik", group: "Master Data" },
       { key: "sdm_gtk", label: "Manajemen SDM GTK", group: "Master Data" },
-      { key: "manajemen_kelas", label: "Manajemen Rombel", group: "Master Data" },
+      { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Master Data" },
       { key: "siakad", label: "Akademik Madrasah", group: "Master Data" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Master Data" },
       { key: "modul_ajar", label: "Modul Ajar PDF", group: "Master Data" },
@@ -284,7 +285,7 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Waka", group: "Kurikulum & Validasi" },
       { key: "sdm_gtk", label: "Beban Kerja GTK (24JP)", group: "Kurikulum & Validasi" },
-      { key: "manajemen_kelas", label: "Manajemen Rombel", group: "Kurikulum & Validasi" },
+      { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Kurikulum & Validasi" },
       { key: "siakad", label: "Akademik Madrasah", group: "Kurikulum & Validasi" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Kurikulum & Validasi" },
       { key: "modul_ajar", label: "Verifikasi Modul Ajar", group: "Kurikulum & Validasi" },
@@ -305,7 +306,7 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Wali Kelas", group: "Manajemen Kelas" },
       { key: "kehadiran", label: "Presensi Rombel 8A", group: "Manajemen Kelas" },
-      { key: "manajemen_kelas", label: "Manajemen Rombel", group: "Manajemen Kelas" },
+      { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Manajemen Kelas" },
       { key: "jadwal", label: "Jadwal Kelas 8A", group: "Manajemen Kelas" },
       { key: "agenda", label: "Agenda & Kalender", group: "Manajemen Kelas" },
       { key: "pengumuman", label: "Pengumuman", group: "Manajemen Kelas" },
@@ -872,7 +873,7 @@ function DashboardContent({
             {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "siakad" && <SiakadMasterDataModule />}
-            {active === "manajemen_kelas" && <ManajemenKelas activeRole={activeRole} />}
+            {active === "manajemen_kelas" && <ManajemenKelasModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "perangkat_pembelajaran" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
             {active === "mapel" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
             {active === "users" && activeRole !== "siswa" && <UserManagementModule />}

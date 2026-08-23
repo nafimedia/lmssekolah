@@ -8,7 +8,7 @@ import { CBTLiveSession } from "./CBTLiveSession";
 import { CBTQuestionBank } from "./CBTQuestionBank";
 import { CBTGradeAnalysis } from "./CBTGradeAnalysis";
 import { CBTExamPlayerModal } from "./CBTExamPlayerModal";
-import { CBTExam, CBTQuestion, CBTGradeAnalysisItem } from "@/types/cbt";
+import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 
 interface CBTModuleProps {
   userRole?: string;
@@ -255,6 +255,11 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
     }
   };
 
+  const isGuruRole = userRole === "guru" || (userRole || "").includes("guru");
+  const visibleExams = isGuruRole ? exams.filter((e) => isSubjectAllowedForUser(e.mapel)) : exams;
+  const visibleQuestions = isGuruRole ? questions.filter((q) => isSubjectAllowedForUser(q.mapel)) : questions;
+  const visibleGradeAnalysis = isGuruRole ? gradeAnalysis.filter((g) => isSubjectAllowedForUser(g.subjectName)) : gradeAnalysis;
+
   return (
     <div className="space-y-6">
       {/* Top Banner Header */}
@@ -321,7 +326,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
       {/* Tab Panels */}
       {activeTab === "sesi" && (
         <CBTLiveSession
-          exams={exams}
+          exams={visibleExams}
           userRole={userRole}
           onStartExam={handleStartExam}
           onCreateExam={handleCreateExam}
@@ -330,7 +335,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
 
       {activeTab === "bank_soal" && (
         <CBTQuestionBank
-          questions={questions}
+          questions={visibleQuestions}
           userRole={userRole}
           onAddQuestion={handleAddQuestion}
         />
@@ -338,7 +343,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
 
       {activeTab === "analisis" && (
         <CBTGradeAnalysis
-          grades={gradeAnalysis}
+          grades={visibleGradeAnalysis}
           userRole={userRole}
           studentName={studentName}
         />

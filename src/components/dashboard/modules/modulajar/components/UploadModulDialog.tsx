@@ -12,6 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { filterSubjectsForUser, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
+
 interface UploadModulDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,8 +22,9 @@ interface UploadModulDialogProps {
 }
 
 export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload }: UploadModulDialogProps) {
+  const allowedMapels = filterSubjectsForUser(ALL_SCHOOL_SUBJECTS);
   const [newTitle, setNewTitle] = useState("");
-  const [newMapel, setNewMapel] = useState(defaultMapel || "Al Qur'an Hadis");
+  const [newMapel, setNewMapel] = useState(defaultMapel || allowedMapels[0] || "Al Qur'an Hadis");
   const [newJenjang, setNewJenjang] = useState("Kelas VIII");
   const [selectedUploadFile, setSelectedUploadFile] = useState<File | null>(null);
   const [uploadedFileDataUrl, setUploadedFileDataUrl] = useState<string>("");
@@ -83,13 +86,17 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs font-semibold">Mata Pelajaran</Label>
-              <Input
-                placeholder="Nama Mapel"
+              <select
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
                 value={newMapel}
                 onChange={(e) => setNewMapel(e.target.value)}
-                required
-                className="mt-1 text-xs"
-              />
+              >
+                {allowedMapels.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

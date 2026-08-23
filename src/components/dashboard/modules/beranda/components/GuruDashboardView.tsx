@@ -12,6 +12,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+import { getTeacherAssignedSubjects } from "@/services/teacherSubjectAccess";
+
 interface GuruDashboardViewProps {
   userName: string;
   currentDayName: string;
@@ -24,9 +26,12 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
   const [selectedTugasModal, setSelectedTugasModal] = useState<any>(null);
   const [selectedCapaianModal, setSelectedCapaianModal] = useState<any>(null);
 
+  const assignedSubjects = getTeacherAssignedSubjects();
+  const activeSubjectName = assignedSubjects && assignedSubjects.length > 0 ? assignedSubjects.join(", ") : "Al Qur'an Hadis";
+
   const jadwalHariIni = [
-    { jam: "07.30 - 09.00 WIB", rombel: "Rombel 8A", mapel: "Al Qur'an Hadis", status: "AKTIF", room: "Ruang VIII-A (Lantai 2)" },
-    { jam: "10.00 - 11.30 WIB", rombel: "Rombel 8B", mapel: "Al Qur'an Hadis", status: "NANTI", room: "Ruang VIII-B (Lantai 2)" },
+    { jam: "07.30 - 09.00 WIB", rombel: "Rombel 8A", mapel: activeSubjectName, status: "AKTIF", room: "Ruang VIII-A (Lantai 2)" },
+    { jam: "10.00 - 11.30 WIB", rombel: "Rombel 8B", mapel: activeSubjectName, status: "NANTI", room: "Ruang VIII-B (Lantai 2)" },
   ];
 
   const tugasPerluDiperiksa = [
@@ -70,7 +75,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-            <div className="font-bold text-slate-800 dark:text-slate-200">Rombel 8A & 8B (Al Qur&apos;an Hadis)</div>
+            <div className="font-bold text-slate-800 dark:text-slate-200">Rombel 8A & 8B ({activeSubjectName})</div>
             <div>Sesi aktif: 07.30 - 09.00 WIB</div>
           </CardContent>
         </Card>

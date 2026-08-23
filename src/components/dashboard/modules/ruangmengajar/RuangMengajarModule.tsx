@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
+import { filterSubjectsForUser, getTeacherAssignedSubjects } from "@/services/teacherSubjectAccess";
 
 import { JurnalMengajarTab } from "./components/JurnalMengajarTab";
 import { TambahJurnalDialog } from "./components/TambahJurnalDialog";
@@ -24,8 +24,11 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
   const me = MysqlAuthService.getActiveUser();
   const currentTeacherName = me?.full_name || userProfile?.name || "SOBIYATI, S.Pd";
 
+  const allowedMapelNames = filterSubjectsForUser(INITIAL_MASTER_MAPEL.map((m) => m.name));
+  const assignedSubjects = getTeacherAssignedSubjects();
+
   const [activeRombel, setActiveRombel] = useState("Kelas VIII A");
-  const [activeMapel, setActiveMapel] = useState("Al Qur'an Hadis");
+  const [activeMapel, setActiveMapel] = useState(assignedSubjects?.[0] || allowedMapelNames[0] || "Al Qur'an Hadis");
 
   const [journalList, setJournalList] = useState<any[]>([
     { id: "j1", title: "Hukum Bacaan Mad Silah & Mad Badal", topic: "Hukum Bacaan Mad Silah & Mad Badal", meeting: "Pertemuan 16", date: "23 Agustus 2026", notes: "Siswa membaca dengan tajwid presisi." },
@@ -99,8 +102,8 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
             value={activeMapel}
             onChange={(e) => setActiveMapel(e.target.value)}
           >
-            {INITIAL_MASTER_MAPEL.map((m) => (
-              <option key={m.code} value={m.name}>{m.name}</option>
+            {allowedMapelNames.map((name) => (
+              <option key={name} value={name}>{name}</option>
             ))}
           </select>
         </div>

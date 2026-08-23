@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTQuestion, QuestionType } from "@/types/cbt";
+import { filterSubjectsForUser, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
 
 interface CBTQuestionBankProps {
   questions: CBTQuestion[];
@@ -40,6 +41,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
   userRole = "guru",
   onAddQuestion,
 }) => {
+  const allowedMapels = filterSubjectsForUser(ALL_SCHOOL_SUBJECTS);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -48,6 +50,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
   // New Question Form State
   const [qText, setQText] = useState("");
   const [qType, setQType] = useState<QuestionType>("pg");
+  const [qMapel, setQMapel] = useState<string>(allowedMapels[0] || "Matematika");
   const [optA, setOptA] = useState("");
   const [optB, setOptB] = useState("");
   const [optC, setOptC] = useState("");
@@ -89,8 +92,8 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
       correctOption: correctKey,
       points: parseInt(qPoints, 10) || 5,
       difficulty: qDifficulty,
-      mapel: "Matematika",
-      author: "SAYONO, S.Pd., M.Pd.",
+      mapel: qMapel || allowedMapels[0] || "Matematika",
+      author: "Guru Pengampu",
     };
 
     onAddQuestion?.(newQuestion);

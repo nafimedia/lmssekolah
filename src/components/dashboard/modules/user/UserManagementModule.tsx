@@ -90,8 +90,17 @@ export function UserManagementModule() {
     setDummyUsersList((prev) => [newUser, ...prev]);
   };
 
-  const handleSaveRoles = (userId: string, userEmail: string, newRoles: string[]) => {
-    MysqlDataService.updateUserRole(userId, newRoles, userEmail).catch(() => {});
+  const handleSaveRoles = async (userId: string, userEmail: string, newRoles: string[]) => {
+    const targetUser = dummyUsersList.find((u) => u.id === userId || u.email.toLowerCase() === userEmail.toLowerCase());
+    const cleanNip = targetUser?.nis?.replace(/^(NISN|NIP)\.\s*/i, "").trim() || "";
+
+    const ok = await MysqlDataService.updateUserRole(userId, newRoles, userEmail, cleanNip);
+    if (!ok) {
+      toast.error("Gagal mengupdate role ke database MySQL.");
+    } else {
+      toast.success("Role pengguna berhasil diperbarui dan disimpan ke database!");
+    }
+
     setDummyUsersList((prev) =>
       prev.map((u) => {
         if (u.id !== userId && u.email.toLowerCase() !== userEmail.toLowerCase()) return u;

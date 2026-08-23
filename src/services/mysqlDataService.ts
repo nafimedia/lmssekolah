@@ -202,10 +202,10 @@ export class MysqlDataService {
     }
   }
 
-  static async updateUserRole(id: string, role: string | string[], email?: string): Promise<boolean> {
+  static async updateUserRole(id: string, role: string | string[], email?: string, nis_nip?: string): Promise<boolean> {
     try {
       const rolesArr = Array.isArray(role) ? role : [role];
-      return await updateUserRoleFn({ data: { id, email, role: rolesArr[0], roles: rolesArr } });
+      return await updateUserRoleFn({ data: { id, email, nis_nip, role: rolesArr[0], roles: rolesArr } });
     } catch (e) {
       console.warn("updateUserRoleFn failed:", e);
       return false;

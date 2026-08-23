@@ -13,23 +13,22 @@ import {
 import logoKemenag from "@/assets/logokemenag.svg";
 
 interface PrintPresensiDialogProps {
-  selectedClass: string;
-  selectedMonth: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  students: Array<{ id: string; name: string; nisn: string; hadir: number; sakit: number; izin: number; alfa: number }>;
+  selectedClass: string;
+  selectedMonth: string;
+  filteredAttendance: any[];
+  onPrint: () => void;
 }
 
 export function PrintPresensiDialog({
-  selectedClass,
-  selectedMonth,
   isOpen,
   onOpenChange,
-  students,
+  selectedClass,
+  selectedMonth,
+  filteredAttendance,
+  onPrint,
 }: PrintPresensiDialogProps) {
-  const handlePrint = () => {
-    window.print();
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

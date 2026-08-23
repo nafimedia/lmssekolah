@@ -17,6 +17,7 @@ import { KehadiranModule } from "@/components/dashboard/modules/kehadiran/Kehadi
 import { JadwalModule } from "@/components/dashboard/modules/jadwal/JadwalModule";
 import { ModulAjarModule } from "@/components/dashboard/modules/modulajar/ModulAjarModule";
 import { ManajemenKelasModule } from "@/components/dashboard/modules/manajemenkelas/ManajemenKelasModule";
+import { MonitoringKbmLiveModule } from "@/components/dashboard/modules/monitoringkbmlive/MonitoringKbmLiveModule";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
@@ -175,6 +176,7 @@ type MenuKey =
   | "perpustakaan"
   | "manajemen_kelas"
   | "ruang_mengajar"
+  | "monitoring_kbm_live"
   | "sdm_gtk"
   | "perangkat_pembelajaran"
   | "profil"
@@ -182,6 +184,7 @@ type MenuKey =
 
 const MENU: { key: MenuKey; label: string; icon: typeof Home; group?: string }[] = [
   { key: "beranda", label: "Beranda", icon: Home, group: "Utama" },
+  { key: "monitoring_kbm_live", label: "Monitoring KBM Live", icon: Activity, group: "Utama" },
   { key: "ruang_mengajar", label: "Ruang Mengajar Hub", icon: BookOpen, group: "Utama" },
   { key: "sdm_gtk", label: "Manajemen SDM GTK", icon: Users, group: "Utama" },
   { key: "siakad", label: "Akademik Madrasah", icon: BarChart3, group: "Utama" },
@@ -262,6 +265,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "KEPALA MADRASAH",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Kamad", group: "Eksekutif" },
+      { key: "monitoring_kbm_live", label: "🔴 Monitoring KBM Live", group: "Eksekutif" },
       { key: "sdm_gtk", label: "Kinerja & SDM GTK", group: "Eksekutif" },
       { key: "manajemen_kelas", label: "Monitoring Rombel", group: "Eksekutif" },
       { key: "siakad", label: "Akademik Madrasah", group: "Eksekutif" },
@@ -284,6 +288,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "WAKA KURIKULUM",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Waka", group: "Kurikulum & Validasi" },
+      { key: "monitoring_kbm_live", label: "🔴 Monitoring KBM Live", group: "Kurikulum & Validasi" },
       { key: "sdm_gtk", label: "Beban Kerja GTK (24JP)", group: "Kurikulum & Validasi" },
       { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Kurikulum & Validasi" },
       { key: "siakad", label: "Akademik Madrasah", group: "Kurikulum & Validasi" },
@@ -337,8 +342,9 @@ const ROLE_PERMISSIONS: Record<
     label: "Guru Pengampu",
     badge: "GURU PENGAMPU",
     allowedMenus: [
-      { key: "beranda", label: "Dashboard Guru", group: "Utama" },
-      { key: "ruang_mengajar", label: "Ruang Mengajar Hub", group: "Ruang Mengajar" },
+      { key: "beranda", label: "Dashboard Utama", group: "Sistem & Hak Akses" },
+      { key: "monitoring_kbm_live", label: "Monitoring KBM Live", group: "Monitoring & Supervisi" },
+      { key: "ruang_mengajar", label: "Ruang Mengajar Hub", group: "Sistem & Hak Akses" },
       { key: "modul_ajar", label: "Perangkat Ajar", group: "Ruang Mengajar" },
       { key: "nilai", label: "Penilaian Kelas", group: "Penilaian" },
       { key: "agenda", label: "Kalender Akademik", group: "Informasi" },
@@ -870,6 +876,7 @@ function DashboardContent({
         <main className="p-4 lg:p-8 flex-1">
           <ErrorBoundary>
             {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
+            {active === "monitoring_kbm_live" && <MonitoringKbmLiveModule />}
             {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "siakad" && <SiakadMasterDataModule />}

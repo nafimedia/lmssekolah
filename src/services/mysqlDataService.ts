@@ -68,6 +68,15 @@ import {
   deleteMasterRombelFn,
   getUserAchievementsFn,
   saveUserAchievementFn,
+  getKbmPresensiFn,
+  saveKbmPresensiBatchFn,
+  getStudentKbmNotesFn,
+  saveStudentKbmNoteFn,
+  deleteStudentKbmNoteFn,
+  getLkpdActivitiesFn,
+  saveLkpdActivityFn,
+  getLkpdGradesFn,
+  saveLkpdGradesBatchFn,
   getHealthStatusFn,
   DatabaseStats,
   UserRow,
@@ -88,6 +97,11 @@ import {
   AnnouncementRow,
   AgendaRow,
   AttendanceRow,
+  JurnalMengajarRow,
+  KbmPresensiRow,
+  StudentKbmNoteRow,
+  LkpdActivityRow,
+  LkpdGradeRow,
   StudentAwardRow,
   WaLogRow,
   CbtExamRow,
@@ -599,7 +613,17 @@ export class MysqlDataService {
   // Teacher Journals
   static async getJournals(): Promise<JournalRow[]> {
     try {
-      return await getJournalsFn();
+      const rows = await getJournalsFn();
+      return (rows || []).map((r) => ({
+        id: r.id,
+        guru_name: r.guru_name,
+        mapel: r.mapel,
+        rombel: r.rombel,
+        tanggal: r.tanggal,
+        jam_ke: r.jam_ke || "07.30",
+        materi: r.materi,
+        catatan: r.catatan || "",
+      }));
     } catch (e) {
       console.warn("getJournalsFn failed:", e);
       return [];
@@ -608,7 +632,16 @@ export class MysqlDataService {
 
   static async saveJournal(data: JournalRow): Promise<{ success: boolean; id?: string }> {
     try {
-      return await saveJournalFn({ data });
+      return await saveJournalFn({
+        data: {
+          ...data,
+          tujuan_pembelajaran: "",
+          kegiatan: "",
+          catatan: data.catatan || "",
+          kendala: "",
+          tindak_lanjut: "",
+        },
+      });
     } catch (e) {
       console.warn("saveJournalFn failed:", e);
       return { success: false };
@@ -617,7 +650,7 @@ export class MysqlDataService {
 
   static async deleteJournal(id: string | number): Promise<boolean> {
     try {
-      const res = await deleteJournalFn({ data: { id } });
+      const res = await deleteJournalFn({ data: { id: String(id) } });
       return res.success;
     } catch (e) {
       console.warn("deleteJournalFn failed:", e);
@@ -832,6 +865,92 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("saveUserAchievementFn failed:", e);
       return { success: false };
+    }
+  }
+
+  // Ruang Mengajar Hub Live CRUD
+  static async getKbmPresensi(rombel: string, mapel: string, date_str: string): Promise<KbmPresensiRow[]> {
+    try {
+      return await getKbmPresensiFn({ data: { rombel, mapel, date_str } });
+    } catch (e) {
+      console.warn("getKbmPresensiFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveKbmPresensiBatch(rombel: string, mapel: string, date_str: string, records: KbmPresensiRow[]): Promise<boolean> {
+    try {
+      const res = await saveKbmPresensiBatchFn({ data: { rombel, mapel, date_str, records } });
+      return res.success;
+    } catch (e) {
+      console.warn("saveKbmPresensiBatchFn failed:", e);
+      return false;
+    }
+  }
+
+  static async getStudentKbmNotes(rombel: string, mapel: string): Promise<StudentKbmNoteRow[]> {
+    try {
+      return await getStudentKbmNotesFn({ data: { rombel, mapel } });
+    } catch (e) {
+      console.warn("getStudentKbmNotesFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveStudentKbmNote(data: StudentKbmNoteRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveStudentKbmNoteFn({ data });
+    } catch (e) {
+      console.warn("saveStudentKbmNoteFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteStudentKbmNote(id: string): Promise<boolean> {
+    try {
+      const res = await deleteStudentKbmNoteFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteStudentKbmNoteFn failed:", e);
+      return false;
+    }
+  }
+
+  // LKPD & Digital Activities
+  static async getLkpdActivities(rombel: string, mapel: string): Promise<LkpdActivityRow[]> {
+    try {
+      return await getLkpdActivitiesFn({ data: { rombel, mapel } });
+    } catch (e) {
+      console.warn("getLkpdActivitiesFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveLkpdActivity(data: LkpdActivityRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveLkpdActivityFn({ data });
+    } catch (e) {
+      console.warn("saveLkpdActivityFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async getLkpdGrades(activityId: string): Promise<LkpdGradeRow[]> {
+    try {
+      return await getLkpdGradesFn({ data: { activity_id: activityId } });
+    } catch (e) {
+      console.warn("getLkpdGradesFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveLkpdGradesBatch(activityId: string, grades: LkpdGradeRow[]): Promise<boolean> {
+    try {
+      const res = await saveLkpdGradesBatchFn({ data: { activity_id: activityId, grades } });
+      return res.success;
+    } catch (e) {
+      console.warn("saveLkpdGradesBatchFn failed:", e);
+      return false;
     }
   }
 }

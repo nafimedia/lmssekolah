@@ -2007,85 +2007,7 @@ export const saveP5ProjectFn = createServerFn({ method: "POST" })
     }
   });
 
-// 16. JURNAL MENGAJAR GURU (TEACHER JOURNALS)
-export const getJournalsFn = createServerFn({ method: "GET" }).handler(
-  async (): Promise<JournalRow[]> => {
-    try {
-      const { query, execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS teacher_journals (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          guru_name VARCHAR(255) NOT NULL,
-          mapel VARCHAR(100) NOT NULL,
-          rombel VARCHAR(50) NOT NULL,
-          tanggal VARCHAR(50) NOT NULL,
-          jam_ke VARCHAR(50) NOT NULL,
-          materi VARCHAR(255) NOT NULL,
-          catatan TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-      return await query<JournalRow[]>("SELECT * FROM teacher_journals ORDER BY id DESC");
-    } catch (e) {
-      console.error("[getJournalsFn Error]:", e);
-      return [];
-    }
-  }
-);
-
-export const saveJournalFn = createServerFn({ method: "POST" })
-  .validator((data: JournalRow) => data)
-  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
-    try {
-      const { execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS teacher_journals (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          guru_name VARCHAR(255) NOT NULL,
-          mapel VARCHAR(100) NOT NULL,
-          rombel VARCHAR(50) NOT NULL,
-          tanggal VARCHAR(50) NOT NULL,
-          jam_ke VARCHAR(50) NOT NULL,
-          materi VARCHAR(255) NOT NULL,
-          catatan TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      if (data.id) {
-        await execute(
-          `UPDATE teacher_journals SET guru_name=?, mapel=?, rombel=?, tanggal=?, jam_ke=?, materi=?, catatan=? WHERE id=?`,
-          [data.guru_name, data.mapel, data.rombel, data.tanggal, data.jam_ke, data.materi, data.catatan || "", data.id]
-        );
-        return { success: true, id: String(data.id) };
-      } else {
-        const res: any = await execute(
-          `INSERT INTO teacher_journals (guru_name, mapel, rombel, tanggal, jam_ke, materi, catatan)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [data.guru_name, data.mapel, data.rombel, data.tanggal, data.jam_ke, data.materi, data.catatan || ""]
-        );
-        return { success: true, id: String(res.insertId || "") };
-      }
-    } catch (e) {
-      console.error("[saveJournalFn Error]:", e);
-      return { success: false };
-    }
-  });
-
-export const deleteJournalFn = createServerFn({ method: "POST" })
-  .validator((data: { id: string | number }) => data)
-  .handler(async ({ data }): Promise<{ success: boolean }> => {
-    try {
-      const { execute } = await import("@/lib/db");
-      await execute("DELETE FROM teacher_journals WHERE id = ?", [data.id]);
-      return { success: true };
-    } catch (e) {
-      console.error("[deleteJournalFn Error]:", e);
-      return { success: false };
-    }
-  });
-
-// 17. HASIL UJIAN CBT SISWA (CBT EXAM RESULTS)
+// 16. HASIL UJIAN CBT SISWA (CBT EXAM RESULTS)
 export const getCbtResultsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<CbtResultRow[]> => {
     try {
@@ -2715,6 +2637,570 @@ export const saveUserAchievementFn = createServerFn({ method: "POST" })
       return { success: true, id: String(res.insertId || "") };
     } catch (e) {
       console.error("[saveUserAchievementFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// ============================================================================
+// 24. BACKEND SUBJECT ACCESS CONTROL & SERVER-SIDE AUTHORIZATION UTILITY
+// ============================================================================
+
+/**
+ * Mengambil daftar Mata Pelajaran (Mapel) yang diampu oleh Guru secara server-side dari DB.
+ * Mengembalikan null jika pengguna adalah Admin Super / Waka / Kamad (Akses Semua Mapel).
+ */
+export async function getTeacherAssignedSubjectsServer(userIdOrEmail: string): Promise<string[] | null> {
+  try {
+    const { queryOne, query } = await import("@/lib/db");
+    const user = await queryOne<UserRow>(
+      "SELECT id, email, role, nis_nip, subject_specialty FROM users WHERE id = ? OR LOWER(email) = LOWER(?) OR (nis_nip IS NOT NULL AND nis_nip = ?) LIMIT 1",
+      [userIdOrEmail, userIdOrEmail, userIdOrEmail]
+    );
+
+    if (!user) return null;
+
+    const roles = (user.role || "").split(",").map((r) => r.trim().toLowerCase());
+    // Super Administrator murni memegang akses penuh
+    if (roles.length === 1 && roles[0] === "admin" && user.email.toLowerCase() === "admin@mail.com") {
+      return null;
+    }
+
+    const subjects: Set<string> = new Set();
+    if (user.subject_specialty) {
+      user.subject_specialty.split(",").forEach((s) => {
+        const clean = s.trim();
+        if (clean) subjects.add(clean);
+      });
+    }
+
+    try {
+      const pengampus = await query<{ mapel: string }[]>(
+        "SELECT DISTINCT mapel FROM pengampu WHERE LOWER(guru) LIKE LOWER(?) OR (nip IS NOT NULL AND nip = ?)",
+        [`%${user.email}%`, user.nis_nip || ""]
+      );
+      if (pengampus && pengampus.length > 0) {
+        pengampus.forEach((p) => {
+          if (p.mapel) subjects.add(p.mapel.trim());
+        });
+      }
+    } catch {}
+
+    return subjects.size > 0 ? Array.from(subjects) : null;
+  } catch (e) {
+    console.error("[getTeacherAssignedSubjectsServer Error]:", e);
+    return null;
+  }
+}
+
+/**
+ * Melakukan verifikasi otorisasi backend/API secara ketat berdasarkan user_id dan mapel diampu.
+ * Melempar error 403 Forbidden jika pengguna (Guru) mencoba mengakses/mengubah data mapel di luar tanggung jawabnya.
+ */
+export async function authorizeSubjectAccessServer(targetSubject: string): Promise<UserRow> {
+  const sessionUser = await requireAuth();
+  const roles = (sessionUser.role || "").split(",").map((r) => r.trim().toLowerCase());
+
+  // Admins, Superadmin, Waka, Kamad, dan Admin Akademik memiliki akses ke seluruh Mapel
+  if (
+    roles.includes("admin") ||
+    roles.includes("superadmin") ||
+    roles.includes("waka") ||
+    roles.includes("kamad") ||
+    roles.includes("admin_akademik") ||
+    sessionUser.email.toLowerCase() === "admin@mail.com"
+  ) {
+    return sessionUser;
+  }
+
+  const assigned = await getTeacherAssignedSubjectsServer(sessionUser.id);
+  if (assigned === null) return sessionUser; // Akses penuh
+
+  const cleanTarget = (targetSubject || "").toLowerCase().trim();
+  const isAllowed = assigned.some(
+    (s) =>
+      s.toLowerCase().trim() === cleanTarget ||
+      cleanTarget.includes(s.toLowerCase().trim()) ||
+      s.toLowerCase().trim().includes(cleanTarget)
+  );
+
+  if (!isAllowed) {
+    throw new Error(
+      `403 Forbidden: Akun Guru (${sessionUser.full_name}) tidak berhak mengelola data Mata Pelajaran "${targetSubject}". Mapel diampu Anda: [${assigned.join(", ")}]`
+    );
+  }
+
+  return sessionUser;
+}
+
+// ============================================================================
+// 25. RUANG MENGAJAR HUB FULL DATABASE CRUD & LIVE SESSION MANAGEMENT
+// ============================================================================
+
+export interface JurnalMengajarRow {
+  id?: string;
+  guru_name: string;
+  rombel: string;
+  mapel: string;
+  materi: string;
+  tujuan_pembelajaran?: string;
+  kegiatan?: string;
+  catatan?: string;
+  kendala?: string;
+  tindak_lanjut?: string;
+  tanggal: string;
+  jam_ke?: string;
+  created_at?: string;
+}
+
+export interface KbmPresensiRow {
+  id?: string;
+  rombel: string;
+  mapel: string;
+  guru_name: string;
+  student_id?: string;
+  student_nis: string;
+  student_name: string;
+  status: "HADIR" | "SAKIT" | "IZIN" | "ALPA";
+  notes?: string;
+  date_str: string;
+  created_at?: string;
+}
+
+export interface StudentKbmNoteRow {
+  id?: string;
+  rombel: string;
+  mapel: string;
+  teacher_name: string;
+  student_name: string;
+  type: "PRESTASI" | "PEMBELAJARAN" | "PERLU_PERHATIAN" | "REMEDIAL" | "PENGAYAAN";
+  note: string;
+  date_str: string;
+  created_at?: string;
+}
+
+export interface KbmSessionStatusRow {
+  id?: string;
+  rombel: string;
+  mapel: string;
+  teacher_name: string;
+  date_str: string;
+  status: "BELUM" | "LIVE" | "SELESAI";
+  start_time?: string;
+  end_time?: string;
+}
+
+// 25A. JURNAL KBM CRUD
+export const getJournalsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<JurnalMengajarRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS jurnal_mengajar (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          guru_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          materi VARCHAR(255) NOT NULL,
+          tujuan_pembelajaran TEXT,
+          kegiatan TEXT,
+          catatan TEXT,
+          kendala TEXT,
+          tindak_lanjut TEXT,
+          tanggal VARCHAR(100) NOT NULL,
+          jam_ke VARCHAR(50) DEFAULT '07.30',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<JurnalMengajarRow[]>("SELECT * FROM jurnal_mengajar ORDER BY id DESC");
+      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.error("[getJournalsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveJournalFn = createServerFn({ method: "POST" })
+  .validator((data: JurnalMengajarRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      await authorizeSubjectAccessServer(data.mapel || "");
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS jurnal_mengajar (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          guru_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          materi VARCHAR(255) NOT NULL,
+          tujuan_pembelajaran TEXT,
+          kegiatan TEXT,
+          catatan TEXT,
+          kendala TEXT,
+          tindak_lanjut TEXT,
+          tanggal VARCHAR(100) NOT NULL,
+          jam_ke VARCHAR(50) DEFAULT '07.30',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO jurnal_mengajar (guru_name, rombel, mapel, materi, tujuan_pembelajaran, kegiatan, catatan, kendala, tindak_lanjut, tanggal, jam_ke)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.guru_name,
+          data.rombel,
+          data.mapel,
+          data.materi,
+          data.tujuan_pembelajaran || "",
+          data.kegiatan || "",
+          data.catatan || "",
+          data.kendala || "",
+          data.tindak_lanjut || "",
+          data.tanggal,
+          data.jam_ke || "07.30",
+        ]
+      );
+      return { success: true, id: String(res?.insertId || Date.now()) };
+    } catch (e) {
+      console.error("[saveJournalFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteJournalFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM jurnal_mengajar WHERE id = ?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteJournalFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 25B. PRESENSI KBM BATCH CRUD
+export const getKbmPresensiFn = createServerFn({ method: "POST" })
+  .validator((data: { rombel: string; mapel: string; date_str: string }) => data)
+  .handler(async ({ data }): Promise<KbmPresensiRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS kbm_presensi (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          guru_name VARCHAR(255) NOT NULL,
+          student_id VARCHAR(64),
+          student_nis VARCHAR(50) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'HADIR',
+          notes TEXT,
+          date_str VARCHAR(100) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<KbmPresensiRow[]>(
+        "SELECT * FROM kbm_presensi WHERE rombel = ? AND mapel = ? AND date_str = ?",
+        [data.rombel, data.mapel, data.date_str]
+      );
+      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.error("[getKbmPresensiFn Error]:", e);
+      return [];
+    }
+  });
+
+export const saveKbmPresensiBatchFn = createServerFn({ method: "POST" })
+  .validator((data: { rombel: string; mapel: string; date_str: string; records: KbmPresensiRow[] }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      await authorizeSubjectAccessServer(data.mapel);
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS kbm_presensi (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          guru_name VARCHAR(255) NOT NULL,
+          student_id VARCHAR(64),
+          student_nis VARCHAR(50) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'HADIR',
+          notes TEXT,
+          date_str VARCHAR(100) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      for (const item of data.records) {
+        await execute(
+          `INSERT INTO kbm_presensi (rombel, mapel, guru_name, student_nis, student_name, status, notes, date_str)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE status=VALUES(status), notes=VALUES(notes)`,
+          [
+            data.rombel,
+            data.mapel,
+            item.guru_name || "SOBIYATI, S.Pd",
+            item.student_nis,
+            item.student_name,
+            item.status,
+            item.notes || "",
+            data.date_str,
+          ]
+        );
+      }
+      return { success: true };
+    } catch (e) {
+      console.error("[saveKbmPresensiBatchFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 25C. CATATAN OBSERVASI SISWA CRUD
+export const getStudentKbmNotesFn = createServerFn({ method: "POST" })
+  .validator((data: { rombel: string; mapel: string }) => data)
+  .handler(async ({ data }): Promise<StudentKbmNoteRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS student_kbm_notes (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          teacher_name VARCHAR(255) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          type VARCHAR(50) NOT NULL DEFAULT 'PEMBELAJARAN',
+          note TEXT NOT NULL,
+          date_str VARCHAR(100) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<StudentKbmNoteRow[]>(
+        "SELECT * FROM student_kbm_notes WHERE rombel = ? AND mapel = ? ORDER BY id DESC",
+        [data.rombel, data.mapel]
+      );
+      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.error("[getStudentKbmNotesFn Error]:", e);
+      return [];
+    }
+  });
+
+export const saveStudentKbmNoteFn = createServerFn({ method: "POST" })
+  .validator((data: StudentKbmNoteRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      await authorizeSubjectAccessServer(data.mapel);
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS student_kbm_notes (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          teacher_name VARCHAR(255) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          type VARCHAR(50) NOT NULL DEFAULT 'PEMBELAJARAN',
+          note TEXT NOT NULL,
+          date_str VARCHAR(100) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO student_kbm_notes (rombel, mapel, teacher_name, student_name, type, note, date_str)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [data.rombel, data.mapel, data.teacher_name, data.student_name, data.type, data.note, data.date_str]
+      );
+      return { success: true, id: String(res?.insertId || Date.now()) };
+    } catch (e) {
+      console.error("[saveStudentKbmNoteFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteStudentKbmNoteFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM student_kbm_notes WHERE id = ?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteStudentKbmNoteFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 26. LKPD & DIGITAL ACTIVITIES CRUD
+export interface LkpdActivityRow {
+  id?: string;
+  rombel: string;
+  mapel: string;
+  teacher_name: string;
+  title: string;
+  type: string;
+  instructions?: string;
+  due_date: string;
+  max_score?: number;
+  status?: string;
+  created_at?: string;
+}
+
+export interface LkpdGradeRow {
+  id?: string;
+  activity_id: string;
+  student_id?: string;
+  student_nisn: string;
+  student_name: string;
+  status: string;
+  score?: number | string;
+  feedback?: string;
+}
+
+export const getLkpdActivitiesFn = createServerFn({ method: "POST" })
+  .validator((data: { rombel: string; mapel: string }) => data)
+  .handler(async ({ data }): Promise<LkpdActivityRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS lkpd_activities (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          teacher_name VARCHAR(255) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          type VARCHAR(50) NOT NULL DEFAULT 'LKPD',
+          instructions TEXT,
+          due_date VARCHAR(100) NOT NULL,
+          max_score INT DEFAULT 100,
+          status VARCHAR(50) DEFAULT 'AKTIF',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<LkpdActivityRow[]>(
+        "SELECT * FROM lkpd_activities WHERE rombel = ? AND mapel = ? ORDER BY id DESC",
+        [data.rombel, data.mapel]
+      );
+      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.error("[getLkpdActivitiesFn Error]:", e);
+      return [];
+    }
+  });
+
+export const saveLkpdActivityFn = createServerFn({ method: "POST" })
+  .validator((data: LkpdActivityRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      await authorizeSubjectAccessServer(data.mapel);
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS lkpd_activities (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          teacher_name VARCHAR(255) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          type VARCHAR(50) NOT NULL DEFAULT 'LKPD',
+          instructions TEXT,
+          due_date VARCHAR(100) NOT NULL,
+          max_score INT DEFAULT 100,
+          status VARCHAR(50) DEFAULT 'AKTIF',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO lkpd_activities (rombel, mapel, teacher_name, title, type, instructions, due_date, max_score, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.rombel,
+          data.mapel,
+          data.teacher_name,
+          data.title,
+          data.type || "LKPD",
+          data.instructions || "",
+          data.due_date,
+          data.max_score || 100,
+          data.status || "AKTIF",
+        ]
+      );
+      return { success: true, id: String(res?.insertId || Date.now()) };
+    } catch (e) {
+      console.error("[saveLkpdActivityFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const getLkpdGradesFn = createServerFn({ method: "POST" })
+  .validator((data: { activity_id: string }) => data)
+  .handler(async ({ data }): Promise<LkpdGradeRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS lkpd_grades (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          activity_id VARCHAR(100) NOT NULL,
+          student_id VARCHAR(100),
+          student_nisn VARCHAR(100) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'BELUM_MENGUMPULKAN',
+          score VARCHAR(20) DEFAULT '',
+          feedback TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<LkpdGradeRow[]>(
+        "SELECT * FROM lkpd_grades WHERE activity_id = ? ORDER BY student_name ASC",
+        [data.activity_id]
+      );
+      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.error("[getLkpdGradesFn Error]:", e);
+      return [];
+    }
+  });
+
+export const saveLkpdGradesBatchFn = createServerFn({ method: "POST" })
+  .validator((data: { activity_id: string; grades: LkpdGradeRow[] }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS lkpd_grades (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          activity_id VARCHAR(100) NOT NULL,
+          student_id VARCHAR(100),
+          student_nisn VARCHAR(100) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'BELUM_MENGUMPULKAN',
+          score VARCHAR(20) DEFAULT '',
+          feedback TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      for (const g of data.grades) {
+        await execute(
+          `INSERT INTO lkpd_grades (activity_id, student_id, student_nisn, student_name, status, score, feedback)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE status=VALUES(status), score=VALUES(score), feedback=VALUES(feedback)`,
+          [
+            data.activity_id,
+            g.student_id || "",
+            g.student_nisn,
+            g.student_name,
+            g.status || "BELUM_MENGUMPULKAN",
+            String(g.score ?? ""),
+            g.feedback || "",
+          ]
+        );
+      }
+      return { success: true };
+    } catch (e) {
+      console.error("[saveLkpdGradesBatchFn Error]:", e);
       return { success: false };
     }
   });

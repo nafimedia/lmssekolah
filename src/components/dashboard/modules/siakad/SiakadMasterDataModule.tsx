@@ -8,6 +8,8 @@ import {
   BookOpen,
   Users,
   Layers,
+  CalendarDays,
+  Award,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +19,8 @@ import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 
 import { PengampuTab } from "./components/PengampuTab";
 import { MasterRombelTab } from "./components/MasterRombelTab";
+import { TahunAjaranTab } from "./components/TahunAjaranTab";
+import { KktpSkemaTab } from "./components/KktpSkemaTab";
 
 export function SiakadMasterDataModule() {
   const [activeTab, setActiveTab] = useState<string>("pengampu");
@@ -67,10 +71,10 @@ export function SiakadMasterDataModule() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Layers className="h-6 w-6 text-primary" /> Master Data SIAKAD & Kurikulum
+            <Layers className="h-6 w-6 text-primary" /> Akademik Madrasah
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Pengelolaan data master akademik, rombel, dan matriks pengampu.
+            Pengelolaan data master akademik madrasah, tahun ajaran & periode, KKTP & skema nilai, rombel, dan matriks pengampu.
           </p>
         </div>
       </div>
@@ -78,6 +82,8 @@ export function SiakadMasterDataModule() {
       <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80">
         {[
           { id: "pengampu", label: "Matriks Pengampu", icon: Users },
+          { id: "tahun_ajaran", label: "Tahun Ajaran & Periode", icon: CalendarDays },
+          { id: "kktp_skema", label: "KKTP & Skema Nilai", icon: Sparkles },
           { id: "rombel", label: "Kelas & Rombel", icon: Building2 },
           { id: "mapel", label: "Master Mapel", icon: BookOpen },
         ].map((t) => (
@@ -106,6 +112,10 @@ export function SiakadMasterDataModule() {
           onDeletePengampu={handleDeletePengampu}
         />
       )}
+
+      {activeTab === "tahun_ajaran" && <TahunAjaranTab />}
+
+      {activeTab === "kktp_skema" && <KktpSkemaTab />}
 
       {activeTab === "rombel" && (
         <MasterRombelTab

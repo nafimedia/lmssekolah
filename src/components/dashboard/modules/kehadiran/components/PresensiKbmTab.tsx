@@ -2,6 +2,7 @@ import { UserCheck, Clock, Zap, Save, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 export interface KbmSession {
   id: string;
@@ -25,6 +26,7 @@ export interface SessionStudent {
   alpa: number;
   pct: number;
   sessionStatus: "hadir" | "izin" | "sakit" | "alpa" | string;
+  notes?: string;
 }
 
 interface PresensiKbmTabProps {
@@ -36,6 +38,7 @@ interface PresensiKbmTabProps {
   handleMarkAllHadir: () => void;
   handleSavePresensiSesiKbm: () => void;
   handleSetSessionStatus: (studentId: string, status: string) => void;
+  handleSetSessionNotes?: (studentId: string, notes: string) => void;
 }
 
 export function PresensiKbmTab({
@@ -47,6 +50,7 @@ export function PresensiKbmTab({
   handleMarkAllHadir,
   handleSavePresensiSesiKbm,
   handleSetSessionStatus,
+  handleSetSessionNotes,
 }: PresensiKbmTabProps) {
   const statusButtons = [
     { key: "hadir", label: "HADIR", activeClass: "bg-emerald-600 text-white shadow-xs" },
@@ -126,6 +130,7 @@ export function PresensiKbmTab({
                 <th className="py-3 px-4">NISN & Nama Siswa</th>
                 <th className="py-3 px-3">Rombel</th>
                 <th className="py-3 px-3 text-center">Status Presensi Sesi KBM</th>
+                <th className="py-3 px-3">Keterangan / Catatan Sesi</th>
                 <th className="py-3 px-3 text-center">Rekap Hadir Total</th>
                 <th className="py-3 px-3 text-center">% Kehadiran Mapel</th>
               </tr>
@@ -155,6 +160,14 @@ export function PresensiKbmTab({
                         </button>
                       ))}
                     </div>
+                  </td>
+                  <td className="py-3 px-3 min-w-[200px]">
+                    <Input
+                      placeholder="Catatan / Alasan..."
+                      value={s.notes || ""}
+                      onChange={(e) => handleSetSessionNotes?.(s.id, e.target.value)}
+                      className="h-7 text-xs bg-background/80 border-border"
+                    />
                   </td>
                   <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{s.hadir} Hari</td>
                   <td className="py-3 px-3 text-center font-mono font-bold text-primary text-sm">{s.pct}%</td>

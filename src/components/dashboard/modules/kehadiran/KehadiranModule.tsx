@@ -5,6 +5,7 @@ import { MysqlDataService } from "@/services/mysqlDataService";
 import { toast } from "sonner";
 import { UserCheck, Printer, Send, CheckCircle2, Info, AlertTriangle, Smartphone, Zap, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { PresensiSiswaTab } from "./components/PresensiSiswaTab";
@@ -84,11 +85,11 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
   const activeSession = kbmSessions.find((s) => s.id === selectedKbmSession) || kbmSessions[0];
 
   const [attendanceData, setAttendanceData] = useState([
-    { id: "s1", nisn: "12123301000288", name: "ALIYA QIARA ABDULLAH", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567890", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
-    { id: "s2", nisn: "0081928371", name: "ABIGAIL HASAN YUSUF PRAYOGA", class: "Rombel 8A", hadir: 21, izin: 0, sakit: 0, alpa: 0, pct: 100.0, parentWa: "081234567894", status: "Sempurna (100%)", today: "hadir", sessionStatus: "hadir" },
-    { id: "s3", nisn: "0081928372", name: "ADITA AZ ZAHRA", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567895", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
-    { id: "s4", nisn: "0081928373", name: "AFRIZA RAHMA AZZAHRA", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567896", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir" },
-    { id: "s5", nisn: "0081928374", name: "AHMAD ZULFIKAR", class: "Rombel 8B", hadir: 19, izin: 1, sakit: 1, alpa: 0, pct: 90.5, parentWa: "081234567897", status: "Baik (B)", today: "hadir", sessionStatus: "hadir" },
+    { id: "s1", nisn: "12123301000288", name: "ALIYA QIARA ABDULLAH", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567890", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir", note: "" },
+    { id: "s2", nisn: "0081928371", name: "ABIGAIL HASAN YUSUF PRAYOGA", class: "Rombel 8A", hadir: 21, izin: 0, sakit: 0, alpa: 0, pct: 100.0, parentWa: "081234567894", status: "Sempurna (100%)", today: "hadir", sessionStatus: "hadir", note: "" },
+    { id: "s3", nisn: "0081928372", name: "ADITA AZ ZAHRA", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567895", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir", note: "" },
+    { id: "s4", nisn: "0081928373", name: "AFRIZA RAHMA AZZAHRA", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567896", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir", note: "" },
+    { id: "s5", nisn: "0081928374", name: "AHMAD ZULFIKAR", class: "Rombel 8B", hadir: 19, izin: 1, sakit: 1, alpa: 0, pct: 90.5, parentWa: "081234567897", status: "Baik (B)", today: "hadir", sessionStatus: "hadir", note: "Surat Dokter" },
   ]);
 
   useEffect(() => {
@@ -113,6 +114,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
             status: "Sangat Baik (A)",
             today: "hadir",
             sessionStatus: "hadir",
+            note: idx % 7 === 0 ? "Izin Resmi" : idx % 11 === 0 ? "Surat Dokter" : "",
           };
         });
         setAttendanceData(formatted);
@@ -129,6 +131,12 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
   const handleSetTodayStatus = (studentId: string, status: string) => {
     setAttendanceData((prev) =>
       prev.map((item) => (item.id === studentId ? { ...item, today: status } : item))
+    );
+  };
+
+  const handleSetTodayNote = (studentId: string, note: string) => {
+    setAttendanceData((prev) =>
+      prev.map((item) => (item.id === studentId ? { ...item, note } : item))
     );
   };
 
@@ -338,6 +346,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                 <th className="py-3 px-4">NISN & Nama Siswa</th>
                 <th className="py-3 px-3">Rombel</th>
                 <th className="py-3 px-3 text-center">Presensi Hari Ini</th>
+                <th className="py-3 px-3">Keterangan / Catatan Wali Kelas</th>
                 <th className="py-3 px-3 text-center">Hadir (H)</th>
                 <th className="py-3 px-3 text-center">Izin (I)</th>
                 <th className="py-3 px-3 text-center">Sakit (S)</th>
@@ -397,6 +406,14 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                           ALPA
                         </button>
                       </div>
+                    </td>
+                    <td className="py-3 px-3 min-w-[200px]">
+                      <Input
+                        placeholder="Catatan Wali Kelas (Alasan Izin/Sakit...)"
+                        value={s.note || ""}
+                        onChange={(e) => handleSetTodayNote(s.id, e.target.value)}
+                        className="h-7 text-xs bg-background/80 border-border"
+                      />
                     </td>
                     <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{effHadir}</td>
                     <td className="py-3 px-3 text-center font-mono">{effIzin}</td>

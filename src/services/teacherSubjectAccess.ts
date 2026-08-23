@@ -21,6 +21,49 @@ export const ALL_SCHOOL_SUBJECTS = [
   "Bimbingan dan Konseling",
 ];
 
+export const ALL_SCHOOL_CLASSES = [
+  "Kelas VII A",
+  "Kelas VII B",
+  "Kelas VIII A",
+  "Kelas VIII B",
+  "Kelas IX A",
+  "Kelas IX B",
+];
+
+export function getTeacherAssignedClasses(user?: UserSession | null): string[] {
+  const activeUser = user || MysqlAuthService.getActiveUser();
+  if (!activeUser) return ALL_SCHOOL_CLASSES;
+
+  const roleStr = (activeUser.role || "").toLowerCase();
+  const roles = roleStr.split(",").map((r) => r.trim());
+
+  if (roles.length === 1 && roles[0] === "admin" && activeUser.email.toLowerCase() === "admin@mail.com") {
+    return ALL_SCHOOL_CLASSES;
+  }
+
+  const catalogUser = fallbackUsersCatalog.find(
+    (u) =>
+      u.email.toLowerCase() === activeUser.email.toLowerCase() ||
+      (activeUser.nis_nip && u.nis_nip === activeUser.nis_nip) ||
+      u.full_name.toLowerCase() === activeUser.full_name.toLowerCase()
+  );
+
+  const rawClass = activeUser.class_name || catalogUser?.class_name || "";
+  if (!rawClass || rawClass === "-") {
+    return ALL_SCHOOL_CLASSES;
+  }
+
+  const grades = rawClass.toUpperCase().split(",").map((g) => g.trim());
+  const matchedClasses = ALL_SCHOOL_CLASSES.filter((c) => {
+    if (grades.includes("VII") || grades.includes("7")) if (c.includes("VII")) return true;
+    if (grades.includes("VIII") || grades.includes("8")) if (c.includes("VIII")) return true;
+    if (grades.includes("IX") || grades.includes("9")) if (c.includes("IX")) return true;
+    return false;
+  });
+
+  return matchedClasses.length > 0 ? matchedClasses : ALL_SCHOOL_CLASSES;
+}
+
 // Dictionary of Guru -> Assigned Subject(s) built from data_guru.md & catalog
 const GURU_SUBJECT_MAP: Record<string, string[]> = {
   "199204042025051002": ["Al Qur'an Hadis"],

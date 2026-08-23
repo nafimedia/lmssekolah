@@ -1386,12 +1386,12 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
       if (!user) {
         const DEFAULT_SEED_USERS: Record<string, { role: string; name: string; class?: string; nis_nip?: string; id_type?: string }> = {
           "admin@mail.com": { role: "admin", name: "Super Administrator MTsN 2", nis_nip: "198501012010011001", id_type: "NIP" },
-          "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", nis_nip: "197205012005011001", id_type: "NIP" },
-          "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "SOLIHUN, S.Pd, M.Si.", nis_nip: "197003151998031002", id_type: "NIP" },
-          "waka@mtsn2cilacap.sch.id": { role: "waka", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", nis_nip: "197205012005011001", id_type: "NIP" },
-          "walikelas@mtsn2cilacap.sch.id": { role: "walikelas", name: "SOBIYATI, S.Pd", class: "VIII-A", nis_nip: "197808152005012004", id_type: "NIP" },
-          "guru@mtsn2cilacap.sch.id": { role: "guru", name: "UMI KHAFSOH, S.Pd", class: "VIII-A", nis_nip: "198302142009022005", id_type: "NIP" },
-          "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class: "VIII-A", nis_nip: "12123301000288", id_type: "NISN" },
+          "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik", name: "AH. SYARIF HIDAYAH, S.Pd.I", nis_nip: "199204042025051002", id_type: "NIP" },
+          "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197905162006041020", id_type: "NIP" },
+          "waka@mtsn2cilacap.sch.id": { role: "waka", name: "ALI MANSUR, S.Pd", nis_nip: "198302142023211010", id_type: "NIP" },
+          "walikelas@mtsn2cilacap.sch.id": { role: "walikelas", name: "SOBIYATI, S.Pd", class: "VIII-A", nis_nip: "197906142007102002", id_type: "NIP" },
+          "guru@mtsn2cilacap.sch.id": { role: "guru", name: "UMI KHAFSOH, S.Pd", class: "VIII-A", nis_nip: "197509192009012008", id_type: "NIP" },
+          "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class: "VIII-A", nis_nip: "0127790481", id_type: "NISN" },
         };
 
         const seedInfo = DEFAULT_SEED_USERS[cleanIdentifier];

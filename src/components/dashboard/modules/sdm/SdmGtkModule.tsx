@@ -8,17 +8,20 @@ import {
   Printer,
   Plus,
   Search,
-  CheckCircle2,
   Trash2,
+  Pencil,
+  Eye,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 import { AddGtkDialog } from "./components/AddGtkDialog";
+import { EditGtkDialog } from "./components/EditGtkDialog";
 import { DetailGtkDialog } from "./components/DetailGtkDialog";
+import { PrintGtkDialog } from "./components/PrintGtkDialog";
 import { CutiIzinDialog } from "./components/CutiIzinDialog";
 
 export interface GtkItem {
@@ -112,7 +115,7 @@ const INITIAL_GTK_LIST: GtkItem[] = [
 ];
 
 export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
-  const [activeTab, setActiveTab] = useState<"daftar" | "kgb" | "cuti">("daftar");
+  const [activeTab, setActiveTab] = useState<"daftar" | "cuti">("daftar");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("semua");
 
@@ -122,41 +125,65 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
 
   // Dialog States
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [gtkToEdit, setGtkToEdit] = useState<GtkItem | null>(null);
+
   const [selectedGtk, setSelectedGtk] = useState<GtkItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isAddLeaveOpen, setIsAddLeaveOpen] = useState(false);
 
   useEffect(() => {
-    MysqlDataService.getUsers().then((users) => {
-      if (users && users.length > 0) {
-        const teachers = users.filter((u: any) => u.role !== "siswa");
-        if (teachers.length > 0) {
-          const formatted = teachers.map((u: any) => ({
-            id: String(u.id || u.email),
-            nip: u.nis_nip || "-",
-            npk: u.nis_nip ? u.nis_nip.substring(0, 11) : "-",
-            name: u.full_name,
-            golongan: "Penata (III/c)",
-            statusKepegawaian: (u.role === "admin" ? "PNS" : "PNS") as any,
-            mapelUtama: u.subject_specialty || "Umum",
-            totalJp: 24,
-            tugasTambahan: "Guru Pengampu",
-            isSertifikasi: true,
-            email: u.email,
-            phone: u.phone || "081234567890",
-          }));
-          setGtkList(formatted);
+    MysqlDataService.getUsers()
+      .then((users) => {
+        if (users && users.length > 0) {
+          const teachers = users.filter((u: any) => u.role !== "siswa");
+          if (teachers.length > 0) {
+            const formatted = teachers.map((u: any) => ({
+              id: String(u.id || u.email),
+              nip: u.nis_nip || "-",
+              npk: u.nis_nip ? u.nis_nip.substring(0, 11) : "-",
+              name: u.full_name,
+              golongan: "Penata (III/c)",
+              statusKepegawaian: (u.role === "admin" ? "PNS" : "PNS") as any,
+              mapelUtama: u.subject_specialty || "Umum",
+              totalJp: 24,
+              tugasTambahan: "Guru Pengampu",
+              isSertifikasi: true,
+              email: u.email,
+              phone: u.phone || "081234567890",
+            }));
+            setGtkList(formatted);
+          }
         }
-      }
-    }).catch(() => {});
+      })
+      .catch(() => {});
 
-    MysqlDataService.getGtkLeaves().then((leaves) => setLeavesList(leaves || [])).catch(() => {});
+    MysqlDataService.getGtkLeaves()
+      .then((leaves) => setLeavesList(leaves || []))
+      .catch(() => {});
   }, []);
 
   const handleOpenDetail = (item: GtkItem) => {
     setSelectedGtk(item);
     setIsDetailOpen(true);
     MysqlDataService.getGtkDocuments().then((docs) => setGtkDocs(docs || [])).catch(() => {});
+  };
+
+  const handleOpenEdit = (item: GtkItem) => {
+    setGtkToEdit(item);
+    setIsEditOpen(true);
+  };
+
+  const handleSaveGtk = (updated: GtkItem) => {
+    setGtkList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+  };
+
+  const handleDeleteGtk = (item: GtkItem) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus data pegawai GTK ${item.name}?`)) {
+      setGtkList((prev) => prev.filter((g) => g.id !== item.id));
+      toast.success(`Data pegawai GTK ${item.name} berhasil dihapus!`);
+    }
   };
 
   const handleAddGtk = (newGtk: GtkItem) => {
@@ -205,7 +232,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => window.print()}>
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintOpen(true)}>
             <Printer className="h-4 w-4" /> Cetak Bio GTK PDF
           </Button>
           <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddOpen(true)}>
@@ -269,7 +296,6 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
           <div className="flex items-center gap-2">
             {[
               { id: "daftar", label: "Daftar Pegawai GTK", icon: Users },
-              { id: "kgb", label: "Kenaikan Gaji Berkala (KGB)", icon: Award },
               { id: "cuti", label: "Layanan Cuti & Izin", icon: FileSpreadsheet },
             ].map((t) => (
               <Button
@@ -328,7 +354,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                   <th className="py-3 px-3">Mapel Utama</th>
                   <th className="py-3 px-3 text-center">Beban JP</th>
                   <th className="py-3 px-3 text-center">Sertifikasi</th>
-                  <th className="py-3 px-4 text-center">Aksi</th>
+                  <th className="py-3 px-4 text-center">Aksi & Kontrol</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -354,26 +380,40 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <Button size="sm" variant="outline" className="h-7 text-xs font-bold gap-1" onClick={() => handleOpenDetail(item)}>
-                        Detail & SK
-                      </Button>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs font-bold gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30"
+                          onClick={() => handleOpenEdit(item)}
+                          title="Edit Data Pegawai GTK"
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs font-bold gap-1"
+                          onClick={() => handleOpenDetail(item)}
+                          title="Lihat Detail Profil & Berkas SK"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> Detail
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs font-bold gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
+                          onClick={() => handleDeleteGtk(item)}
+                          title="Hapus Data Pegawai GTK"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Hapus
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-
-          {activeTab === "kgb" && (
-            <div className="p-6 text-center space-y-3">
-              <div className="text-base font-bold">Kenaikan Gaji Berkala (KGB) Pegawai GTK</div>
-              <p className="text-xs text-muted-foreground max-w-lg mx-auto">
-                Monitoring kenaikan gaji berkala (KGB 2 tahunan) secara teratur untuk seluruh pegawai ASN MTsN 2 Cilacap.
-              </p>
-              <div className="pt-2 flex justify-center gap-2">
-                <Badge className="bg-emerald-600 text-white font-bold">✔ Terintegrasi Simpeg Kemenag</Badge>
-              </div>
-            </div>
           )}
 
           {activeTab === "cuti" && (
@@ -413,11 +453,24 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
         onAddGtk={handleAddGtk}
       />
 
+      <EditGtkDialog
+        selectedGtk={gtkToEdit}
+        isOpen={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        onSaveGtk={handleSaveGtk}
+      />
+
       <DetailGtkDialog
         selectedGtk={selectedGtk}
         isOpen={isDetailOpen}
         onOpenChange={setIsDetailOpen}
         gtkDocs={gtkDocs}
+      />
+
+      <PrintGtkDialog
+        gtkList={gtkList}
+        isOpen={isPrintOpen}
+        onOpenChange={setIsPrintOpen}
       />
 
       <CutiIzinDialog
@@ -428,3 +481,4 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
     </div>
   );
 }
+

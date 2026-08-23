@@ -1,6 +1,8 @@
-import { Users, FileCheck, ShieldCheck, Printer } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, FileCheck, ShieldCheck, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +22,18 @@ interface DetailGtkDialogProps {
 }
 
 export function DetailGtkDialog({ selectedGtk, isOpen, onOpenChange, gtkDocs }: DetailGtkDialogProps) {
+  const [docsList, setDocsList] = useState<GtkDocumentRow[]>([]);
+
+  useEffect(() => {
+    setDocsList(gtkDocs || []);
+  }, [gtkDocs]);
+
   if (!selectedGtk) return null;
+
+  const handleDeleteDoc = (docId: string, docName: string) => {
+    setDocsList((prev) => prev.filter((d) => d.id !== docId));
+    toast.success(`Berkas SK "${docName}" berhasil dihapus!`);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -55,18 +68,29 @@ export function DetailGtkDialog({ selectedGtk, isOpen, onOpenChange, gtkDocs }: 
               <FileCheck className="h-4 w-4 text-emerald-500" /> Dokumen Kepegawaian & SK Resmi (MySQL Storage):
             </div>
             <div className="space-y-2">
-              {gtkDocs.length === 0 ? (
+              {docsList.length === 0 ? (
                 <div className="p-3 border border-dashed rounded-lg text-center text-muted-foreground">Belum ada file SK terunggah</div>
               ) : (
-                gtkDocs.map((doc) => (
+                docsList.map((doc) => (
                   <div key={doc.id} className="p-2.5 rounded-lg border border-border bg-card flex items-center justify-between">
                     <div>
                       <div className="font-bold text-foreground">{doc.doc_name}</div>
                       <div className="text-[10px] text-muted-foreground">Kategori: {doc.category || "SK Resmi"} • Diunggah: {doc.created_at || "Baru"}</div>
                     </div>
-                    <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-                      ✓ Sah Terverifikasi
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                        ✓ Sah Terverifikasi
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 text-rose-600 hover:bg-rose-500/10"
+                        onClick={() => handleDeleteDoc(doc.id, doc.doc_name)}
+                        title="Hapus Berkas SK ini"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 ))
               )}

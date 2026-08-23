@@ -1672,7 +1672,7 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}<br />Kepala MTsN 2 Cilacap</div>
-                <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+                <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
               </div>
             </div>
           </div>
@@ -2239,7 +2239,7 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
-                <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+                <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
               </div>
             </div>
           </div>
@@ -4339,7 +4339,7 @@ function Nilai({ activeRole }: { activeRole?: string }) {
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
-                <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+                <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
               </div>
             </div>
           </div>
@@ -5413,7 +5413,7 @@ function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
-                <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+                <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
               </div>
             </div>
           </div>

@@ -107,7 +107,7 @@ export function PrintJadwalDialog({ isOpen, onOpenChange, filterKelas, filterRom
             </div>
             <div className="text-center space-y-8">
               <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
-              <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+              <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
             </div>
           </div>
         </div>

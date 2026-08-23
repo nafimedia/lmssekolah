@@ -31,7 +31,7 @@ export interface RegisterPayload {
 export const INITIAL_ROLE_USERS: Record<string, { role: string; name: string; class_name?: string; nis_nip?: string; identity_type?: "NISN" | "NIP" }> = {
   "admin@mail.com": { role: "admin", name: "Super Administrator MTsN 2", nis_nip: "198501012010011001", identity_type: "NIP" },
   "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", nis_nip: "197205012005011001", identity_type: "NIP" },
-  "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. MOHAMMAD FATHONI, M.Pd", nis_nip: "197003151998031002", identity_type: "NIP" },
+  "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "SOLIHUN, S.Pd, M.Si.", nis_nip: "197003151998031002", identity_type: "NIP" },
   "waka@mtsn2cilacap.sch.id": { role: "waka", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", nis_nip: "197205012005011001", identity_type: "NIP" },
   "walikelas@mtsn2cilacap.sch.id": { role: "walikelas", name: "SOBIYATI, S.Pd", class_name: "VIII A", nis_nip: "197808152005012004", identity_type: "NIP" },
   "guru@mtsn2cilacap.sch.id": { role: "guru", name: "UMI KHAFSOH, S.Pd", class_name: "VIII A", nis_nip: "198302142009022005", identity_type: "NIP" },

@@ -81,7 +81,7 @@ export function CetakSuratDialog({
           <div className="grid grid-cols-2 gap-4 text-xs pt-6 text-slate-800 border-t border-slate-200">
             <div className="text-center space-y-8">
               <div>Mengetahui,<br />Kepala MTsN 2 Cilacap</div>
-              <div className="font-bold underline text-slate-950">H. Mohammad Fathoni, M.Pd</div>
+              <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
             </div>
             <div className="text-center space-y-8">
               <div>Cilacap, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}<br />Wali Kelas {classNameTitle}</div>

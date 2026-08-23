@@ -43,7 +43,7 @@ export function PrintGtkDialog({ gtkList, isOpen, onOpenChange }: PrintGtkDialog
           {/* Official KOP Surat */}
           <div className="flex items-center gap-4 border-b-4 border-double border-black pb-3 text-center">
             <div className="w-16 h-16 flex items-center justify-center shrink-0">
-              <img src="/logo-mtsn2.png" alt="Logo Kemenag" className="w-14 h-14 object-contain" />
+              <img src="/logokemenag.svg" alt="Logo Kemenag RI" className="w-16 h-16 object-contain" />
             </div>
             <div className="flex-1 text-center">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>

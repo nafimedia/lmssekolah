@@ -24,19 +24,31 @@ interface ResetPasswordDialogProps {
 export function ResetPasswordDialog({ user, isOpen, onOpenChange }: ResetPasswordDialogProps) {
   const [adminNewPassword, setAdminNewPassword] = useState("MtsN2#2026!Reset");
   const [showAdminNewPassword, setShowAdminNewPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const confirmAdminResetPassword = async (customPass?: string) => {
     if (!user) return;
     const targetPass = customPass || adminNewPassword;
 
-    const res = await MysqlAuthService.adminResetPassword(user.email, targetPass);
-    if (res.success) {
-      toast.success(`🔒 Kata sandi akun ${user.full_name} (${user.email}) berhasil diubah menjadi: "${targetPass}"`, {
-        duration: 9000,
-      });
-      onOpenChange(false);
-    } else {
-      toast.error(res.message);
+    if (!targetPass || targetPass.trim().length < 6) {
+      return toast.error("Kata sandi kustom minimal 6 karakter!");
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await MysqlAuthService.adminResetPassword(user.email, targetPass.trim());
+      if (res.success) {
+        toast.success(`🔒 Kata sandi akun ${user.full_name} (${user.email}) berhasil disimpan: "${targetPass.trim()}"`, {
+          duration: 9000,
+        });
+        onOpenChange(false);
+      } else {
+        toast.error(res.message);
+      }
+    } catch {
+      toast.error("Gagal menyimpan kata sandi.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -75,6 +87,7 @@ export function ResetPasswordDialog({ user, isOpen, onOpenChange }: ResetPasswor
               size="sm"
               type="button"
               variant="outline"
+              disabled={isSubmitting}
               className="w-full text-xs font-bold border-teal-500/40 text-teal-600 hover:bg-teal-500/10"
               onClick={() => confirmAdminResetPassword("MtsN2#2026!Reset")}
             >
@@ -90,7 +103,7 @@ export function ResetPasswordDialog({ user, isOpen, onOpenChange }: ResetPasswor
                 type={showAdminNewPassword ? "text" : "password"}
                 value={adminNewPassword}
                 onChange={(e) => setAdminNewPassword(e.target.value)}
-                placeholder="Min 8 Karakter (Huruf Besar, Kecil & Angka)"
+                placeholder="Ketik kata sandi kustom yang Anda inginkan..."
                 className="text-xs pr-10 font-mono"
               />
               <button
@@ -101,14 +114,20 @@ export function ResetPasswordDialog({ user, isOpen, onOpenChange }: ResetPasswor
                 {showAdminNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {adminNewPassword && (() => {
-              const strength = MysqlAuthService.validatePasswordStrength(adminNewPassword);
-              return (
-                <p className={`text-[10px] ${strength.isValid ? "text-emerald-500 font-semibold" : "text-amber-500"}`}>
-                  Kekuatan: {strength.label} {strength.feedback.length > 0 ? `(${strength.feedback.join(", ")})` : "✓"}
-                </p>
-              );
-            })()}
+
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[10px] text-muted-foreground font-semibold">Pilihan Cepat:</span>
+              {["12345678", "guru123", "mtsn2cilacap", "MtsN2#2026!Reset"].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setAdminNewPassword(preset)}
+                  className="text-[10px] font-mono px-2 py-0.5 rounded border border-border bg-muted/60 hover:bg-teal-500/15 hover:border-teal-500 text-foreground transition"
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
           </div>
 
           <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-border">
@@ -117,6 +136,7 @@ export function ResetPasswordDialog({ user, isOpen, onOpenChange }: ResetPasswor
             </Button>
             <Button
               size="sm"
+              disabled={isSubmitting}
               className="bg-teal-600 hover:bg-teal-700 text-white font-bold gap-1.5 text-xs"
               onClick={() => confirmAdminResetPassword()}
             >

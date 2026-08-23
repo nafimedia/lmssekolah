@@ -2702,3 +2702,44 @@ export const saveUserAchievementFn = createServerFn({ method: "POST" })
     }
   });
 
+export const updateUserPasswordFn = createServerFn({ method: "POST" })
+  .validator((data: { emailOrId: string; newPassword: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const sessionUser = await requireRole(["admin", "admin_akademik", "kamad"]);
+      const { execute } = await import("@/lib/db");
+      const { createAuditLog } = await import("@/lib/logger");
+      const bcrypt = await import("bcryptjs");
+
+      const cleanIdentifier = (data.emailOrId || "").trim().toLowerCase();
+      const newPassword = (data.newPassword || "").trim();
+
+      if (!newPassword) {
+        return { success: false, message: "Kata sandi tidak boleh kosong." };
+      }
+
+      // Hash password using bcrypt
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      // Execute update on MySQL users table by id, email, or nis_nip
+      await execute(
+        "UPDATE users SET password_hash = ? WHERE id = ? OR (email IS NOT NULL AND LOWER(email) = LOWER(?)) OR (nis_nip IS NOT NULL AND nis_nip = ? AND nis_nip != '')",
+        [hashedPassword, cleanIdentifier, cleanIdentifier, cleanIdentifier]
+      );
+
+      await createAuditLog({
+        userId: sessionUser.id,
+        action: "RESET_PASSWORD",
+        module: "User Management",
+        target: `${cleanIdentifier} -> Password Updated`,
+        result: "SUCCESS",
+      });
+
+      return { success: true, message: "Kata sandi berhasil diperbarui!" };
+    } catch (e: any) {
+      console.error("[updateUserPasswordFn Error]:", e);
+      return { success: false, message: e?.message || "Gagal mengupdate kata sandi ke database MySQL." };
+    }
+  });
+

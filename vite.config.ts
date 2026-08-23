@@ -6,6 +6,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 
 export default defineConfig({
   server: {
+    // Reload trigger: 2026-08-23T23:51:2273,
     port: 5173,
     host: true,
   },

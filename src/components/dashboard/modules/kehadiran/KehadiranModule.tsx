@@ -239,8 +239,8 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
   return (
     <div className="space-y-6">
       <SectionHeader
-        title={`Kehadiran & Presensi Harian ${selectedClass} (Wali Kelas)`}
-        sub={`Pencatatan resmi presensi harian pagi untuk ${selectedClass}, pemantauan rekap bulanan, & direct WhatsApp alert ke orang tua siswa MTsN 2 Cilacap`}
+        title={`Kehadiran & Presensi Harian ${selectedClass}`}
+        sub="Pencatatan presensi harian siswa dan pemantauan rekapitulasi kehadiran."
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

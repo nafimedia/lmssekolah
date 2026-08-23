@@ -201,7 +201,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
         <div>
           <h1 className="text-2xl font-bold tracking-tight">SDM & Data Kepegawaian GTK</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Database Guru & Tenaga Kependidikan, Kenaikan Gaji Berkala (KGB), dan Layanan Cuti MTsN 2 Cilacap
+            Database kepegawaian guru, sertifikasi, dan administrasi GTK.
           </p>
         </div>
         <div className="flex items-center gap-2">

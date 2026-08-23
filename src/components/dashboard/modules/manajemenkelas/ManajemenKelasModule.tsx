@@ -157,7 +157,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
     <div className="space-y-6">
       <SectionHeader
         title={`Manajemen Kelas ${selectedClass}`}
-        sub={`Portal pendampingan bimbingan siswa ${selectedClass}, pemantauan presensi/EWS, pengumuman internal kelas, & layanan komunikasi ortu oleh Wali Kelas (${waliKelasName})`}
+        sub="Portal bimbingan siswa, presensi kelas, dan pengumuman internal."
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService, JadwalRow } from "@/services/mysqlDataService";
 import { toast } from "sonner";
-import { Download, PencilLine, Trash2 } from "lucide-react";
+import { Download, PencilLine, Trash2, Printer, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -150,18 +150,16 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
             Jadwal Pelajaran {isRestrictedRole && <Badge className="bg-primary text-primary-foreground font-bold text-xs">📍 {filterRombel}</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isRestrictedRole
-              ? `Jadwal alokasi jam tatap muka & pembelajaran khusus ${filterRombel} MTsN 2 Cilacap`
-              : "Plotting alokasi jadwal mengajar & belajar per Tingkat Kelas dan Rombel MTsN 2 Cilacap"}
+            Kelola jadwal pelajaran tatap muka dan alokasi ruang kelas.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
-            <Download className="h-3.5 w-3.5" /> 🖨️ Cetak Jadwal KBM PDF
+            <Printer className="h-3.5 w-3.5" /> Cetak Jadwal KBM PDF
           </Button>
           {!isRestrictedRole && (
             <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-              + Tambah Jadwal Pelajaran
+              <Plus className="h-3.5 w-3.5" /> Tambah Jadwal Pelajaran
             </Button>
           )}
         </div>

@@ -16,6 +16,15 @@ interface ProfilModuleProps {
   activeRole?: string;
 }
 
+function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <div className="mb-6">
+      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      {sub && <p className="text-sm text-muted-foreground mt-1">{sub}</p>}
+    </div>
+  );
+}
+
 export function ProfilModule({
   userProfile,
   setUserProfile,
@@ -252,6 +261,7 @@ export function ProfilModule({
 
   return (
     <div className="space-y-6">
+      <SectionHeader title="Profil Saya & Keamanan Akun" sub="Kelola informasi biodata diri, foto profil, dan keamanan akun." />
       {updateNotification && (
         <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between gap-3 text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in slide-in-from-top-2 shadow-sm">
           <div className="flex items-center gap-3">

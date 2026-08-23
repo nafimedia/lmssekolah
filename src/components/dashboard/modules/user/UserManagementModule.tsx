@@ -137,7 +137,7 @@ export function UserManagementModule() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Manajemen Pengguna & Hak Akses (Role)" sub="Pengelolaan terkelompok untuk Siswa, Guru & Wali Kelas, serta Pejabat/Petugas Staf LMS MTsN 2 Cilacap" />
+      <SectionHeader title="Manajemen Pengguna & Hak Akses (Role)" sub="Kelola akun pengguna, pengelompokan peran, dan hak akses sistem." />
 
       <Card className="border-border shadow-sm">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">

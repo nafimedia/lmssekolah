@@ -70,7 +70,7 @@ export function SiakadMasterDataModule() {
             <Layers className="h-6 w-6 text-primary" /> Master Data SIAKAD & Kurikulum
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Pengelolaan Data Master Tahun Ajaran, Mapel, Rombel, Matriks Pengampu, & Sarana MTsN 2 Cilacap
+            Pengelolaan data master akademik, rombel, dan matriks pengampu.
           </p>
         </div>
       </div>

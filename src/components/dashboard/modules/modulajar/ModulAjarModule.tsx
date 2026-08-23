@@ -189,15 +189,15 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isWaka
-              ? "Portal verifikasi, evaluasi kesesuaian CP/ATP, dan pengesahan Modul Ajar PDF Kurikulum Merdeka yang diunggah Guru Pengampu."
+              ? "Portal verifikasi dan validasi modul ajar Kurikulum Merdeka."
               : isSiswa
-              ? `Akses berkas PDF Modul Ajar Kurikulum Merdeka khusus Kelas ${rawClass} MTsN 2 Cilacap`
-              : "Unggah dan kelola file PDF Modul Ajar Kurikulum Merdeka per mata pelajaran & jenjang (Kelas VII, VIII, IX)."}
+              ? `Akses berkas PDF modul ajar khusus Kelas ${rawClass}.`
+              : "Pengelolaan modul ajar Kurikulum Merdeka per mata pelajaran dan jenjang."}
           </p>
         </div>
         {!isSiswa && (
           <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs" onClick={() => setIsUploadOpen(true)}>
-            <Upload className="h-3.5 w-3.5 mr-1" /> + Unggah Modul Ajar PDF
+            <Upload className="h-3.5 w-3.5" /> Unggah Modul Ajar PDF
           </Button>
         )}
       </div>

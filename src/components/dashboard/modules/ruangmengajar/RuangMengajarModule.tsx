@@ -77,7 +77,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
             <DoorOpen className="h-6 w-6 text-primary" /> Ruang Mengajar & Jurnal KBM Digital
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Portal KBM Tatap Muka {currentTeacherName} • Pengelolaan Jurnal, Media, & LKPD Digital MTsN 2 Cilacap
+            Kelola jurnal mengajar, materi pembelajaran, dan presensi KBM.
           </p>
         </div>
 

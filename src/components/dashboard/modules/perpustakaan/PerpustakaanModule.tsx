@@ -51,17 +51,35 @@ export function PerpustakaanModule() {
   const [isVideoFullScreen, setIsVideoFullScreen] = useState(false);
 
   const [loanList, setLoanList] = useState<ElibraryLoanRow[]>([]);
-  const loadLoansData = async () => {
+  const [bukuList, setBukuList] = useState<any[]>([]);
+
+  const loadData = async () => {
     try {
-      const data = await MysqlDataService.getElibraryLoans();
-      setLoanList(data || []);
+      const [loans, books] = await Promise.all([
+        MysqlDataService.getElibraryLoans(),
+        MysqlDataService.getElibraryBooks(),
+      ]);
+      setLoanList(loans || []);
+      if (books && books.length > 0) {
+        const mapped = books.map((b: any) => ({
+          id: String(b.id),
+          t: b.title,
+          icon: b.cover_url?.includes("youtube") ? Video : FileText,
+          tag: b.category || "E-Book",
+          size: "PDF / Media Digital",
+          type: b.cover_url?.includes("youtube") ? "video" : "pdf",
+          url: b.file_url || b.cover_url || "",
+          desc: b.author ? `Karya ${b.author}` : "Modul Pembelajaran Digital MTsN 2 Cilacap",
+        }));
+        setBukuList(mapped);
+      }
     } catch (e) {
-      console.warn("Gagal memuat sirkulasi pinjaman:", e);
+      console.warn("Gagal memuat data e-library:", e);
     }
   };
 
   useEffect(() => {
-    loadLoansData();
+    loadData();
   }, []);
 
   const handleBorrowBook = async (bookId: string, bookTitle: string) => {
@@ -83,75 +101,11 @@ export function PerpustakaanModule() {
 
     if (res.success) {
       toast.success(`📚 Berhasil Meminjam "${bookTitle}"! Tersimpan di MySQL Database.`);
-      await loadLoansData();
+      await loadData();
     } else {
       toast.error("Gagal mencatat peminjaman ke MySQL.");
     }
   };
-
-  const [bukuList, setBukuList] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("lms_elibrary_books_v2");
-        if (saved) return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return [
-      {
-        id: "1",
-        t: "Buku Digital Fikih Kelas VIII (Kemenag RI)",
-        icon: FileText,
-        tag: "PDF Modul",
-        size: "12.4 MB",
-        type: "pdf",
-        url: "https://pdfobject.com/pdf/sample.pdf",
-        desc: "Buku Teks Utama Pendidikan Agama Islam Fikih MTs Kelas 8 Kurikulum Merdeka.",
-      },
-      {
-        id: "2",
-        t: "Video Tutorial Pembelajaran Tajwid Mad Silah (YouTube HD)",
-        icon: Video,
-        tag: "Video YouTube",
-        size: "YouTube HD",
-        type: "video",
-        videoUrl: "https://www.youtube.com/watch?v=kYJzXv0h0bU",
-        desc: "Penjelasan audio-visual contoh hukum bacaan Mad Silah Qashirah & Thawilah.",
-        provider: "youtube",
-      },
-      {
-        id: "3",
-        t: "Video Praktikum Paru-Paru & Organ Pernapasan (Google Drive Video)",
-        icon: Video,
-        tag: "Video G-Drive",
-        size: "Google Drive HD",
-        type: "video",
-        videoUrl: "https://drive.google.com/file/d/1A2B3C4D5E6F7G8H9/view",
-        desc: "Rekaman video peragaan praktikum paru-paru dan mekanisme inspirasi-ekspirasi.",
-        provider: "gdrive",
-      },
-      {
-        id: "4",
-        t: "Audio Murottal Tajwid Juz 30 (Surah An-Naba')",
-        icon: Headphones,
-        tag: "Audio Murottal",
-        size: "18.2 MB",
-        type: "audio",
-        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        desc: "Murottal merdu beserta panduan makhraj dan hukum tajwid.",
-        provider: "direct",
-      },
-      {
-        id: "5",
-        t: "E-Book Sejarah Kebudayaan Islam MTs",
-        icon: FileText,
-        tag: "E-Book",
-        size: "8.7 MB",
-        type: "pdf",
-        url: "https://pdfobject.com/pdf/sample.pdf",
-        desc: "Sejarah Perkembangan Islam pada Masa Daulah Abbasiyah & Wali Songo.",
-      },
-    ];
-  });
 
   const [isOpen, setIsOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<"file" | "url">("file");

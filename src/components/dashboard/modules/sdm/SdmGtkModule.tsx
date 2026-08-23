@@ -11,6 +11,9 @@ import {
   Trash2,
   Pencil,
   Eye,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,85 +44,12 @@ export interface GtkItem {
   jabatan?: string;
 }
 
-const INITIAL_GTK_LIST: GtkItem[] = [
-  {
-    id: "gtk-1",
-    nip: "199204042025051002",
-    npk: "98204042025",
-    name: "AH. SYARIF HIDAYAH, S.Pd.I",
-    golongan: "Penata (III/c)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Al Qur'an Hadis",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu Al Qur'an Hadis",
-    isSertifikasi: true,
-    email: "199204042025051002@guru.mtsn2cilacap.sch.id",
-    phone: "081234567801",
-  },
-  {
-    id: "gtk-2",
-    nip: "197205122005011003",
-    npk: "98205122005",
-    name: "WAKHIBUN, S.P",
-    golongan: "Pembina (IV/a)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Akidah Akhlak",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu Akidah Akhlak",
-    isSertifikasi: true,
-    email: "197205122005011003@guru.mtsn2cilacap.sch.id",
-    phone: "081234567802",
-  },
-  {
-    id: "gtk-3",
-    nip: "197807072007102001",
-    npk: "98207072007",
-    name: "CARYATI,",
-    golongan: "Pembina (IV/a)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Fikih",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu Fikih",
-    isSertifikasi: true,
-    email: "197807072007102001@guru.mtsn2cilacap.sch.id",
-    phone: "081234567803",
-  },
-  {
-    id: "gtk-4",
-    nip: "197311232005011004",
-    npk: "98211232005",
-    name: "H. DASIRUN, S.Ag., M.Pd.I",
-    golongan: "Pembina Tk. I (IV/b)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Sejarah Kebudayaan Islam",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu SKI",
-    isSertifikasi: true,
-    email: "197311232005011004@guru.mtsn2cilacap.sch.id",
-    phone: "081234567804",
-  },
-  {
-    id: "gtk-5",
-    nip: "199405142019032021",
-    npk: "98205142019",
-    name: "ENDAH SUPRIHATIN, S.Pd",
-    golongan: "Penata (III/c)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Bahasa Arab",
-    totalJp: 26,
-    tugasTambahan: "Wali Kelas 7B & Guru Bahasa Arab",
-    isSertifikasi: true,
-    email: "199405142019032021@guru.mtsn2cilacap.sch.id",
-    phone: "081234567805",
-  },
-];
-
 export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const [activeTab, setActiveTab] = useState<"daftar" | "cuti">("daftar");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("semua");
 
-  const [gtkList, setGtkList] = useState<GtkItem[]>(INITIAL_GTK_LIST);
+  const [gtkList, setGtkList] = useState<GtkItem[]>([]);
   const [leavesList, setLeavesList] = useState<GtkLeaveRow[]>([]);
   const [gtkDocs, setGtkDocs] = useState<GtkDocumentRow[]>([]);
 
@@ -207,8 +137,20 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
     toast.success(`Pengajuan ${leaveData.leaveType} untuk ${leaveData.teacherName} berhasil disimpan!`);
   };
 
+  const [sortColumn, setSortColumn] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (colKey: string) => {
+    if (sortColumn === colKey) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(colKey);
+      setSortDir("asc");
+    }
+  };
+
   const filteredGtk = useMemo(() => {
-    return gtkList.filter((item) => {
+    const list = gtkList.filter((item) => {
       const matchSearch =
         item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.nip.toLowerCase().includes(search.toLowerCase()) ||
@@ -216,7 +158,32 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
       const matchStatus = filterStatus === "semua" || item.statusKepegawaian === filterStatus;
       return matchSearch && matchStatus;
     });
-  }, [gtkList, search, filterStatus]);
+
+    return list.sort((a, b) => {
+      let valA: any = "";
+      let valB: any = "";
+      if (sortColumn === "name") {
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+      } else if (sortColumn === "status") {
+        valA = a.statusKepegawaian.toLowerCase();
+        valB = b.statusKepegawaian.toLowerCase();
+      } else if (sortColumn === "golongan") {
+        valA = a.golongan.toLowerCase();
+        valB = b.golongan.toLowerCase();
+      } else if (sortColumn === "mapel") {
+        valA = a.mapelUtama.toLowerCase();
+        valB = b.mapelUtama.toLowerCase();
+      } else if (sortColumn === "bebanJp") {
+        valA = a.totalJp || 0;
+        valB = b.totalJp || 0;
+      }
+
+      if (valA < valB) return sortDir === "asc" ? -1 : 1;
+      if (valA > valB) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [gtkList, search, filterStatus, sortColumn, sortDir]);
 
   const totalPns = gtkList.filter((g) => g.statusKepegawaian === "PNS").length;
   const totalPppk = gtkList.filter((g) => g.statusKepegawaian === "PPPK").length;
@@ -348,11 +315,56 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
             <table className="w-full text-xs">
               <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
                 <tr>
-                  <th className="py-3 px-4">Nama Pegawai & NIP</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3">Golongan</th>
-                  <th className="py-3 px-3">Mapel Utama</th>
-                  <th className="py-3 px-3 text-center">Beban JP</th>
+                  <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("name")}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Nama Pegawai & NIP</span>
+                      {sortColumn === "name" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("status")}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Status</span>
+                      {sortColumn === "status" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("golongan")}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Golongan</span>
+                      {sortColumn === "golongan" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("mapel")}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Mapel Utama</span>
+                      {sortColumn === "mapel" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("bebanJp")}>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span>Beban JP</span>
+                      {sortColumn === "bebanJp" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
                   <th className="py-3 px-3 text-center">Sertifikasi</th>
                   <th className="py-3 px-4 text-center">Aksi & Kontrol</th>
                 </tr>

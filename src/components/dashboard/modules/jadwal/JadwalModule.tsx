@@ -13,8 +13,10 @@ import { PrintJadwalDialog } from "./components/PrintJadwalDialog";
 
 export function JadwalModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
+  const isGuru = activeRole === "guru";
   const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
-  const isRestrictedRole = isSiswa || isWaliKelas;
+  const isRestrictedRole = isSiswa;
+  const isReadOnlyRole = isSiswa || isGuru || isWaliKelas;
   const me = MysqlAuthService.getActiveUser();
 
   const resolvedInitialRombel = useMemo(() => {
@@ -104,6 +106,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
 
     if (res.success) {
       toast.success(`✅ Jadwal ${data.mapel} (${data.inputTingkat} - ${data.inputRombel}) hari ${data.selectedHari} berhasil ditambahkan!`);
+      setIsOpen(false);
       await loadJadwalData();
     } else {
       toast.error("Gagal menyimpan jadwal ke database.");
@@ -147,17 +150,19 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Jadwal Pelajaran {isRestrictedRole && <Badge className="bg-primary text-primary-foreground font-bold text-xs">📍 {filterRombel}</Badge>}
+            Jadwal Pelajaran {isGuru && <Badge className="bg-emerald-600 text-white font-bold text-xs">📖 Media Informasi Guru (Read-Only)</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Kelola jadwal pelajaran tatap muka dan alokasi ruang kelas.
+            {isGuru
+              ? "Informasi matriks jadwal pelajaran tatap muka dan alokasi ruang kelas MTsN 2 Cilacap."
+              : "Kelola jadwal pelajaran tatap muka dan alokasi ruang kelas."}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
             <Printer className="h-3.5 w-3.5" /> Cetak Jadwal KBM PDF
           </Button>
-          {!isRestrictedRole && (
+          {!isReadOnlyRole && (
             <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
               <Plus className="h-3.5 w-3.5" /> Tambah Jadwal Pelajaran
             </Button>
@@ -254,7 +259,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                         <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.jam}</div>
                       </div>
 
-                      {!isRestrictedRole && (
+                      {!isReadOnlyRole && (
                         <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100 transition">
                           <Button
                             size="sm"

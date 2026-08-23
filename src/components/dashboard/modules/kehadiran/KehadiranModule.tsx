@@ -3,10 +3,11 @@ import { useRealtimeCalendar } from "@/hooks/useRealtimeCalendar";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { toast } from "sonner";
-import { UserCheck, Printer, Send, CheckCircle2, Info, AlertTriangle, Smartphone, Zap, Save } from "lucide-react";
+import { UserCheck, Printer, Send, CheckCircle2, Info, AlertTriangle, Smartphone, Zap, Save, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 import { PresensiSiswaTab } from "./components/PresensiSiswaTab";
 import { PresensiKbmTab } from "./components/PresensiKbmTab";
@@ -105,16 +106,16 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
             nisn: s.nis_nip || s.nis || `008192${1000 + idx}`,
             name: s.full_name || s.name,
             class: studentClass,
-            hadir: 20 + (idx % 2),
-            izin: idx % 7 === 0 ? 1 : 0,
-            sakit: idx % 11 === 0 ? 1 : 0,
+            hadir: 0,
+            izin: 0,
+            sakit: 0,
             alpa: 0,
-            pct: Math.round(((20 + (idx % 2)) / 22) * 1000) / 10,
+            pct: 100.0,
             parentWa: s.phone || "081234567890",
-            status: "Sangat Baik (A)",
+            status: "Baik",
             today: "hadir",
             sessionStatus: "hadir",
-            note: idx % 7 === 0 ? "Izin Resmi" : idx % 11 === 0 ? "Surat Dokter" : "",
+            note: "",
           };
         });
         setAttendanceData(formatted);
@@ -126,11 +127,74 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
     };
   }, []);
 
+  const [sortColumn, setSortColumn] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (colKey: string) => {
+    if (sortColumn === colKey) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(colKey);
+      setSortDir("asc");
+    }
+  };
+
   const filteredAttendance = attendanceData.filter((a) => selectedClass === "Semua" || a.class === selectedClass);
+
+  const sortedAttendance = useMemo(() => {
+    return [...filteredAttendance].sort((a, b) => {
+      let valA: any = "";
+      let valB: any = "";
+      const effHadirA = a.hadir + (a.today === "hadir" ? 1 : 0);
+      const effHadirB = b.hadir + (b.today === "hadir" ? 1 : 0);
+      const effIzinA = a.izin + (a.today === "izin" ? 1 : 0);
+      const effIzinB = b.izin + (b.today === "izin" ? 1 : 0);
+      const effSakitA = a.sakit + (a.today === "sakit" ? 1 : 0);
+      const effSakitB = b.sakit + (b.today === "sakit" ? 1 : 0);
+      const effAlpaA = a.alpa + (a.today === "alpa" ? 1 : 0);
+      const effAlpaB = b.alpa + (b.today === "alpa" ? 1 : 0);
+
+      if (sortColumn === "name") {
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+      } else if (sortColumn === "nisn") {
+        valA = a.nisn;
+        valB = b.nisn;
+      } else if (sortColumn === "hadir") {
+        valA = effHadirA;
+        valB = effHadirB;
+      } else if (sortColumn === "izin") {
+        valA = effIzinA;
+        valB = effIzinB;
+      } else if (sortColumn === "sakit") {
+        valA = effSakitA;
+        valB = effSakitB;
+      } else if (sortColumn === "alpa") {
+        valA = effAlpaA;
+        valB = effAlpaB;
+      } else if (sortColumn === "pct") {
+        valA = (effHadirA / (effHadirA + effIzinA + effSakitA + effAlpaA || 1));
+        valB = (effHadirB / (effHadirB + effIzinB + effSakitB + effAlpaB || 1));
+      }
+
+      if (valA < valB) return sortDir === "asc" ? -1 : 1;
+      if (valA > valB) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [filteredAttendance, sortColumn, sortDir]);
 
   const handleSetTodayStatus = (studentId: string, status: string) => {
     setAttendanceData((prev) =>
-      prev.map((item) => (item.id === studentId ? { ...item, today: status } : item))
+      prev.map((item) => {
+        if (item.id !== studentId) return item;
+        let defaultNote = item.note;
+        if (status === "hadir") defaultNote = "";
+        else if (status === "izin" && (!item.note || item.note === "Surat Dokter" || item.note === "Tanpa Keterangan")) defaultNote = "Izin Resmi";
+        else if (status === "sakit" && (!item.note || item.note === "Izin Resmi" || item.note === "Tanpa Keterangan")) defaultNote = "Surat Dokter";
+        else if (status === "alpa" && (!item.note || item.note === "Izin Resmi" || item.note === "Surat Dokter")) defaultNote = "Tanpa Keterangan";
+
+        return { ...item, today: status, note: defaultNote };
+      })
     );
   };
 
@@ -233,16 +297,11 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
   }
 
   const totalStudents = filteredAttendance.length || 1;
-  const avgAttendancePct = Math.round(
-    (filteredAttendance.reduce((acc, curr) => {
-      const h = curr.hadir + (curr.today === "hadir" ? 1 : 0);
-      const tot = h + curr.izin + curr.sakit + curr.alpa + (curr.today !== "hadir" ? 1 : 0);
-      return acc + (h / (tot || 1)) * 100;
-    }, 0) / totalStudents) * 10
-  ) / 10;
-
-  const totalIzinSakit = filteredAttendance.filter((s) => s.today === "izin" || s.today === "sakit" || s.izin > 0 || s.sakit > 0).length;
-  const totalAlpaEws = filteredAttendance.filter((s) => s.today === "alpa" || s.alpa > 0).length;
+  const totalHadirToday = filteredAttendance.filter((s) => s.today === "hadir").length;
+  const totalIzinSakit = filteredAttendance.filter((s) => s.today === "izin" || s.today === "sakit").length;
+  const totalAlpaEws = filteredAttendance.filter((s) => s.today === "alpa").length;
+  const avgAttendancePct = Math.round((totalHadirToday / totalStudents) * 1000) / 10;
+  const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
 
   return (
     <div className="space-y-6">
@@ -322,15 +381,23 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
               <span>Simpan & Sync Kalender</span>
             </Button>
 
-            <select
-              className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-            >
-              <option value="Rombel 8A">Rombel 8A (Bimbingan)</option>
-              <option value="Rombel 8B">Rombel 8B</option>
-              <option value="Semua">Semua Rombel</option>
-            </select>
+            {isWaliKelas ? (
+              <Badge variant="outline" className="h-9 px-3 text-xs font-extrabold bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                🔒 {resolvedWaliClass} (Rombel Binaan)
+              </Badge>
+            ) : (
+              <select
+                className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+              >
+                {["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B", "Semua"].map((cls) => (
+                  <option key={cls} value={cls}>
+                    {cls === resolvedWaliClass ? `${cls} (Rombel Binaan)` : cls === "Semua" ? "Semua Rombel Sekolah" : cls}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintPresensiOpen(true)}>
               <Printer className="h-3.5 w-3.5" />
@@ -343,20 +410,74 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
           <table className="w-full text-xs">
             <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
               <tr>
-                <th className="py-3 px-4">NISN & Nama Siswa</th>
+                <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("name")}>
+                  <div className="flex items-center gap-1.5">
+                    <span>NISN & Nama Siswa</span>
+                    {sortColumn === "name" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
                 <th className="py-3 px-3">Rombel</th>
                 <th className="py-3 px-3 text-center">Presensi Hari Ini</th>
                 <th className="py-3 px-3">Keterangan / Catatan Wali Kelas</th>
-                <th className="py-3 px-3 text-center">Hadir (H)</th>
-                <th className="py-3 px-3 text-center">Izin (I)</th>
-                <th className="py-3 px-3 text-center">Sakit (S)</th>
-                <th className="py-3 px-3 text-center">Alpa (A)</th>
-                <th className="py-3 px-3 text-center">% Kehadiran</th>
+                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("hadir")}>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Hadir (H)</span>
+                    {sortColumn === "hadir" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("izin")}>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Izin (I)</span>
+                    {sortColumn === "izin" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("sakit")}>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Sakit (S)</span>
+                    {sortColumn === "sakit" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("alpa")}>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Alpa (A)</span>
+                    {sortColumn === "alpa" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("pct")}>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>% Kehadiran</span>
+                    {sortColumn === "pct" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
                 <th className="py-3 px-4 text-right">Aksi WA Ortu</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredAttendance.map((s) => {
+              {sortedAttendance.map((s) => {
                 const effHadir = s.hadir + (s.today === "hadir" ? 1 : 0);
                 const effIzin = s.izin + (s.today === "izin" ? 1 : 0);
                 const effSakit = s.sakit + (s.today === "sakit" ? 1 : 0);
@@ -409,7 +530,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                     </td>
                     <td className="py-3 px-3 min-w-[200px]">
                       <Input
-                        placeholder="Catatan Wali Kelas (Alasan Izin/Sakit...)"
+                        placeholder="Catatan Wali Kelas..."
                         value={s.note || ""}
                         onChange={(e) => handleSetTodayNote(s.id, e.target.value)}
                         className="h-7 text-xs bg-background/80 border-border"

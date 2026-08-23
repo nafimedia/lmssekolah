@@ -80,107 +80,31 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         setExams(mapped);
       }
     });
+
+    MysqlDataService.getCbtResults().then((dbResults) => {
+      if (dbResults && dbResults.length > 0) {
+        const mapped = dbResults.map((r: any) => ({
+          id: String(r.id),
+          name: r.student_name || "Siswa",
+          nis: r.student_nis || "-",
+          classRombel: r.class_name || "VIII A",
+          subjectName: r.subject_name || "Mata Pelajaran",
+          pgScore: r.score || 0,
+          essayScore: 0,
+          totalScore: r.score || 0,
+          status: (r.score >= 75 ? "Lulus KKM" : "Remedial") as "Lulus KKM" | "Remedial",
+          kkm: 75,
+        }));
+        setGradeAnalysis(mapped);
+      }
+    });
   }, []);
 
   // State Bank Soal
-  const [questions, setQuestions] = useState<CBTQuestion[]>([
-    {
-      id: "1",
-      questionType: "pg",
-      questionText: "Hasil dari ( -12 ) × 4 + 72 ÷ ( -6 ) adalah ...",
-      options: { A: "-60", B: "-36", C: "36", D: "60" },
-      correctOption: "A",
-      points: 5,
-      difficulty: "Sedang",
-      mapel: "Matematika",
-      author: "Pak Hendra",
-    },
-    {
-      id: "2",
-      questionType: "pg",
-      questionText: "Dua suku berikutnya dari barisan 3, 7, 11, 15, ... adalah ...",
-      options: { A: "18, 22", B: "19, 23", C: "19, 24", D: "20, 25" },
-      correctOption: "B",
-      points: 5,
-      difficulty: "Mudah",
-      mapel: "Matematika",
-      author: "Pak Hendra",
-    },
-    {
-      id: "3",
-      questionType: "pg",
-      questionText: "Persamaan garis yang melalui titik (2, 5) dan bergradien 3 adalah ...",
-      options: { A: "y = 3x - 1", B: "y = 3x + 1", C: "y = 3x - 5", D: "y = 3x + 5" },
-      correctOption: "A",
-      points: 5,
-      difficulty: "Sedang",
-      mapel: "Matematika",
-      author: "Pak Hendra",
-    },
-    {
-      id: "4",
-      questionType: "essay",
-      questionText: "Jelaskan perbedaan antara syarat sah dan rukun shalat dalam fikih ibadah!",
-      options: { A: "", B: "", C: "", D: "" },
-      correctOption: "A",
-      points: 15,
-      difficulty: "Sukar",
-      mapel: "Fiqih",
-      author: "CARYATI,",
-    },
-  ]);
+  const [questions, setQuestions] = useState<CBTQuestion[]>([]);
 
   // State Analisis Nilai KKM
-  const [gradeAnalysis, setGradeAnalysis] = useState<CBTGradeAnalysisItem[]>([
-    {
-      id: "1",
-      name: "ALIYA QIARA ABDULLAH",
-      nis: "12123301000288",
-      classRombel: "VIII A",
-      subjectName: "Matematika",
-      pgScore: 85,
-      essayScore: 10,
-      totalScore: 95,
-      status: "Lulus KKM",
-      kkm: 75,
-    },
-    {
-      id: "2",
-      name: "ABIGAIL HASAN YUSUF PRAYOGA",
-      nis: "0081928371",
-      classRombel: "VIII A",
-      subjectName: "Matematika",
-      pgScore: 80,
-      essayScore: 10,
-      totalScore: 90,
-      status: "Lulus KKM",
-      kkm: 75,
-    },
-    {
-      id: "3",
-      name: "ADITA AZ ZAHRA",
-      nis: "0081928372",
-      classRombel: "VIII A",
-      subjectName: "Matematika",
-      pgScore: 55,
-      essayScore: 10,
-      totalScore: 65,
-      status: "Remedial",
-      kkm: 75,
-    },
-    {
-      id: "4",
-      name: "AFRIZA RAHMA AZZAHRA",
-      nis: "0081928373",
-      classRombel: "VIII A",
-      subjectName: "Matematika",
-      pgScore: 60,
-      essayScore: 10,
-      totalScore: 70,
-      status: "Remedial",
-      kkm: 75,
-    },
-  ]);
+  const [gradeAnalysis, setGradeAnalysis] = useState<CBTGradeAnalysisItem[]>([]);
 
   // Exam Player State
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);

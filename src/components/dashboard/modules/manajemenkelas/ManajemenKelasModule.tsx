@@ -125,6 +125,21 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
     setIsSuratOpen(true);
   };
 
+  const handleUpdateStudentParentData = (studentId: string, parentName: string, parentWa: string) => {
+    setStudents((prev) =>
+      prev.map((item) =>
+        item.id === studentId ? { ...item, parentName, parentWa } : item
+      )
+    );
+    const targetStudent = students.find((s) => s.id === studentId);
+    MysqlDataService.updateUserProfile({
+      id: studentId,
+      fullName: targetStudent?.name || "",
+      email: `${studentId}@mail.com`,
+      phone: parentWa,
+    }).catch(() => {});
+  };
+
   const handleAddAnnouncement = (item: { title: string; content: string }) => {
     const newAnn: PengumumanItem = {
       id: "a_" + Date.now(),
@@ -258,6 +273,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
           students={classStudents}
           onSendWa={handleSendWaAlert}
           onOpenCetakSurat={handleOpenCetakSurat}
+          onUpdateStudent={handleUpdateStudentParentData}
         />
       )}
 

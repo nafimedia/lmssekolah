@@ -204,7 +204,7 @@ export function MonitoringKbmLiveModule() {
             const izin = rombelPresensi.filter((p: any) => p.status === "IZIN").length;
             const alpa = rombelPresensi.filter((p: any) => p.status === "ALPA").length;
 
-            const mapel = rombelPresensi[0]?.mapel || rombelJournal?.mapel || "Pendidikan Kewarganegaraan";
+            const mapel = rombelPresensi[0]?.mapel || rombelJournal?.mapel || "Mata Pelajaran";
             const guru = rombelPresensi[0]?.guru_name || rombelJournal?.guru_name || "Guru Pengampu";
             const materi = rombelJournal?.materi || rombelJournal?.catatan || "Presensi KBM sedang berlangsung";
 
@@ -215,7 +215,7 @@ export function MonitoringKbmLiveModule() {
               materi,
               status: "LIVE",
               hadirCount: hadir,
-              totalStudents: totalSiswaRombel || (hadir + sakit + izin + alpa) || 30,
+              totalStudents: totalSiswaRombel || (hadir + sakit + izin + alpa),
               sakitCount: sakit,
               izinCount: izin,
               alpaCount: alpa,

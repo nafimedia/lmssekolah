@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check } from "lucide-react";
+import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 
 export interface ActivityDetail {
   id: string;
@@ -42,6 +43,7 @@ export function ViewActivityDialog({
   activeMapel,
 }: ViewActivityDialogProps) {
   const [grades, setGrades] = useState<StudentGradeRow[]>([]);
+  const isAllowed = isSubjectAllowedForUser(activeMapel);
 
   useEffect(() => {
     if (!isOpen || !activity) return;
@@ -103,19 +105,25 @@ export function ViewActivityDialog({
   if (!activity) return null;
 
   const handleStatusChange = (id: string, status: string) => {
+    if (!isAllowed) return;
     setGrades((prev) => prev.map((g) => (g.id === id ? { ...g, status } : g)));
   };
 
   const handleScoreChange = (id: string, score: string) => {
+    if (!isAllowed) return;
     setGrades((prev) => prev.map((g) => (g.id === id ? { ...g, score } : g)));
   };
 
   const handleFeedbackChange = (id: string, feedback: string) => {
+    if (!isAllowed) return;
     setGrades((prev) => prev.map((g) => (g.id === id ? { ...g, feedback } : g)));
   };
 
   const handleSaveGrades = async () => {
     if (!activity) return;
+    if (!isAllowed) {
+      return toast.error("Akses Ditolak: Anda hanya memiliki hak akses Lihat (Read-Only) pada Mata Pelajaran ini.");
+    }
     const dbGrades = grades.map((g) => ({
       activity_id: activity.id,
       student_id: g.id,
@@ -135,16 +143,24 @@ export function ViewActivityDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader className="border-b border-border pb-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className="text-[10px] font-bold gap-1">
-              {activity.type === "LKPD" && <FileText className="h-3 w-3 text-emerald-600" />}
-              {activity.type === "TUGAS_KELOMPOK" && <Users className="h-3 w-3 text-blue-600" />}
-              {activity.type === "QUIZ" && <Brain className="h-3 w-3 text-purple-600" />}
-              {activity.type}
-            </Badge>
-            <span className="text-xs text-muted-foreground font-mono">
-              {activeMapel} · {activeRombel}
-            </span>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px] font-bold gap-1">
+                {activity.type === "LKPD" && <FileText className="h-3 w-3 text-emerald-600" />}
+                {activity.type === "TUGAS_KELOMPOK" && <Users className="h-3 w-3 text-blue-600" />}
+                {activity.type === "QUIZ" && <Brain className="h-3 w-3 text-purple-600" />}
+                {activity.type}
+              </Badge>
+              <span className="text-xs text-muted-foreground font-mono">
+                {activeMapel} · {activeRombel}
+              </span>
+            </div>
+
+            {!isAllowed && (
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-[10px] gap-1">
+                <Lock className="h-3 w-3" /> 🔒 Hanya Dibaca (Bukan Pengampu Mapel)
+              </Badge>
+            )}
           </div>
 
           <DialogTitle className="text-lg font-extrabold">{activity.title}</DialogTitle>
@@ -198,13 +214,14 @@ export function ViewActivityDialog({
                         </td>
                         <td className="py-2.5 px-3 text-center">
                           <select
+                            disabled={!isAllowed}
                             className={`h-7 rounded-md border text-[11px] font-bold px-2 ${
                               g.status === "TERKUMPUL"
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300"
                                 : g.status === "DIPERIKSA"
                                 ? "bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300"
                                 : "bg-muted text-muted-foreground border-border"
-                            }`}
+                            } ${!isAllowed ? "opacity-60 cursor-not-allowed" : ""}`}
                             value={g.status}
                             onChange={(e) => handleStatusChange(g.id, e.target.value)}
                           >
@@ -217,17 +234,23 @@ export function ViewActivityDialog({
                           <Input
                             type="number"
                             placeholder="0-100"
+                            disabled={!isAllowed}
                             value={g.score}
                             onChange={(e) => handleScoreChange(g.id, e.target.value)}
-                            className="h-7 text-xs font-mono font-bold text-center border-emerald-300 dark:border-emerald-800"
+                            className={`h-7 text-xs font-mono font-bold text-center border-emerald-300 dark:border-emerald-800 ${
+                              !isAllowed ? "opacity-60 cursor-not-allowed bg-muted" : ""
+                            }`}
                           />
                         </td>
                         <td className="py-2.5 px-3">
                           <Input
-                            placeholder="Tuliskan apresiasi / catatan umpan balik..."
+                            placeholder={isAllowed ? "Tuliskan apresiasi / catatan umpan balik..." : "Pengisian umpan balik terkunci (Hanya Pengampu)"}
+                            disabled={!isAllowed}
                             value={g.feedback}
                             onChange={(e) => handleFeedbackChange(g.id, e.target.value)}
-                            className="h-7 text-xs bg-background/80 border-border"
+                            className={`h-7 text-xs bg-background/80 border-border ${
+                              !isAllowed ? "opacity-60 cursor-not-allowed bg-muted" : ""
+                            }`}
                           />
                         </td>
                       </tr>
@@ -244,13 +267,19 @@ export function ViewActivityDialog({
             Tutup
           </Button>
 
-          <Button
-            size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
-            onClick={handleSaveGrades}
-          >
-            <Save className="h-4 w-4" /> Simpan Nilai & Sync Ke Penilaian Kelas
-          </Button>
+          {isAllowed ? (
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+              onClick={handleSaveGrades}
+            >
+              <Save className="h-4 w-4" /> Simpan Nilai & Sync Ke Penilaian Kelas
+            </Button>
+          ) : (
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-xs gap-1.5 py-1.5 px-3">
+              <Lock className="h-3.5 w-3.5" /> Akses Edit Terkunci (Bukan Mapel Pengampu)
+            </Badge>
+          )}
         </div>
       </DialogContent>
     </Dialog>

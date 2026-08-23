@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { toast } from "sonner";
-import { Shield, Search, UserCog, Save, KeyRound, Trash2, Users, GraduationCap, UserCheck, ShieldCheck, UserPlus } from "lucide-react";
+import { Shield, Search, UserCog, Save, KeyRound, Trash2, Users, GraduationCap, UserCheck, ShieldCheck, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +42,7 @@ function setPersistedRoleOverride(identifier: string, roles: string[]) {
 
 export function UserManagementModule() {
   const [search, setSearch] = useState("");
-  const [dummyUsersList, setDummyUsersList] = useState<Array<{ id: string; full_name: string; email: string; nis: string; class: string; roles: string[] }>>([]);
+  const [usersList, setUsersList] = useState<Array<{ id: string; full_name: string; email: string; nis: string; class: string; roles: string[] }>>([]);
 
   // Dialog States
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -71,34 +71,11 @@ export function UserManagementModule() {
             const cleanId = String(u.id || "").trim();
             const cleanNip = (u.nis_nip || "").trim();
 
-            // Check if admin manually saved role overrides in localStorage
             let finalRoles: string[] =
               overrides[cleanEmail] || overrides[cleanId] || overrides[cleanNip] || [];
 
             if (finalRoles.length === 0) {
-              const INITIAL_GTK_MULTI_ROLES: Record<string, string> = {
-                "197905162006041020": "kamad,guru",
-                "197002272005011001": "admin,walikelas,guru",
-                "197906142007102002": "walikelas,guru",
-                "198302142023211010": "waka,guru",
-                "199011022025212013": "walikelas,guru",
-                "199204042025051002": "admin_akademik,guru",
-                "199508182023212044": "walikelas,guru",
-                "199712302024212037": "walikelas,guru",
-                "12345678": "walikelas,guru",
-              };
-
-              let roleStr = INITIAL_GTK_MULTI_ROLES[cleanNip] || u.role || "";
-              if (!roleStr) {
-                if (u.full_name.includes("MAKMUN ROSID")) roleStr = "admin,walikelas,guru";
-                else if (u.full_name.includes("SOLIHUN")) roleStr = "kamad,guru";
-                else if (u.full_name.includes("ALI MANSUR")) roleStr = "waka,guru";
-                else if (u.full_name.includes("SYARIF HIDAYAH")) roleStr = "admin_akademik,guru";
-                else if (u.full_name.includes("SOBIYATI") || u.full_name.includes("NOVANTYA") || u.full_name.includes("MAULIDIA") || u.full_name.includes("INDAH NURROHMAH") || u.full_name.includes("RINDANG")) {
-                  roleStr = "walikelas,guru";
-                }
-              }
-
+              const roleStr = u.role || "";
               if (roleStr && roleStr.includes(",")) {
                 finalRoles = roleStr.split(",").map((r) => r.trim());
               } else if (roleStr) {
@@ -117,7 +94,7 @@ export function UserManagementModule() {
               roles: finalRoles,
             };
           });
-          setDummyUsersList(formatted);
+          setUsersList(formatted);
         }
       })
       .catch((err) => console.warn("Failed fetching users from MySQL:", err));
@@ -129,11 +106,11 @@ export function UserManagementModule() {
 
   const handleUserCreated = (newUser: { id: string; full_name: string; email: string; nis: string; class: string; roles: string[] }) => {
     MysqlDataService.updateUserRole(newUser.id, newUser.roles, newUser.email).catch(() => {});
-    setDummyUsersList((prev) => [newUser, ...prev]);
+    setUsersList((prev) => [newUser, ...prev]);
   };
 
   const handleSaveRoles = async (userId: string, userEmail: string, newRoles: string[]) => {
-    const targetUser = dummyUsersList.find((u) => u.id === userId || u.email.toLowerCase() === userEmail.toLowerCase());
+    const targetUser = usersList.find((u) => u.id === userId || u.email.toLowerCase() === userEmail.toLowerCase());
     const cleanNip = targetUser?.nis?.replace(/^(NISN|NIP)\.\s*/i, "").trim() || "";
 
     // 1. Immediately persist to localStorage overrides so refresh never reverts
@@ -150,7 +127,7 @@ export function UserManagementModule() {
     }
 
     // 3. Update React UI state
-    setDummyUsersList((prev) =>
+    setUsersList((prev) =>
       prev.map((u) => {
         if (u.id !== userId && u.email.toLowerCase() !== userEmail.toLowerCase()) return u;
         return { ...u, roles: newRoles };
@@ -159,7 +136,7 @@ export function UserManagementModule() {
   };
 
   const toggleRole = (userId: string, role: string) => {
-    const userObj = dummyUsersList.find((u) => u.id === userId);
+    const userObj = usersList.find((u) => u.id === userId);
     if (userObj) {
       const exists = userObj.roles.includes(role);
       if (exists && userObj.roles.length <= 1) {
@@ -178,7 +155,7 @@ export function UserManagementModule() {
     const targetEmail = userToDelete.email;
     const targetName = userToDelete.full_name;
 
-    setDummyUsersList((prev) => prev.filter((u) => u.id !== targetId));
+    setUsersList((prev) => prev.filter((u) => u.id !== targetId));
     try {
       await MysqlDataService.deleteUser(targetId, targetEmail);
     } catch (err) {}
@@ -188,11 +165,11 @@ export function UserManagementModule() {
     setUserToDelete(null);
   };
 
-  const siswaCount = dummyUsersList.filter((u) => u.roles.includes("siswa")).length;
-  const guruCount = dummyUsersList.filter((u) => u.roles.some((r) => r === "guru" || r === "walikelas")).length;
-  const pejabatCount = dummyUsersList.filter((u) => u.roles.some((r) => ["admin", "admin_akademik", "kamad", "waka"].includes(r))).length;
+  const siswaCount = usersList.filter((u) => u.roles.includes("siswa")).length;
+  const guruCount = usersList.filter((u) => u.roles.some((r) => r === "guru" || r === "walikelas")).length;
+  const pejabatCount = usersList.filter((u) => u.roles.some((r) => ["admin", "admin_akademik", "kamad", "waka"].includes(r))).length;
 
-  const filtered = dummyUsersList.filter((u) => {
+  const filtered = usersList.filter((u) => {
     if (activeGroup === "siswa" && !u.roles.includes("siswa")) return false;
     if (activeGroup === "guru" && !u.roles.some((r) => r === "guru" || r === "walikelas")) return false;
     if (activeGroup === "pejabat" && !u.roles.some((r) => ["admin", "admin_akademik", "kamad", "waka"].includes(r))) return false;
@@ -203,6 +180,40 @@ export function UserManagementModule() {
       u.email.toLowerCase().includes(searchLower) ||
       u.nis.toLowerCase().includes(searchLower)
     );
+  });
+
+  const [sortColumn, setSortColumn] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (colKey: string) => {
+    if (sortColumn === colKey) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(colKey);
+      setSortDir("asc");
+    }
+  };
+
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    let valA: any = "";
+    let valB: any = "";
+    if (sortColumn === "name") {
+      valA = a.full_name.toLowerCase();
+      valB = b.full_name.toLowerCase();
+    } else if (sortColumn === "email") {
+      valA = a.email.toLowerCase();
+      valB = b.email.toLowerCase();
+    } else if (sortColumn === "class") {
+      valA = a.class.toLowerCase();
+      valB = b.class.toLowerCase();
+    } else if (sortColumn === "role") {
+      valA = (a.roles[0] || "").toLowerCase();
+      valB = (b.roles[0] || "").toLowerCase();
+    }
+
+    if (valA < valB) return sortDir === "asc" ? -1 : 1;
+    if (valA > valB) return sortDir === "asc" ? 1 : -1;
+    return 0;
   });
 
   return (
@@ -216,7 +227,7 @@ export function UserManagementModule() {
               <Shield className="h-5 w-5 text-primary" /> Data Akun Pengguna & Hak Akses
             </CardTitle>
             <CardDescription>
-              Kelola akun terdaftar ({dummyUsersList.length} total) berdasarkan pengelompokan peran dan wewenang.
+              Kelola akun terdaftar ({usersList.length} total) berdasarkan pengelompokan peran dan wewenang.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -245,7 +256,7 @@ export function UserManagementModule() {
               }`}
             >
               <Users className="h-4 w-4" />
-              <span>Semua User ({dummyUsersList.length})</span>
+              <span>Semua User ({usersList.length})</span>
             </button>
 
             <button
@@ -284,7 +295,7 @@ export function UserManagementModule() {
 
           <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
             <div>
-              Menampilkan <strong className="text-foreground">{filtered.length}</strong> akun dari kelompok{" "}
+              Menampilkan <strong className="text-foreground">{sortedFiltered.length}</strong> akun dari kelompok{" "}
               <strong className="text-foreground uppercase">
                 {activeGroup === "semua" ? "Semua User" : activeGroup === "siswa" ? "Siswa" : activeGroup === "guru" ? "Guru & Wali Kelas" : "Pejabat & Petugas Staf"}
               </strong>
@@ -300,15 +311,51 @@ export function UserManagementModule() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
-                  <th className="py-3 px-4">Pengguna & NIP/NIS</th>
-                  <th className="py-3 px-4">Email</th>
-                  <th className="py-3 px-3">Kelas / Spesialisasi</th>
-                  <th className="py-3 px-4">Hak Akses (Role Aktif)</th>
+                  <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("name")}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Pengguna & NIP/NIS</span>
+                      {sortColumn === "name" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("email")}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Email</span>
+                      {sortColumn === "email" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("class")}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Kelas / Spesialisasi</span>
+                      {sortColumn === "class" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("role")}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Hak Akses (Role Aktif)</span>
+                      {sortColumn === "role" ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                  </th>
                   <th className="py-3 px-4 text-right">Aksi & Kontrol Akses</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filtered.map((u) => {
+                {sortedFiltered.map((u) => {
                   const isSuperAdmin = u.email === "admin@mail.com";
                   const activeSession = MysqlAuthService.getActiveUser();
                   const isSelf = activeSession && activeSession.email.toLowerCase() === u.email.toLowerCase();

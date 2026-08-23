@@ -441,7 +441,7 @@ function AuthPage() {
               📐 Waka Kurikulum
             </Button>
             <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px] bg-slate-950 border-slate-800 hover:border-teal-500 text-slate-200" onClick={() => handleQuickLogin("walikelas@mtsn2cilacap.sch.id")}>
-              📋 Wali Kelas 8A
+              📋 Wali Kelas 9A (Sobiyati, S.Pd)
             </Button>
             <Button variant="outline" size="sm" className="justify-start gap-1.5 h-8 text-[11px] bg-slate-950 border-slate-800 hover:border-teal-500 text-slate-200" onClick={() => handleQuickLogin("guru@mtsn2cilacap.sch.id")}>
               👨‍🏫 Guru Pengampu

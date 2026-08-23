@@ -19,6 +19,7 @@ import { ModulAjarModule } from "@/components/dashboard/modules/modulajar/ModulA
 import { ManajemenKelasModule } from "@/components/dashboard/modules/manajemenkelas/ManajemenKelasModule";
 import { MonitoringKbmLiveModule } from "@/components/dashboard/modules/monitoringkbmlive/MonitoringKbmLiveModule";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
+import { isSubjectAllowedForUser, filterSubjectsForUser, getTeacherAssignedSubjects, getTeacherAssignedClasses, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -223,6 +224,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "SUPER ADMIN PORTAL",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Superadmin", group: "Utama & Kontrol" },
+      { key: "monitoring_kbm_live", label: "🔴 Monitoring KBM Live", group: "Utama & Kontrol" },
       { key: "sdm_gtk", label: "Manajemen SDM GTK", group: "Utama & Kontrol" },
       { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Utama & Kontrol" },
       { key: "users", label: "Data User & Role", group: "Utama & Kontrol" },
@@ -246,6 +248,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "ADMIN AKADEMIK",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Akademik", group: "Master Data" },
+      { key: "monitoring_kbm_live", label: "🔴 Monitoring KBM Live", group: "Master Data" },
       { key: "sdm_gtk", label: "Manajemen SDM GTK", group: "Master Data" },
       { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Master Data" },
       { key: "siakad", label: "Akademik Madrasah", group: "Master Data" },
@@ -306,8 +309,8 @@ const ROLE_PERMISSIONS: Record<
     ],
   },
   walikelas: {
-    label: "Wali Kelas 8A",
-    badge: "WALI KELAS 8A",
+    label: "Wali Kelas",
+    badge: "PORTAL WALI KELAS",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Wali Kelas", group: "Manajemen Kelas" },
       { key: "kehadiran", label: "Presensi Rombel 8A", group: "Manajemen Kelas" },
@@ -323,8 +326,8 @@ const ROLE_PERMISSIONS: Record<
     ],
   },
   wali_kelas: {
-    label: "Wali Kelas 8A",
-    badge: "WALI KELAS 8A",
+    label: "Wali Kelas",
+    badge: "PORTAL WALI KELAS",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Wali Kelas", group: "Manajemen Kelas" },
       { key: "kehadiran", label: "Presensi Rombel 8A", group: "Manajemen Kelas" },
@@ -342,11 +345,11 @@ const ROLE_PERMISSIONS: Record<
     label: "Guru Pengampu",
     badge: "GURU PENGAMPU",
     allowedMenus: [
-      { key: "beranda", label: "Dashboard Utama", group: "Sistem & Hak Akses" },
-      { key: "monitoring_kbm_live", label: "Monitoring KBM Live", group: "Monitoring & Supervisi" },
-      { key: "ruang_mengajar", label: "Ruang Mengajar Hub", group: "Sistem & Hak Akses" },
+      { key: "beranda", label: "Dashboard Guru", group: "Utama" },
+      { key: "ruang_mengajar", label: "Ruang Mengajar Hub", group: "Ruang Mengajar" },
       { key: "modul_ajar", label: "Perangkat Ajar", group: "Ruang Mengajar" },
       { key: "nilai", label: "Penilaian Kelas", group: "Penilaian" },
+      { key: "jadwal", label: "Jadwal Pelajaran (Info)", group: "Informasi" },
       { key: "agenda", label: "Kalender Akademik", group: "Informasi" },
       { key: "perpustakaan", label: "E-Library Digital", group: "Informasi" },
       { key: "asisten_ai", label: "AI Assistant", group: "Asisten" },
@@ -354,7 +357,7 @@ const ROLE_PERMISSIONS: Record<
     ],
   },
   siswa: {
-    label: "Siswa Kelas 8A",
+    label: "Siswa Madrasah",
     badge: "RUANG BELAJAR SISWA",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Siswa", group: "Ruang Belajar" },
@@ -422,7 +425,11 @@ function Dashboard() {
     let savedRolesMap: Record<string, string[]> = {};
     if (typeof window !== "undefined") {
       try {
-        savedRolesMap = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
+        savedRolesMap = JSON.parse(
+          localStorage.getItem("lms_user_roles_overrides") ||
+            localStorage.getItem("lms_persisted_user_roles_v2") ||
+            "{}"
+        );
       } catch (e) {}
     }
 
@@ -438,49 +445,60 @@ function Dashboard() {
       }
     }
 
-    const isGtk =
-      cleanEmail.includes("@guru") ||
-      cleanEmail.includes("admin") ||
-      me.role === "guru" ||
-      me.role === "walikelas" ||
-      me.role === "admin_akademik" ||
-      (me as any).user_type === "gtk";
+    const set = new Set<string>();
+    roles.forEach((r: string) => {
+      const lower = r.toLowerCase().trim();
+      if (lower === "admin" || lower === "superadmin") {
+        set.add("admin");
+      } else if (lower === "admin_akademik") {
+        set.add("admin_akademik");
+        set.add("guru");
+      } else if (lower === "kamad") {
+        set.add("kamad");
+        set.add("guru");
+      } else if (lower === "waka") {
+        set.add("waka");
+        set.add("guru");
+      } else if (lower === "walikelas" || lower === "wali_kelas") {
+        set.add("walikelas");
+        set.add("guru");
+      } else if (lower === "guru" || lower === "guru_mapel") {
+        set.add("guru");
+        if (me.class_name || (me as any).assigned_class) {
+          set.add("walikelas");
+        }
+      } else if (lower !== "siswa") {
+        set.add(lower);
+      } else {
+        set.add("siswa");
+      }
+    });
 
-    if (isGtk) {
-      const set = new Set<string>();
-      roles.forEach((r: string) => {
-        const lower = r.toLowerCase().trim();
-        if (lower === "admin" || lower === "superadmin") set.add("admin");
-        else if (lower === "admin_akademik") set.add("admin_akademik");
-        else if (lower === "guru" || lower === "guru_mapel") set.add("guru");
-        else if (lower === "walikelas" || lower === "wali_kelas") set.add("walikelas");
-        else if (lower !== "siswa") set.add(lower);
-      });
-
-      if (set.size === 0) set.add("guru");
-      return Array.from(set);
-    }
-
-    return roles && roles.length > 0 ? roles : ["siswa"];
+    if (set.size === 0) set.add("guru");
+    return Array.from(set);
   }, [me]);
 
   const [activeRole, setActiveRole] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const savedPref = localStorage.getItem("lms_active_role_pref");
+      if (savedPref) return savedPref;
+    }
     const activeUserSession = MysqlAuthService.getActiveUser();
     if (!activeUserSession) return "siswa";
-    let savedRolesMap: Record<string, string[]> = {};
-    if (typeof window !== "undefined") {
-      try {
-        savedRolesMap = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
-      } catch (e) {}
+    if (activeUserSession.role && activeUserSession.role.includes(",")) {
+      return activeUserSession.role.split(",")[0].trim();
     }
-    const roles = savedRolesMap[activeUserSession.email.toLowerCase()] || savedRolesMap[activeUserSession.id];
-    return roles && roles.length > 0 ? roles[0] : (activeUserSession.role || "siswa");
+    return activeUserSession.role || "siswa";
   });
 
   const handleSwitchRole = (newRole: string) => {
     setActiveRole(newRole);
-    const info = ROLE_LABELS[newRole] || { label: newRole, icon: "👤" };
-    toast.info(`🔄 Mode Peran Aktif Diubah Ke: ${info.icon} ${info.label}`);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("lms_active_role_pref", newRole);
+    }
+    setActive("beranda");
+    const info = ROLE_LABELS[newRole] || { label: newRole.toUpperCase().replace("_", " "), icon: "👤" };
+    toast.success(`🔄 Mode Peran Aktif Diubah Ke: ${info.icon} ${info.label}`);
   };
 
   // User Profile Global State (Synchronized with logged in user session)
@@ -526,15 +544,35 @@ function Dashboard() {
   });
 
   const roleInfo = ROLE_PERMISSIONS[activeRole] || ROLE_PERMISSIONS.siswa;
-  const allowedKeys = roleInfo.allowedMenus.map((x) => x.key);
+  const allowedKeys = useMemo(() => roleInfo.allowedMenus.map((x) => x.key), [roleInfo]);
+
+  const activeUserForSidebar = MysqlAuthService.getActiveUser();
+  const cleanNameForSidebar = (activeUserForSidebar?.full_name || "").toLowerCase();
+  const cleanNipForSidebar = (activeUserForSidebar?.nis_nip || "").trim();
+
+  let resolvedWaliRombel = "Rombel 8A";
+  if (cleanNameForSidebar.includes("achmad makmun") || cleanNipForSidebar.includes("272005011001")) resolvedWaliRombel = "Rombel 8B";
+  else if (cleanNameForSidebar.includes("misbah")) resolvedWaliRombel = "Rombel 7A";
+  else if (cleanNameForSidebar.includes("endah")) resolvedWaliRombel = "Rombel 7B";
+  else if (cleanNameForSidebar.includes("siti rahmah")) resolvedWaliRombel = "Rombel 8A";
+  else if (cleanNameForSidebar.includes("sobiyati")) resolvedWaliRombel = "Rombel 9A";
+  else if (cleanNameForSidebar.includes("sayono")) resolvedWaliRombel = "Rombel 9B";
+  else if (activeUserForSidebar?.class_name) resolvedWaliRombel = activeUserForSidebar.class_name;
 
   const filteredMenu = roleInfo.allowedMenus
     .map((item) => {
       const base = MENU.find((m) => m.key === item.key);
       if (!base) return null;
+      let label = item.label || base.label;
+      if (activeRole === "walikelas" || activeRole === "wali_kelas") {
+        label = label
+          .replace("Rombel 8A", resolvedWaliRombel)
+          .replace("Kelas 8A", resolvedWaliRombel.replace("Rombel", "Kelas"))
+          .replace(" 8A", ` ${resolvedWaliRombel.replace("Rombel ", "")}`);
+      }
       return {
         ...base,
-        label: item.label || base.label,
+        label,
         group: item.group || base.group,
       };
     })
@@ -551,18 +589,19 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!allowedKeys.includes(active)) {
-      if ((active === "ruang_mengajar" || active === "modul_ajar") && allowedKeys.includes("mapel")) {
+    const keys = roleInfo.allowedMenus.map((x) => x.key);
+    if (!keys.includes(active)) {
+      if ((active === "ruang_mengajar" || active === "modul_ajar") && keys.includes("mapel")) {
         setActive("mapel");
         return;
       }
-      if (active === "mapel" && allowedKeys.includes("ruang_mengajar")) {
+      if (active === "mapel" && keys.includes("ruang_mengajar")) {
         setActive("ruang_mengajar");
         return;
       }
       setActive("beranda");
     }
-  }, [activeRole, allowedKeys, active]);
+  }, [activeRole, active, roleInfo]);
 
   const isSuperAdmin = me?.role === "admin" || me?.email?.toLowerCase() === "admin@mail.com" || me?.role === "superadmin";
 
@@ -645,13 +684,37 @@ function DashboardContent({
   const roleInfo = ROLE_PERMISSIONS[activeRole] || ROLE_PERMISSIONS.siswa;
   const allowedKeys = roleInfo.allowedMenus.map((x) => x.key);
 
+  const resolvedWaliRombel = useMemo(() => {
+    const cleanName = (displayName || "").toLowerCase();
+    const cleanNip = (me?.nis_nip || "").trim();
+    if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
+    if (cleanName.includes("misbah")) return "Rombel 7A";
+    if (cleanName.includes("endah")) return "Rombel 7B";
+    if (cleanName.includes("siti rahmah")) return "Rombel 8A";
+    if (cleanName.includes("sobiyati")) return "Rombel 9A";
+    if (cleanName.includes("sayono")) return "Rombel 9B";
+    if (userProfile?.class_name) return userProfile.class_name;
+    return "Rombel 8A";
+  }, [displayName, me, userProfile]);
+
+  const sidebarBadge = (activeRole === "walikelas" || activeRole === "wali_kelas")
+    ? `WALI KELAS ${resolvedWaliRombel.replace("Rombel ", "")}`
+    : roleInfo.badge;
+
   const filteredMenu = roleInfo.allowedMenus
     .map((item) => {
       const base = MENU.find((m) => m.key === item.key);
       if (!base) return null;
+      let label = item.label || base.label;
+      if (activeRole === "walikelas" || activeRole === "wali_kelas") {
+        label = label
+          .replace("Rombel 8A", resolvedWaliRombel)
+          .replace("Kelas 8A", resolvedWaliRombel.replace("Rombel", "Kelas"))
+          .replace(" 8A", ` ${resolvedWaliRombel.replace("Rombel ", "")}`);
+      }
       return {
         ...base,
-        label: item.label || base.label,
+        label,
         group: item.group || base.group,
       };
     })
@@ -674,7 +737,7 @@ function DashboardContent({
             />
             <div className="leading-tight overflow-hidden group-data-[state=collapsed]:hidden">
               <div className="font-bold text-xs text-sidebar-foreground truncate">MTsN 2 Cilacap</div>
-              <div className="text-[10px] text-sidebar-primary font-mono font-semibold truncate uppercase">{roleInfo.badge}</div>
+              <div className="text-[10px] text-sidebar-primary font-mono font-semibold truncate uppercase">{sidebarBadge}</div>
             </div>
           </div>
         </SidebarHeader>
@@ -876,7 +939,18 @@ function DashboardContent({
         <main className="p-4 lg:p-8 flex-1">
           <ErrorBoundary>
             {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
-            {active === "monitoring_kbm_live" && <MonitoringKbmLiveModule />}
+            {active === "monitoring_kbm_live" && (
+              activeRole === "admin" || activeRole === "admin_akademik" || activeRole === "kamad" || activeRole === "waka" ? (
+                <MonitoringKbmLiveModule />
+              ) : (
+                <div className="p-12 text-center border border-dashed border-red-200 rounded-2xl bg-red-50/30">
+                  <h3 className="font-extrabold text-sm text-red-600">Akses Terbatas — Supervisi Pimpinan</h3>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                    Menu <strong>Monitoring KBM Live</strong> khusus diperuntukkan bagi Kepala Madrasah (Kamad), Waka Kurikulum, dan Administrator.
+                  </p>
+                </div>
+              )
+            )}
             {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "siakad" && <SiakadMasterDataModule />}
@@ -3702,11 +3776,28 @@ function Nilai({ activeRole }: { activeRole?: string }) {
     toast.success(`🖨️ Cetak E-Rapor Kurikulum Merdeka (${raporStudentName}) berhasil diproses!`);
   };
 
-  const teacherEntryList = [
-    { code: "AGM-01", mapel: "Al Qur'an Hadis", rombel: "Kelas VIII A", totalSiswa: 32, entered: 32, progress: 100, status: "Lengkap 100%", c: "text-emerald-500" },
-    { code: "AGM-01", mapel: "Al Qur'an Hadis", rombel: "Kelas VIII B", totalSiswa: 32, entered: 28, progress: 87.5, status: "Entry 87.5%", c: "text-blue-500" },
-    { code: "AGM-03", mapel: "Fikih", rombel: "Kelas IX A", totalSiswa: 32, entered: 32, progress: 100, status: "Lengkap 100%", c: "text-emerald-500" },
-  ];
+  const activeUserForEntry = MysqlAuthService.getActiveUser();
+  const assignedSubjectsForEntry = useMemo(() => getTeacherAssignedSubjects(activeUserForEntry) || ALL_SCHOOL_SUBJECTS, [activeUserForEntry]);
+  const assignedClassesForEntry = useMemo(() => getTeacherAssignedClasses(activeUserForEntry), [activeUserForEntry]);
+
+  const teacherEntryList = useMemo(() => {
+    const list: Array<{ code: string; mapel: string; rombel: string; totalSiswa: number; entered: number; progress: number; status: string; c: string }> = [];
+    assignedSubjectsForEntry.forEach((subject) => {
+      assignedClassesForEntry.forEach((cls) => {
+        list.push({
+          code: "MP-" + subject.substring(0, 3).toUpperCase(),
+          mapel: subject,
+          rombel: cls,
+          totalSiswa: 32,
+          entered: 32,
+          progress: 100,
+          status: "Lengkap 100%",
+          c: "text-emerald-500",
+        });
+      });
+    });
+    return list;
+  }, [assignedSubjectsForEntry, assignedClassesForEntry]);
 
   const classesList = [
     { name: "Kelas VII A", wali: "MISBAH AHMAD DANI, S.Pd", siswa: 32, avg: 86.4, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
@@ -5831,7 +5922,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         grade: "VIII",
         name: "8A",
         room: "Ruang R-201",
-        waliKelas: "SOBIYATI, S.Pd",
+        waliKelas: "DRA. HJ. SITI RAHMAH, M.Pd",
         capacity: 32,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 98.2,
@@ -5865,7 +5956,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         grade: "IX",
         name: "9A",
         room: "Ruang R-301",
-        waliKelas: "NOVANTYA KARTIKAWATI, S.Pd",
+        waliKelas: "SOBIYATI, S.Pd",
         capacity: 35,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 97.0,
@@ -5881,7 +5972,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         grade: "IX",
         name: "9B",
         room: "Ruang R-302",
-        waliKelas: "INDAH NURROHMAH, S.Pd",
+        waliKelas: "SAYONO, S.Pd., M.Pd.",
         capacity: 32,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 96.0,
@@ -5895,12 +5986,13 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
 
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("lms_rombel_management_v4");
+        const saved = localStorage.getItem("lms_rombel_management_v5");
         if (saved) return JSON.parse(saved);
         localStorage.removeItem("lms_rombel_management_v1");
         localStorage.removeItem("lms_rombel_management_v2");
         localStorage.removeItem("lms_rombel_management_v3");
-        localStorage.setItem("lms_rombel_management_v4", JSON.stringify(defaultRombels));
+        localStorage.removeItem("lms_rombel_management_v4");
+        localStorage.setItem("lms_rombel_management_v5", JSON.stringify(defaultRombels));
       } catch (e) {}
     }
     return defaultRombels;
@@ -7826,7 +7918,13 @@ function PusatAsesmen({ activeRole }: { activeRole?: string }) {
                     <td className="p-3 font-medium">{"Al-Quran Hadits (Kelas VIII A)"}</td>
                     <td className="p-3 text-center font-mono">15 Agustus 2026</td>
                     <td className="p-3 text-center font-mono font-bold text-primary text-sm">91.4</td>
-                    <td className="p-3 text-right"><Button size="sm" variant="ghost" className="text-xs text-primary font-bold">Input Skor →</Button></td>
+                    <td className="p-3 text-right">
+                      {isSubjectAllowedForUser("Al-Quran Hadits") ? (
+                        <Button size="sm" variant="ghost" className="text-xs text-primary font-bold">Input Skor →</Button>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30">🔒 Read-Only</Badge>
+                      )}
+                    </td>
                   </tr>
                 </tbody>
               </table>

@@ -8,6 +8,21 @@ import { useRealtimeCalendar } from "@/hooks/useRealtimeCalendar";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { AddAgendaDialog } from "./components/AddAgendaDialog";
 
+const NATIONAL_ISLAMIC_HOLIDAYS = [
+  { id: "nat-1", title: "Hari Kemerdekaan Republik Indonesia (HUT RI)", category: "libur", date: "17 Agustus 2026", rawDate: "2026-08-17", desc: "Upacara Bendera Peringatan Kemerdekaan RI & Libur Resmi Nasional.", badge: "🟢 Libur Nasional" },
+  { id: "nat-2", title: "Hari Santri Nasional (HSN)", category: "libur", date: "22 Oktober 2026", rawDate: "2026-10-22", desc: "Apel Hari Santri & Kegiatan Keagamaan Madrasah.", badge: "🟢 Hari Besar Islam" },
+  { id: "nat-3", title: "Hari Guru Nasional (HGN)", category: "libur", date: "25 November 2026", rawDate: "2026-11-25", desc: "Penghargaan Guru & Tenaga Kependidikan Madrasah.", badge: "🟢 Hari Peringatan" },
+  { id: "nat-4", title: "Hari Amal Bhakti (HAB) Kemenag RI", category: "libur", date: "03 Januari 2027", rawDate: "2027-01-03", desc: "Upacara Peringatan HAB Kementerian Agama Republik Indonesia.", badge: "🟢 Hari Besar Kemenag" },
+  { id: "nat-5", title: "Tahun Baru Islam (1 Muharram 1448 H)", category: "libur", date: "16 Juni 2026", rawDate: "2026-06-16", desc: "Pawai Ta'aruf & Doa Bersama Tahun Baru Hijriah.", badge: "🟢 Hari Besar Islam" },
+  { id: "nat-6", title: "Maulid Nabi Muhammad SAW (12 Rabiul Awal)", category: "libur", date: "25 Agustus 2026", rawDate: "2026-08-25", desc: "Peringatan Maulid Nabi Muhammad SAW.", badge: "🟢 Hari Besar Islam" },
+  { id: "nat-7", title: "Isra Mi'raj Nabi Muhammad SAW (27 Rajab)", category: "libur", date: "05 Februari 2027", rawDate: "2027-02-05", desc: "Pengajian & Peringatan Isra Mi'raj Nabi Muhammad SAW.", badge: "🟢 Hari Besar Islam" },
+  { id: "nat-8", title: "Hari Raya Idul Fitri 1448 H", category: "libur", date: "20 Maret 2027", rawDate: "2027-03-20", desc: "Hari Raya Idul Fitri & Libur Resmi Kemenag.", badge: "🟢 Hari Besar Islam" },
+  { id: "nat-9", title: "Hari Raya Idul Adha 1448 H", category: "libur", date: "27 Mei 2027", rawDate: "2027-05-27", desc: "Penyembelihan Hewan Kurban & Sholat Idul Adha.", badge: "🟢 Hari Besar Islam" },
+  { id: "nat-10", title: "Tahun Baru Masehi 2027", category: "libur", date: "01 Januari 2027", rawDate: "2027-01-01", desc: "Libur Nasional Tahun Baru Masehi.", badge: "🟢 Libur Nasional" },
+  { id: "nat-11", title: "Hari Lahir Pancasila", category: "libur", date: "01 Juni 2026", rawDate: "2026-06-01", desc: "Upacara Peringatan Hari Lahir Pancasila.", badge: "🟢 Libur Nasional" },
+  { id: "nat-12", title: "Hari Buruh Internasional", category: "libur", date: "01 Mei 2026", rawDate: "2026-05-01", desc: "Libur Nasional Hari Buruh.", badge: "🟢 Libur Nasional" },
+];
+
 export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
   const {
     currentMonthName,
@@ -22,18 +37,11 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
 
   const [filterCategory, setFilterCategory] = useState("semua");
   const [isAddAgendaOpen, setIsAddAgendaOpen] = useState(false);
-
-  const [agendaList, setAgendaList] = useState([
-    { id: "1", title: "CBT Ujian Tengah Semester (PTS) Ganjil", category: "cbt", date: "15 Agustus 2026", rawDate: "2026-08-15", desc: "Evaluasi Komputer Pertemuan 1-9 untuk seluruh rombel.", badge: "🔴 Ujian CBT" },
-    { id: "2", title: "Rapat Pleno Evaluasi KBM & Kurikulum", category: "rapat", date: "18 Agustus 2026", rawDate: "2026-08-18", desc: "Rapat koordinasi Kepala Madrasah, Waka, dan Guru Pengampu.", badge: "🟣 Rapat Dinas" },
-    { id: "3", title: "Gelar Karya Projek Kokurikuler P5 (Batik Cilacap)", category: "kokurikuler", date: "25 Agustus 2026", rawDate: "2026-08-25", desc: "Pameran karya seni batik dan produk wirausaha siswa.", badge: "🟡 Kokurikuler P5" },
-    { id: "4", title: "Hari Libur Nasional & Peringatan HUT RI", category: "libur", date: "17 Agustus 2026", rawDate: "2026-08-17", desc: "Upacara bendera & Kegiatan peringatan kemerdekaan.", badge: "🟢 Libur Resmi" },
-    { id: "5", title: "Bimbingan Sertifikasi Tahfidz Juz 30", category: "kbm", date: "01 September 2026", rawDate: "2026-09-01", desc: "Murojaah massal & ujian kelayakan tajwid siswa.", badge: "🔵 KBM Efektif" },
-  ]);
+  const [schoolAgendas, setSchoolAgendas] = useState<any[]>([]);
 
   useEffect(() => {
     MysqlDataService.getAgendas().then((dbAgendas) => {
-      if (dbAgendas && dbAgendas.length > 0) {
+      if (dbAgendas) {
         const mapped = dbAgendas.map((item) => {
           const cat = item.category || "kbm";
           const badge = cat === "cbt" ? "🔴 Ujian CBT" : cat === "rapat" ? "🟣 Rapat Dinas" : cat === "kokurikuler" ? "🟡 Kokurikuler P5" : cat === "libur" ? "🟢 Libur Resmi" : "🔵 KBM Efektif";
@@ -45,12 +53,15 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
             rawDate: item.date_str,
             desc: item.description || "",
             badge,
+            isSchoolAgenda: true,
           };
         });
-        setAgendaList(mapped);
+        setSchoolAgendas(mapped);
       }
     });
   }, []);
+
+  const agendaList = [...schoolAgendas, ...NATIONAL_ISLAMIC_HOLIDAYS];
 
   const calendarDays = getCalendarDays();
 
@@ -67,6 +78,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
       rawDate: data.selectedDate,
       desc: data.desc,
       badge,
+      isSchoolAgenda: true,
     };
 
     MysqlDataService.saveAgenda({
@@ -76,7 +88,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
       date_str: dateFormatted,
     }).catch((err) => console.warn("saveAgenda DB failed:", err));
 
-    setAgendaList([newEntry, ...agendaList]);
+    setSchoolAgendas([newEntry, ...schoolAgendas]);
     toast.success("Agenda kegiatan madrasah berhasil ditambahkan!");
   };
 
@@ -84,7 +96,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
     if (Number(id)) {
       MysqlDataService.deleteAgenda(Number(id)).catch((err) => console.warn("deleteAgenda DB failed:", err));
     }
-    setAgendaList(agendaList.filter((a) => a.id !== id));
+    setSchoolAgendas(schoolAgendas.filter((a) => a.id !== id));
     toast.success("Agenda kegiatan berhasil dihapus!");
   };
 
@@ -136,33 +148,50 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
             </div>
 
             <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((day, idx) => (
-                <div
-                  key={idx}
-                  className={`min-h-[70px] p-1.5 rounded-lg border text-left transition flex flex-col justify-between ${
-                    day.isCurrentMonth
-                      ? day.isToday
-                        ? "bg-primary/10 border-primary font-bold shadow-xs"
-                        : "bg-background border-border hover:border-primary/40"
-                      : "bg-muted/30 border-transparent opacity-40"
-                  }`}
-                >
-                  <span className={`text-xs ${day.isToday ? "text-primary font-extrabold" : "text-foreground"}`}>
-                    {day.dayNumber}
-                  </span>
+              {calendarDays.map((day, idx) => {
+                const dayEvents = agendaList.filter(
+                  (ag) => day.isCurrentMonth && (ag.rawDate === day.dateString || ag.rawDate?.startsWith(day.dateString))
+                );
 
-                  {day.isCurrentMonth && idx % 6 === 0 && (
-                    <Badge className="text-[9px] px-1 py-0 bg-red-500/15 text-red-600 dark:text-red-400 border-none font-semibold truncate">
-                      PTS CBT
-                    </Badge>
-                  )}
-                  {day.isCurrentMonth && idx % 9 === 0 && (
-                    <Badge className="text-[9px] px-1 py-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border-none font-semibold truncate">
-                      Rapat Dinas
-                    </Badge>
-                  )}
-                </div>
-              ))}
+                return (
+                  <div
+                    key={idx}
+                    className={`min-h-[70px] p-1.5 rounded-lg border text-left transition flex flex-col justify-between ${
+                      day.isCurrentMonth
+                        ? day.isToday
+                          ? "bg-primary/10 border-primary font-bold shadow-xs"
+                          : "bg-background border-border hover:border-primary/40"
+                        : "bg-muted/30 border-transparent opacity-40"
+                    }`}
+                  >
+                    <span className={`text-xs ${day.isToday ? "text-primary font-extrabold" : "text-foreground"}`}>
+                      {day.dayNumber}
+                    </span>
+
+                    <div className="space-y-1 mt-1 overflow-hidden">
+                      {dayEvents.map((ev) => (
+                        <Badge
+                          key={ev.id}
+                          className={`text-[9px] px-1 py-0 border-none font-semibold truncate w-full block ${
+                            ev.category === "libur"
+                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                              : ev.category === "cbt"
+                              ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                              : ev.category === "rapat"
+                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400"
+                              : ev.category === "kokurikuler"
+                              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                              : "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                          }`}
+                          title={ev.title}
+                        >
+                          {ev.title}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -189,23 +218,31 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
               </div>
             </CardHeader>
             <CardContent className="p-3 space-y-2.5 max-h-[500px] overflow-y-auto">
-              {filteredAgenda.map((ag) => (
-                <div key={ag.id} className="p-3 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-bold text-foreground leading-snug">{ag.title}</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive shrink-0" onClick={() => handleDeleteAgenda(ag.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-bold">
-                      {ag.badge}
-                    </Badge>
-                    <span className="text-[11px] text-muted-foreground font-mono">{ag.date}</span>
-                  </div>
-                  {ag.desc && <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{ag.desc}</p>}
+              {filteredAgenda.length === 0 ? (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  Belum ada agenda kegiatan dalam kategori ini.
                 </div>
-              ))}
+              ) : (
+                filteredAgenda.map((ag) => (
+                  <div key={ag.id} className="p-3 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-bold text-foreground leading-snug">{ag.title}</span>
+                      {ag.isSchoolAgenda && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive shrink-0" onClick={() => handleDeleteAgenda(ag.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-bold">
+                        {ag.badge}
+                      </Badge>
+                      <span className="text-[11px] text-muted-foreground font-mono">{ag.date}</span>
+                    </div>
+                    {ag.desc && <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{ag.desc}</p>}
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

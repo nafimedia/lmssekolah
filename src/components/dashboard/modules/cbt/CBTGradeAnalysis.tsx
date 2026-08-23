@@ -28,6 +28,9 @@ import {
   UserCheck,
   ShieldCheck,
   Lock,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTGradeAnalysisItem } from "@/types/cbt";
@@ -62,7 +65,19 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   const isGuru = userRole === "guru";
   const isExecutive = userRole === "kamad" || userRole === "waka" || userRole === "admin" || userRole === "admin_akademik";
 
-  // Filter Grades by Role Scope
+  const [sortColumn, setSortColumn] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (colKey: string) => {
+    if (sortColumn === colKey) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(colKey);
+      setSortDir("asc");
+    }
+  };
+
+  // Filter & Sort Grades by Role Scope
   const filteredGrades = grades.filter((g) => {
     // Siswa only sees their own grade
     if (isSiswa) {
@@ -78,6 +93,36 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
 
     return matchesSearch && matchesStatus;
   });
+
+  const sortedGrades = React.useMemo(() => {
+    return [...filteredGrades].sort((a, b) => {
+      let valA: any = "";
+      let valB: any = "";
+      if (sortColumn === "name") {
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+      } else if (sortColumn === "nis") {
+        valA = a.nis;
+        valB = b.nis;
+      } else if (sortColumn === "rombel") {
+        valA = a.classRombel.toLowerCase();
+        valB = b.classRombel.toLowerCase();
+      } else if (sortColumn === "pg") {
+        valA = a.pgScore;
+        valB = b.pgScore;
+      } else if (sortColumn === "essay") {
+        valA = a.essayScore;
+        valB = b.essayScore;
+      } else if (sortColumn === "total") {
+        valA = a.totalScore;
+        valB = b.totalScore;
+      }
+
+      if (valA < valB) return sortDir === "asc" ? -1 : 1;
+      if (valA > valB) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [filteredGrades, sortColumn, sortDir]);
 
   const totalStudents = grades.length;
   const passedStudents = grades.filter((g) => g.status === "Lulus KKM").length;
@@ -295,18 +340,72 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
           <table className="w-full text-left text-xs">
             <thead className="bg-muted/50 text-muted-foreground font-semibold uppercase tracking-wider border-b border-border">
               <tr>
-                <th className="p-3 pl-4">Siswa</th>
-                <th className="p-3">NIS</th>
-                <th className="p-3">Rombel</th>
-                <th className="p-3 text-center">Skor PG</th>
-                <th className="p-3 text-center">Skor Essay</th>
-                <th className="p-3 text-center">Total Nilai</th>
+                <th className="p-3 pl-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("name")}>
+                  <div className="flex items-center gap-1.5">
+                    <span>Siswa</span>
+                    {sortColumn === "name" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="p-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("nis")}>
+                  <div className="flex items-center gap-1.5">
+                    <span>NIS</span>
+                    {sortColumn === "nis" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="p-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("rombel")}>
+                  <div className="flex items-center gap-1.5">
+                    <span>Rombel</span>
+                    {sortColumn === "rombel" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="p-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("pg")}>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Skor PG</span>
+                    {sortColumn === "pg" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="p-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("essay")}>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Skor Essay</span>
+                    {sortColumn === "essay" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
+                <th className="p-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("total")}>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Total Nilai</span>
+                    {sortColumn === "total" ? (
+                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                </th>
                 <th className="p-3">Status KKM (75)</th>
                 <th className="p-3 text-right pr-4">Tindak Lanjut</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredGrades.map((g) => {
+              {sortedGrades.map((g) => {
                 const isPassed = g.status === "Lulus KKM";
                 return (
                   <tr key={g.id} className="hover:bg-muted/30 transition-colors">

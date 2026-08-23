@@ -257,9 +257,9 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
   };
 
   const isGuruRole = userRole === "guru" || (userRole || "").includes("guru");
-  const visibleExams = isGuruRole ? exams.filter((e) => isSubjectAllowedForUser(e.mapel)) : exams;
-  const visibleQuestions = isGuruRole ? questions.filter((q) => isSubjectAllowedForUser(q.mapel)) : questions;
-  const visibleGradeAnalysis = isGuruRole ? gradeAnalysis.filter((g) => isSubjectAllowedForUser(g.subjectName)) : gradeAnalysis;
+  const visibleExams = isGuruRole ? exams.filter((e) => isSubjectAllowedForUser(e.mapel || "")) : exams;
+  const visibleQuestions = isGuruRole ? questions.filter((q) => isSubjectAllowedForUser(q.mapel || "")) : questions;
+  const visibleGradeAnalysis = isGuruRole ? gradeAnalysis.filter((g) => isSubjectAllowedForUser(g.subjectName || "")) : gradeAnalysis;
 
   return (
     <div className="space-y-6">

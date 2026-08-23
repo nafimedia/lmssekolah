@@ -76,16 +76,27 @@ export function UserManagementModule() {
               overrides[cleanEmail] || overrides[cleanId] || overrides[cleanNip] || [];
 
             if (finalRoles.length === 0) {
-              let roleStr = u.role || "";
-              // Initial default GTK multi-roles (only if no manual override exists)
-              if (cleanNip === "197002272005011001" || u.full_name.includes("MAKMUN ROSID")) {
-                roleStr = "admin,walikelas,guru";
-              } else if (cleanNip === "197905162006041020" || u.full_name.includes("SOLIHUN")) {
-                roleStr = "kamad,guru";
-              } else if (cleanNip === "198302142023211010" || u.full_name.includes("ALI MANSUR")) {
-                roleStr = "waka,guru";
-              } else if (cleanNip === "199204042025051002" || u.full_name.includes("SYARIF HIDAYAH")) {
-                roleStr = "admin_akademik,guru";
+              const INITIAL_GTK_MULTI_ROLES: Record<string, string> = {
+                "197905162006041020": "kamad,guru",
+                "197002272005011001": "admin,walikelas,guru",
+                "197906142007102002": "walikelas,guru",
+                "198302142023211010": "waka,guru",
+                "199011022025212013": "walikelas,guru",
+                "199204042025051002": "admin_akademik,guru",
+                "199508182023212044": "walikelas,guru",
+                "199712302024212037": "walikelas,guru",
+                "12345678": "walikelas,guru",
+              };
+
+              let roleStr = INITIAL_GTK_MULTI_ROLES[cleanNip] || u.role || "";
+              if (!roleStr) {
+                if (u.full_name.includes("MAKMUN ROSID")) roleStr = "admin,walikelas,guru";
+                else if (u.full_name.includes("SOLIHUN")) roleStr = "kamad,guru";
+                else if (u.full_name.includes("ALI MANSUR")) roleStr = "waka,guru";
+                else if (u.full_name.includes("SYARIF HIDAYAH")) roleStr = "admin_akademik,guru";
+                else if (u.full_name.includes("SOBIYATI") || u.full_name.includes("NOVANTYA") || u.full_name.includes("MAULIDIA") || u.full_name.includes("INDAH NURROHMAH") || u.full_name.includes("RINDANG")) {
+                  roleStr = "walikelas,guru";
+                }
               }
 
               if (roleStr && roleStr.includes(",")) {

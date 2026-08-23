@@ -1,0 +1,48 @@
+Jadwal Pelajaran
+Kelas 7A
+Senin : Matematika, PJOK, Bahasa Jawa, IPA, Seni Rupa
+Selasa : Tahfidz, Matematika, Akidah Akhlak, Bahasa Indonesia, Bimbingan Konseling
+Rabu : Tahfidz, Al Qur'an Hadis, Bahasa Indonesia, Teknologi Informasi dan Komunikasi
+Kamis : Tahfidz, Pendidikan Kewarganegaraan, Bahasa Inggris, IPS
+Jumat : Tahfidz, Bahasa Arab, Sejarah Kebudayaan Islam
+Sabtu : Fikih, IPA
+
+Kelas 7B
+Senin : IPA, Bahasa Indonesia, Matematika, Bahasa Jawa, Bimbingan Konseling
+Selasa : Tahfidz, Bahasa Arab, Bahasa Inggris, Pendidikan Kewarganegaraan
+Rabu : Tahfidz, IPA, Seni Rupa, Teknologi Informasi dan Komunikasi, Sejarah Kebudayaan Islam
+Kamis :Tahfidz, FIkih, Bahasa Indonesia, Al Qur'an Hadis
+Jumat : Tahfidz, PJOK, Akidah Akhlak
+Sabtu : Matematika, IPS
+
+Kelas 8A
+Senin : PJOK, Sejarah Kebudayaan Islam, Bahasa Indonesia, Bimbingan Konseling
+Selasa : Tahfidz, IPA, Matematika, Bahasa Inggris
+Rabu : Tahfidz, Bahasa JAwa, IPA, Fikih, Bahasa Arab
+Kamis : Tahfidz, Matematika, Seni Rupa, Pendidikan Kewarganegaraan, Bahasa Indonesia
+Jumat : Tahfidz, Al Qur'an Hadis, IPS
+Sabtu : Akidah Akhlak, Teknologi Informasi dan Komunikasi
+
+Kelas 8B
+Senin : Pendidikan Kewarganegaraan, Bahasa Arab, Fikih, Seni Rupa, Bahasa Indonesia
+Selasa : Tahfidz, Bahasa Jawa, Bahasa Indonesia, IPS, Al Qur'an Hadis
+Rabu : Tahfidz, Bahasa Inggris, Sejarah Kebudayaan Islam, Bahasa Indonesia
+Kamis : Tahfidz, IPA, Matematika, Akidah Akhlak, Bimbingan Konseling
+Jumat : Tahfidz, Matematika, Teknologi Informasi dan Komunikasi
+Sabtu : IPA, PJOK
+
+Kelas 9A
+Senin : Bahasa Jawa, Teknologi Informasi dan Komunikasi, Bahasa Inggris, Sejarah Kebudayaan Islam
+Selasa : Tahfidz, Matematika, IPA, Pendidikan Kewarganegaraan, Bahasa Indonesia
+Rabu : Tahfidz, Bahasa Indonesia, Matematika, Seni Rupa, IPS
+Kamis : Tahfidz, Al Qur'an Hadis, Bahasa Arab, Bimbingan Konseling, FIkih
+Jumat : Tahfidz, Akidah Akhlak, Matematika
+Sabtu : PJOK, IPA
+
+Kelas 9B
+Senin : IPA, Bimbingan Konseling, Matematika, Seni Rupa, Akidah Akhlak
+Selasa : Tahfidz, Teknologi Informasi dan Komunikasi, Bahasa JAwa, Al Qur'an Hadis, Bahasa Arab
+Rabu : Tahfidz, Bahasa Inggris, Bahasa Indonesia, Sejarah Kebudayaan Islam
+Kamis : Tahfidz, Bahasa Indonesia, Matematika, IPA, Pendidikan Kewarganegaraan
+Jumat : Tahfidz, PJOK, Fikih
+Sabtu : Matematika, IPS

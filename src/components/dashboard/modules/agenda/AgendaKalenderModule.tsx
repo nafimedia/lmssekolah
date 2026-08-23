@@ -1,21 +1,12 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { CalendarDays, CalendarClock, ChevronLeft, ChevronRight, Plus, Trash2, Clock } from "lucide-react";
+import { CalendarDays, CalendarClock, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRealtimeCalendar } from "@/hooks/useRealtimeCalendar";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { AddAgendaDialog } from "./components/AddAgendaDialog";
 
 export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
   const {
@@ -61,43 +52,32 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
     });
   }, []);
 
-  const [title, setTitle] = useState("");
-  const [cat, setCat] = useState("cbt");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const [desc, setDesc] = useState("");
-
   const calendarDays = getCalendarDays();
 
-  const handleAddAgenda = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !selectedDate) return toast.error("Harap lengkapi judul dan tanggal agenda!");
-
-    const dateObj = new Date(selectedDate);
+  const handleAddAgenda = (data: { title: string; category: string; selectedDate: string; desc: string }) => {
+    const dateObj = new Date(data.selectedDate);
     const dateFormatted = dateObj.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-    const badge = cat === "cbt" ? "🔴 Ujian CBT" : cat === "rapat" ? "🟣 Rapat Dinas" : cat === "kokurikuler" ? "🟡 Kokurikuler P5" : cat === "libur" ? "🟢 Libur Resmi" : "🔵 KBM Efektif";
+    const badge = data.category === "cbt" ? "🔴 Ujian CBT" : data.category === "rapat" ? "🟣 Rapat Dinas" : data.category === "kokurikuler" ? "🟡 Kokurikuler P5" : data.category === "libur" ? "🟢 Libur Resmi" : "🔵 KBM Efektif";
 
     const newEntry = {
       id: String(Date.now()),
-      title,
-      category: cat,
+      title: data.title,
+      category: data.category,
       date: dateFormatted,
-      rawDate: selectedDate,
-      desc,
-      badge
+      rawDate: data.selectedDate,
+      desc: data.desc,
+      badge,
     };
 
     MysqlDataService.saveAgenda({
-      title,
-      description: desc,
-      category: cat,
+      title: data.title,
+      description: data.desc,
+      category: data.category,
       date_str: dateFormatted,
     }).catch((err) => console.warn("saveAgenda DB failed:", err));
 
     setAgendaList([newEntry, ...agendaList]);
     toast.success("Agenda kegiatan madrasah berhasil ditambahkan!");
-    setIsAddAgendaOpen(false);
-    setTitle("");
-    setDesc("");
   };
 
   const handleDeleteAgenda = (id: string) => {
@@ -125,7 +105,6 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Visual Realtime Interactive Calendar Widget */}
         <Card className="lg:col-span-2 border-border shadow-xs bg-card">
           <CardHeader className="bg-muted/40 border-b border-border p-4 flex flex-row items-center justify-between">
             <div>
@@ -188,7 +167,6 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
           </CardContent>
         </Card>
 
-        {/* List Events Sidebar */}
         <div className="space-y-4">
           <Card className="border-border shadow-xs bg-card">
             <CardHeader className="p-4 border-b border-border">
@@ -233,52 +211,11 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
         </div>
       </div>
 
-      {/* Modal Form Tambah Agenda */}
-      <Dialog open={isAddAgendaOpen} onOpenChange={setIsAddAgendaOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <CalendarClock className="h-5 w-5 text-primary" /> Tambah Agenda Kegiatan Baru
-            </DialogTitle>
-            <DialogDescription>Masukkan detail kegiatan resmi madrasah ke dalam kalender.</DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleAddAgenda} className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Nama / Judul Kegiatan</Label>
-              <Input placeholder="Contoh: Ujian Tengah Semester (PTS)..." value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Kategori Kegiatan</Label>
-                <select className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs" value={cat} onChange={(e) => setCat(e.target.value)}>
-                  <option value="cbt">🔴 Ujian CBT</option>
-                  <option value="rapat">🟣 Rapat Dinas</option>
-                  <option value="kokurikuler">🟡 Kokurikuler P5</option>
-                  <option value="libur">🟢 Libur Resmi</option>
-                  <option value="kbm">🔵 KBM Efektif</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Tanggal Pelaksanaan</Label>
-                <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Keterangan / Detail Tambahan</Label>
-              <textarea className="w-full min-h-[80px] rounded-md border border-input bg-background p-3 text-xs focus:outline-hidden focus:ring-1 focus:ring-primary" placeholder="Tuliskan keterangan tempat atau perlengkapan..." value={desc} onChange={(e) => setDesc(e.target.value)} />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddAgendaOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Agenda</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <AddAgendaDialog
+        isOpen={isAddAgendaOpen}
+        onOpenChange={setIsAddAgendaOpen}
+        onAddAgenda={handleAddAgenda}
+      />
     </>
   );
 }

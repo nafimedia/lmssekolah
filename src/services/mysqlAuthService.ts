@@ -138,9 +138,13 @@ export class MysqlAuthService {
     }
   }
 
-  private static setActiveUserCache(user: UserSession): void {
+  static setActiveUser(user: UserSession): void {
     if (typeof window === "undefined") return;
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
+  }
+
+  private static setActiveUserCache(user: UserSession): void {
+    this.setActiveUser(user);
   }
 
   private static clearUserCache(): void {

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlDataService, GtkLeaveRow, GtkDocumentRow } from "@/services/mysqlDataService";
 import {
   Users,
   UserCheck,
@@ -8,50 +8,30 @@ import {
   Printer,
   Plus,
   Search,
-  Filter,
   CheckCircle2,
-  AlertTriangle,
-  FileCheck,
-  Building2,
-  Briefcase,
-  ShieldCheck,
-  Edit,
   Trash2,
-  BookOpen,
-  Calendar,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 
-interface SdmGtkModuleProps {
-  activeRole?: string;
-  userProfile?: any;
-}
+import { AddGtkDialog } from "./components/AddGtkDialog";
+import { DetailGtkDialog } from "./components/DetailGtkDialog";
+import { CutiIzinDialog } from "./components/CutiIzinDialog";
 
 export interface GtkItem {
   id: string;
   nip: string;
   npk: string;
   name: string;
-  golongan: string; // IV/a, III/c, III/a, etc.
+  golongan: string;
   statusKepegawaian: "PNS" | "PPPK" | "GTT / Honor";
   mapelUtama: string;
-  totalJp: number; // Jam Pelajaran per Minggu
-  tugasTambahan: string; // Wali Kelas 8A, Pembina OSIS, etc.
-  isSertifikasi: boolean; // TPG Status
+  totalJp: number;
+  tugasTambahan: string;
+  isSertifikasi: boolean;
   email: string;
   phone: string;
   mapel?: string;
@@ -129,747 +109,322 @@ const INITIAL_GTK_LIST: GtkItem[] = [
     email: "199405142019032021@guru.mtsn2cilacap.sch.id",
     phone: "081234567805",
   },
-  {
-    id: "gtk-6",
-    nip: "197808152005012004",
-    npk: "98208152005",
-    name: "SOBIYATI, S.Pd",
-    golongan: "Pembina (IV/a)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Bahasa Indonesia",
-    totalJp: 28,
-    tugasTambahan: "Wali Kelas 9A & Guru Bahasa Indonesia",
-    isSertifikasi: true,
-    email: "197808152005012004@guru.mtsn2cilacap.sch.id",
-    phone: "081234567806",
-  },
-  {
-    id: "gtk-7",
-    nip: "272005011001",
-    npk: "98272005011",
-    name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd",
-    golongan: "Pembina (IV/a)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Bahasa Inggris",
-    totalJp: 28,
-    tugasTambahan: "Wali Kelas 8B & Guru Bahasa Inggris / TIK",
-    isSertifikasi: true,
-    email: "272005011001@guru.mtsn2cilacap.sch.id",
-    phone: "081234567807",
-  },
-  {
-    id: "gtk-8",
-    nip: "197003122000031002",
-    npk: "98203122000",
-    name: "SAYONO, S.Pd., M.Pd.",
-    golongan: "Pembina Utama Muda (IV/c)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Matematika",
-    totalJp: 28,
-    tugasTambahan: "Wali Kelas 9B & Guru Matematika",
-    isSertifikasi: true,
-    email: "197003122000031002@guru.mtsn2cilacap.sch.id",
-    phone: "081234567808",
-  },
-  {
-    id: "gtk-9",
-    nip: "199511122020122018",
-    npk: "98211122020",
-    name: "NOVANTYA KARTIKAWATI, S.Pd",
-    golongan: "Penata (III/c)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Ilmu Pendidikan Alam",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu IPA",
-    isSertifikasi: true,
-    email: "199511122020122018@guru.mtsn2cilacap.sch.id",
-    phone: "081234567809",
-  },
-  {
-    id: "gtk-10",
-    nip: "198203152009012015",
-    npk: "98203152009",
-    name: "UMI KHAFSOH, S.Pd",
-    golongan: "Penata Tk. I (III/d)",
-    statusKepegawaian: "PNS",
-    mapelUtama: "Ilmu Pendidikan Sosial",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu IPS",
-    isSertifikasi: true,
-    email: "198203152009012015@guru.mtsn2cilacap.sch.id",
-    phone: "081234567810",
-  },
-  {
-    id: "gtk-11",
-    nip: "199711302025052006",
-    npk: "98211302025",
-    name: "ANGGUN NOVTALIA BERLIAN, S.Pd",
-    golongan: "Ahli Pertama (IX)",
-    statusKepegawaian: "PPPK",
-    mapelUtama: "Pendidikan Kewarganegaraan",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu PKn",
-    isSertifikasi: true,
-    email: "199711302025052006@guru.mtsn2cilacap.sch.id",
-    phone: "081234567811",
-  },
-  {
-    id: "gtk-12",
-    nip: "198804102023211012",
-    npk: "98204102023",
-    name: "NUR ROCHMAN SHODIQ, S.Pd.I",
-    golongan: "Ahli Pertama (IX)",
-    statusKepegawaian: "PPPK",
-    mapelUtama: "Pendidikan Jasmani, Olahraga dan Kesehatan",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu PJOK",
-    isSertifikasi: true,
-    email: "198804102023211012@guru.mtsn2cilacap.sch.id",
-    phone: "081234567812",
-  },
-  {
-    id: "gtk-13",
-    nip: "199102142023212028",
-    npk: "98202142023",
-    name: "ISNAENI HASANAH, S.Pd.I",
-    golongan: "Ahli Pertama (IX)",
-    statusKepegawaian: "PPPK",
-    mapelUtama: "Prakarya dan Seni Budaya",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu Seni Budaya",
-    isSertifikasi: true,
-    email: "199102142023212028@guru.mtsn2cilacap.sch.id",
-    phone: "081234567813",
-  },
-  {
-    id: "gtk-14",
-    nip: "199608182025052004",
-    npk: "98208182025",
-    name: "RINDANG FARIHA IDANA, S.Pd",
-    golongan: "Ahli Pertama (IX)",
-    statusKepegawaian: "PPPK",
-    mapelUtama: "Bahasa Jawa",
-    totalJp: 24,
-    tugasTambahan: "Guru Pengampu Bahasa Jawa",
-    isSertifikasi: true,
-    email: "199608182025052004@guru.mtsn2cilacap.sch.id",
-    phone: "081234567814",
-  },
-  {
-    id: "gtk-15",
-    nip: "198409142023211019",
-    npk: "98209142023",
-    name: "ASROR HIDAYAT, S.Pd",
-    golongan: "Ahli Pertama (IX)",
-    statusKepegawaian: "PPPK",
-    mapelUtama: "Bimbingan dan Konseling",
-    totalJp: 24,
-    tugasTambahan: "Guru Bimbingan Konseling (BK)",
-    isSertifikasi: true,
-    email: "198409142023211019@guru.mtsn2cilacap.sch.id",
-    phone: "081234567815",
-  },
 ];
 
-export function SdmGtkModule({ activeRole, userProfile }: SdmGtkModuleProps) {
+export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+  const [activeTab, setActiveTab] = useState<"daftar" | "kgb" | "cuti">("daftar");
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("semua");
+
   const [gtkList, setGtkList] = useState<GtkItem[]>(INITIAL_GTK_LIST);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [tpgFilter, setTpgFilter] = useState<string>("ALL");
+  const [leavesList, setLeavesList] = useState<GtkLeaveRow[]>([]);
+  const [gtkDocs, setGtkDocs] = useState<GtkDocumentRow[]>([]);
+
+  // Dialog States
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [selectedGtk, setSelectedGtk] = useState<GtkItem | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isAddLeaveOpen, setIsAddLeaveOpen] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    MysqlDataService.getUsers()
-      .then((users) => {
-        if (!isMounted) return;
-        if (users && users.length > 0) {
-          const gtkUsers = users.filter((u) => u.role !== "siswa");
-          if (gtkUsers.length > 0) {
-            const mapped: GtkItem[] = gtkUsers.map((u, idx) => ({
-              id: String(u.id || `gtk-${idx + 1}`),
-              nip: u.nis_nip || "-",
-              npk: u.nis_nip ? `982${u.nis_nip.slice(-8)}` : "-",
-              name: u.full_name,
-              golongan: u.role === "admin" || u.role === "kamad" ? "Pembina Utama (IV/c)" : "Penata (III/c)",
-              statusKepegawaian: u.nis_nip && u.nis_nip.startsWith("19") ? "PNS" : u.nis_nip ? "PPPK" : "GTT / Honor",
-              mapelUtama: u.subject_specialty || (u.role === "kamad" ? "Manajemen Sekolah" : u.role === "waka" ? "Kurikulum" : "Mata Pelajaran"),
-              totalJp: 24,
-              tugasTambahan: u.class_name ? `Wali Kelas ${u.class_name}` : u.role === "kamad" ? "Kepala Madrasah" : u.role === "waka" ? "Waka Kurikulum" : "Guru Pengampu",
-              isSertifikasi: true,
-              email: u.email,
-              phone: "08123456789" + (idx % 10),
-            }));
-            setGtkList(mapped);
-          }
+    MysqlDataService.getUsers().then((users) => {
+      if (users && users.length > 0) {
+        const teachers = users.filter((u: any) => u.role !== "siswa");
+        if (teachers.length > 0) {
+          const formatted = teachers.map((u: any) => ({
+            id: String(u.id || u.email),
+            nip: u.nis_nip || "-",
+            npk: u.nis_nip ? u.nis_nip.substring(0, 11) : "-",
+            name: u.full_name,
+            golongan: "Penata (III/c)",
+            statusKepegawaian: (u.role === "admin" ? "PNS" : "PNS") as any,
+            mapelUtama: u.subject_specialty || "Umum",
+            totalJp: 24,
+            tugasTambahan: "Guru Pengampu",
+            isSertifikasi: true,
+            email: u.email,
+            phone: u.phone || "081234567890",
+          }));
+          setGtkList(formatted);
         }
-      })
-      .catch((err) => console.warn("Failed loading GTK list from DB:", err));
+      }
+    }).catch(() => {});
 
-    return () => {
-      isMounted = false;
-    };
+    MysqlDataService.getGtkLeaves().then((leaves) => setLeavesList(leaves || [])).catch(() => {});
   }, []);
 
-  // Modal States
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isSkModalOpen, setIsSkModalOpen] = useState(false);
-  const [selectedGtkForDetail, setSelectedGtkForDetail] = useState<GtkItem | null>(null);
-
-  // Edit GTK User State
-  const [editingGtk, setEditingGtk] = useState<GtkItem | null>(null);
-
-  const handleSaveEditGtk = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingGtk) return;
-
-    try {
-      await MysqlDataService.updateUserProfile({
-        id: editingGtk.id,
-        email: editingGtk.email,
-        fullName: editingGtk.name,
-        nipNis: editingGtk.nip,
-        phone: editingGtk.phone,
-      });
-
-      if (typeof window !== "undefined" && editingGtk.email) {
-        try {
-          const map = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
-          const roles = ["admin_akademik", "guru", "walikelas"];
-          map[editingGtk.email.toLowerCase()] = roles;
-          map[editingGtk.id] = roles;
-          localStorage.setItem("lms_persisted_user_roles_v2", JSON.stringify(map));
-        } catch (e) {}
-      }
-
-      setGtkList((prev) => prev.map((g) => (g.id === editingGtk.id ? editingGtk : g)));
-      toast.success(`✅ Data user GTK/Guru ${editingGtk.name} (Role: Admin, Guru, Wali Kelas) berhasil diperbarui!`);
-      setEditingGtk(null);
-    } catch (err) {
-      toast.error("Gagal memperbarui data user GTK.");
-    }
+  const handleOpenDetail = (item: GtkItem) => {
+    setSelectedGtk(item);
+    setIsDetailOpen(true);
+    MysqlDataService.getGtkDocuments().then((docs) => setGtkDocs(docs || [])).catch(() => {});
   };
 
-  // Form States for New GTK
-  const [formName, setFormName] = useState("");
-  const [formNip, setFormNip] = useState("");
-  const [formNpk, setFormNpk] = useState("");
-  const [formGol, setFormGol] = useState("Penata (III/c)");
-  const [formStatus, setFormStatus] = useState<"PNS" | "PPPK" | "GTT / Honor">("PNS");
-  const [formMapel, setFormMapel] = useState("Al-Quran Hadits");
-  const [formJp, setFormJp] = useState(24);
-  const [formTugas, setFormTugas] = useState("Guru Pengampu");
-  const [formSertifikasi, setFormSertifikasi] = useState(true);
+  const handleAddGtk = (newGtk: GtkItem) => {
+    setGtkList((prev) => [newGtk, ...prev]);
+    toast.success(`Data pegawai GTK ${newGtk.name} berhasil ditambahkan!`);
+  };
 
-  // Filtered GTK List
+  const handleAddLeave = (leaveData: { teacherName: string; leaveType: string; startDate: string; endDate: string; reason: string }) => {
+    const newLeave: GtkLeaveRow = {
+      id: String(Date.now()),
+      user_id: "u_gtk",
+      guru_name: leaveData.teacherName,
+      leave_type: leaveData.leaveType,
+      start_date: leaveData.startDate,
+      end_date: leaveData.endDate,
+      reason: leaveData.reason,
+      status: "Disetujui Kamad",
+    };
+    setLeavesList((prev) => [newLeave, ...prev]);
+    MysqlDataService.saveGtkLeave(newLeave).catch(() => {});
+    toast.success(`Pengajuan ${leaveData.leaveType} untuk ${leaveData.teacherName} berhasil disimpan!`);
+  };
+
   const filteredGtk = useMemo(() => {
     return gtkList.filter((item) => {
-      const matchQuery =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.nip.includes(searchQuery) ||
-        item.npk.includes(searchQuery) ||
-        item.mapelUtama.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchStatus =
-        statusFilter === "ALL" || item.statusKepegawaian === statusFilter;
-
-      const matchTpg =
-        tpgFilter === "ALL" ||
-        (tpgFilter === "TPG" && item.isSertifikasi) ||
-        (tpgFilter === "NON_TPG" && !item.isSertifikasi);
-
-      return matchQuery && matchStatus && matchTpg;
+      const matchSearch =
+        item.name.toLowerCase().includes(search.toLowerCase()) ||
+        item.nip.toLowerCase().includes(search.toLowerCase()) ||
+        item.mapelUtama.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = filterStatus === "semua" || item.statusKepegawaian === filterStatus;
+      return matchSearch && matchStatus;
     });
-  }, [gtkList, searchQuery, statusFilter, tpgFilter]);
+  }, [gtkList, search, filterStatus]);
 
-  // Statistics Summary
-  const stats = useMemo(() => {
-    const totalGtk = gtkList.length;
-    const pnsPppk = gtkList.filter((g) => g.statusKepegawaian === "PNS" || g.statusKepegawaian === "PPPK").length;
-    const gtt = gtkList.filter((g) => g.statusKepegawaian === "GTT / Honor").length;
-    const sertifikasi = gtkList.filter((g) => g.isSertifikasi).length;
-    const tuntas24Jp = gtkList.filter((g) => g.totalJp >= 24).length;
-
-    return { totalGtk, pnsPppk, gtt, sertifikasi, tuntas24Jp };
-  }, [gtkList]);
-
-  // Handle Add GTK
-  const handleAddGtk = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formName) return toast.error("Harap masukkan nama lengkap guru!");
-
-    const newGtk: GtkItem = {
-      id: `gtk-${Date.now()}`,
-      nip: formNip || "-",
-      npk: formNpk || `${Math.floor(Math.random() * 90000000000) + 10000000000}`,
-      name: formName,
-      golongan: formGol,
-      statusKepegawaian: formStatus,
-      mapelUtama: formMapel,
-      totalJp: Number(formJp),
-      tugasTambahan: formTugas,
-      isSertifikasi: formSertifikasi,
-      email: `${formName.toLowerCase().replace(/[^a-z]/g, "")}@mtsn2cilacap.sch.id`,
-      phone: "081234567890",
-    };
-
-    setGtkList([newGtk, ...gtkList]);
-    toast.success(`🎉 Data SDM Guru "${formName}" berhasil ditambahkan!`);
-    setIsAddModalOpen(false);
-    setFormName("");
-    setFormNip("");
-  };
-
-  // Export Excel CSV GTK
-  const handleExportExcel = () => {
-    let csv = `NIP,NPK,Nama Lengkap,Pangkat/Golongan,Status Kepegawaian,Mapel Utama,Total JP,Penugasan Tambahan,Status TPG\n`;
-    gtkList.forEach((g) => {
-      csv += `"${g.nip}","${g.npk}","${g.name}","${g.golongan}","${g.statusKepegawaian}","${g.mapelUtama}",${g.totalJp},"${g.tugasTambahan}","${g.isSertifikasi ? "Terverifikasi TPG" : "Belum Sertifikasi"}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Master_Data_SDM_GTK_MTsN2_Cilacap_${new Date().getFullYear()}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast.success("📊 Master Data SDM GTK (.CSV) berhasil diunduh!");
-  };
+  const totalPns = gtkList.filter((g) => g.statusKepegawaian === "PNS").length;
+  const totalPppk = gtkList.filter((g) => g.statusKepegawaian === "PPPK").length;
+  const totalSertifikasi = gtkList.filter((g) => g.isSertifikasi).length;
 
   return (
-    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
-      {/* 1. Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Users className="h-6 w-6 text-emerald-700 dark:text-emerald-400" />
-            Manajemen SDM & Master Data GTK
-          </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Database Guru & Tenaga Kependidikan MTsN 2 Cilacap · Pemenuhan 24 JP & Sertifikasi TPG Kemenag
+          <h1 className="text-2xl font-bold tracking-tight">SDM & Data Kepegawaian GTK</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Database Guru & Tenaga Kependidikan, Kenaikan Gaji Berkala (KGB), dan Layanan Cuti MTsN 2 Cilacap
           </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-xs font-bold gap-1.5 border-emerald-600/40 text-emerald-700 dark:text-emerald-400"
-            onClick={handleExportExcel}
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5" /> Export Excel
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => window.print()}>
+            <Printer className="h-4 w-4" /> Cetak Bio GTK PDF
           </Button>
-
-          <Button
-            size="sm"
-            className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 shadow-xs"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            <Plus className="h-4 w-4" /> + Tambah Data GTK
+          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddOpen(true)}>
+            <Plus className="h-4 w-4" /> Tambah Pegawai GTK
           </Button>
         </div>
       </div>
 
-      {/* 2. 4 Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
-          <div className="text-xs font-semibold text-slate-500">Total SDM GTK Terdaftar</div>
-          <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{stats.totalGtk} Personel</div>
-          <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">48 Guru Pengampu · 6 Tendik</div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Total Pegawai GTK</div>
+              <div className="text-xl font-extrabold text-foreground">{gtkList.length} Orang</div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
-          <div className="text-xs font-semibold text-slate-500">Status Kepegawaian</div>
-          <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{stats.pnsPppk} PNS / PPPK</div>
-          <div className="text-xs text-slate-500 font-medium">{stats.gtt} Guru Honor (GTT)</div>
-        </div>
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
+              <UserCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">PNS & PPPK</div>
+              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{totalPns + totalPppk} Orang</div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
-          <div className="text-xs font-semibold text-slate-500">Guru Sertifikasi (TPG)</div>
-          <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400">{stats.sertifikasi} Guru (89%)</div>
-          <div className="text-xs text-slate-500 font-medium">Validasi Kemenag SIMPATIKA</div>
-        </div>
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
+              <Award className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Tersertifikasi TPG</div>
+              <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">{totalSertifikasi} Guru</div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-1">
-          <div className="text-xs font-semibold text-slate-500">Pemenuhan 24 Jam (JP)</div>
-          <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{stats.tuntas24Jp} / {stats.totalGtk} Guru</div>
-          <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">100% Memenuhi Beban KBM</div>
-        </div>
+        <Card className="border-border bg-card shadow-2xs">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+              <FileSpreadsheet className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Layanan Cuti Aktif</div>
+              <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{leavesList.length} Berkas</div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* 3. Filter Bar & Search */}
-      <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-3">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Cari NIP, NPK, atau Nama Guru..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 text-xs h-9 bg-slate-50 dark:bg-slate-900"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <select
-              className="h-9 px-3 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 cursor-pointer"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="ALL">Semua Status Kepegawaian</option>
-              <option value="PNS">PNS / ASN</option>
-              <option value="PPPK">PPPK</option>
-              <option value="GTT / Honor">GTT / Honor</option>
-            </select>
-
-            <select
-              className="h-9 px-3 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 cursor-pointer"
-              value={tpgFilter}
-              onChange={(e) => setTpgFilter(e.target.value)}
-            >
-              <option value="ALL">Semua Status Sertifikasi</option>
-              <option value="TPG">Sudah Sertifikasi (TPG)</option>
-              <option value="NON_TPG">Belum Sertifikasi</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Table Master Data GTK */}
-      <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-950">
-        <table className="w-full text-xs text-left">
-          <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold">
-            <tr>
-              <th className="py-3 px-4 w-10">No</th>
-              <th className="py-3 px-4">Nama Lengkap & NIP/NPK</th>
-              <th className="py-3 px-3">Pangkat / Golongan</th>
-              <th className="py-3 px-3 text-center">Status</th>
-              <th className="py-3 px-3">Mapel Utama</th>
-              <th className="py-3 px-3 text-center">Beban (JP)</th>
-              <th className="py-3 px-3">Penugasan Tambahan</th>
-              <th className="py-3 px-3 text-center">TPG</th>
-              <th className="py-3 px-4 text-center w-28">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredGtk.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="py-8 text-center text-slate-400 font-medium">
-                  Tidak ada data SDM GTK yang sesuai kriteria pencarian.
-                </td>
-              </tr>
-            ) : (
-              filteredGtk.map((item, idx) => (
-                <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition">
-                  <td className="py-3 px-4 text-slate-400 font-mono">{idx + 1}</td>
-                  <td className="py-3 px-4">
-                    <div className="font-bold text-slate-900 dark:text-slate-100">{item.name}</div>
-                    <div className="text-[11px] text-slate-500 font-mono">
-                      NIP: {item.nip} · NPK: {item.npk}
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 font-medium text-slate-700 dark:text-slate-300">{item.golongan}</td>
-                  <td className="py-3 px-3 text-center">
-                    <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase ${
-                      item.statusKepegawaian === "PNS" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300" :
-                      item.statusKepegawaian === "PPPK" ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300" :
-                      "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                    }`}>
-                      {item.statusKepegawaian}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 font-semibold text-slate-900 dark:text-slate-100">{item.mapelUtama}</td>
-                  <td className="py-3 px-3 text-center">
-                    <span className={`font-mono font-bold px-2 py-0.5 rounded-md text-[11px] ${
-                      item.totalJp >= 24 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : "bg-amber-50 text-amber-700"
-                    }`}>
-                      {item.totalJp} JP
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-slate-600 dark:text-slate-400 font-medium">{item.tugasTambahan}</td>
-                  <td className="py-3 px-3 text-center">
-                    {item.isSertifikasi ? (
-                      <span className="text-emerald-700 dark:text-emerald-400 font-bold text-[11px]">✓ Sertifikasi</span>
-                    ) : (
-                      <span className="text-slate-400 text-[11px]">Belum</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex items-center justify-center">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50"
-                        title="Edit Data User GTK/Guru"
-                        onClick={() => setEditingGtk({ ...item })}
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* MODAL 1: TAMBAH SDM GTK BARU */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-emerald-600" /> Input Data SDM GTK Baru
-            </DialogTitle>
-            <DialogDescription>Input master data guru atau tenaga kependidikan MTsN 2 Cilacap.</DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleAddGtk} className="space-y-4 py-2 text-xs">
-            <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 space-y-2">
-              <Label className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" /> Pilih Akun Terdaftar (Database User System)
-              </Label>
-              <select
-                className="w-full h-9 rounded-md border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-3 text-xs font-semibold text-slate-900 dark:text-slate-100"
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "MANUAL") return;
-                  const selectedUser = gtkList.find((u) => u.name === val);
-
-                  if (selectedUser) {
-                    setFormName(selectedUser.name);
-                    setFormNip(selectedUser.nip);
-                    setFormMapel(selectedUser.mapelUtama || selectedUser.mapel || "Pendidik MTsN 2");
-                    toast.info(`✓ Data terhubung dengan akun user: ${selectedUser.name}`);
-                  }
-                }}
+      <Card className="border-border shadow-sm">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            {[
+              { id: "daftar", label: "Daftar Pegawai GTK", icon: Users },
+              { id: "kgb", label: "Kenaikan Gaji Berkala (KGB)", icon: Award },
+              { id: "cuti", label: "Layanan Cuti & Izin", icon: FileSpreadsheet },
+            ].map((t) => (
+              <Button
+                key={t.id}
+                size="sm"
+                variant={activeTab === t.id ? "default" : "outline"}
+                className="text-xs font-bold gap-1.5"
+                onClick={() => setActiveTab(t.id as any)}
               >
-                <option value="MANUAL">-- (Pilih Akun Guru / GTK dari Database MySQL) --</option>
-                {gtkList.map((g) => (
-                  <option key={g.id} value={g.name}>
-                    {g.name} ({g.tugasTambahan || g.jabatan || g.statusKepegawaian} - {g.mapelUtama || g.mapel || "GTK"})
-                  </option>
-                ))}
+                <t.icon className="h-3.5 w-3.5" />
+                <span>{t.label}</span>
+              </Button>
+            ))}
+          </div>
+
+          {activeTab === "daftar" && (
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-60">
+                <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
+                <Input
+                  placeholder="Cari nama, NIP, mapel..."
+                  className="pl-9 h-9 text-xs"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <select
+                className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="semua">Semua Status</option>
+                <option value="PNS">PNS</option>
+                <option value="PPPK">PPPK</option>
+                <option value="GTT / Honor">GTT / Honor</option>
               </select>
             </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Nama Lengkap & Gelar GTK</Label>
-              <Input
-                placeholder="Dra. Hj. Siti Rahmah, M.Pd"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                required
-                className="mt-1 text-xs font-bold"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs font-semibold">NIP (Pegawai Negeri)</Label>
-                <Input
-                  placeholder="197204151998032001"
-                  value={formNip}
-                  onChange={(e) => setFormNip(e.target.value)}
-                  className="mt-1 text-xs font-mono"
-                />
-              </div>
-              <div>
-                <Label className="text-xs font-semibold">NPK SIMPATIKA</Label>
-                <Input
-                  placeholder="98273619201"
-                  value={formNpk}
-                  onChange={(e) => setFormNpk(e.target.value)}
-                  className="mt-1 text-xs font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs font-semibold">Status Kepegawaian</Label>
-                <select
-                  className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-semibold"
-                  value={formStatus}
-                  onChange={(e) => setFormStatus(e.target.value as any)}
-                >
-                  <option value="PNS">PNS / ASN</option>
-                  <option value="PPPK">PPPK</option>
-                  <option value="GTT / Honor">GTT / Honor</option>
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Pangkat / Golongan</Label>
-                <Input
-                  placeholder="Penata (III/c)"
-                  value={formGol}
-                  onChange={(e) => setFormGol(e.target.value)}
-                  className="mt-1 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs font-semibold">Mapel Utama Pengampu</Label>
-                <select
-                  className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-semibold"
-                  value={formMapel}
-                  onChange={(e) => setFormMapel(e.target.value)}
-                >
-                  {INITIAL_MASTER_MAPEL.map((m) => (
-                    <option key={m.code} value={m.name}>
-                      {m.name} ({m.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Beban Mengajar (JP)</Label>
-                <Input
-                  type="number"
-                  value={formJp}
-                  onChange={(e) => setFormJp(Number(e.target.value))}
-                  className="mt-1 text-xs font-mono font-bold"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Penugasan Tambahan</Label>
-              <Input
-                placeholder="Wali Kelas 8A & Pembina Ekstra"
-                value={formTugas}
-                onChange={(e) => setFormTugas(e.target.value)}
-                className="mt-1 text-xs"
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddModalOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold">Simpan SDM GTK</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* MODAL EDIT DATA USER GTK / GURU (ADMIN/SUPERADMIN) */}
-      <Dialog open={!!editingGtk} onOpenChange={(o) => !o && setEditingGtk(null)}>
-        <DialogContent className="sm:max-w-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Edit className="h-5 w-5 text-emerald-600" /> Edit Data User GTK / Guru (MySQL DB)
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Perbarui profil, NIP, status kepegawaian, mapel, dan kontak login user.
-            </DialogDescription>
-          </DialogHeader>
-
-          {editingGtk && (
-            <form onSubmit={handleSaveEditGtk} className="space-y-3 py-2 text-xs">
-              <div>
-                <Label className="text-xs font-semibold">Nama Lengkap & Gelar</Label>
-                <Input
-                  value={editingGtk.name}
-                  onChange={(e) => setEditingGtk({ ...editingGtk, name: e.target.value })}
-                  required
-                  className="mt-1 text-xs font-bold"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs font-semibold">NIP (Pegawai / SIMPATIKA)</Label>
-                  <Input
-                    value={editingGtk.nip}
-                    onChange={(e) => setEditingGtk({ ...editingGtk, nip: e.target.value })}
-                    className="mt-1 text-xs font-mono"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">Email Login System</Label>
-                  <Input
-                    type="email"
-                    value={editingGtk.email}
-                    onChange={(e) => setEditingGtk({ ...editingGtk, email: e.target.value })}
-                    required
-                    className="mt-1 text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs font-semibold">Status Kepegawaian</Label>
-                  <select
-                    className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-semibold"
-                    value={editingGtk.statusKepegawaian}
-                    onChange={(e) => setEditingGtk({ ...editingGtk, statusKepegawaian: e.target.value as any })}
-                  >
-                    <option value="PNS">PNS</option>
-                    <option value="PPPK">PPPK</option>
-                    <option value="GTT / Honor">GTT / Honor</option>
-                  </select>
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">Pangkat / Golongan</Label>
-                  <Input
-                    value={editingGtk.golongan}
-                    onChange={(e) => setEditingGtk({ ...editingGtk, golongan: e.target.value })}
-                    className="mt-1 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs font-semibold">Mapel Utama Pengampu</Label>
-                  <select
-                    className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 text-xs mt-1 font-semibold"
-                    value={editingGtk.mapelUtama}
-                    onChange={(e) => setEditingGtk({ ...editingGtk, mapelUtama: e.target.value })}
-                  >
-                    {INITIAL_MASTER_MAPEL.map((m) => (
-                      <option key={m.code} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">No. WhatsApp / Telepon</Label>
-                  <Input
-                    value={editingGtk.phone}
-                    onChange={(e) => setEditingGtk({ ...editingGtk, phone: e.target.value })}
-                    className="mt-1 text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Penugasan / Tugas Tambahan</Label>
-                <Input
-                  value={editingGtk.tugasTambahan}
-                  onChange={(e) => setEditingGtk({ ...editingGtk, tugasTambahan: e.target.value })}
-                  className="mt-1 text-xs"
-                />
-              </div>
-
-              <DialogFooter className="pt-2 gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setEditingGtk(null)}>Batal</Button>
-                <Button type="submit" size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold gap-1.5">
-                  <CheckCircle2 className="h-4 w-4" /> Simpan Perubahan User GTK
-                </Button>
-              </DialogFooter>
-            </form>
           )}
-        </DialogContent>
-      </Dialog>
+
+          {activeTab === "cuti" && (
+            <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddLeaveOpen(true)}>
+              + Pengajuan Cuti Baru
+            </Button>
+          )}
+        </CardHeader>
+
+        <CardContent className="p-0 overflow-x-auto">
+          {activeTab === "daftar" && (
+            <table className="w-full text-xs">
+              <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
+                <tr>
+                  <th className="py-3 px-4">Nama Pegawai & NIP</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3">Golongan</th>
+                  <th className="py-3 px-3">Mapel Utama</th>
+                  <th className="py-3 px-3 text-center">Beban JP</th>
+                  <th className="py-3 px-3 text-center">Sertifikasi</th>
+                  <th className="py-3 px-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredGtk.map((item) => (
+                  <tr key={item.id} className="hover:bg-muted/30 transition">
+                    <td className="py-3 px-4 font-semibold">
+                      <div className="font-bold text-foreground flex items-center gap-1.5">
+                        {item.name}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground font-mono">NIP: {item.nip}</div>
+                    </td>
+                    <td className="py-3 px-3">
+                      <Badge className={item.statusKepegawaian === "PNS" ? "bg-emerald-600 text-white" : item.statusKepegawaian === "PPPK" ? "bg-purple-600 text-white" : "bg-amber-600 text-white"}>
+                        {item.statusKepegawaian}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-3 font-semibold">{item.golongan}</td>
+                    <td className="py-3 px-3 font-bold">{item.mapelUtama}</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-primary">{item.totalJp} JP</td>
+                    <td className="py-3 px-3 text-center">
+                      <Badge variant="outline" className={item.isSertifikasi ? "border-emerald-500 text-emerald-600 bg-emerald-500/10" : "border-muted text-muted-foreground"}>
+                        {item.isSertifikasi ? "✓ TPG" : "-"}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <Button size="sm" variant="outline" className="h-7 text-xs font-bold gap-1" onClick={() => handleOpenDetail(item)}>
+                        Detail & SK
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {activeTab === "kgb" && (
+            <div className="p-6 text-center space-y-3">
+              <div className="text-base font-bold">Kenaikan Gaji Berkala (KGB) Pegawai GTK</div>
+              <p className="text-xs text-muted-foreground max-w-lg mx-auto">
+                Monitoring kenaikan gaji berkala (KGB 2 tahunan) secara teratur untuk seluruh pegawai ASN MTsN 2 Cilacap.
+              </p>
+              <div className="pt-2 flex justify-center gap-2">
+                <Badge className="bg-emerald-600 text-white font-bold">✔ Terintegrasi Simpeg Kemenag</Badge>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "cuti" && (
+            <table className="w-full text-xs">
+              <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
+                <tr>
+                  <th className="py-3 px-4">Nama Pegawai</th>
+                  <th className="py-3 px-3">Jenis Cuti</th>
+                  <th className="py-3 px-3">Tanggal Mulai - Selesai</th>
+                  <th className="py-3 px-3">Alasan</th>
+                  <th className="py-3 px-4 text-center">Status Surat</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {leavesList.map((l) => (
+                  <tr key={l.id} className="hover:bg-muted/30 transition">
+                    <td className="py-3 px-4 font-bold text-foreground">{l.guru_name}</td>
+                    <td className="py-3 px-3 font-semibold">{l.leave_type}</td>
+                    <td className="py-3 px-3 font-mono">{l.start_date} s/d {l.end_date}</td>
+                    <td className="py-3 px-3 text-muted-foreground">{l.reason}</td>
+                    <td className="py-3 px-4 text-center">
+                      <Badge className="bg-emerald-600 text-white font-bold text-[10px]">
+                        ✓ {l.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
+
+      <AddGtkDialog
+        isOpen={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        onAddGtk={handleAddGtk}
+      />
+
+      <DetailGtkDialog
+        selectedGtk={selectedGtk}
+        isOpen={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        gtkDocs={gtkDocs}
+      />
+
+      <CutiIzinDialog
+        isOpen={isAddLeaveOpen}
+        onOpenChange={setIsAddLeaveOpen}
+        onAddLeave={handleAddLeave}
+      />
     </div>
   );
 }

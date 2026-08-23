@@ -2,7 +2,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MysqlAuthService, INITIAL_ROLE_USERS } from "@/services/mysqlAuthService";
-import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlDataService, JadwalRow } from "@/services/mysqlDataService";
 import logoAsset from "@/assets/logo-mtsn2.png.asset.json";
 import { BerandaModule } from "@/components/dashboard/modules/beranda/BerandaModule";
 import { ProfilModule } from "@/components/dashboard/modules/profil/ProfilModule";
@@ -12,6 +12,10 @@ import { SdmGtkModule } from "@/components/dashboard/modules/sdm/SdmGtkModule";
 import { PengumumanModule } from "@/components/dashboard/modules/pengumuman/PengumumanModule";
 import { AgendaKalenderModule } from "@/components/dashboard/modules/agenda/AgendaKalenderModule";
 import { PerpustakaanModule } from "@/components/dashboard/modules/perpustakaan/PerpustakaanModule";
+import { UserManagementModule } from "@/components/dashboard/modules/user/UserManagementModule";
+import { KehadiranModule } from "@/components/dashboard/modules/kehadiran/KehadiranModule";
+import { JadwalModule } from "@/components/dashboard/modules/jadwal/JadwalModule";
+import { ModulAjarModule } from "@/components/dashboard/modules/modulajar/ModulAjarModule";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
@@ -871,12 +875,12 @@ function DashboardContent({
             {active === "manajemen_kelas" && <ManajemenKelas activeRole={activeRole} />}
             {active === "perangkat_pembelajaran" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
             {active === "mapel" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
-            {active === "users" && activeRole !== "siswa" && <DataUserRole />}
+            {active === "users" && activeRole !== "siswa" && <UserManagementModule />}
             {active === "pengumuman" && <Pengumuman />}
-            {active === "jadwal" && <Jadwal activeRole={activeRole} userProfile={userProfile} />}
+            {active === "jadwal" && <JadwalModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "agenda" && <AgendaKalender activeRole={activeRole} />}
-            {active === "kehadiran" && <KehadiranSiswa activeRole={activeRole} userProfile={userProfile} />}
-            {active === "modul_ajar" && <ModulAjar activeRole={activeRole} userProfile={userProfile} />}
+            {active === "kehadiran" && <KehadiranModule activeRole={activeRole} userProfile={userProfile} />}
+            {active === "modul_ajar" && <ModulAjarModule activeRole={activeRole} userProfile={userProfile} />}
             {active === "asesmen" && <PusatAsesmen activeRole={activeRole} />}
             {active === "tugas" && <Tugas />}
             {active === "quiz" && <Quiz />}
@@ -910,905 +914,7 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   );
 }
 
-function DataUserRole() {
-  const [search, setSearch] = useState("");
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<{ id: string; full_name: string; email: string; nis: string; roles: string[] } | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  // Super Admin Password Reset & Edit State
-  const [userToResetPass, setUserToResetPass] = useState<{ id: string; full_name: string; email: string; nis: string; roles: string[] } | null>(null);
-  const [isResetPassModalOpen, setIsResetPassModalOpen] = useState(false);
-  const [adminNewPassword, setAdminNewPassword] = useState("MtsN2#2026!Reset");
-  const [showAdminNewPassword, setShowAdminNewPassword] = useState(false);
-
-  // Edit Multi-Role Modal State
-  const [userToEditRoles, setUserToEditRoles] = useState<{ id: string; full_name: string; email: string; nis: string; roles: string[] } | null>(null);
-  const [isEditRoleModalOpen, setIsEditRoleModalOpen] = useState(false);
-  const [tempEditRoles, setTempEditRoles] = useState<string[]>([]);
-
-  // Form input state
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("MtsN2#2026!Sec");
-  const [nis, setNis] = useState("");
-  const [userClass, setUserClass] = useState("8A");
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(["guru"]);
-
-  // Helper to persist roles map
-  const saveRolesToStorage = (emailOrId: string, roles: string[]) => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem("lms_persisted_user_roles_v2") || "{}";
-      const rolesMap = JSON.parse(raw);
-      rolesMap[emailOrId.toLowerCase()] = roles;
-      localStorage.setItem("lms_persisted_user_roles_v2", JSON.stringify(rolesMap));
-    } catch (e) {}
-  };
-
-  const [dummyUsersList, setDummyUsersList] = useState(() => {
-    let savedRolesMap: Record<string, string[]> = {};
-    if (typeof window !== "undefined") {
-      try {
-        savedRolesMap = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
-      } catch (e) {}
-    }
-
-    const defaultList = [
-      { id: "usr-admin-1", full_name: "Super Administrator MTsN 2", email: "admin@mail.com", nis: "NIP. 198501012010011001", class: "Semua", roles: ["admin"] },
-      { id: "usr-guru-1", full_name: "H. SOLIHUN, S.Pd., M.Si", email: "guru@mtsn2cilacap.sch.id", nis: "NIP. 198005122006042005", class: "Semua", roles: ["kamad"] },
-      { id: "usr-guru-21", full_name: "ALI MANSUR, S.Pd", email: "198302142023211010@guru.mtsn2cilacap.sch.id", nis: "NIP. 198302142023211010", class: "Semua", roles: ["waka"] },
-      { id: "usr-guru-17", full_name: "SOBIYATI, S.Pd", email: "197906142007102002@guru.mtsn2cilacap.sch.id", nis: "NIP. 197906142007102002", class: "VIII A", roles: ["walikelas"] },
-      { id: "usr-guru-10", full_name: "UMI KHAFSOH, S.Pd", email: "197509192009012008@guru.mtsn2cilacap.sch.id", nis: "NIP. 197509192009012008", class: "VIII A", roles: ["guru"] },
-      { id: "usr-siswa-1", full_name: "ALIYA QIARA ABDULLAH", email: "0127790481@siswa.mtsn2cilacap.sch.id", nis: "NISN. 0127790481", class: "VIII-A", roles: ["siswa"] },
-    ];
-
-    return defaultList.map((u) => ({
-      ...u,
-      roles: savedRolesMap[u.email.toLowerCase()] || savedRolesMap[u.id] || u.roles,
-    }));
-  });
-
-  useEffect(() => {
-    let isMounted = true;
-
-    let savedRolesMap: Record<string, string[]> = {};
-    if (typeof window !== "undefined") {
-      try {
-        savedRolesMap = JSON.parse(localStorage.getItem("lms_persisted_user_roles_v2") || "{}");
-      } catch (e) {}
-    }
-
-    MysqlDataService.getUsers()
-      .then((users) => {
-        if (!isMounted) return;
-        if (users && users.length > 0) {
-          const formatted = users.map((u) => {
-            const cleanEmail = u.email.toLowerCase();
-            let finalRoles = savedRolesMap[cleanEmail] || savedRolesMap[u.id];
-            if (!finalRoles) {
-              if (u.role && u.role.includes(",")) {
-                finalRoles = u.role.split(",").map((r) => r.trim());
-              } else {
-                finalRoles = [u.role || "siswa"];
-              }
-            }
-            return {
-              id: String(u.id),
-              full_name: u.full_name,
-              email: u.email,
-              nis: `${u.identity_type || (u.role === "siswa" ? "NISN" : "NIP")}. ${u.nis_nip || "-"}`,
-              class: u.class_name || u.subject_specialty || "Semua",
-              roles: finalRoles,
-            };
-          });
-          setDummyUsersList(formatted);
-        }
-      })
-      .catch((err) => console.warn("Failed fetching users from MySQL:", err));
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const availableRoles = ["admin", "admin_akademik", "kamad", "waka", "walikelas", "guru", "siswa"];
-
-  // Open Edit Roles Modal
-  const handlePromptEditRoles = (u: { id: string; full_name: string; email: string; nis: string; roles: string[] }) => {
-    setUserToEditRoles(u);
-    setTempEditRoles([...u.roles]);
-    setIsEditRoleModalOpen(true);
-  };
-
-  const toggleTempEditRole = (role: string) => {
-    if (tempEditRoles.includes(role)) {
-      if (tempEditRoles.length <= 1) {
-        return toast.error("Minimal 1 role aktif wajib dimiliki pengguna!");
-      }
-      setTempEditRoles(tempEditRoles.filter((r) => r !== role));
-    } else {
-      setTempEditRoles([...tempEditRoles, role]);
-    }
-  };
-
-  const saveUserRoles = () => {
-    if (!userToEditRoles) return;
-    if (tempEditRoles.length === 0) {
-      return toast.error("Pengguna harus memiliki minimal 1 role aktif!");
-    }
-
-    const userId = userToEditRoles.id;
-    const userEmail = userToEditRoles.email;
-    const newRoles = tempEditRoles;
-
-    // Persist immediately to localStorage & MySQL DB
-    saveRolesToStorage(userEmail, newRoles);
-    saveRolesToStorage(userId, newRoles);
-    MysqlDataService.updateUserRole(userId, newRoles, userEmail).catch(() => { });
-
-    setDummyUsersList((prev) =>
-      prev.map((u) => {
-        if (u.id !== userId && u.email.toLowerCase() !== userEmail.toLowerCase()) return u;
-        return { ...u, roles: newRoles };
-      })
-    );
-
-    toast.success(`💾 Hak akses multi-role untuk ${userToEditRoles.full_name} berhasil disimpan secara permanen! (${newRoles.join(", ").toUpperCase()})`);
-    setIsEditRoleModalOpen(false);
-    setUserToEditRoles(null);
-  };
-
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName || !email || !password) {
-      return toast.error("Harap isi Nama Lengkap, Email, dan Kata Sandi.");
-    }
-
-    if (selectedRoles.length === 0) {
-      return toast.error("Pilih minimal 1 role untuk pengguna baru.");
-    }
-
-    const strength = MysqlAuthService.validatePasswordStrength(password);
-    if (!strength.isValid) {
-      return toast.error(`Kata sandi terlalu lemah: ${strength.feedback.join(", ")}`);
-    }
-
-    const primaryRole = selectedRoles[0];
-    const newUserObj = {
-      id: String(Date.now()),
-      full_name: fullName,
-      email: email.trim().toLowerCase(),
-      nis: nis || (primaryRole === "siswa" ? "NISN. 008" + Math.floor(100000 + Math.random() * 900000) : "NIP. 199" + Math.floor(10000000 + Math.random() * 90000000)),
-      class: userClass || "Semua",
-      roles: selectedRoles,
-    };
-
-    saveRolesToStorage(newUserObj.email, selectedRoles);
-    saveRolesToStorage(newUserObj.id, selectedRoles);
-    MysqlDataService.updateUserRole(newUserObj.id, selectedRoles, newUserObj.email).catch(() => { });
-
-    setDummyUsersList([newUserObj, ...dummyUsersList]);
-
-    // Register user to MysqlAuthService
-    try {
-      await MysqlAuthService.registerUser({
-        email,
-        password,
-        full_name: fullName,
-        role: primaryRole as any,
-        nis_nip: newUserObj.nis,
-        class_name: userClass,
-      });
-    } catch (err) { }
-
-    toast.success(`Akun pengguna ${fullName} dengan ${selectedRoles.length} role (${selectedRoles.join(", ").toUpperCase()}) berhasil ditambahkan!`);
-    setIsAddUserOpen(false);
-
-    // Reset Form
-    setFullName("");
-    setEmail("");
-    setPassword("MtsN2#2026!Sec");
-    setNis("");
-    setUserClass("8A");
-    setSelectedRoles(["guru"]);
-  };
-
-  const toggleRole = (userId: string, role: string) => {
-    const userObj = dummyUsersList.find((u) => u.id === userId);
-    if (userObj) {
-      const exists = userObj.roles.includes(role);
-      // Rule 3: Minimum 1 role active check
-      if (exists && userObj.roles.length <= 1) {
-        return toast.error("Rule Delete: Pengguna harus memiliki minimal 1 role aktif! Gunakan tombol 'Hapus User' jika ingin menghapus akun.");
-      }
-
-      const newRoles = exists ? userObj.roles.filter((r) => r !== role) : [...userObj.roles, role];
-
-      saveRolesToStorage(userObj.email, newRoles);
-      saveRolesToStorage(userId, newRoles);
-      MysqlDataService.updateUserRole(userId, newRoles, userObj.email).catch(() => { });
-
-      setDummyUsersList((prev) =>
-        prev.map((u) => {
-          if (u.id !== userId) return u;
-          return { ...u, roles: newRoles };
-        })
-      );
-      toast.success(`Hak akses role ${role} berhasil diperbarui dan tersimpan permanen!`);
-    }
-  };
-
-  const handlePromptDeleteUser = (u: { id: string; full_name: string; email: string; nis: string; roles: string[] }) => {
-    const activeSession = MysqlAuthService.getActiveUser();
-
-    // Rule 1: Protection for Super Admin Primary Account
-    if (u.email === "admin@mail.com" || (u.roles.includes("admin") && dummyUsersList.filter((item) => item.roles.includes("admin")).length <= 1)) {
-      return toast.error("Rule Protection: Akun Super Admin Utama (admin@mail.com) dilindungi dan tidak dapat dihapus!");
-    }
-
-    // Rule 2: Active Logged In User Protection
-    if (activeSession && activeSession.email.toLowerCase() === u.email.toLowerCase()) {
-      return toast.error("Rule Protection: Anda tidak dapat menghapus akun Anda sendiri yang sedang digunakan saat ini!");
-    }
-
-    setUserToDelete(u);
-    setIsDeleteModalOpen(true);
-  };
-
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return;
-    const targetId = userToDelete.id;
-    const targetEmail = userToDelete.email;
-    const targetName = userToDelete.full_name;
-
-    // Update state local
-    setDummyUsersList((prev) => prev.filter((u) => u.id !== targetId));
-
-    // Call backend API MySQL Delete User
-    try {
-      await MysqlDataService.deleteUser(targetId, targetEmail);
-    } catch (err) {
-      console.warn("Failed executing MySQL delete user:", err);
-    }
-
-    toast.success(`Akun pengguna ${targetName} (${targetEmail}) berhasil dihapus permanen!`);
-    setIsDeleteModalOpen(false);
-    setUserToDelete(null);
-  };
-
-  // Admin Password Reset & Edit Handlers
-  const handlePromptResetPassword = (u: { id: string; full_name: string; email: string; nis: string; roles: string[] }) => {
-    const activeSession = MysqlAuthService.getActiveUser();
-    const isAdminUser =
-      activeSession?.role === "admin" ||
-      activeSession?.role === "superadmin" ||
-      activeSession?.role === "admin_akademik" ||
-      activeSession?.email?.toLowerCase() === "admin@mail.com" ||
-      activeSession?.email?.includes("admin");
-
-    if (!isAdminUser) {
-      return toast.error("Hanya Administrator yang berhak mengelola & mereset kata sandi akun pengguna!");
-    }
-
-    setUserToResetPass(u);
-    setAdminNewPassword("MtsN2#2026!Reset");
-    setShowAdminNewPassword(false);
-    setIsResetPassModalOpen(true);
-  };
-
-  const confirmAdminResetPassword = async (customPass?: string) => {
-    if (!userToResetPass) return;
-    const targetPass = customPass || adminNewPassword;
-
-    const res = await MysqlAuthService.adminResetPassword(userToResetPass.email, targetPass);
-    if (res.success) {
-      toast.success(`🔒 Kata sandi akun ${userToResetPass.full_name} (${userToResetPass.email}) berhasil diubah menjadi: "${targetPass}"`, {
-        duration: 9000,
-      });
-      setIsResetPassModalOpen(false);
-      setUserToResetPass(null);
-    } else {
-      toast.error(res.message);
-    }
-  };
-
-  // User Grouping Filter State (Siswa, Guru & Wali Kelas, Pejabat & Petugas Staf)
-  const [activeGroup, setActiveGroup] = useState<"semua" | "siswa" | "guru" | "pejabat">("semua");
-
-  // Group Counts Calculation
-  const siswaCount = dummyUsersList.filter((u) => u.roles.includes("siswa")).length;
-  const guruCount = dummyUsersList.filter((u) => u.roles.some((r) => r === "guru" || r === "walikelas")).length;
-  const pejabatCount = dummyUsersList.filter((u) => u.roles.some((r) => ["admin", "admin_akademik", "kamad", "waka"].includes(r))).length;
-
-  const filtered = dummyUsersList.filter((u) => {
-    // 1. Group Category Filter
-    if (activeGroup === "siswa" && !u.roles.includes("siswa")) return false;
-    if (activeGroup === "guru" && !u.roles.some((r) => r === "guru" || r === "walikelas")) return false;
-    if (activeGroup === "pejabat" && !u.roles.some((r) => ["admin", "admin_akademik", "kamad", "waka"].includes(r))) return false;
-
-    // 2. Search Text Filter
-    const searchLower = search.toLowerCase();
-    return (
-      u.full_name.toLowerCase().includes(searchLower) ||
-      u.email.toLowerCase().includes(searchLower) ||
-      u.nis.toLowerCase().includes(searchLower)
-    );
-  });
-
-  return (
-    <div className="space-y-6">
-      <SectionHeader title="Manajemen Pengguna & Hak Akses (Role)" sub="Pengelolaan terkelompok untuk Siswa, Guru & Wali Kelas, serta Pejabat/Petugas Staf LMS MTsN 2 Cilacap" />
-
-      {/* Card Tab Pengelompokan Pengguna */}
-      <Card className="border-border shadow-sm">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-          <div>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" /> Data Akun Pengguna & Hak Akses
-            </CardTitle>
-            <CardDescription>
-              Kelola akun terdaftar ({dummyUsersList.length} total) berdasarkan pengelompokan peran dan wewenang.
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
-              <Input
-                placeholder="Cari nama, email, NIS..."
-                className="pl-9 h-9 text-xs"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <Button size="sm" className="gap-1.5 shrink-0 bg-primary text-primary-foreground font-bold" onClick={() => setIsAddUserOpen(true)}>
-              + Tambah User Baru
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-4 space-y-4">
-          {/* Baris Tombol Pengelompokan (Grouping Tabs) */}
-          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80">
-            <button
-              type="button"
-              onClick={() => setActiveGroup("semua")}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-                activeGroup === "semua"
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              <span>🌐 Semua Pengguna</span>
-              <Badge variant="secondary" className="text-[10px] bg-background/80 text-foreground font-extrabold px-1.5 py-0.2">
-                {dummyUsersList.length}
-              </Badge>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveGroup("siswa")}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-                activeGroup === "siswa"
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              <span>🎓 Kelompok Siswa</span>
-              <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-extrabold px-1.5 py-0.2 border border-emerald-500/30">
-                {siswaCount}
-              </Badge>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveGroup("guru")}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-                activeGroup === "guru"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              <span>👨‍🏫 Guru & Wali Kelas</span>
-              <Badge variant="secondary" className="text-[10px] bg-blue-500/20 text-blue-600 dark:text-blue-300 font-extrabold px-1.5 py-0.2 border border-blue-500/30">
-                {guruCount}
-              </Badge>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveGroup("pejabat")}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-                activeGroup === "pejabat"
-                  ? "bg-amber-600 text-white shadow-xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              <span>🏛️ Pejabat & Petugas Staf</span>
-              <Badge variant="secondary" className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-300 font-extrabold px-1.5 py-0.2 border border-amber-500/30">
-                {pejabatCount}
-              </Badge>
-            </button>
-          </div>
-
-          {/* Banner Info Kelompok Aktif */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <div>
-              Menampilkan <strong className="text-foreground">{filtered.length}</strong> akun dari kelompok{" "}
-              <strong className="text-foreground uppercase">
-                {activeGroup === "semua" ? "Semua User" : activeGroup === "siswa" ? "Siswa" : activeGroup === "guru" ? "Guru & Wali Kelas" : "Pejabat & Petugas Staf"}
-              </strong>
-            </div>
-            {search && (
-              <div>
-                Pencarian: &quot;<span className="font-semibold text-foreground">{search}</span>&quot;
-              </div>
-            )}
-          </div>
-
-          <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50 text-left border-b border-border">
-                  <th className="py-3 px-4 font-semibold">Pengguna & NIP/NIS</th>
-                  <th className="py-3 px-4 font-semibold">Email</th>
-                  <th className="py-3 px-4 font-semibold">Kelas</th>
-                  <th className="py-3 px-4 font-semibold">Role Aktif</th>
-                  <th className="py-3 px-4 font-semibold">Kelola Hak Akses</th>
-                  <th className="py-3 px-4 font-semibold text-center">Aksi & Kontrol</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((u) => {
-                  const isSuperAdmin = u.email === "admin@mail.com";
-                  const activeSession = MysqlAuthService.getActiveUser();
-                  const isSelf = activeSession && activeSession.email.toLowerCase() === u.email.toLowerCase();
-                  const currentIsAdmin =
-                    activeSession?.role === "admin" ||
-                    activeSession?.role === "superadmin" ||
-                    activeSession?.role === "admin_akademik" ||
-                    activeSession?.email?.toLowerCase() === "admin@mail.com" ||
-                    activeSession?.email?.includes("admin");
-
-                  return (
-                    <tr key={u.id} className="border-b border-border/60 hover:bg-muted/30 transition">
-                      <td className="py-3 px-4 font-medium">
-                        <div className="font-bold text-foreground flex items-center gap-1.5">
-                          {u.full_name}
-                          {isSuperAdmin && (
-                            <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/30">
-                              🛡️ Dilindungi
-                            </Badge>
-                          )}
-                          {isSelf && (
-                            <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-                              👤 Sesi Anda
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground font-mono">{u.nis}</div>
-                      </td>
-                      <td className="py-3 px-4 text-xs font-mono text-muted-foreground">{u.email}</td>
-                      <td className="py-3 px-4 text-xs font-semibold">{u.class}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1">
-                          {u.roles.map((r) => (
-                            <Badge key={r} variant="secondary" className="text-[10px] uppercase font-bold bg-primary/10 text-primary border border-primary/20">
-                              {r.replace("_", " ")}
-                            </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 text-[10px] px-2 font-bold bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 gap-1 mr-1"
-                            onClick={() => handlePromptEditRoles(u)}
-                            title="Buka Modal Kelola & Simpan Multi-Role"
-                          >
-                            <UserCog className="h-3 w-3" /> 🎭 Atur & Simpan Role
-                          </Button>
-                          {availableRoles.map((r) => {
-                            const hasRole = u.roles.includes(r);
-                            return (
-                              <Button
-                                key={r}
-                                size="sm"
-                                variant={hasRole ? "default" : "outline"}
-                                className={`h-6 text-[10px] px-2 ${hasRole ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
-                                onClick={() => toggleRole(u.id, r)}
-                              >
-                                {hasRole ? `✓ ${r}` : `+ ${r}`}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30 gap-1"
-                            onClick={() => handlePromptEditRoles(u)}
-                            title="Buka Form Kelola & Simpan Role"
-                          >
-                            <Save className="h-3.5 w-3.5" /> Simpan Role
-                          </Button>
-
-                          {currentIsAdmin && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 px-2 text-xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 border-teal-500/30 gap-1"
-                              onClick={() => handlePromptResetPassword(u)}
-                              title="Ubah / Reset Kata Sandi Akun (Khusus Super Admin)"
-                            >
-                              <KeyRound className="h-3.5 w-3.5" /> Sandi
-                            </Button>
-                          )}
-
-                          {isSuperAdmin || isSelf ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              disabled
-                              className="h-7 px-2 text-xs text-muted-foreground opacity-50 cursor-not-allowed"
-                              title={isSuperAdmin ? "Super Admin Utama dilindungi dari penghapusan" : "Tidak dapat menghapus akun sendiri"}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 px-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
-                              onClick={() => handlePromptDeleteUser(u)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Dialog Modal Reset/Ubah Password Khusus Super Admin */}
-      <Dialog open={isResetPassModalOpen} onOpenChange={setIsResetPassModalOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-teal-600 dark:text-teal-400 flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-teal-600" /> Kelola & Reset Kata Sandi Pengguna
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Fitur kontrol khusus Super Administrator untuk memperbarui kata sandi akun pengguna LMS.
-            </DialogDescription>
-          </DialogHeader>
-
-          {userToResetPass && (
-            <div className="space-y-4 py-2">
-              <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-3 text-xs space-y-1">
-                <div><span className="font-semibold text-muted-foreground">Target Akun:</span> <strong className="text-foreground">{userToResetPass.full_name}</strong></div>
-                <div><span className="font-semibold text-muted-foreground">Email / Username:</span> <code className="font-mono text-foreground">{userToResetPass.email}</code></div>
-                <div><span className="font-semibold text-muted-foreground">NIP / NISN:</span> <code className="font-mono text-foreground">{userToResetPass.nis}</code></div>
-              </div>
-
-              {/* Action 1: Quick Reset Default Pass */}
-              <div className="p-3 border border-border rounded-xl bg-muted/30 space-y-2">
-                <div className="text-xs font-bold flex items-center justify-between">
-                  <span>⚡ Reset Cepat (Default Password)</span>
-                  <Badge variant="outline" className="text-[10px] bg-teal-500/10 text-teal-600 border-teal-500/30">
-                    Otomatis
-                  </Badge>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Sistem akan mereset password akun ini menjadi kata sandi sementara yang aman: <code className="font-mono text-teal-600 dark:text-teal-400 font-bold">MtsN2#2026!Reset</code>
-                </p>
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                  className="w-full text-xs font-bold border-teal-500/40 text-teal-600 hover:bg-teal-500/10"
-                  onClick={() => confirmAdminResetPassword("MtsN2#2026!Reset")}
-                >
-                  ⚡ Terbitkan Password Reset Default
-                </Button>
-              </div>
-
-              {/* Action 2: Custom Password Input */}
-              <div className="space-y-2 pt-1">
-                <Label htmlFor="admin-custom-pass" className="text-xs font-semibold">Atau Masukkan Kata Sandi Kustom Baru</Label>
-                <div className="relative">
-                  <Input
-                    id="admin-custom-pass"
-                    type={showAdminNewPassword ? "text" : "password"}
-                    value={adminNewPassword}
-                    onChange={(e) => setAdminNewPassword(e.target.value)}
-                    placeholder="Min 8 Karakter (Huruf Besar, Kecil & Angka)"
-                    className="text-xs pr-10 font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowAdminNewPassword(!showAdminNewPassword)}
-                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition"
-                  >
-                    {showAdminNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {adminNewPassword && (() => {
-                  const strength = MysqlAuthService.validatePasswordStrength(adminNewPassword);
-                  return (
-                    <p className={`text-[10px] ${strength.isValid ? "text-emerald-500 font-semibold" : "text-amber-500"}`}>
-                      Kekuatan: {strength.label} {strength.feedback.length > 0 ? `(${strength.feedback.join(", ")})` : "✓"}
-                    </p>
-                  );
-                })()}
-              </div>
-
-              <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-                <Button variant="outline" size="sm" onClick={() => setIsResetPassModalOpen(false)}>
-                  Batal
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-teal-600 hover:bg-teal-700 text-white font-bold gap-1.5 text-xs"
-                  onClick={() => confirmAdminResetPassword()}
-                >
-                  <KeyRound className="h-4 w-4" /> Simpan Kata Sandi Kustom
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Modal Edit & Simpan Hak Akses Multi-Role */}
-      <Dialog open={isEditRoleModalOpen} onOpenChange={setIsEditRoleModalOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-              <UserCog className="h-5 w-5 text-emerald-600" /> Kelola & Simpan Hak Akses Multi-Role
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Atur dan centang peran (role) untuk akun pengguna ini, lalu klik Simpan Perubahan.
-            </DialogDescription>
-          </DialogHeader>
-
-          {userToEditRoles && (
-            <div className="space-y-4 py-2">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-xs space-y-1">
-                <div><span className="font-semibold text-muted-foreground">Nama Pengguna:</span> <strong className="text-foreground">{userToEditRoles.full_name}</strong></div>
-                <div><span className="font-semibold text-muted-foreground">Email / Username:</span> <code className="font-mono text-foreground">{userToEditRoles.email}</code></div>
-                <div><span className="font-semibold text-muted-foreground">NIP / NISN:</span> <code className="font-mono text-foreground">{userToEditRoles.nis}</code></div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-xs font-semibold">Pilih Role yang Diberikan (Bisa Lebih Dari 1 Role)</Label>
-                  <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold">
-                    {tempEditRoles.length} Role Terpilih
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: "guru", label: "👨‍🏫 Guru Pengampu" },
-                    { id: "siswa", label: "🎓 Siswa" },
-                    { id: "walikelas", label: "📋 Wali Kelas" },
-                    { id: "waka", label: "📐 Waka Kurikulum" },
-                    { id: "kamad", label: "🏛️ Kepala Madrasah" },
-                    { id: "admin_akademik", label: "💼 Admin Akademik" },
-                    { id: "admin", label: "🛡️ Super Admin" },
-                  ].map((r) => {
-                    const isSelected = tempEditRoles.includes(r.id);
-                    return (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => toggleTempEditRole(r.id)}
-                        className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between transition ${isSelected
-                          ? "bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs"
-                          : "bg-muted/40 border-border hover:bg-muted text-muted-foreground"
-                          }`}
-                      >
-                        <span>{r.label}</span>
-                        {isSelected && <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <Button variant="outline" size="sm" onClick={() => setIsEditRoleModalOpen(false)}>
-                  Batal
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5 text-xs"
-                  onClick={saveUserRoles}
-                >
-                  <Save className="h-4 w-4" /> Simpan Perubahan Role
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Modal Hapus User Confirmation */}
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-rose-600" /> Konfirmasi Penghapusan Akun
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Apakah Anda yakin ingin menghapus akun pengguna ini dari sistem LMS secara permanen?
-            </DialogDescription>
-          </DialogHeader>
-
-          {userToDelete && (
-            <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 text-xs space-y-1.5 my-2">
-              <div><span className="font-semibold text-muted-foreground">Nama Pengguna:</span> <strong className="text-foreground">{userToDelete.full_name}</strong></div>
-              <div><span className="font-semibold text-muted-foreground">Email / Username:</span> <code className="font-mono text-foreground">{userToDelete.email}</code></div>
-              <div><span className="font-semibold text-muted-foreground">NIP / NISN:</span> <code className="font-mono text-foreground">{userToDelete.nis}</code></div>
-              <div>
-                <span className="font-semibold text-muted-foreground">Role Saat Ini:</span>{" "}
-                <span className="font-semibold uppercase text-rose-600 dark:text-rose-400">{userToDelete.roles.join(", ")}</span>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setIsDeleteModalOpen(false)}>
-              Batal
-            </Button>
-            <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5" onClick={confirmDeleteUser}>
-              <Trash2 className="h-4 w-4" /> Ya, Hapus Pengguna
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Modal Form Tambah User Baru */}
-      <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" /> Tambah Pengguna Baru
-            </DialogTitle>
-            <DialogDescription>
-              Formulir pembuatan akun pengguna baru dan penetapan peran hak akses di MTsN 2 Cilacap.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleCreateUser} className="space-y-4 py-2">
-            <div>
-              <Label htmlFor="add-name" className="text-xs font-semibold">Nama Lengkap & Gelar</Label>
-              <Input
-                id="add-name"
-                placeholder="Contoh: AH. SYARIF HIDAYAH, S.Pd.I"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                className="mt-1"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="add-email" className="text-xs font-semibold">Email / Username</Label>
-                <Input
-                  id="add-email"
-                  type="email"
-                  placeholder="fauzi@mtsn2cilacap.sch.id"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="mt-1 text-xs font-mono"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="add-pass" className="text-xs font-semibold">Kata Sandi Default</Label>
-                <Input
-                  id="add-pass"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="mt-1 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="add-nis" className="text-xs font-semibold">NIP / NISN (Opsional)</Label>
-                <Input
-                  id="add-nis"
-                  placeholder="NIP. 19850512..."
-                  value={nis}
-                  onChange={(e) => setNis(e.target.value)}
-                  className="mt-1 text-xs font-mono"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="add-class" className="text-xs font-semibold">Kelas / Rombel</Label>
-                <Input
-                  id="add-class"
-                  placeholder="8A / 8B / Semua"
-                  value={userClass}
-                  onChange={(e) => setUserClass(e.target.value)}
-                  className="mt-1 text-xs"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold">Pilih Peran Pengguna (Dapat Memilih Lebih Dari 1 Role)</Label>
-                <span className="text-[10px] text-emerald-600 font-bold">{selectedRoles.length} Role Terpilih</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-1.5">
-                {[
-                  { id: "guru", label: "👨‍🏫 Guru Pengampu" },
-                  { id: "siswa", label: "🎓 Siswa" },
-                  { id: "walikelas", label: "📋 Wali Kelas" },
-                  { id: "waka", label: "📐 Waka Kurikulum" },
-                  { id: "kamad", label: "🏛️ Kepala Madrasah" },
-                  { id: "admin_akademik", label: "💼 Admin Akademik" },
-                  { id: "admin", label: "🛡️ Super Admin" },
-                ].map((r) => {
-                  const isSelected = selectedRoles.includes(r.id);
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          if (selectedRoles.length <= 1) return toast.error("Minimal 1 role wajib dipilih!");
-                          setSelectedRoles(selectedRoles.filter((item) => item !== r.id));
-                        } else {
-                          setSelectedRoles([...selectedRoles, r.id]);
-                        }
-                      }}
-                      className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-between transition ${isSelected
-                        ? "bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs"
-                        : "bg-muted/40 border-border hover:bg-muted"
-                        }`}
-                    >
-                      <span>{r.label}</span>
-                      {isSelected && <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <DialogFooter className="pt-3 gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddUserOpen(false)}>
-                Batal
-              </Button>
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">
-                Simpan & Buat Akun
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+/* ---------- Extracted Modules: UserManagementModule, KehadiranModule, JadwalModule ---------- */
 
 /* ---------- New Menu Pages ---------- */
 
@@ -2591,7 +1697,6 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
   const me = MysqlAuthService.getActiveUser();
 
   const resolvedInitialRombel = useMemo(() => {
-    // 1. If Siswa, use student class
     if (isSiswa) {
       const raw = userProfile?.class_name || (me as any)?.class_name || "VIII-A";
       const clean = raw.toUpperCase().replace("-", "").replace(/\s+/g, "");
@@ -2603,7 +1708,6 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
       if (clean.includes("9A") || clean.includes("IXA")) return "Rombel 9A";
     }
 
-    // 2. If Wali Kelas or Guru, resolve from logged in user name/nip/assigned_class
     const cleanName = (me?.full_name || "").toLowerCase();
     const cleanNip = (me?.nis_nip || "").trim();
     const cleanAssigned = (userProfile?.assignedClass || (me as any)?.assigned_class || "").toUpperCase();
@@ -2631,216 +1735,29 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
     return "Kelas VIII";
   }, [resolvedInitialRombel]);
 
-  const hari = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const hariList = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
   const [filterKelas, setFilterKelas] = useState(resolvedInitialGrade);
   const [filterRombel, setFilterRombel] = useState(resolvedInitialRombel);
 
-  const [jadwal, setJadwal] = useState<
-    Record<string, { j: string; m: string; tingkat: string; rombel: string; g: string }[]>
-  >(() => {
-    const OFFICIAL_SCHEDULE = {
-      Senin: [
-        // 7A
-        { j: "07.30 - 08.15", m: "Matematika", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "08.15 - 09.00", m: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
-        { j: "09.15 - 10.00", m: "Bahasa Jawa", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "RINDANG FARIHA IDANA, S.Pd" },
-        { j: "10.00 - 10.45", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "10.45 - 11.30", m: "Prakarya dan Seni Budaya", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ISNAENI HASANAH, S.Pd.I" },
-        // 7B
-        { j: "07.30 - 08.15", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "SOBIYATI, S.Pd" },
-        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "10.00 - 10.45", m: "Bahasa Jawa", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "RINDANG FARIHA IDANA, S.Pd" },
-        { j: "10.45 - 11.30", m: "Bimbingan dan Konseling", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ASROR HIDAYAT, S.Pd" },
-        // 8A
-        { j: "07.30 - 08.30", m: "PJOK", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
-        { j: "08.30 - 09.30", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "H. DASIRUN, S.Ag., M.Pd.I" },
-        { j: "09.45 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "SOBIYATI, S.Pd" },
-        { j: "10.45 - 11.45", m: "Bimbingan dan Konseling", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ASROR HIDAYAT, S.Pd" },
-        // 8B
-        { j: "07.30 - 08.15", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
-        { j: "08.15 - 09.00", m: "Bahasa Arab", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ENDAH SUPRIHATIN, S.Pd" },
-        { j: "09.15 - 10.00", m: "Fikih", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "CARYATI," },
-        { j: "10.00 - 10.45", m: "Prakarya dan Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ISNAENI HASANAH, S.Pd.I" },
-        { j: "10.45 - 11.30", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SOBIYATI, S.Pd" },
-        // 9A
-        { j: "07.30 - 08.30", m: "Bahasa Jawa", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "RINDANG FARIHA IDANA, S.Pd" },
-        { j: "08.30 - 09.30", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { j: "09.45 - 10.45", m: "Bahasa Inggris", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { j: "10.45 - 11.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "H. DASIRUN, S.Ag., M.Pd.I" },
-        // 9B
-        { j: "07.30 - 08.15", m: "Ilmu Pendidikan Alam", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Bimbingan dan Konseling", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ASROR HIDAYAT, S.Pd" },
-        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "10.00 - 10.45", m: "Prakarya dan Seni Budaya", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ISNAENI HASANAH, S.Pd.I" },
-        { j: "10.45 - 11.30", m: "Akidah Akhlak", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "WAKHIBUN, S.P" },
-      ],
-      Selasa: [
-        // 7A
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Matematika", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "09.15 - 10.00", m: "Akidah Akhlak", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "WAKHIBUN, S.P" },
-        { j: "10.00 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "SOBIYATI, S.Pd" },
-        { j: "10.45 - 11.30", m: "Bimbingan dan Konseling", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ASROR HIDAYAT, S.Pd" },
-        // 7B
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Bahasa Arab", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ENDAH SUPRIHATIN, S.Pd" },
-        { j: "09.45 - 10.45", m: "Bahasa Inggris", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { j: "10.45 - 11.45", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
-        // 8A
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "09.45 - 10.45", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "10.45 - 11.45", m: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        // 8B
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Bahasa Jawa", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "RINDANG FARIHA IDANA, S.Pd" },
-        { j: "09.15 - 10.00", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SOBIYATI, S.Pd" },
-        { j: "10.00 - 10.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "UMI KHAFSOH, S.Pd" },
-        { j: "10.45 - 11.30", m: "Al Qur'an Hadis", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        // 9A
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "09.15 - 10.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "10.00 - 10.45", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
-        { j: "10.45 - 11.30", m: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SOBIYATI, S.Pd" },
-        // 9B
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { j: "09.15 - 10.00", m: "Bahasa Jawa", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "RINDANG FARIHA IDANA, S.Pd" },
-        { j: "10.00 - 10.45", m: "Al Qur'an Hadis", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        { j: "10.45 - 11.30", m: "Bahasa Arab", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ENDAH SUPRIHATIN, S.Pd" },
-      ],
-      Rabu: [
-        // 7A
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Al Qur'an Hadis", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        { j: "09.45 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "SOBIYATI, S.Pd" },
-        { j: "10.45 - 11.45", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        // 7B
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "09.15 - 10.00", m: "Prakarya dan Seni Budaya", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ISNAENI HASANAH, S.Pd.I" },
-        { j: "10.00 - 10.45", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { j: "10.45 - 11.30", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "H. DASIRUN, S.Ag., M.Pd.I" },
-        // 8A
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Bahasa Jawa", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "RINDANG FARIHA IDANA, S.Pd" },
-        { j: "09.15 - 10.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "10.00 - 10.45", m: "Fikih", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "CARYATI," },
-        { j: "10.45 - 11.30", m: "Bahasa Arab", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ENDAH SUPRIHATIN, S.Pd" },
-        // 8B
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { j: "09.45 - 10.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "H. DASIRUN, S.Ag., M.Pd.I" },
-        { j: "10.45 - 11.45", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SOBIYATI, S.Pd" },
-        // 9A
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SOBIYATI, S.Pd" },
-        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "10.00 - 10.45", m: "Prakarya dan Seni Budaya", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ISNAENI HASANAH, S.Pd.I" },
-        { j: "10.45 - 11.30", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "UMI KHAFSOH, S.Pd" },
-        // 9B
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Bahasa Inggris", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { j: "09.45 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SOBIYATI, S.Pd" },
-        { j: "10.45 - 11.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "H. DASIRUN, S.Ag., M.Pd.I" },
-      ],
-      Kamis: [
-        // 7A
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
-        { j: "09.45 - 10.45", m: "Bahasa Inggris", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { j: "10.45 - 11.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "UMI KHAFSOH, S.Pd" },
-        // 7B
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Fikih", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "CARYATI," },
-        { j: "09.45 - 10.45", m: "Bahasa Indonesia", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "SOBIYATI, S.Pd" },
-        { j: "10.45 - 11.45", m: "Al Qur'an Hadis", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        // 8A
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "09.15 - 10.00", m: "Prakarya dan Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ISNAENI HASANAH, S.Pd.I" },
-        { j: "10.00 - 10.45", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
-        { j: "10.45 - 11.30", m: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "SOBIYATI, S.Pd" },
-        // 8B
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "10.00 - 10.45", m: "Akidah Akhlak", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "WAKHIBUN, S.P" },
-        { j: "10.45 - 11.30", m: "Bimbingan dan Konseling", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ASROR HIDAYAT, S.Pd" },
-        // 9A
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Al Qur'an Hadis", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        { j: "09.15 - 10.00", m: "Bahasa Arab", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ENDAH SUPRIHATIN, S.Pd" },
-        { j: "10.00 - 10.45", m: "Bimbingan dan Konseling", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "ASROR HIDAYAT, S.Pd" },
-        { j: "10.45 - 11.30", m: "Fikih", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "CARYATI," },
-        // 9B
-        { j: "07.30 - 08.15", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.15 - 09.00", m: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SOBIYATI, S.Pd" },
-        { j: "09.15 - 10.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "10.00 - 10.45", m: "Ilmu Pendidikan Alam", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "10.45 - 11.30", m: "Pendidikan Kewarganegaraan", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
-      ],
-      Jumat: [
-        // 7A
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Bahasa Arab", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "ENDAH SUPRIHATIN, S.Pd" },
-        { j: "09.45 - 10.45", m: "Sejarah Kebudayaan Islam", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "H. DASIRUN, S.Ag., M.Pd.I" },
-        // 7B
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
-        { j: "09.45 - 10.45", m: "Akidah Akhlak", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "WAKHIBUN, S.P" },
-        // 8A
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Al Qur'an Hadis", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        { j: "09.45 - 10.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "UMI KHAFSOH, S.Pd" },
-        // 8B
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "09.45 - 10.45", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        // 9A
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "Akidah Akhlak", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "WAKHIBUN, S.P" },
-        { j: "09.45 - 10.45", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "SAYONO, S.Pd., M.Pd." },
-        // 9B
-        { j: "07.30 - 08.30", m: "Tahfidz & Murottal", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "MISBAH AHMAD DANI, S.Pd" },
-        { j: "08.30 - 09.30", m: "PJOK", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
-        { j: "09.45 - 10.45", m: "Fikih", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "CARYATI," },
-      ],
-      Sabtu: [
-        // 7A
-        { j: "07.30 - 09.00", m: "Fikih", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "CARYATI," },
-        { j: "09.15 - 10.45", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VII", rombel: "Rombel 7A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        // 7B
-        { j: "07.30 - 09.00", m: "Matematika", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "09.15 - 10.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas VII", rombel: "Rombel 7B", g: "UMI KHAFSOH, S.Pd" },
-        // 8A
-        { j: "07.30 - 09.00", m: "Akidah Akhlak", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "WAKHIBUN, S.P" },
-        { j: "09.15 - 10.45", m: "Teknologi Informasi dan Komunikasi", tingkat: "Kelas VIII", rombel: "Rombel 8A", g: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        // 8B
-        { j: "07.30 - 09.00", m: "Ilmu Pendidikan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { j: "09.15 - 10.45", m: "PJOK", tingkat: "Kelas VIII", rombel: "Rombel 8B", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
-        // 9A
-        { j: "07.30 - 09.00", m: "PJOK", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "NUR ROCHMAN SHODIQ, S.Pd.I" },
-        { j: "09.15 - 10.45", m: "Ilmu Pendidikan Alam", tingkat: "Kelas IX", rombel: "Rombel 9A", g: "NOVANTYA KARTIKAWATI, S.Pd" },
-        // 9B
-        { j: "07.30 - 09.00", m: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "SAYONO, S.Pd., M.Pd." },
-        { j: "09.15 - 10.45", m: "Ilmu Pendidikan Sosial", tingkat: "Kelas IX", rombel: "Rombel 9B", g: "UMI KHAFSOH, S.Pd" },
-      ],
-    };
+  // State Jadwal Pelajaran (MySQL Database Persisten)
+  const [jadwalList, setJadwalList] = useState<JadwalRow[]>([]);
+  const [isLoadingJadwal, setIsLoadingJadwal] = useState(true);
 
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("lms_schedule_v3");
-        if (saved) return JSON.parse(saved);
-        localStorage.removeItem("lms_schedule_v1");
-        localStorage.removeItem("lms_schedule_v2");
-        localStorage.setItem("lms_schedule_v3", JSON.stringify(OFFICIAL_SCHEDULE));
-      } catch (e) {}
+  const loadJadwalData = async () => {
+    setIsLoadingJadwal(true);
+    try {
+      const data = await MysqlDataService.getJadwalList();
+      setJadwalList(data || []);
+    } catch (e) {
+      console.warn("Gagal memuat jadwal dari MySQL:", e);
+    } finally {
+      setIsLoadingJadwal(false);
     }
-    return OFFICIAL_SCHEDULE;
-  });
+  };
+
+  useEffect(() => {
+    loadJadwalData();
+  }, []);
 
   useEffect(() => {
     if (isRestrictedRole) {
@@ -2849,21 +1766,67 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
     }
   }, [isRestrictedRole, resolvedInitialRombel, resolvedInitialGrade]);
 
+  // Modal Form Tambah State
   const [isOpen, setIsOpen] = useState(false);
   const [selectedHari, setSelectedHari] = useState("Senin");
-  const [jam, setJam] = useState("07.30 - 09.00");
+  const [jam, setJam] = useState("07.30 - 08.15");
   const [mapel, setMapel] = useState("Matematika");
   const [inputTingkat, setInputTingkat] = useState("Kelas VIII");
   const [inputRombel, setInputRombel] = useState("Rombel 8A");
   const [guru, setGuru] = useState("SAYONO, S.Pd., M.Pd.");
 
-  const handleAdd = (e: React.FormEvent) => {
+  // Modal Form Edit State
+  const [isEditJadwalOpen, setIsEditJadwalOpen] = useState(false);
+  const [editingJadwal, setEditingJadwal] = useState<JadwalRow | null>(null);
+
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    const currentList = jadwal[selectedHari] || [];
-    const updated = [...currentList, { j: jam, m: mapel, tingkat: inputTingkat, rombel: inputRombel, g: guru }];
-    setJadwal({ ...jadwal, [selectedHari]: updated });
-    toast.success(`Jadwal ${mapel} (${inputTingkat} - ${inputRombel}) hari ${selectedHari} berhasil ditambahkan!`);
-    setIsOpen(false);
+    const res = await MysqlDataService.saveJadwal({
+      hari: selectedHari,
+      jam,
+      mapel,
+      tingkat: inputTingkat,
+      rombel: inputRombel,
+      guru,
+    });
+
+    if (res.success) {
+      toast.success(`✅ Jadwal ${mapel} (${inputTingkat} - ${inputRombel}) hari ${selectedHari} berhasil ditambahkan ke database!`);
+      setIsOpen(false);
+      await loadJadwalData();
+    } else {
+      toast.error("Gagal menyimpan jadwal ke database.");
+    }
+  };
+
+  const handleOpenEdit = (item: JadwalRow) => {
+    setEditingJadwal({ ...item });
+    setIsEditJadwalOpen(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingJadwal) return;
+    const res = await MysqlDataService.saveJadwal(editingJadwal);
+    if (res.success) {
+      toast.success(`✏️ Jadwal ${editingJadwal.mapel} (${editingJadwal.rombel}) berhasil diperbarui!`);
+      setIsEditJadwalOpen(false);
+      setEditingJadwal(null);
+      await loadJadwalData();
+    } else {
+      toast.error("Gagal memperbarui jadwal.");
+    }
+  };
+
+  const handleDelete = async (id?: string, itemDesc?: string) => {
+    if (!id) return;
+    const ok = await MysqlDataService.deleteJadwal(id);
+    if (ok) {
+      toast.success(`🗑️ Jadwal ${itemDesc || 'dipilih'} berhasil dihapus dari database.`);
+      await loadJadwalData();
+    } else {
+      toast.error("Gagal menghapus jadwal.");
+    }
   };
 
   const [isPrintJadwalOpen, setIsPrintJadwalOpen] = useState(false);
@@ -2898,60 +1861,38 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
         </div>
       </div>
 
-      {/* Filter Bar Kelas & Rombel (Hidden & Locked for Siswa & Wali Kelas) */}
+      {/* Filter Bar (Dropdown Selector Single Source of Truth) */}
       {!isRestrictedRole ? (
-        <div className="p-4 rounded-xl bg-card border border-border space-y-3 mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-muted-foreground mr-1">Filter Tingkat Kelas:</span>
-              {["Semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((k) => (
-                <Button
-                  key={k}
-                  size="sm"
-                  variant={filterKelas === k ? "default" : "outline"}
-                  className="text-xs h-7 font-semibold"
-                  onClick={() => setFilterKelas(k)}
-                >
-                  {k}
-                </Button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-muted-foreground">Rombel:</span>
-              <select
-                className="h-8 rounded-md border border-border bg-background px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400"
-                value={filterRombel}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setFilterRombel(val);
-                  if (val.includes("7")) setFilterKelas("Kelas VII");
-                  else if (val.includes("8")) setFilterKelas("Kelas VIII");
-                  else if (val.includes("9")) setFilterKelas("Kelas IX");
-                  else if (val === "Semua") setFilterKelas("Semua");
-                }}
-              >
-                <option value="Semua">Semua Rombel</option>
-                <option value="Rombel 7A">Rombel 7A</option>
-                <option value="Rombel 7B">Rombel 7B</option>
-                <option value="Rombel 8A">Rombel 8A</option>
-                <option value="Rombel 8B">Rombel 8B</option>
-                <option value="Rombel 9A">Rombel 9A</option>
-                <option value="Rombel 9B">Rombel 9B</option>
-              </select>
-            </div>
+        <div className="p-3.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 shadow-2xs">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <span className="text-xs font-bold text-muted-foreground shrink-0">Filter Rombel / Kelas:</span>
+            <select
+              className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer hover:border-primary/50 transition shrink-0 min-w-[220px]"
+              value={filterRombel}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterRombel(val);
+                if (val.includes("7")) setFilterKelas("Kelas VII");
+                else if (val.includes("8")) setFilterKelas("Kelas VIII");
+                else if (val.includes("9")) setFilterKelas("Kelas IX");
+                else if (val === "Semua") setFilterKelas("Semua");
+              }}
+            >
+              <option value="Semua">Semua Rombel (Seluruh Tingkat)</option>
+              <option value="Rombel 7A">Rombel 7A (Kelas VII)</option>
+              <option value="Rombel 7B">Rombel 7B (Kelas VII)</option>
+              <option value="Rombel 8A">Rombel 8A (Kelas VIII)</option>
+              <option value="Rombel 8B">Rombel 8B (Kelas VIII)</option>
+              <option value="Rombel 9A">Rombel 9A (Kelas IX)</option>
+              <option value="Rombel 9B">Rombel 9B (Kelas IX)</option>
+            </select>
           </div>
 
-          {/* Banner Info Schedule Filter */}
-          <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">📍</span> Menampilkan Jadwal KBM Resmi: <strong className="underline decoration-emerald-500 font-extrabold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})
-            </span>
-            {filterRombel !== "Semua" && (
-              <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400 text-[10px]">
-                Tersaring Presisi
-              </Badge>
-            )}
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+            <span>📍 Menampilkan: <strong className="underline decoration-emerald-500 font-extrabold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})</span>
+            <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 text-[9px] font-bold shrink-0">
+              ✔ {jadwalList.length} Sesi MySQL
+            </Badge>
           </div>
         </div>
       ) : (
@@ -2967,48 +1908,78 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
       )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {hari.map((h) => {
-          const listForDay = (jadwal[h] || []).filter((s) => {
-            const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
-            const matchRombel = filterRombel === "Semua" || s.rombel === filterRombel;
-            return matchKelas && matchRombel;
-          });
+        {isLoadingJadwal ? (
+          <div className="col-span-full py-12 text-center text-xs font-semibold text-muted-foreground">
+            ⏳ Memuat Jadwal Pelajaran KBM dari Database MySQL...
+          </div>
+        ) : (
+          hariList.map((h) => {
+            const listForDay = (jadwalList || []).filter((s) => {
+              if (s.hari !== h) return false;
+              const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
+              const matchRombel = filterRombel === "Semua" || s.rombel === filterRombel;
+              return matchKelas && matchRombel;
+            });
 
-          return (
-            <Card key={h} className="border-border shadow-xs">
-              <CardHeader className="py-3 px-4 bg-muted/30 border-b border-border">
-                <CardTitle className="text-sm font-bold flex items-center justify-between">
-                  <span>📅 {h}</span>
-                  <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-mono">
-                    {listForDay.length} Sesi
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                {listForDay.length === 0 && (
-                  <div className="text-xs text-muted-foreground py-3 text-center">Belum ada jadwal untuk filter ini</div>
-                )}
-                {listForDay.map((s, i) => (
-                  <div key={i} className="flex items-start gap-3 border-l-4 border-primary pl-3 py-1.5 bg-card rounded-r-lg shadow-2xs">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-xs text-foreground truncate">{s.m}</div>
-                      <div className="flex items-center gap-1.5 my-1 flex-wrap">
-                        <Badge variant="secondary" className="text-[9px] font-bold bg-muted text-foreground border-border">
-                          🏛️ {s.tingkat}
-                        </Badge>
-                        <Badge className="text-[9px] font-bold bg-primary/15 text-primary border-primary/20">
-                          🏫 {s.rombel}
-                        </Badge>
+            return (
+              <Card key={h} className="border-border shadow-xs">
+                <CardHeader className="py-3 px-4 bg-muted/30 border-b border-border">
+                  <CardTitle className="text-sm font-bold flex items-center justify-between">
+                    <span>📅 {h}</span>
+                    <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-mono">
+                      {listForDay.length} Sesi
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                  {listForDay.length === 0 && (
+                    <div className="text-xs text-muted-foreground py-3 text-center">Belum ada jadwal untuk filter ini</div>
+                  )}
+                  {listForDay.map((s) => (
+                    <div key={s.id || `${s.hari}-${s.jam}-${s.rombel}`} className="flex items-start justify-between gap-2 border-l-4 border-primary pl-3 py-2 bg-card rounded-r-lg shadow-2xs group hover:border-primary/80 transition">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-xs text-foreground truncate">{s.mapel}</div>
+                        <div className="flex items-center gap-1.5 my-1 flex-wrap">
+                          <Badge variant="secondary" className="text-[9px] font-bold bg-muted text-foreground border-border">
+                            🏛️ {s.tingkat}
+                          </Badge>
+                          <Badge className="text-[9px] font-bold bg-primary/15 text-primary border-primary/20">
+                            🏫 {s.rombel}
+                          </Badge>
+                        </div>
+                        <div className="text-[11px] text-muted-foreground truncate">👨‍🏫 {s.guru || "-"}</div>
+                        <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.jam}</div>
                       </div>
-                      <div className="text-[11px] text-muted-foreground truncate">👨‍🏫 {s.g}</div>
-                      <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.j}</div>
+
+                      {!isRestrictedRole && (
+                        <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100 transition">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            onClick={() => handleOpenEdit(s)}
+                            title="Edit Jadwal"
+                          >
+                            <PencilLine className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(s.id, `${s.mapel} (${s.rombel})`)}
+                            title="Hapus Jadwal"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          );
-        })}
+                  ))}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
       </div>
 
       {/* Modal Form Tambah Jadwal */}
@@ -3050,7 +2021,7 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
               <div>
                 <Label className="text-xs font-semibold">Pilih Hari</Label>
                 <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={selectedHari} onChange={(e) => setSelectedHari(e.target.value)}>
-                  {hari.map((h) => <option key={h} value={h}>{h}</option>)}
+                  {hariList.map((h) => <option key={h} value={h}>{h}</option>)}
                 </select>
               </div>
 
@@ -3075,6 +2046,106 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
               <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Jadwal</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Form Edit Jadwal */}
+      <Dialog open={isEditJadwalOpen} onOpenChange={setIsEditJadwalOpen}>
+        <DialogContent className="sm:max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <PencilLine className="h-5 w-5 text-primary" /> Edit Jadwal Pelajaran
+            </DialogTitle>
+            <DialogDescription>Perbarui detail jadwal KBM untuk rombel dan guru pengampu.</DialogDescription>
+          </DialogHeader>
+          {editingJadwal && (
+            <form onSubmit={handleSaveEdit} className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold">Tingkat Kelas</Label>
+                  <select
+                    className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                    value={editingJadwal.tingkat || "Kelas VIII"}
+                    onChange={(e) => setEditingJadwal({ ...editingJadwal, tingkat: e.target.value })}
+                  >
+                    <option value="Kelas VII">Kelas VII (7)</option>
+                    <option value="Kelas VIII">Kelas VIII (8)</option>
+                    <option value="Kelas IX">Kelas IX (9)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-semibold">Nama Rombel</Label>
+                  <select
+                    className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                    value={editingJadwal.rombel || "Rombel 8A"}
+                    onChange={(e) => setEditingJadwal({ ...editingJadwal, rombel: e.target.value })}
+                  >
+                    <option value="Rombel 7A">Rombel 7A</option>
+                    <option value="Rombel 7B">Rombel 7B</option>
+                    <option value="Rombel 7C">Rombel 7C</option>
+                    <option value="Rombel 8A">Rombel 8A</option>
+                    <option value="Rombel 8B">Rombel 8B</option>
+                    <option value="Rombel 8C">Rombel 8C</option>
+                    <option value="Rombel 9A">Rombel 9A</option>
+                    <option value="Rombel 9B">Rombel 9B</option>
+                    <option value="Rombel 9C">Rombel 9C</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold">Pilih Hari</Label>
+                  <select
+                    className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                    value={editingJadwal.hari || "Senin"}
+                    onChange={(e) => setEditingJadwal({ ...editingJadwal, hari: e.target.value })}
+                  >
+                    {hariList.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-semibold">Alokasi Waktu Jam</Label>
+                  <Input
+                    placeholder="07.30 - 08.15"
+                    value={editingJadwal.jam || ""}
+                    onChange={(e) => setEditingJadwal({ ...editingJadwal, jam: e.target.value })}
+                    required
+                    className="mt-1 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Mata Pelajaran</Label>
+                <Input
+                  placeholder="Contoh: Matematika"
+                  value={editingJadwal.mapel || ""}
+                  onChange={(e) => setEditingJadwal({ ...editingJadwal, mapel: e.target.value })}
+                  required
+                  className="mt-1 text-xs"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Guru Pengampu</Label>
+                <Input
+                  placeholder="Nama Guru Pengampu"
+                  value={editingJadwal.guru || ""}
+                  onChange={(e) => setEditingJadwal({ ...editingJadwal, guru: e.target.value })}
+                  required
+                  className="mt-1 text-xs"
+                />
+              </div>
+
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsEditJadwalOpen(false)}>Batal</Button>
+                <Button type="submit" size="sm" className="bg-primary text-primary-foreground font-bold">Simpan Perubahan</Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -3119,8 +2190,9 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
 
             {/* Matriks Hari (Senin - Sabtu) */}
             <div className="space-y-3">
-              {hari.map((h) => {
-                const listForDay = (jadwal[h] || []).filter((s) => {
+              {hariList.map((h) => {
+                const listForDay = (jadwalList || []).filter((s) => {
+                  if (s.hari !== h) return false;
                   const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
                   const matchRombel = filterRombel === "Semua" || s.rombel === filterRombel;
                   return matchKelas && matchRombel;
@@ -3144,11 +2216,11 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
                       </thead>
                       <tbody>
                         {listForDay.map((s, idx) => (
-                          <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
-                            <td className="p-1.5 text-center font-mono font-bold text-slate-900 border-r border-slate-200">{s.j}</td>
-                            <td className="p-1.5 font-bold text-blue-950 border-r border-slate-200">{s.m}</td>
+                          <tr key={s.id || idx} className="border-b border-slate-200 hover:bg-slate-50">
+                            <td className="p-1.5 text-center font-mono font-bold text-slate-900 border-r border-slate-200">{s.jam}</td>
+                            <td className="p-1.5 font-bold text-blue-950 border-r border-slate-200">{s.mapel}</td>
                             <td className="p-1.5 border-r border-slate-200">{s.rombel} ({s.tingkat})</td>
-                            <td className="p-1.5 text-slate-800">{s.g}</td>
+                            <td className="p-1.5 text-slate-800">{s.guru || "-"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -8307,13 +7379,13 @@ startxref
       {/* List Modul Ajar PDF */}
       <div className="grid sm:grid-cols-2 gap-4">
         {filteredModul.map((m) => (
-          <Card key={m.id} className="border-border hover:border-emerald-500/50 transition shadow-xs">
+          <Card key={m.id} className="border-border hover:border-emerald-500/50 transition shadow-xs flex flex-col justify-between">
             <CardContent className="p-4 flex items-start gap-3">
               <div className="h-12 w-12 rounded-xl bg-emerald-500/15 text-emerald-600 grid place-items-center shrink-0 font-bold text-xl">
                 📄
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 border-emerald-500/30">
                     {m.jenjang} • {m.mapel}
                   </Badge>
@@ -8321,56 +7393,62 @@ startxref
                     {m.status === "Terverifikasi Waka" ? "✓ Terverifikasi Waka" : "⏳ Perlu Verifikasi"}
                   </Badge>
                 </div>
-                <div className="font-bold text-sm text-foreground mt-1 truncate">{m.title}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">Penyusun: {m.teacher}</div>
-
-                <div className="flex flex-wrap items-center justify-between text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border gap-2">
-                  <span>Ukuran: <strong>{m.size}</strong></span>
-                  
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 gap-1"
-                      onClick={() => setPreviewModul(m)}
-                    >
-                      <Eye className="h-3 w-3" /> Pratinjau
-                    </Button>
-
-                    {isWakaOrAdmin && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className={`h-7 text-xs font-bold ${
-                          m.status === "Terverifikasi Waka"
-                            ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
-                            : "bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold shadow-xs"
-                        }`}
-                        onClick={() => handleToggleVerification(m.id, m.status, m.title)}
-                      >
-                        {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan & Verifikasi"}
-                      </Button>
-                    )}
-
-                    <Button size="sm" variant="ghost" className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleDownloadModulPdf(m)}>
-                      <Download className="h-3 w-3 mr-1" /> Unduh PDF
-                    </Button>
-
-                    {(isWakaOrAdmin || isGuru) && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs font-bold text-rose-600 hover:bg-rose-500/10 hover:text-rose-700 gap-1"
-                        onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
-                        title="Hapus Modul Ajar"
-                      >
-                        <Trash2 className="h-3 w-3" /> Hapus
-                      </Button>
-                    )}
-                  </div>
+                <div className="font-bold text-sm text-foreground mt-1.5 leading-snug line-clamp-2">{m.title}</div>
+                <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-between gap-2 flex-wrap">
+                  <span>Penyusun: <strong className="text-foreground font-semibold">{m.teacher}</strong></span>
+                  <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">💾 {m.size}</span>
                 </div>
               </div>
             </CardContent>
+
+            <div className="px-4 pb-3 pt-2.5 border-t border-border/80 flex items-center justify-between flex-wrap gap-2 bg-muted/20">
+              <div className="flex items-center gap-1.5 flex-wrap flex-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 px-2.5 gap-1"
+                  onClick={() => setPreviewModul(m)}
+                >
+                  <Eye className="h-3.5 w-3.5" /> Pratinjau
+                </Button>
+
+                {isWakaOrAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={`h-7 text-xs font-bold px-2.5 ${
+                      m.status === "Terverifikasi Waka"
+                        ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold shadow-xs"
+                    }`}
+                    onClick={() => handleToggleVerification(m.id, m.status, m.title)}
+                  >
+                    {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan"}
+                  </Button>
+                )}
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 px-2.5 gap-1"
+                  onClick={() => handleDownloadModulPdf(m)}
+                >
+                  <Download className="h-3.5 w-3.5" /> Unduh PDF
+                </Button>
+              </div>
+
+              {(isWakaOrAdmin || isGuru) && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/15 hover:text-rose-700 border border-rose-500/30 rounded-lg shrink-0"
+                  onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
+                  title="Hapus Modul Ajar"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           </Card>
         ))}
       </div>

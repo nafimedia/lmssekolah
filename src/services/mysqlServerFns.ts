@@ -20,6 +20,160 @@ export interface UserRow {
   role: string;
 }
 
+export interface PengampuRow {
+  id?: string;
+  guru: string;
+  mapel: string;
+  rombel: string;
+  jam?: string;
+  created_at?: string;
+}
+
+export interface RuangRow {
+  id?: string;
+  name: string;
+  type: string;
+  cap?: string;
+  fas?: string;
+  icon?: string;
+  created_at?: string;
+}
+
+export interface JadwalRow {
+  id?: string;
+  hari: string;
+  jam: string;
+  mapel: string;
+  tingkat: string;
+  rombel: string;
+  guru: string;
+  created_at?: string;
+}
+
+export interface JournalRow {
+  id?: string;
+  guru_name: string;
+  mapel: string;
+  rombel: string;
+  tanggal: string;
+  jam_ke: string;
+  materi: string;
+  catatan?: string;
+  created_at?: string;
+}
+
+export interface CbtResultRow {
+  id?: string;
+  exam_id: string;
+  exam_title?: string;
+  user_id: string;
+  student_name: string;
+  rombel: string;
+  score: number;
+  total_correct: number;
+  total_questions: number;
+  status: string;
+  submitted_at?: string;
+  created_at?: string;
+}
+
+export interface KktpConfigRow {
+  id?: string;
+  kktp_minimal: number;
+  bobot_formatif: number;
+  bobot_sumatif: number;
+  rentang_a?: number;
+  rentang_b?: number;
+  rentang_c?: number;
+  updated_by?: string;
+  updated_at?: string;
+}
+
+export interface AssignmentRow {
+  id?: string;
+  title: string;
+  mapel: string;
+  rombel: string;
+  due_date: string;
+  description?: string;
+  author_guru?: string;
+  created_at?: string;
+}
+
+export interface SubmissionRow {
+  id?: string;
+  assignment_id: string;
+  user_id: string;
+  student_name: string;
+  rombel: string;
+  file_url?: string;
+  notes?: string;
+  score?: number;
+  feedback?: string;
+  submitted_at?: string;
+  created_at?: string;
+}
+
+export interface ElibraryLoanRow {
+  id?: string;
+  book_id: string;
+  book_title: string;
+  user_id: string;
+  borrower_name: string;
+  rombel: string;
+  loan_date: string;
+  due_date: string;
+  return_date?: string;
+  status: string;
+  fine_amount?: number;
+  created_at?: string;
+}
+
+export interface GtkLeaveRow {
+  id?: string;
+  user_id: string;
+  guru_name: string;
+  nip_nis?: string;
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: string;
+  created_at?: string;
+}
+
+export interface GtkDocumentRow {
+  id?: string;
+  user_id: string;
+  doc_name: string;
+  category: string;
+  file_url?: string;
+  created_at?: string;
+}
+
+export interface MasterRombelRow {
+  id?: string;
+  code: string;
+  name: string;
+  grade: string;
+  wali_kelas: string;
+  room: string;
+  siswa_count?: number;
+  created_at?: string;
+}
+
+export interface UserAchievementRow {
+  id?: string;
+  user_id: string;
+  user_name: string;
+  title: string;
+  category: string;
+  year?: string;
+  issuer?: string;
+  file_url?: string;
+  created_at?: string;
+}
+
 /* =========================================================================
    SERVER-AUTHORITATIVE SESSION & AUTHORIZATION MIDDLEWARE
    ========================================================================= */
@@ -595,6 +749,298 @@ export const deleteSubjectFn = createServerFn({ method: "POST" })
       return true;
     } catch {
       return false;
+    }
+  });
+
+// 2B. MATRIKS PENGAMPU (GURU + MAPEL + ROMBEL)
+export async function createPengampuTableIfNotExists() {
+  try {
+    const { execute } = await import("@/lib/db");
+    await execute(`
+      CREATE TABLE IF NOT EXISTS matriks_pengampu (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        guru VARCHAR(255) NOT NULL,
+        mapel VARCHAR(255) NOT NULL,
+        rombel VARCHAR(100) NOT NULL,
+        jam VARCHAR(50) DEFAULT '2 JP / mgg',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+  } catch (e) {
+    console.warn("[matriks_pengampu init error]:", e);
+  }
+}
+
+export const getPengampuFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<PengampuRow[]> => {
+    try {
+      await createPengampuTableIfNotExists();
+      const { query, execute } = await import("@/lib/db");
+      const rows = await query<PengampuRow[]>("SELECT id, guru, mapel, rombel, jam FROM matriks_pengampu ORDER BY id DESC");
+      if (rows && rows.length > 0) {
+        return rows.map(r => ({ ...r, id: String(r.id) }));
+      }
+
+      const initialSeed: PengampuRow[] = [
+        { guru: "AH. SYARIF HIDAYAH, S.Pd.I", mapel: "Al Qur'an Hadis", rombel: "IX A", jam: "2 JP / mgg" },
+        { guru: "MISBAH AHMAD DANI, S.Pd", mapel: "Al Qur'an Hadis", rombel: "VII A", jam: "2 JP / mgg" },
+        { guru: "WAKHIBUN, S.P", mapel: "Akidah Akhlak", rombel: "VIII A", jam: "2 JP / mgg" },
+        { guru: "MAHMUDAH, S.", mapel: "Akidah Akhlak", rombel: "VII B", jam: "2 JP / mgg" },
+        { guru: "CARYATI,", mapel: "Fikih", rombel: "VIII A", jam: "2 JP / mgg" },
+        { guru: "MUHTAMAM, S.Ag., M.Pd.I", mapel: "Fikih", rombel: "IX B", jam: "2 JP / mgg" },
+        { guru: "H. DASIRUN, S.Ag., M.Pd.I", mapel: "Sejarah Kebudayaan Islam", rombel: "VII A", jam: "2 JP / mgg" },
+        { guru: "ENDAH SUPRIHATIN, S.Pd", mapel: "Bahasa Arab", rombel: "VII A", jam: "3 JP / mgg" },
+        { guru: "Hj. SITI MUHSINAH, S", mapel: "Bahasa Arab", rombel: "VIII A", jam: "3 JP / mgg" },
+        { guru: "WAHYUDIN, S", mapel: "Bahasa Arab", rombel: "IX A", jam: "3 JP / mgg" },
+        { guru: "SOBIYATI, S.Pd", mapel: "Bahasa Indonesia", rombel: "VIII A", jam: "4 JP / mgg" },
+        { guru: "DAISAH, S.Pd", mapel: "Bahasa Indonesia", rombel: "VII A", jam: "4 JP / mgg" },
+        { guru: "Hj. NANGIMAH, S.", mapel: "Bahasa Indonesia", rombel: "IX A", jam: "4 JP / mgg" },
+        { guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", mapel: "Bahasa Inggris", rombel: "VII A", jam: "3 JP / mgg" },
+        { guru: "RIDHO ANSHORI, S.Pd., M.Pd", mapel: "Bahasa Inggris", rombel: "VIII A", jam: "3 JP / mgg" },
+        { guru: "CETY MAHARSY, S.Pd", mapel: "Bahasa Inggris", rombel: "VIII B", jam: "3 JP / mgg" },
+        { guru: "SASI VIVIANI, S.Pd", mapel: "Bahasa Inggris", rombel: "VII B", jam: "3 JP / mgg" },
+        { guru: "INDAH NURROHMAH, S.Pd", mapel: "Bahasa Inggris", rombel: "IX A", jam: "3 JP / mgg" },
+        { guru: "SAYONO, S.Pd., M.Pd.", mapel: "Matematika", rombel: "VIII A", jam: "4 JP / mgg" },
+        { guru: "SRIYANI KUNTARI, S.Pd", mapel: "Matematika", rombel: "VII A", jam: "4 JP / mgg" },
+        { guru: "H. ANI YULIANI, S.Pd", mapel: "Matematika", rombel: "IX A", jam: "4 JP / mgg" },
+        { guru: "IFTI NURROHMAH, S.Pd", mapel: "Matematika", rombel: "VII B", jam: "4 JP / mgg" },
+        { guru: "NOVANTYA KARTIKAWATI, S.Pd", mapel: "Ilmu Pendidikan Alam", rombel: "VIII A", jam: "4 JP / mgg" },
+        { guru: "STEFI APRIONITA SETYO ARUM, S.Pd", mapel: "Ilmu Pendidikan Alam", rombel: "VII A", jam: "4 JP / mgg" },
+        { guru: "ILHAM HABIBI, S.Pd", mapel: "Ilmu Pendidikan Alam", rombel: "IX A", jam: "4 JP / mgg" },
+        { guru: "HIKMATUL ASTRI AZKIYA, S.Pd", mapel: "Ilmu Pendidikan Alam", rombel: "VII B", jam: "4 JP / mgg" },
+        { guru: "UMI KHAFSOH, S.Pd", mapel: "Ilmu Pendidikan Sosial", rombel: "VIII A", jam: "3 JP / mgg" },
+        { guru: "NAZIHATUN ZUHRIYAH, S.Pd.", mapel: "Ilmu Pendidikan Sosial", rombel: "VII A", jam: "3 JP / mgg" },
+        { guru: "ALI MANSUR, S.Pd", mapel: "Ilmu Pendidikan Sosial", rombel: "IX A", jam: "3 JP / mgg" },
+        { guru: "ANGGUN NOVTALIA BERLIAN, S.Pd", mapel: "Pendidikan Kewarganegaraan", rombel: "VIII A", jam: "2 JP / mgg" },
+        { guru: "TEGUH WIYONO, S.Pd", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", rombel: "VIII A", jam: "2 JP / mgg" },
+        { guru: "NUR ROCHMAN SHODIQ, S.Pd.I", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", rombel: "VII A", jam: "2 JP / mgg" },
+        { guru: "MASRUKHAN, S.Pd", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", rombel: "IX A", jam: "2 JP / mgg" },
+        { guru: "HASIS SYARIFUDIN, S.Pd", mapel: "Prakarya dan Seni Budaya", rombel: "VIII A", jam: "2 JP / mgg" },
+        { guru: "ISNAENI HASANAH, S.Pd.I", mapel: "Prakarya dan Seni Budaya", rombel: "VII A", jam: "2 JP / mgg" },
+        { guru: "RINDANG FARIHA IDANA, S.Pd", mapel: "Bahasa Jawa", rombel: "VIII A", jam: "2 JP / mgg" },
+        { guru: "ASROR HIDAYAT, S.Pd", mapel: "Bimbingan dan Konseling", rombel: "VIII A", jam: "2 JP / mgg" },
+        { guru: "MAULIDIA NURUL IZATI, S.Pd", mapel: "Bimbingan dan Konseling", rombel: "VII A", jam: "2 JP / mgg" },
+        { guru: "SARAH SAFIRA, S.Pd", mapel: "Bimbingan dan Konseling", rombel: "IX A", jam: "2 JP / mgg" },
+        { guru: "H. SOLIHUN, S.Pd., M.Si", mapel: "Manajemen Sekolah", rombel: "Semua Rombel", jam: "6 JP / mgg" },
+      ];
+
+      for (const s of initialSeed) {
+        await execute("INSERT INTO matriks_pengampu (guru, mapel, rombel, jam) VALUES (?, ?, ?, ?)", [s.guru, s.mapel, s.rombel, s.jam || "2 JP / mgg"]);
+      }
+
+      const freshRows = await query<PengampuRow[]>("SELECT id, guru, mapel, rombel, jam FROM matriks_pengampu ORDER BY id DESC");
+      return (freshRows || []).map(r => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.warn("[getPengampuFn error]:", e);
+      return [];
+    }
+  }
+);
+
+export const savePengampuFn = createServerFn({ method: "POST" })
+  .validator((data: PengampuRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      await createPengampuTableIfNotExists();
+      const { execute } = await import("@/lib/db");
+      if (data.id) {
+        await execute(
+          "UPDATE matriks_pengampu SET guru=?, mapel=?, rombel=?, jam=? WHERE id=?",
+          [data.guru, data.mapel, data.rombel, data.jam || "2 JP / mgg", data.id]
+        );
+        return { success: true, id: String(data.id) };
+      } else {
+        const res: any = await execute(
+          "INSERT INTO matriks_pengampu (guru, mapel, rombel, jam) VALUES (?, ?, ?, ?)",
+          [data.guru, data.mapel, data.rombel, data.jam || "2 JP / mgg"]
+        );
+        return { success: true, id: String(res?.insertId || Date.now()) };
+      }
+    } catch (e) {
+      console.error("[savePengampuFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deletePengampuFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      await createPengampuTableIfNotExists();
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM matriks_pengampu WHERE id=?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deletePengampuFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 2C. MASTER SARANA & RUANG KELAS
+export async function createRuangTableIfNotExists() {
+  try {
+    const { execute } = await import("@/lib/db");
+    await execute(`
+      CREATE TABLE IF NOT EXISTS master_ruang (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        type VARCHAR(100) NOT NULL,
+        cap VARCHAR(100) DEFAULT '36 Siswa',
+        fas VARCHAR(255) DEFAULT 'Proyektor, AC',
+        icon VARCHAR(20) DEFAULT '🏫',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+  } catch (e) {
+    console.warn("[master_ruang init error]:", e);
+  }
+}
+
+export const getRuangFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<RuangRow[]> => {
+    try {
+      await createRuangTableIfNotExists();
+      const { query, execute } = await import("@/lib/db");
+      const rows = await query<RuangRow[]>("SELECT id, name, type, cap, fas, icon FROM master_ruang ORDER BY id DESC");
+      if (rows && rows.length > 0) {
+        return rows.map(r => ({ ...r, id: String(r.id) }));
+      }
+
+      const initialSeed: RuangRow[] = [
+        { name: "Ruang A.01", type: "Ruang Teori (Kelas VII A)", cap: "36 Siswa", fas: "Proyektor, AC, Papan Tulis", icon: "🏫" },
+        { name: "Ruang A.02", type: "Ruang Teori (Kelas VIII A)", cap: "36 Siswa", fas: "Proyektor, AC, Sound System", icon: "🏫" },
+        { name: "Lab IPA Terpadu", type: "Laboratorium Praktikum", cap: "40 Siswa", fas: "Mikroskop, Alat Bedah, Proyektor", icon: "🔬" },
+        { name: "Lab Komputer CBT", type: "Laboratorium Komputer", cap: "40 Komputer", fas: "LAN, Server CBT, AC, UPS 10kVA", icon: "💻" },
+        { name: "Perpustakaan Digital", type: "E-Library & Ruang Baca", cap: "60 Siswa", fas: "Tablet E-Library, Wi-Fi 100Mbps", icon: "📚" },
+        { name: "Lapangan Olahraga Utama", type: "Fasilitas Outdoor", cap: "500 Siswa", fas: "Garis Futsal, Basket, Voli", icon: "⚽" },
+      ];
+
+      for (const s of initialSeed) {
+        await execute(
+          "INSERT INTO master_ruang (name, type, cap, fas, icon) VALUES (?, ?, ?, ?, ?)",
+          [s.name, s.type, s.cap || "36 Siswa", s.fas || "Proyektor, AC", s.icon || "🏫"]
+        );
+      }
+
+      const freshRows = await query<RuangRow[]>("SELECT id, name, type, cap, fas, icon FROM master_ruang ORDER BY id DESC");
+      return (freshRows || []).map(r => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.warn("[getRuangFn error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveRuangFn = createServerFn({ method: "POST" })
+  .validator((data: RuangRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      await createRuangTableIfNotExists();
+      const { execute } = await import("@/lib/db");
+      if (data.id && !data.id.startsWith("ruang-") && !isNaN(Number(data.id))) {
+        await execute(
+          "UPDATE master_ruang SET name=?, type=?, cap=?, fas=?, icon=? WHERE id=?",
+          [data.name, data.type, data.cap || "36 Siswa", data.fas || "Proyektor, AC", data.icon || "🏫", data.id]
+        );
+        return { success: true, id: String(data.id) };
+      } else {
+        const res: any = await execute(
+          "INSERT INTO master_ruang (name, type, cap, fas, icon) VALUES (?, ?, ?, ?, ?)",
+          [data.name, data.type, data.cap || "36 Siswa", data.fas || "Proyektor, AC", data.icon || "🏫"]
+        );
+        return { success: true, id: String(res?.insertId || Date.now()) };
+      }
+    } catch (e) {
+      console.error("[saveRuangFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteRuangFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      await createRuangTableIfNotExists();
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM master_ruang WHERE id=?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteRuangFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 2D. JADWAL PELAJARAN KBM
+export async function createJadwalTableIfNotExists() {
+  try {
+    const { execute } = await import("@/lib/db");
+    await execute(`
+      CREATE TABLE IF NOT EXISTS jadwal_pelajaran (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        hari VARCHAR(50) NOT NULL,
+        jam VARCHAR(100) NOT NULL,
+        mapel VARCHAR(255) NOT NULL,
+        tingkat VARCHAR(100) NOT NULL,
+        rombel VARCHAR(100) NOT NULL,
+        guru VARCHAR(255) DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+  } catch (e) {
+    console.warn("[jadwal_pelajaran init error]:", e);
+  }
+}
+
+export const getJadwalFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<JadwalRow[]> => {
+    try {
+      await createJadwalTableIfNotExists();
+      const { query } = await import("@/lib/db");
+      const rows = await query<JadwalRow[]>("SELECT id, hari, jam, mapel, tingkat, rombel, guru FROM jadwal_pelajaran ORDER BY id ASC");
+      return (rows || []).map(r => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.warn("[getJadwalFn error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveJadwalFn = createServerFn({ method: "POST" })
+  .validator((data: JadwalRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      await createJadwalTableIfNotExists();
+      const { execute } = await import("@/lib/db");
+      if (data.id && !isNaN(Number(data.id))) {
+        await execute(
+          "UPDATE jadwal_pelajaran SET hari=?, jam=?, mapel=?, tingkat=?, rombel=?, guru=? WHERE id=?",
+          [data.hari, data.jam, data.mapel, data.tingkat, data.rombel, data.guru || "", data.id]
+        );
+        return { success: true, id: String(data.id) };
+      } else {
+        const res: any = await execute(
+          "INSERT INTO jadwal_pelajaran (hari, jam, mapel, tingkat, rombel, guru) VALUES (?, ?, ?, ?, ?, ?)",
+          [data.hari, data.jam, data.mapel, data.tingkat, data.rombel, data.guru || ""]
+        );
+        return { success: true, id: String(res?.insertId || Date.now()) };
+      }
+    } catch (e) {
+      console.error("[saveJadwalFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteJadwalFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      await createJadwalTableIfNotExists();
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM jadwal_pelajaran WHERE id=?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteJadwalFn Error]:", e);
+      return { success: false };
     }
   });
 
@@ -1529,6 +1975,718 @@ export const saveP5ProjectFn = createServerFn({ method: "POST" })
       return { success: true };
     } catch (e) {
       console.error("[saveP5ProjectFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 16. JURNAL MENGAJAR GURU (TEACHER JOURNALS)
+export const getJournalsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<JournalRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS teacher_journals (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          guru_name VARCHAR(255) NOT NULL,
+          mapel VARCHAR(100) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          tanggal VARCHAR(50) NOT NULL,
+          jam_ke VARCHAR(50) NOT NULL,
+          materi VARCHAR(255) NOT NULL,
+          catatan TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<JournalRow[]>("SELECT * FROM teacher_journals ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getJournalsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveJournalFn = createServerFn({ method: "POST" })
+  .validator((data: JournalRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS teacher_journals (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          guru_name VARCHAR(255) NOT NULL,
+          mapel VARCHAR(100) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          tanggal VARCHAR(50) NOT NULL,
+          jam_ke VARCHAR(50) NOT NULL,
+          materi VARCHAR(255) NOT NULL,
+          catatan TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      if (data.id) {
+        await execute(
+          `UPDATE teacher_journals SET guru_name=?, mapel=?, rombel=?, tanggal=?, jam_ke=?, materi=?, catatan=? WHERE id=?`,
+          [data.guru_name, data.mapel, data.rombel, data.tanggal, data.jam_ke, data.materi, data.catatan || "", data.id]
+        );
+        return { success: true, id: String(data.id) };
+      } else {
+        const res: any = await execute(
+          `INSERT INTO teacher_journals (guru_name, mapel, rombel, tanggal, jam_ke, materi, catatan)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [data.guru_name, data.mapel, data.rombel, data.tanggal, data.jam_ke, data.materi, data.catatan || ""]
+        );
+        return { success: true, id: String(res.insertId || "") };
+      }
+    } catch (e) {
+      console.error("[saveJournalFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteJournalFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string | number }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM teacher_journals WHERE id = ?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteJournalFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 17. HASIL UJIAN CBT SISWA (CBT EXAM RESULTS)
+export const getCbtResultsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CbtResultRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS cbt_exam_results (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          exam_id VARCHAR(64) NOT NULL,
+          exam_title VARCHAR(255),
+          user_id VARCHAR(64) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          score DECIMAL(5,2) DEFAULT 0,
+          total_correct INT DEFAULT 0,
+          total_questions INT DEFAULT 0,
+          status VARCHAR(50) DEFAULT 'Selesai',
+          submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<CbtResultRow[]>("SELECT * FROM cbt_exam_results ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getCbtResultsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveCbtResultFn = createServerFn({ method: "POST" })
+  .validator((data: CbtResultRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS cbt_exam_results (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          exam_id VARCHAR(64) NOT NULL,
+          exam_title VARCHAR(255),
+          user_id VARCHAR(64) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          score DECIMAL(5,2) DEFAULT 0,
+          total_correct INT DEFAULT 0,
+          total_questions INT DEFAULT 0,
+          status VARCHAR(50) DEFAULT 'Selesai',
+          submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      const res: any = await execute(
+        `INSERT INTO cbt_exam_results (exam_id, exam_title, user_id, student_name, rombel, score, total_correct, total_questions, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.exam_id,
+          data.exam_title || "",
+          data.user_id,
+          data.student_name,
+          data.rombel,
+          data.score || 0,
+          data.total_correct || 0,
+          data.total_questions || 0,
+          data.status || "Selesai",
+        ]
+      );
+      return { success: true, id: String(res.insertId || "") };
+    } catch (e) {
+      console.error("[saveCbtResultFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteCbtResultFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string | number }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM cbt_exam_results WHERE id = ?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteCbtResultFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 18. PENGATURAN KKTP & SKEMA PENILAIAN (MASTER KKTP CONFIG)
+export const getKktpConfigFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<KktpConfigRow> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS master_kktp_config (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          kktp_minimal INT DEFAULT 75,
+          bobot_formatif INT DEFAULT 40,
+          bobot_sumatif INT DEFAULT 60,
+          rentang_a INT DEFAULT 90,
+          rentang_b INT DEFAULT 80,
+          rentang_c INT DEFAULT 75,
+          updated_by VARCHAR(255),
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<KktpConfigRow[]>("SELECT * FROM master_kktp_config ORDER BY id DESC LIMIT 1");
+      if (rows && rows.length > 0) {
+        return rows[0];
+      }
+      return {
+        kktp_minimal: 75,
+        bobot_formatif: 40,
+        bobot_sumatif: 60,
+        rentang_a: 90,
+        rentang_b: 80,
+        rentang_c: 75,
+        updated_by: "Sistem Admin",
+      };
+    } catch (e) {
+      console.error("[getKktpConfigFn Error]:", e);
+      return {
+        kktp_minimal: 75,
+        bobot_formatif: 40,
+        bobot_sumatif: 60,
+        rentang_a: 90,
+        rentang_b: 80,
+        rentang_c: 75,
+        updated_by: "Default System",
+      };
+    }
+  }
+);
+
+export const saveKktpConfigFn = createServerFn({ method: "POST" })
+  .validator((data: KktpConfigRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS master_kktp_config (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          kktp_minimal INT DEFAULT 75,
+          bobot_formatif INT DEFAULT 40,
+          bobot_sumatif INT DEFAULT 60,
+          rentang_a INT DEFAULT 90,
+          rentang_b INT DEFAULT 80,
+          rentang_c INT DEFAULT 75,
+          updated_by VARCHAR(255),
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      await execute(
+        `INSERT INTO master_kktp_config (kktp_minimal, bobot_formatif, bobot_sumatif, rentang_a, rentang_b, rentang_c, updated_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.kktp_minimal || 75,
+          data.bobot_formatif || 40,
+          data.bobot_sumatif || 60,
+          data.rentang_a || 90,
+          data.rentang_b || 80,
+          data.rentang_c || 75,
+          data.updated_by || "Admin",
+        ]
+      );
+      return { success: true };
+    } catch (e) {
+      console.error("[saveKktpConfigFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 19. TUGAS SISWA & SUBMISSION (STUDENT ASSIGNMENTS)
+export const getAssignmentsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<AssignmentRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS student_assignments (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          mapel VARCHAR(100) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          due_date VARCHAR(50) NOT NULL,
+          description TEXT,
+          author_guru VARCHAR(255),
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<AssignmentRow[]>("SELECT * FROM student_assignments ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getAssignmentsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveAssignmentFn = createServerFn({ method: "POST" })
+  .validator((data: AssignmentRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS student_assignments (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          mapel VARCHAR(100) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          due_date VARCHAR(50) NOT NULL,
+          description TEXT,
+          author_guru VARCHAR(255),
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO student_assignments (title, mapel, rombel, due_date, description, author_guru)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [data.title, data.mapel, data.rombel, data.due_date, data.description || "", data.author_guru || "Guru"]
+      );
+      return { success: true, id: String(res.insertId || "") };
+    } catch (e) {
+      console.error("[saveAssignmentFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteAssignmentFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string | number }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM student_assignments WHERE id = ?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteAssignmentFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const getSubmissionsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<SubmissionRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS assignment_submissions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          assignment_id VARCHAR(64) NOT NULL,
+          user_id VARCHAR(64) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          file_url TEXT,
+          notes TEXT,
+          score INT DEFAULT 0,
+          feedback TEXT,
+          submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<SubmissionRow[]>("SELECT * FROM assignment_submissions ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getSubmissionsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveSubmissionFn = createServerFn({ method: "POST" })
+  .validator((data: SubmissionRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS assignment_submissions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          assignment_id VARCHAR(64) NOT NULL,
+          user_id VARCHAR(64) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          file_url TEXT,
+          notes TEXT,
+          score INT DEFAULT 0,
+          feedback TEXT,
+          submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO assignment_submissions (assignment_id, user_id, student_name, rombel, file_url, notes, score, feedback)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.assignment_id,
+          data.user_id,
+          data.student_name,
+          data.rombel,
+          data.file_url || "",
+          data.notes || "",
+          data.score || 0,
+          data.feedback || "",
+        ]
+      );
+      return { success: true, id: String(res.insertId || "") };
+    } catch (e) {
+      console.error("[saveSubmissionFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 20. PEMINJAMAN PERPUSTAKAAN (ELIBRARY LOANS)
+export const getElibraryLoansFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ElibraryLoanRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS elibrary_loans (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          book_id VARCHAR(64) NOT NULL,
+          book_title VARCHAR(255) NOT NULL,
+          user_id VARCHAR(64) NOT NULL,
+          borrower_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          loan_date VARCHAR(50) NOT NULL,
+          due_date VARCHAR(50) NOT NULL,
+          return_date VARCHAR(50),
+          status VARCHAR(50) DEFAULT 'Dipinjam',
+          fine_amount INT DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<ElibraryLoanRow[]>("SELECT * FROM elibrary_loans ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getElibraryLoansFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveElibraryLoanFn = createServerFn({ method: "POST" })
+  .validator((data: ElibraryLoanRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS elibrary_loans (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          book_id VARCHAR(64) NOT NULL,
+          book_title VARCHAR(255) NOT NULL,
+          user_id VARCHAR(64) NOT NULL,
+          borrower_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          loan_date VARCHAR(50) NOT NULL,
+          due_date VARCHAR(50) NOT NULL,
+          return_date VARCHAR(50),
+          status VARCHAR(50) DEFAULT 'Dipinjam',
+          fine_amount INT DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO elibrary_loans (book_id, book_title, user_id, borrower_name, rombel, loan_date, due_date, status, fine_amount)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.book_id,
+          data.book_title,
+          data.user_id,
+          data.borrower_name,
+          data.rombel,
+          data.loan_date,
+          data.due_date,
+          data.status || "Dipinjam",
+          data.fine_amount || 0,
+        ]
+      );
+      return { success: true, id: String(res.insertId || "") };
+    } catch (e) {
+      console.error("[saveElibraryLoanFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const updateElibraryLoanStatusFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string | number; status: string; return_date?: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("UPDATE elibrary_loans SET status = ?, return_date = ? WHERE id = ?", [
+        data.status,
+        data.return_date || new Date().toISOString().split("T")[0],
+        data.id,
+      ]);
+      return { success: true };
+    } catch (e) {
+      console.error("[updateElibraryLoanStatusFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 21. GTK LEAVES & DOCUMENTS
+export const getGtkLeavesFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<GtkLeaveRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS gtk_leaves (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id VARCHAR(64) NOT NULL,
+          guru_name VARCHAR(255) NOT NULL,
+          nip_nis VARCHAR(50),
+          leave_type VARCHAR(50) NOT NULL,
+          start_date VARCHAR(50) NOT NULL,
+          end_date VARCHAR(50) NOT NULL,
+          reason TEXT NOT NULL,
+          status VARCHAR(50) DEFAULT 'Menunggu',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<GtkLeaveRow[]>("SELECT * FROM gtk_leaves ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getGtkLeavesFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveGtkLeaveFn = createServerFn({ method: "POST" })
+  .validator((data: GtkLeaveRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS gtk_leaves (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id VARCHAR(64) NOT NULL,
+          guru_name VARCHAR(255) NOT NULL,
+          nip_nis VARCHAR(50),
+          leave_type VARCHAR(50) NOT NULL,
+          start_date VARCHAR(50) NOT NULL,
+          end_date VARCHAR(50) NOT NULL,
+          reason TEXT NOT NULL,
+          status VARCHAR(50) DEFAULT 'Menunggu',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO gtk_leaves (user_id, guru_name, nip_nis, leave_type, start_date, end_date, reason, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.user_id,
+          data.guru_name,
+          data.nip_nis || "",
+          data.leave_type,
+          data.start_date,
+          data.end_date,
+          data.reason,
+          data.status || "Menunggu",
+        ]
+      );
+      return { success: true, id: String(res.insertId || "") };
+    } catch (e) {
+      console.error("[saveGtkLeaveFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const getGtkDocumentsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<GtkDocumentRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS gtk_documents (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id VARCHAR(64) NOT NULL,
+          doc_name VARCHAR(255) NOT NULL,
+          category VARCHAR(50) NOT NULL,
+          file_url TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<GtkDocumentRow[]>("SELECT * FROM gtk_documents ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getGtkDocumentsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveGtkDocumentFn = createServerFn({ method: "POST" })
+  .validator((data: GtkDocumentRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS gtk_documents (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id VARCHAR(64) NOT NULL,
+          doc_name VARCHAR(255) NOT NULL,
+          category VARCHAR(50) NOT NULL,
+          file_url TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO gtk_documents (user_id, doc_name, category, file_url)
+         VALUES (?, ?, ?, ?)`,
+        [data.user_id, data.doc_name, data.category, data.file_url || ""]
+      );
+      return { success: true, id: String(res.insertId || "") };
+    } catch (e) {
+      console.error("[saveGtkDocumentFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 22. MASTER ROMBEL & WALI KELAS
+export const getMasterRombelsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<MasterRombelRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS master_rombels (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          code VARCHAR(50) NOT NULL UNIQUE,
+          name VARCHAR(100) NOT NULL,
+          grade VARCHAR(10) NOT NULL,
+          wali_kelas VARCHAR(255) NOT NULL,
+          room VARCHAR(100) NOT NULL,
+          siswa_count INT DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<MasterRombelRow[]>("SELECT * FROM master_rombels ORDER BY code ASC");
+    } catch (e) {
+      console.error("[getMasterRombelsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveMasterRombelFn = createServerFn({ method: "POST" })
+  .validator((data: MasterRombelRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS master_rombels (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          code VARCHAR(50) NOT NULL UNIQUE,
+          name VARCHAR(100) NOT NULL,
+          grade VARCHAR(10) NOT NULL,
+          wali_kelas VARCHAR(255) NOT NULL,
+          room VARCHAR(100) NOT NULL,
+          siswa_count INT DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO master_rombels (code, name, grade, wali_kelas, room, siswa_count)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE name=VALUES(name), grade=VALUES(grade), wali_kelas=VALUES(wali_kelas), room=VALUES(room), siswa_count=VALUES(siswa_count)`,
+        [data.code, data.name, data.grade, data.wali_kelas, data.room, data.siswa_count || 0]
+      );
+      return { success: true, id: String(res.insertId || "") };
+    } catch (e) {
+      console.error("[saveMasterRombelFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteMasterRombelFn = createServerFn({ method: "POST" })
+  .validator((data: { code: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM master_rombels WHERE code = ?", [data.code]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteMasterRombelFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 23. USER ACHIEVEMENTS & CERTIFICATES
+export const getUserAchievementsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<UserAchievementRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS user_achievements (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id VARCHAR(64) NOT NULL,
+          user_name VARCHAR(255) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          category VARCHAR(100) NOT NULL,
+          year VARCHAR(10),
+          issuer VARCHAR(255),
+          file_url TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<UserAchievementRow[]>("SELECT * FROM user_achievements ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getUserAchievementsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveUserAchievementFn = createServerFn({ method: "POST" })
+  .validator((data: UserAchievementRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS user_achievements (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id VARCHAR(64) NOT NULL,
+          user_name VARCHAR(255) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          category VARCHAR(100) NOT NULL,
+          year VARCHAR(10),
+          issuer VARCHAR(255),
+          file_url TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO user_achievements (user_id, user_name, title, category, year, issuer, file_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [data.user_id, data.user_name, data.title, data.category, data.year || "", data.issuer || "", data.file_url || ""]
+      );
+      return { success: true, id: String(res.insertId || "") };
+    } catch (e) {
+      console.error("[saveUserAchievementFn Error]:", e);
       return { success: false };
     }
   });

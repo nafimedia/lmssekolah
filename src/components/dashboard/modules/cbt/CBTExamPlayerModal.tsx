@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import {
   Dialog,
   DialogContent,
@@ -258,16 +260,42 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     };
   };
 
-  const handleAutoSubmit = () => {
+  const saveCbtResultToDb = async (results: { scorePg: number; totalScore: number; violationCount: number }) => {
+    try {
+      const me = MysqlAuthService.getActiveUser();
+      let correctCount = 0;
+      activeQuestions.forEach((q, idx) => {
+        if (userAnswers[idx] === q.correctOption) correctCount++;
+      });
+
+      await MysqlDataService.saveCbtResult({
+        exam_id: exam.id || "cbt-exam-1",
+        exam_title: exam.title,
+        user_id: me?.id || "usr-siswa-1",
+        student_name: me?.full_name || studentName,
+        rombel: (me as any)?.class_name || "VIII A",
+        score: results.totalScore,
+        total_correct: correctCount,
+        total_questions: activeQuestions.length,
+        status: results.totalScore >= (exam.passingScore || 75) ? "LULUS" : "REMEDIAL",
+      });
+    } catch (e) {
+      console.warn("Gagal menyimpan hasil CBT ke MySQL:", e);
+    }
+  };
+
+  const handleAutoSubmit = async () => {
     const results = calculateResults();
+    await saveCbtResultToDb(results);
     onExamComplete(results);
     onClose();
   };
 
-  const handleManualSubmit = () => {
+  const handleManualSubmit = async () => {
     setIsConfirmSubmitOpen(false);
     const results = calculateResults();
-    toast.success("✅ CBT Ujian Berhasil Disubmit!", {
+    await saveCbtResultToDb(results);
+    toast.success("✅ CBT Ujian Berhasil Disubmit & Tersimpan ke MySQL!", {
       description: `Nilai Anda: ${results.totalScore}/100 (${results.totalScore >= (exam.passingScore || 75) ? "LULUS KKM" : "REMEDIAL"})`,
     });
     onExamComplete(results);

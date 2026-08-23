@@ -8,6 +8,15 @@ import {
   getSubjectsFn,
   saveSubjectFn,
   deleteSubjectFn,
+  getPengampuFn,
+  savePengampuFn,
+  deletePengampuFn,
+  getRuangFn,
+  saveRuangFn,
+  deleteRuangFn,
+  getJadwalFn,
+  saveJadwalFn,
+  deleteJadwalFn,
   getAnnouncementsFn,
   saveAnnouncementFn,
   deleteAnnouncementFn,
@@ -34,10 +43,48 @@ import {
   deleteElibraryBookFn,
   getP5ProjectsFn,
   saveP5ProjectFn,
+  getJournalsFn,
+  saveJournalFn,
+  deleteJournalFn,
+  getCbtResultsFn,
+  saveCbtResultFn,
+  deleteCbtResultFn,
+  getKktpConfigFn,
+  saveKktpConfigFn,
+  getAssignmentsFn,
+  saveAssignmentFn,
+  deleteAssignmentFn,
+  getSubmissionsFn,
+  saveSubmissionFn,
+  getElibraryLoansFn,
+  saveElibraryLoanFn,
+  updateElibraryLoanStatusFn,
+  getGtkLeavesFn,
+  saveGtkLeaveFn,
+  getGtkDocumentsFn,
+  saveGtkDocumentFn,
+  getMasterRombelsFn,
+  saveMasterRombelFn,
+  deleteMasterRombelFn,
+  getUserAchievementsFn,
+  saveUserAchievementFn,
   getHealthStatusFn,
   DatabaseStats,
   UserRow,
   SubjectRow,
+  PengampuRow,
+  RuangRow,
+  JadwalRow,
+  JournalRow,
+  CbtResultRow,
+  KktpConfigRow,
+  AssignmentRow,
+  SubmissionRow,
+  ElibraryLoanRow,
+  GtkLeaveRow,
+  GtkDocumentRow,
+  MasterRombelRow,
+  UserAchievementRow,
   AnnouncementRow,
   AgendaRow,
   AttendanceRow,
@@ -53,7 +100,37 @@ import {
   HealthStatusResponse,
 } from "./mysqlServerFns";
 
-export type { DatabaseStats, UserRow, SubjectRow, AnnouncementRow, AgendaRow, AttendanceRow, StudentAwardRow, WaLogRow, CbtExamRow, MaterialRow, HafalanRow, ElibraryBookRow, P5ProjectRow, PaginatedParams, PaginatedResult, HealthStatusResponse };
+export type {
+  DatabaseStats,
+  UserRow,
+  SubjectRow,
+  PengampuRow,
+  RuangRow,
+  JadwalRow,
+  JournalRow,
+  CbtResultRow,
+  KktpConfigRow,
+  AssignmentRow,
+  SubmissionRow,
+  ElibraryLoanRow,
+  GtkLeaveRow,
+  GtkDocumentRow,
+  MasterRombelRow,
+  UserAchievementRow,
+  AnnouncementRow,
+  AgendaRow,
+  AttendanceRow,
+  StudentAwardRow,
+  WaLogRow,
+  CbtExamRow,
+  MaterialRow,
+  HafalanRow,
+  ElibraryBookRow,
+  P5ProjectRow,
+  PaginatedParams,
+  PaginatedResult,
+  HealthStatusResponse,
+};
 
 export class MysqlDataService {
   static async getHealthStatus(): Promise<HealthStatusResponse> {
@@ -178,6 +255,93 @@ export class MysqlDataService {
       return await deleteSubjectFn({ data: { code } });
     } catch (e) {
       console.warn("deleteSubjectFn failed:", e);
+      return false;
+    }
+  }
+
+  // Matriks Pengampu
+  static async getPengampuList(): Promise<PengampuRow[]> {
+    try {
+      return await getPengampuFn();
+    } catch (e) {
+      console.warn("getPengampuFn failed:", e);
+      return [];
+    }
+  }
+
+  static async savePengampu(data: PengampuRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await savePengampuFn({ data });
+    } catch (e) {
+      console.warn("savePengampuFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deletePengampu(id: string): Promise<boolean> {
+    try {
+      const res = await deletePengampuFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deletePengampuFn failed:", e);
+      return false;
+    }
+  }
+
+  // Master Sarana & Ruang Kelas
+  static async getRuangList(): Promise<RuangRow[]> {
+    try {
+      return await getRuangFn();
+    } catch (e) {
+      console.warn("getRuangFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveRuang(data: RuangRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveRuangFn({ data });
+    } catch (e) {
+      console.warn("saveRuangFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteRuang(id: string): Promise<boolean> {
+    try {
+      const res = await deleteRuangFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteRuangFn failed:", e);
+      return false;
+    }
+  }
+
+  // Jadwal Pelajaran KBM
+  static async getJadwalList(): Promise<JadwalRow[]> {
+    try {
+      return await getJadwalFn();
+    } catch (e) {
+      console.warn("getJadwalFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveJadwal(data: JadwalRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveJadwalFn({ data });
+    } catch (e) {
+      console.warn("saveJadwalFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteJadwal(id: string): Promise<boolean> {
+    try {
+      const res = await deleteJadwalFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteJadwalFn failed:", e);
       return false;
     }
   }
@@ -429,6 +593,245 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("saveP5ProjectFn failed:", e);
       return false;
+    }
+  }
+
+  // Teacher Journals
+  static async getJournals(): Promise<JournalRow[]> {
+    try {
+      return await getJournalsFn();
+    } catch (e) {
+      console.warn("getJournalsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveJournal(data: JournalRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveJournalFn({ data });
+    } catch (e) {
+      console.warn("saveJournalFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteJournal(id: string | number): Promise<boolean> {
+    try {
+      const res = await deleteJournalFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteJournalFn failed:", e);
+      return false;
+    }
+  }
+
+  // CBT Exam Results
+  static async getCbtResults(): Promise<CbtResultRow[]> {
+    try {
+      return await getCbtResultsFn();
+    } catch (e) {
+      console.warn("getCbtResultsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveCbtResult(data: CbtResultRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveCbtResultFn({ data });
+    } catch (e) {
+      console.warn("saveCbtResultFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteCbtResult(id: string | number): Promise<boolean> {
+    try {
+      const res = await deleteCbtResultFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteCbtResultFn failed:", e);
+      return false;
+    }
+  }
+
+  // Master KKTP Config
+  static async getKktpConfig(): Promise<KktpConfigRow> {
+    try {
+      return await getKktpConfigFn();
+    } catch (e) {
+      console.warn("getKktpConfigFn failed:", e);
+      return { kktp_minimal: 75, bobot_formatif: 40, bobot_sumatif: 60, rentang_a: 90, rentang_b: 80, rentang_c: 75, updated_by: "Default" };
+    }
+  }
+
+  static async saveKktpConfig(data: KktpConfigRow): Promise<boolean> {
+    try {
+      const res = await saveKktpConfigFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("saveKktpConfigFn failed:", e);
+      return false;
+    }
+  }
+
+  // Student Assignments & Submissions
+  static async getAssignments(): Promise<AssignmentRow[]> {
+    try {
+      return await getAssignmentsFn();
+    } catch (e) {
+      console.warn("getAssignmentsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveAssignment(data: AssignmentRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveAssignmentFn({ data });
+    } catch (e) {
+      console.warn("saveAssignmentFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteAssignment(id: string | number): Promise<boolean> {
+    try {
+      const res = await deleteAssignmentFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteAssignmentFn failed:", e);
+      return false;
+    }
+  }
+
+  static async getSubmissions(): Promise<SubmissionRow[]> {
+    try {
+      return await getSubmissionsFn();
+    } catch (e) {
+      console.warn("getSubmissionsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveSubmission(data: SubmissionRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveSubmissionFn({ data });
+    } catch (e) {
+      console.warn("saveSubmissionFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  // Elibrary Loans
+  static async getElibraryLoans(): Promise<ElibraryLoanRow[]> {
+    try {
+      return await getElibraryLoansFn();
+    } catch (e) {
+      console.warn("getElibraryLoansFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveElibraryLoan(data: ElibraryLoanRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveElibraryLoanFn({ data });
+    } catch (e) {
+      console.warn("saveElibraryLoanFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async updateElibraryLoanStatus(id: string | number, status: string, return_date?: string): Promise<boolean> {
+    try {
+      const res = await updateElibraryLoanStatusFn({ data: { id, status, return_date } });
+      return res.success;
+    } catch (e) {
+      console.warn("updateElibraryLoanStatusFn failed:", e);
+      return false;
+    }
+  }
+
+  // GTK Leaves & Documents
+  static async getGtkLeaves(): Promise<GtkLeaveRow[]> {
+    try {
+      return await getGtkLeavesFn();
+    } catch (e) {
+      console.warn("getGtkLeavesFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveGtkLeave(data: GtkLeaveRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveGtkLeaveFn({ data });
+    } catch (e) {
+      console.warn("saveGtkLeaveFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async getGtkDocuments(): Promise<GtkDocumentRow[]> {
+    try {
+      return await getGtkDocumentsFn();
+    } catch (e) {
+      console.warn("getGtkDocumentsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveGtkDocument(data: GtkDocumentRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveGtkDocumentFn({ data });
+    } catch (e) {
+      console.warn("saveGtkDocumentFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  // Master Rombels
+  static async getMasterRombels(): Promise<MasterRombelRow[]> {
+    try {
+      return await getMasterRombelsFn();
+    } catch (e) {
+      console.warn("getMasterRombelsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveMasterRombel(data: MasterRombelRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveMasterRombelFn({ data });
+    } catch (e) {
+      console.warn("saveMasterRombelFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteMasterRombel(code: string): Promise<boolean> {
+    try {
+      const res = await deleteMasterRombelFn({ data: { code } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteMasterRombelFn failed:", e);
+      return false;
+    }
+  }
+
+  // User Achievements
+  static async getUserAchievements(): Promise<UserAchievementRow[]> {
+    try {
+      return await getUserAchievementsFn();
+    } catch (e) {
+      console.warn("getUserAchievementsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveUserAchievement(data: UserAchievementRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await saveUserAchievementFn({ data });
+    } catch (e) {
+      console.warn("saveUserAchievementFn failed:", e);
+      return { success: false };
     }
   }
 }

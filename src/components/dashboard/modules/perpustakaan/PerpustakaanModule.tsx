@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Library, FileText, Video, Headphones, Upload, ExternalLink, Maximize2, Minimize2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlDataService, ElibraryLoanRow } from "@/services/mysqlDataService";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 
 function parseMediaUrl(url: string): { embedUrl: string; provider: "youtube" | "gdrive" | "direct" } {
   if (!url) return { embedUrl: "", provider: "direct" };
@@ -48,6 +49,45 @@ export function PerpustakaanModule() {
   const [deleteConfirmBook, setDeleteConfirmBook] = useState<{ id: string; title: string } | null>(null);
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   const [isVideoFullScreen, setIsVideoFullScreen] = useState(false);
+
+  const [loanList, setLoanList] = useState<ElibraryLoanRow[]>([]);
+  const loadLoansData = async () => {
+    try {
+      const data = await MysqlDataService.getElibraryLoans();
+      setLoanList(data || []);
+    } catch (e) {
+      console.warn("Gagal memuat sirkulasi pinjaman:", e);
+    }
+  };
+
+  useEffect(() => {
+    loadLoansData();
+  }, []);
+
+  const handleBorrowBook = async (bookId: string, bookTitle: string) => {
+    const me = MysqlAuthService.getActiveUser();
+    const today = new Date();
+    const dueDate = new Date();
+    dueDate.setDate(today.getDate() + 7);
+
+    const res = await MysqlDataService.saveElibraryLoan({
+      book_id: bookId,
+      book_title: bookTitle,
+      user_id: me?.id || "usr-siswa-1",
+      borrower_name: me?.full_name || "Siswa MTsN 2",
+      rombel: (me as any)?.class_name || "VIII A",
+      loan_date: today.toISOString().split("T")[0],
+      due_date: dueDate.toISOString().split("T")[0],
+      status: "Dipinjam",
+    });
+
+    if (res.success) {
+      toast.success(`📚 Berhasil Meminjam "${bookTitle}"! Tersimpan di MySQL Database.`);
+      await loadLoansData();
+    } else {
+      toast.error("Gagal mencatat peminjaman ke MySQL.");
+    }
+  };
 
   const [bukuList, setBukuList] = useState(() => {
     if (typeof window !== "undefined") {

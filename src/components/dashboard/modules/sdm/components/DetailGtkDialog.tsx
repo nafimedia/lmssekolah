@@ -85,7 +85,7 @@ export function DetailGtkDialog({ selectedGtk, isOpen, onOpenChange, gtkDocs }: 
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0 text-rose-600 hover:bg-rose-500/10"
-                        onClick={() => handleDeleteDoc(doc.id, doc.doc_name)}
+                        onClick={() => handleDeleteDoc(doc.id, doc.doc_name || "Dokumen SK")}
                         title="Hapus Berkas SK ini"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

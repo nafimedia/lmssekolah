@@ -8,6 +8,7 @@ import { CBTLiveSession } from "./CBTLiveSession";
 import { CBTQuestionBank } from "./CBTQuestionBank";
 import { CBTGradeAnalysis } from "./CBTGradeAnalysis";
 import { CBTExamPlayerModal } from "./CBTExamPlayerModal";
+import { CBTExam, CBTQuestion, CBTGradeAnalysisItem } from "@/types/cbt";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 
 interface CBTModuleProps {

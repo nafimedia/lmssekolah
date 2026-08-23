@@ -22,6 +22,24 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   );
 }
 
+function getPersistedRoleOverrides(): Record<string, string[]> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem("lms_user_roles_overrides") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function setPersistedRoleOverride(identifier: string, roles: string[]) {
+  if (typeof window === "undefined" || !identifier) return;
+  try {
+    const current = getPersistedRoleOverrides();
+    current[identifier.toLowerCase().trim()] = roles;
+    localStorage.setItem("lms_user_roles_overrides", JSON.stringify(current));
+  } catch {}
+}
+
 export function UserManagementModule() {
   const [search, setSearch] = useState("");
   const [dummyUsersList, setDummyUsersList] = useState<Array<{ id: string; full_name: string; email: string; nis: string; class: string; roles: string[] }>>([]);
@@ -47,25 +65,38 @@ export function UserManagementModule() {
       .then((users) => {
         if (!isMounted) return;
         if (users && users.length > 0) {
+          const overrides = getPersistedRoleOverrides();
           const formatted = users.map((u) => {
-            let roleStr = u.role || "";
-            // Special fallback for Achmad Makmun Rosid & key GTK multi-roles if DB single role was loaded
-            if (u.nis_nip === "197002272005011001" || u.full_name.includes("MAKMUN ROSID")) {
-              roleStr = "admin,walikelas,guru";
-            } else if (u.nis_nip === "197905162006041020" || u.full_name.includes("SOLIHUN")) {
-              roleStr = "kamad,guru";
-            } else if (u.nis_nip === "198302142023211010" || u.full_name.includes("ALI MANSUR")) {
-              roleStr = "waka,guru";
-            } else if (u.nis_nip === "199204042025051002" || u.full_name.includes("SYARIF HIDAYAH")) {
-              roleStr = "admin_akademik,guru";
+            const cleanEmail = (u.email || "").toLowerCase().trim();
+            const cleanId = String(u.id || "").trim();
+            const cleanNip = (u.nis_nip || "").trim();
+
+            // Check if admin manually saved role overrides in localStorage
+            let finalRoles: string[] =
+              overrides[cleanEmail] || overrides[cleanId] || overrides[cleanNip] || [];
+
+            if (finalRoles.length === 0) {
+              let roleStr = u.role || "";
+              // Initial default GTK multi-roles (only if no manual override exists)
+              if (cleanNip === "197002272005011001" || u.full_name.includes("MAKMUN ROSID")) {
+                roleStr = "admin,walikelas,guru";
+              } else if (cleanNip === "197905162006041020" || u.full_name.includes("SOLIHUN")) {
+                roleStr = "kamad,guru";
+              } else if (cleanNip === "198302142023211010" || u.full_name.includes("ALI MANSUR")) {
+                roleStr = "waka,guru";
+              } else if (cleanNip === "199204042025051002" || u.full_name.includes("SYARIF HIDAYAH")) {
+                roleStr = "admin_akademik,guru";
+              }
+
+              if (roleStr && roleStr.includes(",")) {
+                finalRoles = roleStr.split(",").map((r) => r.trim());
+              } else if (roleStr) {
+                finalRoles = [roleStr];
+              } else {
+                finalRoles = ["siswa"];
+              }
             }
 
-            let finalRoles: string[] = [];
-            if (roleStr && roleStr.includes(",")) {
-              finalRoles = roleStr.split(",").map((r) => r.trim());
-            } else {
-              finalRoles = [roleStr || "siswa"];
-            }
             return {
               id: String(u.id),
               full_name: u.full_name,
@@ -94,13 +125,20 @@ export function UserManagementModule() {
     const targetUser = dummyUsersList.find((u) => u.id === userId || u.email.toLowerCase() === userEmail.toLowerCase());
     const cleanNip = targetUser?.nis?.replace(/^(NISN|NIP)\.\s*/i, "").trim() || "";
 
+    // 1. Immediately persist to localStorage overrides so refresh never reverts
+    if (userEmail) setPersistedRoleOverride(userEmail, newRoles);
+    if (userId) setPersistedRoleOverride(userId, newRoles);
+    if (cleanNip) setPersistedRoleOverride(cleanNip, newRoles);
+
+    // 2. Persist to MySQL database via backend server function
     const ok = await MysqlDataService.updateUserRole(userId, newRoles, userEmail, cleanNip);
     if (!ok) {
-      toast.error("Gagal mengupdate role ke database MySQL.");
+      toast.warning("Role tersimpan di browser, tetapi gagal tersambung ke database MySQL.");
     } else {
-      toast.success("Role pengguna berhasil diperbarui dan disimpan ke database!");
+      toast.success("Role pengguna berhasil diperbarui dan disimpan secara permanen!");
     }
 
+    // 3. Update React UI state
     setDummyUsersList((prev) =>
       prev.map((u) => {
         if (u.id !== userId && u.email.toLowerCase() !== userEmail.toLowerCase()) return u;

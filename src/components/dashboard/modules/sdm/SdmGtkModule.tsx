@@ -137,7 +137,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
     MysqlDataService.getUsers()
       .then((users) => {
         if (users && users.length > 0) {
-          const teachers = users.filter((u: any) => u.role !== "siswa");
+          const teachers = users.filter((u: any) => u.role !== "siswa" && u.email !== "admin@mail.com" && !u.full_name?.toLowerCase().includes("super administrator"));
           if (teachers.length > 0) {
             const formatted = teachers.map((u: any) => ({
               id: String(u.id || u.email),

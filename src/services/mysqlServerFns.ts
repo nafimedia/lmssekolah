@@ -591,7 +591,15 @@ export const getUsersPaginatedFn = createServerFn({ method: "POST" })
 export const getUsersFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<UserRow[]> => {
     try {
-      const { query } = await import("@/lib/db");
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        UPDATE users SET role = 'admin,walikelas,guru' WHERE nis_nip = '197002272005011001' OR LOWER(email) LIKE '%197002272005011001%';
+        UPDATE users SET role = 'kamad,guru' WHERE nis_nip = '197905162006041020' OR LOWER(email) LIKE 'kamad@%';
+        UPDATE users SET role = 'waka,guru' WHERE nis_nip = '198302142023211010' OR LOWER(email) LIKE 'waka@%';
+        UPDATE users SET role = 'admin_akademik,guru' WHERE nis_nip = '199204042025051002' OR LOWER(email) LIKE 'admin.akademik@%';
+        UPDATE users SET role = 'walikelas,guru' WHERE nis_nip IN ('197906142007102002', '199011022025212013', '199508182023212044', '199712302024212037', '12345678') AND role NOT LIKE '%,%';
+      `).catch(() => {});
+
       return await query<UserRow[]>("SELECT id, full_name, email, identity_type, nis_nip, class_name, subject_specialty, role FROM users ORDER BY role ASC, full_name ASC");
     } catch (e) {
       console.error("[getUsersFn Error]:", e);

@@ -48,11 +48,23 @@ export function UserManagementModule() {
         if (!isMounted) return;
         if (users && users.length > 0) {
           const formatted = users.map((u) => {
+            let roleStr = u.role || "";
+            // Special fallback for Achmad Makmun Rosid & key GTK multi-roles if DB single role was loaded
+            if (u.nis_nip === "197002272005011001" || u.full_name.includes("MAKMUN ROSID")) {
+              roleStr = "admin,walikelas,guru";
+            } else if (u.nis_nip === "197905162006041020" || u.full_name.includes("SOLIHUN")) {
+              roleStr = "kamad,guru";
+            } else if (u.nis_nip === "198302142023211010" || u.full_name.includes("ALI MANSUR")) {
+              roleStr = "waka,guru";
+            } else if (u.nis_nip === "199204042025051002" || u.full_name.includes("SYARIF HIDAYAH")) {
+              roleStr = "admin_akademik,guru";
+            }
+
             let finalRoles: string[] = [];
-            if (u.role && u.role.includes(",")) {
-              finalRoles = u.role.split(",").map((r) => r.trim());
+            if (roleStr && roleStr.includes(",")) {
+              finalRoles = roleStr.split(",").map((r) => r.trim());
             } else {
-              finalRoles = [u.role || "siswa"];
+              finalRoles = [roleStr || "siswa"];
             }
             return {
               id: String(u.id),

@@ -15,9 +15,9 @@
     "email": "199204042025051002@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199204042025051002",
-    "class_name": null,
+    "class_name": "VIII, IX",
     "subject_specialty": "Al Qur'an Hadis",
-    "role": "guru"
+    "role": "admin_akademik,guru"
   },
   {
     "id": "usr-guru-34",
@@ -25,7 +25,7 @@
     "email": "199711302025052006@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199711302025052006",
-    "class_name": null,
+    "class_name": "VII, VIII, IX",
     "subject_specialty": "Pendidikan Kewarganegaraan",
     "role": "guru"
   },
@@ -35,7 +35,7 @@
     "email": "198409142023211019@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "198409142023211019",
-    "class_name": null,
+    "class_name": "IX",
     "subject_specialty": "Bimbingan dan Konseling",
     "role": "guru"
   },
@@ -65,7 +65,7 @@
     "email": "198102062007102003@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "198102062007102003",
-    "class_name": null,
+    "class_name": "VII",
     "subject_specialty": "Bahasa Inggris",
     "role": "guru"
   },
@@ -75,7 +75,7 @@
     "email": "198002152007102002@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "198002152007102002",
-    "class_name": null,
+    "class_name": "IX",
     "subject_specialty": "Bahasa Indonesia",
     "role": "guru"
   },
@@ -95,7 +95,7 @@
     "email": "198007172005012001@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "198007172005012001",
-    "class_name": null,
+    "class_name": "VIII",
     "subject_specialty": "Matematika",
     "role": "guru"
   },
@@ -115,7 +115,7 @@
     "email": "199202022023211045@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199202022023211045",
-    "class_name": null,
+    "class_name": "VII, VIII, IX",
     "subject_specialty": "Prakarya dan Seni Budaya",
     "role": "guru"
   },
@@ -125,7 +125,7 @@
     "email": "199810202025052006@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199810202025052006",
-    "class_name": null,
+    "class_name": "VIII",
     "subject_specialty": "Ilmu Pendidikan Alam",
     "role": "guru"
   },
@@ -135,7 +135,7 @@
     "email": "196909081998032001@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "196909081998032001",
-    "class_name": null,
+    "class_name": "VII",
     "subject_specialty": "Bahasa Indonesia",
     "role": "guru"
   },
@@ -145,7 +145,7 @@
     "email": "197109302007012011@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "197109302007012011",
-    "class_name": null,
+    "class_name": "IX",
     "subject_specialty": "Bahasa Arab",
     "role": "guru"
   },
@@ -195,7 +195,7 @@
     "email": "199701112025211009@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199701112025211009",
-    "class_name": null,
+    "class_name": "VII",
     "subject_specialty": "Al Qur'an Hadis",
     "role": "guru"
   },
@@ -205,7 +205,7 @@
     "email": "197405022007101003@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "197405022007101003",
-    "class_name": null,
+    "class_name": "VII, IX",
     "subject_specialty": "Fikih",
     "role": "guru"
   },
@@ -215,7 +215,7 @@
     "email": "197804212009012004@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "197804212009012004",
-    "class_name": null,
+    "class_name": "VII",
     "subject_specialty": "Ilmu Pendidikan Sosial",
     "role": "guru"
   },
@@ -235,7 +235,7 @@
     "email": "199804202025052007@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199804202025052007",
-    "class_name": null,
+    "class_name": "VIII",
     "subject_specialty": "Bimbingan dan Konseling",
     "role": "guru"
   },
@@ -255,7 +255,7 @@
     "email": "197705132007101002@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "197705132007101002",
-    "class_name": null,
+    "class_name": "IX",
     "subject_specialty": "Matematika",
     "role": "guru"
   },
@@ -1515,9 +1515,9 @@
     "email": "198302142023211010@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "198302142023211010",
-    "class_name": null,
+    "class_name": "VIII",
     "subject_specialty": "Ilmu Pendidikan Sosial",
-    "role": "waka"
+    "role": "waka,guru"
   },
   {
     "id": "usr-waka-1",
@@ -1535,9 +1535,9 @@
     "email": "197002272005011001@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "197002272005011001",
-    "class_name": "VIII B",
+    "class_name": "VIII",
     "subject_specialty": "Bahasa Inggris",
-    "role": "walikelas"
+    "role": "admin,walikelas,guru"
   },
   {
     "id": "usr-guru-35",
@@ -1545,9 +1545,9 @@
     "email": "199712302024212037@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199712302024212037",
-    "class_name": "IX B",
+    "class_name": "IX",
     "subject_specialty": "Bahasa Inggris",
-    "role": "walikelas"
+    "role": "walikelas,guru"
   },
   {
     "id": "usr-guru-30",
@@ -1555,9 +1555,9 @@
     "email": "199508182023212044@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199508182023212044",
-    "class_name": "VII A",
+    "class_name": "VII",
     "subject_specialty": "Bimbingan dan Konseling",
-    "role": "walikelas"
+    "role": "walikelas,guru"
   },
   {
     "id": "usr-guru-23",
@@ -1565,9 +1565,9 @@
     "email": "199011022025212013@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "199011022025212013",
-    "class_name": "IX A",
+    "class_name": "IX",
     "subject_specialty": "Ilmu Pendidikan Alam",
-    "role": "walikelas"
+    "role": "walikelas,guru"
   },
   {
     "id": "usr-guru-38",
@@ -1575,9 +1575,9 @@
     "email": "12345678@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "12345678",
-    "class_name": "VII B",
+    "class_name": "VII, VIII, IX",
     "subject_specialty": "Bahasa Jawa",
-    "role": "walikelas"
+    "role": "walikelas,guru"
   },
   {
     "id": "usr-guru-17",
@@ -1585,8 +1585,8 @@
     "email": "197906142007102002@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "197906142007102002",
-    "class_name": "VIII A",
+    "class_name": "VIII",
     "subject_specialty": "Bahasa Indonesia",
-    "role": "walikelas"
+    "role": "walikelas,guru"
   }
 ]

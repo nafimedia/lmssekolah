@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { DaftarSiswaKelasTab, StudentItem } from "./components/DaftarSiswaKelasTab";
 import { PengumumanKelasTab, PengumumanItem } from "./components/PengumumanKelasTab";
 import { CetakSuratDialog } from "./components/CetakSuratDialog";
+import { PrintDataKelasDialog } from "./components/PrintDataKelasDialog";
 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
@@ -73,6 +74,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
 
   const [selectedStudentForSurat, setSelectedStudentForSurat] = useState<StudentItem | null>(null);
   const [isSuratOpen, setIsSuratOpen] = useState(false);
+  const [isPrintDataKelasOpen, setIsPrintDataKelasOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -244,7 +246,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
             <option value="Semua">Semua Siswa</option>
           </select>
 
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => window.print()}>
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintDataKelasOpen(true)}>
             <Printer className="h-3.5 w-3.5" /> Cetak Data Kelas PDF
           </Button>
         </div>
@@ -277,6 +279,18 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
         onPrint={() => {
           window.print();
           toast.success("Dokumen Surat Keterangan Wali Kelas berhasil dicetak!");
+        }}
+      />
+
+      <PrintDataKelasDialog
+        isOpen={isPrintDataKelasOpen}
+        onOpenChange={setIsPrintDataKelasOpen}
+        selectedClass={selectedClass}
+        waliKelasName={waliKelasName}
+        students={classStudents}
+        onPrint={() => {
+          window.print();
+          toast.success(`Dokumen Laporan Siswa ${selectedClass} berhasil dicetak!`);
         }}
       />
     </div>

@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { JadwalRow } from "@/services/mysqlDataService";
 
+import logoKemenag from "@/assets/logokemenag.svg";
+
 interface PrintJadwalDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,7 +43,7 @@ export function PrintJadwalDialog({ isOpen, onOpenChange, filterKelas, filterRom
         <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
           <div className="border-b-2 border-slate-900 pb-3">
             <div className="flex items-center gap-4 mb-2">
-              <img src="/logokemenag.svg" alt="Logo Kemenag RI" className="h-16 w-16 object-contain shrink-0" />
+              <img src={logoKemenag} alt="Logo Kemenag RI" className="h-16 w-16 object-contain shrink-0" />
               <div className="text-center flex-1 pr-14">
                 <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
                 <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>

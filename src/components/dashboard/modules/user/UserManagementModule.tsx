@@ -227,18 +227,17 @@ export function UserManagementModule() {
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
-                <tr className="bg-muted/50 text-left border-b border-border">
-                  <th className="py-3 px-4 font-semibold">Pengguna & NIP/NIS</th>
-                  <th className="py-3 px-4 font-semibold">Email</th>
-                  <th className="py-3 px-4 font-semibold">Kelas</th>
-                  <th className="py-3 px-4 font-semibold">Role Aktif</th>
-                  <th className="py-3 px-4 font-semibold">Kelola Hak Akses</th>
-                  <th className="py-3 px-4 font-semibold text-center">Aksi & Kontrol</th>
+                <tr className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
+                  <th className="py-3 px-4">Pengguna & NIP/NIS</th>
+                  <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-3">Kelas / Spesialisasi</th>
+                  <th className="py-3 px-4">Hak Akses (Role Aktif)</th>
+                  <th className="py-3 px-4 text-right">Aksi & Kontrol Akses</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border">
                 {filtered.map((u) => {
                   const isSuperAdmin = u.email === "admin@mail.com";
                   const activeSession = MysqlAuthService.getActiveUser();
@@ -251,89 +250,80 @@ export function UserManagementModule() {
                     activeSession?.email?.includes("admin");
 
                   return (
-                    <tr key={u.id} className="border-b border-border/60 hover:bg-muted/30 transition">
+                    <tr key={u.id} className="hover:bg-muted/30 transition">
                       <td className="py-3 px-4 font-medium">
-                        <div className="font-bold text-foreground flex items-center gap-1.5">
-                          {u.full_name}
+                        <div className="font-bold text-foreground flex items-center gap-1.5 flex-wrap">
+                          <span>{u.full_name}</span>
                           {isSuperAdmin && (
-                            <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/30">
-                              🛡️ Dilindungi
+                            <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 flex items-center gap-1">
+                              <Shield className="h-3 w-3 text-amber-500" /> Dilindungi
                             </Badge>
                           )}
                           {isSelf && (
-                            <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-                              👤 Sesi Anda
+                            <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 flex items-center gap-1">
+                              <UserCheck className="h-3 w-3 text-emerald-500" /> Sesi Anda
                             </Badge>
                           )}
                         </div>
-                        <div className="text-xs text-muted-foreground font-mono">{u.nis}</div>
+                        <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{u.nis}</div>
                       </td>
-                      <td className="py-3 px-4 text-xs font-mono text-muted-foreground">{u.email}</td>
-                      <td className="py-3 px-4 text-xs font-semibold">{u.class}</td>
+
+                      <td className="py-3 px-4 font-mono text-muted-foreground text-xs">{u.email}</td>
+
+                      <td className="py-3 px-3">
+                        <Badge variant="outline" className="text-[11px] font-semibold border-border">
+                          {u.class}
+                        </Badge>
+                      </td>
+
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
-                          {u.roles.map((r) => (
-                            <Badge key={r} variant="secondary" className="text-[10px] uppercase font-bold bg-primary/10 text-primary border border-primary/20">
-                              {r.replace("_", " ")}
-                            </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 text-[10px] px-2 font-bold bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 gap-1 mr-1"
-                            onClick={() => {
-                              setUserToEditRoles(u);
-                              setIsEditRoleModalOpen(true);
-                            }}
-                            title="Buka Modal Kelola & Simpan Multi-Role"
-                          >
-                            <UserCog className="h-3 w-3" /> 🎭 Atur & Simpan Role
-                          </Button>
-                          {availableRoles.map((r) => {
-                            const hasRole = u.roles.includes(r);
+                          {u.roles.map((r) => {
+                            const badgeColor =
+                              r === "admin" || r === "admin_akademik"
+                                ? "bg-purple-600 text-white"
+                                : r === "kamad" || r === "waka"
+                                ? "bg-amber-600 text-white"
+                                : r === "walikelas"
+                                ? "bg-blue-600 text-white"
+                                : r === "guru"
+                                ? "bg-emerald-600 text-white"
+                                : "bg-muted text-muted-foreground border border-border";
+
                             return (
-                              <Button
-                                key={r}
-                                size="sm"
-                                variant={hasRole ? "default" : "outline"}
-                                className={`h-6 text-[10px] px-2 ${hasRole ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
-                                onClick={() => toggleRole(u.id, r)}
-                              >
-                                {hasRole ? `✓ ${r}` : `+ ${r}`}
-                              </Button>
+                              <Badge key={r} className={`text-[10px] uppercase font-bold px-2 py-0.5 ${badgeColor}`}>
+                                {r.replace("_", " ")}
+                              </Badge>
                             );
                           })}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 px-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30 gap-1"
+                            className="h-7 px-2.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30 gap-1"
                             onClick={() => {
                               setUserToEditRoles(u);
                               setIsEditRoleModalOpen(true);
                             }}
-                            title="Buka Form Kelola & Simpan Role"
+                            title="Kelola Peran (Role) Pengguna"
                           >
-                            <Save className="h-3.5 w-3.5" /> Simpan Role
+                            <UserCog className="h-3.5 w-3.5" /> Kelola Role
                           </Button>
 
                           {currentIsAdmin && (
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 px-2 text-xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 border-teal-500/30 gap-1"
+                              className="h-7 px-2.5 text-xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 border-teal-500/30 gap-1"
                               onClick={() => {
                                 setUserToResetPass(u);
                                 setIsResetPassModalOpen(true);
                               }}
-                              title="Ubah / Reset Kata Sandi Akun (Khusus Super Admin)"
+                              title="Ubah / Reset Kata Sandi"
                             >
                               <KeyRound className="h-3.5 w-3.5" /> Sandi
                             </Button>
@@ -344,7 +334,7 @@ export function UserManagementModule() {
                               size="sm"
                               variant="ghost"
                               disabled
-                              className="h-7 px-2 text-xs text-muted-foreground opacity-50 cursor-not-allowed"
+                              className="h-7 px-2.5 text-xs text-muted-foreground opacity-40 cursor-not-allowed"
                               title={isSuperAdmin ? "Super Admin Utama dilindungi dari penghapusan" : "Tidak dapat menghapus akun sendiri"}
                             >
                               <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
@@ -353,7 +343,7 @@ export function UserManagementModule() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-7 px-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
+                              className="h-7 px-2.5 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
                               onClick={() => {
                                 setUserToDelete(u);
                                 setIsDeleteModalOpen(true);

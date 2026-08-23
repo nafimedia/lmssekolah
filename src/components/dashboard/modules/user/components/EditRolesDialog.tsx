@@ -80,13 +80,13 @@ export function EditRolesDialog({ user, isOpen, onOpenChange, onSaveRoles }: Edi
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { id: "guru", label: "👨‍🏫 Guru Pengampu" },
-                { id: "siswa", label: "🎓 Siswa" },
-                { id: "walikelas", label: "📋 Wali Kelas" },
-                { id: "waka", label: "📐 Waka Kurikulum" },
-                { id: "kamad", label: "🏛️ Kepala Madrasah" },
-                { id: "admin_akademik", label: "💼 Admin Akademik" },
-                { id: "admin", label: "🛡️ Super Admin" },
+                { id: "guru", label: "Guru Pengampu" },
+                { id: "siswa", label: "Siswa" },
+                { id: "walikelas", label: "Wali Kelas" },
+                { id: "waka", label: "Waka Kurikulum" },
+                { id: "kamad", label: "Kepala Madrasah" },
+                { id: "admin_akademik", label: "Admin Akademik" },
+                { id: "admin", label: "Super Admin" },
               ].map((r) => {
                 const isSelected = tempEditRoles.includes(r.id);
                 return (

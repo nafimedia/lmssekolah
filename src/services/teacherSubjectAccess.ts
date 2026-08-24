@@ -36,17 +36,26 @@ export function getTeacherAssignedClasses(user?: UserSession | null): string[] {
 
   const roleStr = (activeUser.role || "").toLowerCase();
   const roles = roleStr.split(",").map((r) => r.trim());
+  const userEmail = (activeUser.email || "").toLowerCase();
+  const userName = (activeUser.full_name || (activeUser as any).name || "").toLowerCase();
+  const userNip = activeUser.nis_nip || "";
 
-  if (roles.length === 1 && roles[0] === "admin" && activeUser.email.toLowerCase() === "admin@mail.com") {
+  if (roles.includes("admin") || roles.includes("kamad")) {
     return ALL_SCHOOL_CLASSES;
   }
 
-  const catalogUser = fallbackUsersCatalog.find(
-    (u) =>
-      u.email.toLowerCase() === activeUser.email.toLowerCase() ||
-      (activeUser.nis_nip && u.nis_nip === activeUser.nis_nip) ||
-      u.full_name.toLowerCase() === activeUser.full_name.toLowerCase()
-  );
+  const catalogUser = fallbackUsersCatalog.find((u: any) => {
+    if (!u) return false;
+    const uEmail = (u.email || "").toLowerCase();
+    const uName = (u.full_name || u.name || "").toLowerCase();
+    const uNip = u.nis_nip || "";
+
+    return (
+      (userEmail && uEmail && uEmail === userEmail) ||
+      (userNip && uNip && uNip === userNip) ||
+      (userName && uName && uName === userName)
+    );
+  });
 
   const rawClass = activeUser.class_name || catalogUser?.class_name || "";
   if (!rawClass || rawClass === "-") {
@@ -97,13 +106,16 @@ export function getTeacherAssignedSubjects(user?: UserSession | null): string[] 
   const roleStr = (activeUser.role || "").toLowerCase();
   const roles = roleStr.split(",").map((r) => r.trim());
 
-  // Super Administrator murni yang bukan guru memiliki akses penuh ke semua Mapel
-  if (roles.length === 1 && roles[0] === "admin" && activeUser.email.toLowerCase() === "admin@mail.com") {
-    return null; // Semua Mapel
+  const userEmail = (activeUser.email || "").toLowerCase();
+  const userName = (activeUser.full_name || (activeUser as any).name || "").toLowerCase();
+
+  // Super Administrator, Kamad, atau Waka murni memiliki akses penuh ke semua Mapel
+  if (roles.includes("admin") || roles.includes("kamad") || roles.includes("waka")) {
+    return null; // Semua Mapel (Akses Penuh)
   }
 
   // Jika bukan guru (misal siswa), return null (sesuai view siswa)
-  const isGuru = roles.some((r) => ["guru", "guru_mapel", "walikelas", "admin_akademik", "kamad", "waka"].includes(r));
+  const isGuru = roles.some((r) => ["guru", "guru_mapel", "walikelas", "admin_akademik"].includes(r));
   if (!isGuru) return null;
 
   const assigned: Set<string> = new Set();
@@ -123,12 +135,18 @@ export function getTeacherAssignedSubjects(user?: UserSession | null): string[] 
   }
 
   // 3. Cek dari catalog berdasarkan nama / email
-  const catalogUser = fallbackUsersCatalog.find(
-    (u) =>
-      u.email.toLowerCase() === activeUser.email.toLowerCase() ||
-      (nip && u.nis_nip === nip) ||
-      u.full_name.toLowerCase() === activeUser.full_name.toLowerCase()
-  );
+  const catalogUser = fallbackUsersCatalog.find((u: any) => {
+    if (!u) return false;
+    const uEmail = (u.email || "").toLowerCase();
+    const uName = (u.full_name || u.name || "").toLowerCase();
+    const uNip = u.nis_nip || "";
+
+    return (
+      (userEmail && uEmail && uEmail === userEmail) ||
+      (nip && uNip && uNip === nip) ||
+      (userName && uName && uName === userName)
+    );
+  });
 
   if (catalogUser && catalogUser.subject_specialty) {
     catalogUser.subject_specialty.split(",").forEach((s) => {

@@ -470,7 +470,6 @@ function Dashboard() {
         set.add("guru");
       } else if (lower === "kamad") {
         set.add("kamad");
-        set.add("guru");
       } else if (lower === "waka") {
         set.add("waka");
         set.add("guru");
@@ -488,6 +487,11 @@ function Dashboard() {
         set.add("siswa");
       }
     });
+
+    if (set.has("kamad")) {
+      // Catatan Client: "Masa Kamad mulang lah" -> Kamad is strictly executive monitoring only (1 role: kamad)
+      return ["kamad"];
+    }
 
     if (set.size === 0) set.add("guru");
     return Array.from(set);

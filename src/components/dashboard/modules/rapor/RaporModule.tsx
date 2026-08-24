@@ -38,13 +38,35 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
   };
 
   const mapelDetails = [
-    { code: "AGM-01", mapel: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", pertemuan: "18/18 Pertemuan (100%)", cp: "95% Tuntas", tugas: 90, kuis: 92, cbt: 88, avg: 90, kkm: "Tuntas (≥75)" },
-    { code: "AGM-02", mapel: "Akidah Akhlak", teacher: "WAKHIBUN, S.P", pertemuan: "16/18 Pertemuan (88%)", cp: "90% Tuntas", tugas: 88, kuis: 86, cbt: 85, avg: 86, kkm: "Tuntas (≥75)" },
-    { code: "AGM-03", mapel: "Fikih", teacher: "CARYATI,", pertemuan: "17/18 Pertemuan (94%)", cp: "92% Tuntas", tugas: 92, kuis: 90, cbt: 89, avg: 90, kkm: "Tuntas (≥75)" },
-    { code: "AGM-04", mapel: "Sejarah Kebudayaan Islam", teacher: "H. DASIRUN, S.Ag., M.Pd.I", pertemuan: "16/18 Pertemuan (88%)", cp: "90% Tuntas", tugas: 88, kuis: 88, cbt: 86, avg: 87, kkm: "Tuntas (≥75)" },
-    { code: "AGM-05", mapel: "Bahasa Arab", teacher: "ENDAH SUPRIHATIN, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "96% Tuntas", tugas: 92, kuis: 94, cbt: 90, avg: 92, kkm: "Tuntas (≥75)" },
-    { code: "UMM-01", mapel: "Bahasa Indonesia", teacher: "SOBIYATI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "94% Tuntas", tugas: 89, kuis: 91, cbt: 88, avg: 89, kkm: "Tuntas (≥75)" },
+    { code: "AGM-01", mapel: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 90, kuis: 92, cbt: 88, avg: 90, kkm: "Tuntas (≥75)" },
+    { code: "AGM-02", mapel: "Akidah Akhlak", teacher: "WAKHIBUN, S.P", pertemuan: "16/18 Pertemuan (88%)", cp: "Baik", tugas: 88, kuis: 86, cbt: 85, avg: 86, kkm: "Tuntas (≥75)" },
+    { code: "AGM-03", mapel: "Fikih", teacher: "CARYATI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "Sangat Baik", tugas: 92, kuis: 90, cbt: 89, avg: 90, kkm: "Tuntas (≥75)" },
+    { code: "AGM-04", mapel: "Sejarah Kebudayaan Islam", teacher: "H. DASIRUN, S.Ag., M.Pd.I", pertemuan: "16/18 Pertemuan (88%)", cp: "Baik", tugas: 88, kuis: 88, cbt: 86, avg: 87, kkm: "Tuntas (≥75)" },
+    { code: "AGM-05", mapel: "Bahasa Arab", teacher: "ENDAH SUPRIHATIN, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 92, kuis: 94, cbt: 90, avg: 92, kkm: "Tuntas (≥75)" },
+    { code: "UMM-01", mapel: "Bahasa Indonesia", teacher: "SOBIYATI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "Baik", tugas: 89, kuis: 91, cbt: 88, avg: 89, kkm: "Tuntas (≥75)" },
+    { code: "UMM-02", mapel: "Bahasa Inggris", teacher: "ALI MANSUR, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Baik", tugas: 88, kuis: 87, cbt: 89, avg: 88, kkm: "Tuntas (≥75)" },
+    { code: "UMM-03", mapel: "Matematika", teacher: "ACHMAD MAKMUN, S.Pd.I", pertemuan: "17/18 Pertemuan (94%)", cp: "Baik", tugas: 85, kuis: 86, cbt: 84, avg: 85, kkm: "Tuntas (≥75)" },
+    { code: "UMM-04", mapel: "Ilmu Pengetahuan Alam", teacher: "Dra. Hj. SITI RAHMAH, M.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Baik", tugas: 89, kuis: 87, cbt: 88, avg: 88, kkm: "Tuntas (≥75)" },
+    { code: "UMM-05", mapel: "Ilmu Pengetahuan Sosial", teacher: "UMI KHAFSOH, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 92, kuis: 90, cbt: 91, avg: 91, kkm: "Tuntas (≥75)" },
+    { code: "UMM-06", mapel: "Pendidikan Kewarganegaraan", teacher: "SAYONO, S.Pd.I", pertemuan: "17/18 Pertemuan (94%)", cp: "Sangat Baik", tugas: 90, kuis: 89, cbt: 91, avg: 90, kkm: "Tuntas (≥75)" },
+    { code: "UMM-07", mapel: "PJOK", teacher: "MISBAHUDIN, S.Pd.I", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 95, kuis: 93, cbt: 94, avg: 94, kkm: "Tuntas (≥75)" },
+    { code: "UMM-08", mapel: "Seni Budaya", teacher: "SITI NURJANAH, S.Pd", pertemuan: "16/18 Pertemuan (88%)", cp: "Sangat Baik", tugas: 93, kuis: 91, cbt: 92, avg: 92, kkm: "Tuntas (≥75)" },
+    { code: "UMM-09", mapel: "Informatika", teacher: "FAHRUR ROZI, S.Kom", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 94, kuis: 92, cbt: 93, avg: 93, kkm: "Tuntas (≥75)" },
+    { code: "ML-01", mapel: "Bahasa Jawa", teacher: "TRI WAHYUNI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "Baik", tugas: 88, kuis: 90, cbt: 89, avg: 89, kkm: "Tuntas (≥75)" },
   ];
+
+  const getCpDescription = (mapelName: string, score: number) => {
+    if (score >= 90) {
+      return `Menunjukkan penguasaan sangat baik dalam pemahaman dan penerapan kompetensi dasar ${mapelName}.`;
+    }
+    if (score >= 80) {
+      return `Menunjukkan penguasaan baik dalam aplikasi materi dan diskusi kelompok ${mapelName}.`;
+    }
+    if (score >= 75) {
+      return `Menunjukkan penguasaan cukup dan telah mencapai ketuntasan kriteria KKTP ${mapelName}.`;
+    }
+    return `Perlu bimbingan lebih lanjut pada penguasaan materi utama ${mapelName}.`;
+  };
 
   const handleExportExcelLeger = () => {
     const headers = ["No", "Kode Mapel", "Mata Pelajaran", "Guru Pengampu", "Tugas & LKPD", "Kuis", "CBT", "Nilai Akhir", "Keterangan KKM"];
@@ -239,8 +261,8 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
                       <td className="border border-slate-300 p-2 text-center font-mono">{idx + 1}</td>
                       <td className="border border-slate-300 p-2 font-bold">{m.mapel}</td>
                       <td className="border border-slate-300 p-2 text-center font-bold text-blue-900 text-xs">{m.avg}</td>
-                      <td className="border border-slate-300 p-2 text-slate-700">
-                        Menunjukkan penguasaan sangat baik dalam alur {m.mapel} {m.cp}.
+                      <td className="border border-slate-300 p-2 text-slate-700 leading-snug">
+                        {getCpDescription(m.mapel, m.avg)}
                       </td>
                     </tr>
                   ))}
@@ -248,16 +270,73 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               </table>
             </div>
 
+            {/* Ekstrakurikuler & Ketidakhadiran */}
+            <div className="grid grid-cols-2 gap-4 text-xs font-medium">
+              <div className="border border-slate-200 rounded-md p-3 bg-slate-50 space-y-2">
+                <div className="font-bold text-slate-900">Kegiatan Ekstrakurikuler & Kokurikuler (P5-PPRA):</div>
+                <table className="w-full text-[11px] border-collapse">
+                  <thead>
+                    <tr className="bg-slate-200 text-slate-900 font-bold">
+                      <th className="p-1 text-left">Kegiatan</th>
+                      <th className="p-1 text-center">Nilai</th>
+                      <th className="p-1 text-left">Keterangan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-slate-200">
+                      <td className="p-1 font-semibold">Pramuka Penggalang</td>
+                      <td className="p-1 text-center font-bold text-emerald-700">A</td>
+                      <td className="p-1">Sangat Aktif & Mandiri</td>
+                    </tr>
+                    <tr className="border-b border-slate-200">
+                      <td className="p-1 font-semibold">Tahfidz Al-Qur'an</td>
+                      <td className="p-1 text-center font-bold text-emerald-700">A</td>
+                      <td className="p-1">Tuntas Juz 30 & Surat An-Naba</td>
+                    </tr>
+                    <tr>
+                      <td className="p-1 font-semibold">PMR Madya</td>
+                      <td className="p-1 text-center font-bold text-blue-700">B</td>
+                      <td className="p-1">Aktif & Disiplin</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="border border-slate-200 rounded-md p-3 bg-slate-50 space-y-2">
+                <div className="font-bold text-slate-900">Ketidakhadiran / Presensi Semester:</div>
+                <table className="w-full text-[11px]">
+                  <tbody>
+                    <tr className="border-b border-slate-200">
+                      <td className="py-1">Sakit (S)</td>
+                      <td className="py-1 text-right font-mono font-bold">0 Hari</td>
+                    </tr>
+                    <tr className="border-b border-slate-200">
+                      <td className="py-1">Izin (I)</td>
+                      <td className="py-1 text-right font-mono font-bold">0 Hari</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1">Tanpa Keterangan (A)</td>
+                      <td className="py-1 text-right font-mono font-bold text-emerald-600">0 Hari (Nihil)</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div className="pt-2 text-[10px] text-slate-500 font-mono flex items-center justify-between border-t border-slate-200">
+                  <span>Status Verifikasi E-Rapor:</span>
+                  <span className="font-bold text-emerald-700">TERVERIFIKASI RESMI</span>
+                </div>
+              </div>
+            </div>
+
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-md text-xs space-y-1">
               <div className="font-bold text-slate-900">Catatan Wali Kelas:</div>
               <div className="text-slate-700 italic">
-                "Ananda {raporStudentName} menunjukkan semangat belajar yang sangat tinggi dan tingkat kedisiplinan serta akhlak terpuji. Pertahankan kinerjamu."
+                "Ananda {raporStudentName} menunjukkan prestasi akademik dan non-akademik yang sangat membanggakan. Pertahankan semangat juang dan tingkatkan kedisiplinan serta akhlakul karimah."
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2 text-[11px] pt-4 text-slate-800 border-t border-slate-200">
               <div className="text-center space-y-8">
-                <div>Orang Tua / Wali</div>
+                <div>Orang Tua / Wali Siswa</div>
                 <div className="font-bold underline text-slate-950">( .......................... )</div>
               </div>
               <div className="text-center space-y-8">
@@ -266,7 +345,7 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
-                <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
+                <div className="font-bold underline text-slate-950">H. Solihun, S.Pd., M.Si.</div>
               </div>
             </div>
           </div>

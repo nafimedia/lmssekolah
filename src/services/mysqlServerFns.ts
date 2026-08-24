@@ -2967,10 +2967,20 @@ export const getKbmPresensiFn = createServerFn({ method: "POST" })
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
-      const rows = await query<KbmPresensiRow[]>(
-        "SELECT * FROM kbm_presensi WHERE rombel = ? AND mapel = ? AND date_str = ?",
-        [data.rombel, data.mapel, data.date_str]
-      );
+      let sql = "SELECT * FROM kbm_presensi WHERE date_str = ?";
+      const params: any[] = [data.date_str];
+
+      if (data.rombel && data.rombel !== "ALL") {
+        sql += " AND (rombel = ? OR rombel LIKE ?)";
+        params.push(data.rombel, `%${data.rombel}%`);
+      }
+
+      if (data.mapel && data.mapel !== "ALL") {
+        sql += " AND mapel = ?";
+        params.push(data.mapel);
+      }
+
+      const rows = await query<KbmPresensiRow[]>(sql, params);
       return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
     } catch (e) {
       console.error("[getKbmPresensiFn Error]:", e);

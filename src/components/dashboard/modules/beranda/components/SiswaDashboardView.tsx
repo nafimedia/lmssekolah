@@ -52,6 +52,18 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
     loadSiswaRealData();
   }, [userName, siswaClass, currentDayName]);
 
+  const presensiStatus = presensiToday?.status ? String(presensiToday.status).toUpperCase() : null;
+  const statusText = presensiStatus
+    ? `Presensi Hari Ini: ${presensiStatus}`
+    : "Presensi Hari Ini: BELUM ABSEN";
+  const statusVariant = presensiStatus === "HADIR"
+    ? "success"
+    : presensiStatus === "SAKIT" || presensiStatus === "IZIN"
+    ? "warning"
+    : presensiStatus === "ALPA"
+    ? "danger"
+    : "warning";
+
   return (
     <div className="space-y-6">
       <StudentHeaderBanner
@@ -59,19 +71,19 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         subtitle={`Portal akademik siswa MTsN 2 Cilacap • ${currentDayName}, ${formattedTime} WIB`}
         icon={GraduationCap}
         studentNisn={siswaNisn}
-        statusText={`Presensi Hari Ini: ${presensiToday?.status || "HADIR"}`}
-        statusVariant={presensiToday?.status === "HADIR" || !presensiToday ? "success" : "warning"}
+        statusText={statusText}
+        statusVariant={statusVariant}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20">
+        <Card className={`border-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-500/30 bg-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-50/50 dark:bg-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-950/20`}>
           <CardHeader className="pb-2">
-            <CardDescription className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+            <CardDescription className={`text-xs font-semibold text-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-600 dark:text-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-400 flex items-center justify-between`}>
               <span>Kehadiran Presensi Saya</span>
               <CheckCircle2 className="h-4 w-4" />
             </CardDescription>
             <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
-              {presensiToday?.status || "BELUM ABSEN"}
+              {presensiStatus || "BELUM ABSEN"}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-slate-600 dark:text-slate-400">

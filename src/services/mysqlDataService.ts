@@ -77,6 +77,10 @@ import {
   saveLkpdActivityFn,
   getLkpdGradesFn,
   saveLkpdGradesBatchFn,
+  getWaGatewayConfigFn,
+  saveWaGatewayConfigFn,
+  sendTestWaMessageFn,
+  WaGatewayConfigRow,
   getHealthStatusFn,
   DatabaseStats,
   UserRow,
@@ -953,4 +957,47 @@ export class MysqlDataService {
       return false;
     }
   }
+
+  // WA Gateway System Config & Test Message
+  static async getWaGatewayConfig(): Promise<WaGatewayConfigRow> {
+    try {
+      return await getWaGatewayConfigFn();
+    } catch (e) {
+      console.warn("getWaGatewayConfigFn failed:", e);
+      return {
+        provider: "fonnte",
+        api_token: "",
+        sender_phone: "0812-3456-7890",
+        api_url: "https://api.fonnte.com/send",
+        is_presensi_active: true,
+        is_tahfidz_active: true,
+        is_pengumuman_active: false,
+        is_rapor_active: true,
+        template_presensi: "Assalamu'alaikum Bpk/Ibu wali dari {nama_siswa} ({rombel}), menginformasikan bahwa ananda hari ini {tanggal} tercatat status: {status_presensi}. Terima kasih.",
+        template_tahfidz: "Assalamu'alaikum Bpk/Ibu, ananda {nama_siswa} baru saja menyelesaikan setoran Tahfidz {surah} ({ayat}) dengan nilai {nilai} - Status: {status_mutqin}.",
+        template_pengumuman: "📢 PENGUMUMAN MADRASAH: {judul_pengumuman}\n\n{isi_pengumuman}",
+      };
+    }
+  }
+
+  static async saveWaGatewayConfig(config: WaGatewayConfigRow): Promise<boolean> {
+    try {
+      const res = await saveWaGatewayConfigFn({ data: { config } });
+      return res.success;
+    } catch (e) {
+      console.warn("saveWaGatewayConfigFn failed:", e);
+      return false;
+    }
+  }
+
+  static async sendTestWaMessage(target: string, message: string, config?: WaGatewayConfigRow): Promise<{ success: boolean; message: string; response?: any }> {
+    try {
+      return await sendTestWaMessageFn({ data: { target, message, config } });
+    } catch (e: any) {
+      console.warn("sendTestWaMessageFn failed:", e);
+      return { success: false, message: e?.message || "Error sending test message" };
+    }
+  }
 }
+
+export type { WaGatewayConfigRow };

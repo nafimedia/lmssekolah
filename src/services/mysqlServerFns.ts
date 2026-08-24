@@ -3200,3 +3200,227 @@ export const saveLkpdGradesBatchFn = createServerFn({ method: "POST" })
     }
   });
 
+// ============================================================================
+// 32. WA GATEWAY CONFIGURATION & AUTO-DISPATCH SYSTEM
+// ============================================================================
+
+export interface WaGatewayConfigRow {
+  id?: string;
+  provider: "fonnte" | "wablas" | "whacenter" | "custom";
+  api_token: string;
+  sender_phone: string;
+  api_url?: string;
+  is_presensi_active: boolean;
+  is_tahfidz_active: boolean;
+  is_pengumuman_active: boolean;
+  is_rapor_active: boolean;
+  template_presensi: string;
+  template_tahfidz: string;
+  template_pengumuman: string;
+  template_rapor?: string;
+  updated_at?: string;
+}
+
+export const getWaGatewayConfigFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<WaGatewayConfigRow> => {
+    const defaultConfig: WaGatewayConfigRow = {
+      provider: "fonnte",
+      api_token: "",
+      sender_phone: "0812-3456-7890",
+      api_url: "https://api.fonnte.com/send",
+      is_presensi_active: true,
+      is_tahfidz_active: true,
+      is_pengumuman_active: false,
+      is_rapor_active: true,
+      template_presensi: "Assalamu'alaikum Bpk/Ibu wali dari {nama_siswa} ({rombel}), menginformasikan bahwa ananda hari ini {tanggal} tercatat status: {status_presensi}. Terima kasih.",
+      template_tahfidz: "Assalamu'alaikum Bpk/Ibu, ananda {nama_siswa} baru saja menyelesaikan setoran Tahfidz {surah} ({ayat}) dengan nilai {nilai} - Status: {status_mutqin}.",
+      template_pengumuman: "📢 PENGUMUMAN MADRASAH: {judul_pengumuman}\n\n{isi_pengumuman}",
+      template_rapor: "Assalamu'alaikum Bpk/Ibu, E-Rapor digital semester {semester} ananda {nama_siswa} ({rombel}) telah terbit dengan rata-rata nilai {rata_nilai}.",
+    };
+
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS wa_gateway_config (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          provider VARCHAR(50) DEFAULT 'fonnte',
+          api_token TEXT,
+          sender_phone VARCHAR(50) DEFAULT '0812-3456-7890',
+          api_url VARCHAR(255) DEFAULT 'https://api.fonnte.com/send',
+          is_presensi_active TINYINT(1) DEFAULT 1,
+          is_tahfidz_active TINYINT(1) DEFAULT 1,
+          is_pengumuman_active TINYINT(1) DEFAULT 0,
+          is_rapor_active TINYINT(1) DEFAULT 1,
+          template_presensi TEXT,
+          template_tahfidz TEXT,
+          template_pengumuman TEXT,
+          template_rapor TEXT,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      const rows = await query<any[]>("SELECT * FROM wa_gateway_config ORDER BY id DESC LIMIT 1");
+      if (rows && rows.length > 0) {
+        const r = rows[0];
+        return {
+          id: String(r.id),
+          provider: r.provider || "fonnte",
+          api_token: r.api_token || "",
+          sender_phone: r.sender_phone || "0812-3456-7890",
+          api_url: r.api_url || "https://api.fonnte.com/send",
+          is_presensi_active: Boolean(r.is_presensi_active),
+          is_tahfidz_active: Boolean(r.is_tahfidz_active),
+          is_pengumuman_active: Boolean(r.is_pengumuman_active),
+          is_rapor_active: Boolean(r.is_rapor_active),
+          template_presensi: r.template_presensi || defaultConfig.template_presensi,
+          template_tahfidz: r.template_tahfidz || defaultConfig.template_tahfidz,
+          template_pengumuman: r.template_pengumuman || defaultConfig.template_pengumuman,
+          template_rapor: r.template_rapor || defaultConfig.template_rapor,
+        };
+      }
+      return defaultConfig;
+    } catch (e) {
+      console.error("[getWaGatewayConfigFn Error]:", e);
+      return defaultConfig;
+    }
+  }
+);
+
+export const saveWaGatewayConfigFn = createServerFn({ method: "POST" })
+  .validator((data: { config: WaGatewayConfigRow }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      const c = data.config;
+      await execute(`
+        CREATE TABLE IF NOT EXISTS wa_gateway_config (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          provider VARCHAR(50) DEFAULT 'fonnte',
+          api_token TEXT,
+          sender_phone VARCHAR(50) DEFAULT '0812-3456-7890',
+          api_url VARCHAR(255) DEFAULT 'https://api.fonnte.com/send',
+          is_presensi_active TINYINT(1) DEFAULT 1,
+          is_tahfidz_active TINYINT(1) DEFAULT 1,
+          is_pengumuman_active TINYINT(1) DEFAULT 0,
+          is_rapor_active TINYINT(1) DEFAULT 1,
+          template_presensi TEXT,
+          template_tahfidz TEXT,
+          template_pengumuman TEXT,
+          template_rapor TEXT,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      await execute(
+        `INSERT INTO wa_gateway_config (
+          provider, api_token, sender_phone, api_url,
+          is_presensi_active, is_tahfidz_active, is_pengumuman_active, is_rapor_active,
+          template_presensi, template_tahfidz, template_pengumuman, template_rapor
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          c.provider || "fonnte",
+          c.api_token || "",
+          c.sender_phone || "",
+          c.api_url || "https://api.fonnte.com/send",
+          c.is_presensi_active ? 1 : 0,
+          c.is_tahfidz_active ? 1 : 0,
+          c.is_pengumuman_active ? 1 : 0,
+          c.is_rapor_active ? 1 : 0,
+          c.template_presensi || "",
+          c.template_tahfidz || "",
+          c.template_pengumuman || "",
+          c.template_rapor || "",
+        ]
+      );
+      return { success: true };
+    } catch (e) {
+      console.error("[saveWaGatewayConfigFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const sendTestWaMessageFn = createServerFn({ method: "POST" })
+  .validator((data: { target: string; message: string; config?: WaGatewayConfigRow }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message: string; response?: any }> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      let cfg = data.config;
+      if (!cfg || !cfg.api_token) {
+        const rows = await query<any[]>("SELECT * FROM wa_gateway_config ORDER BY id DESC LIMIT 1");
+        if (rows && rows.length > 0) {
+          const r = rows[0];
+          cfg = {
+            provider: r.provider || "fonnte",
+            api_token: r.api_token || "",
+            sender_phone: r.sender_phone || "",
+            api_url: r.api_url || "https://api.fonnte.com/send",
+            is_presensi_active: Boolean(r.is_presensi_active),
+            is_tahfidz_active: Boolean(r.is_tahfidz_active),
+            is_pengumuman_active: Boolean(r.is_pengumuman_active),
+            is_rapor_active: Boolean(r.is_rapor_active),
+            template_presensi: r.template_presensi || "",
+            template_tahfidz: r.template_tahfidz || "",
+            template_pengumuman: r.template_pengumuman || "",
+          };
+        }
+      }
+
+      const token = cfg?.api_token || process.env.FONNTE_TOKEN || "";
+      if (!token) {
+        return { success: false, message: "API Token / Key belum diisi pada Konfigurasi WA Gateway!" };
+      }
+
+      const provider = cfg?.provider || "fonnte";
+      let apiUrl = cfg?.api_url || "https://api.fonnte.com/send";
+      if (provider === "wablas") {
+        apiUrl = "https://kudus.wablas.com/api/send-message";
+      } else if (provider === "whacenter") {
+        apiUrl = "https://whacenter.com/api/send";
+      }
+
+      let resData: any = {};
+      if (provider === "fonnte" || provider === "custom") {
+        const params = new URLSearchParams();
+        params.append("target", data.target);
+        params.append("message", data.message);
+
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: token,
+          },
+          body: params,
+        });
+        resData = await res.json().catch(() => ({ status: res.status }));
+      } else if (provider === "wablas") {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ phone: data.target, message: data.message }),
+        });
+        resData = await res.json().catch(() => ({ status: res.status }));
+      }
+
+      // Log message dispatch to DB wa_logs
+      try {
+        await execute(`
+          INSERT INTO wa_logs (parent_name, student_name, category, message, phone, status)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `, ["Pengujian UI", data.target, "Uji Coba System", data.message, data.target, "TERKIRIM"]);
+      } catch (e) {}
+
+      return {
+        success: true,
+        message: `Pesan uji coba berhasil dikirimkan via provider ${provider.toUpperCase()}!`,
+        response: resData,
+      };
+    } catch (e: any) {
+      console.error("[sendTestWaMessageFn Error]:", e);
+      return { success: false, message: `Gagal mengirim WA: ${e?.message || e}` };
+    }
+  });
+
+

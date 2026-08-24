@@ -830,7 +830,7 @@ function DashboardContent({
                 <div className="font-bold text-xs text-sidebar-foreground truncate">
                   {displayName}
                 </div>
-                <div className="text-[10px] text-muted-foreground truncate font-mono font-medium uppercase">
+                <div className="text-[10px] text-sidebar-foreground/85 truncate font-mono font-bold uppercase tracking-wider">
                   {activeRole.replace("_", " ")}
                 </div>
               </div>

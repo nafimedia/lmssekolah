@@ -149,3 +149,31 @@
     color: var(--color-card-foreground);
   }
 }
+
+/* Format Cetak Dokumen Resmi @media print MTsN 2 Cilacap */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header,
+  [data-sidebar="sidebar"],
+  aside,
+  nav,
+  .no-print,
+  button:not(.print-keep) {
+    display: none !important;
+  }
+
+  .printable-document,
+  .print-area {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

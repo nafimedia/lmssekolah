@@ -17,16 +17,14 @@ import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 
 export function PengumumanModule() {
-  const [list, setList] = useState([
-    { id: "1", t: "Libur Maulid Nabi", d: "Sekolah diliburkan Senin, 27 Juli 2026.", tag: "Pengumuman" },
-    { id: "2", t: "Rapat Wali Murid Kelas 9", d: "Persiapan ujian akhir, Sabtu 08.00 WIB.", tag: "Agenda" },
-    { id: "3", t: "Lomba MTQ Antar Kelas", d: "Pendaftaran dibuka sampai 20 Juli 2026.", tag: "Kegiatan" },
-    { id: "4", t: "Update Kurikulum Merdeka", d: "Silabus baru untuk fase D telah tersedia.", tag: "Kurikulum" },
-  ]);
+  const [list, setList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    MysqlDataService.getAnnouncements().then((dbList) => {
-      if (dbList && dbList.length > 0) {
+  const fetchAnnouncements = async () => {
+    setIsLoading(true);
+    try {
+      const dbList = await MysqlDataService.getAnnouncements();
+      if (dbList) {
         const mapped = dbList.map((item) => ({
           id: String(item.id || Date.now()),
           t: item.title,
@@ -34,8 +32,19 @@ export function PengumumanModule() {
           tag: item.tag || "Pengumuman",
         }));
         setList(mapped);
+      } else {
+        setList([]);
       }
-    });
+    } catch (err) {
+      console.warn("getAnnouncements DB failed:", err);
+      setList([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
   }, []);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -44,37 +53,38 @@ export function PengumumanModule() {
   const [desc, setDesc] = useState("");
   const [tag, setTag] = useState("Pengumuman");
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !desc) return toast.error("Isi judul dan detail pengumuman!");
 
-    const newAnn = {
-      id: String(Date.now()),
-      t: title,
-      d: desc,
-      tag,
-    };
+    try {
+      await MysqlDataService.saveAnnouncement({
+        title,
+        content: desc,
+        tag,
+        date_str: new Date().toLocaleDateString("id-ID"),
+      });
 
-    MysqlDataService.saveAnnouncement({
-      title,
-      content: desc,
-      tag,
-      date_str: new Date().toLocaleDateString("id-ID"),
-    }).catch((err) => console.warn("saveAnnouncement DB failed:", err));
-
-    setList([newAnn, ...list]);
-    toast.success("Pengumuman resmi madrasah berhasil diterbitkan ke Database!");
-    setIsOpen(false);
-    setTitle("");
-    setDesc("");
+      await fetchAnnouncements();
+      toast.success("Pengumuman resmi madrasah berhasil diterbitkan ke Database!");
+      setIsOpen(false);
+      setTitle("");
+      setDesc("");
+    } catch (err) {
+      toast.error("Gagal menyimpan pengumuman ke Database");
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (Number(id)) {
-      MysqlDataService.deleteAnnouncement(Number(id)).catch((err) => console.warn("deleteAnnouncement DB failed:", err));
+  const handleDelete = async (id: string) => {
+    try {
+      if (Number(id)) {
+        await MysqlDataService.deleteAnnouncement(Number(id));
+      }
+      setList((prev) => prev.filter((x) => x.id !== id));
+      toast.success("Pengumuman berhasil dihapus permanen!");
+    } catch (err) {
+      toast.error("Gagal menghapus pengumuman");
     }
-    setList(list.filter((x) => x.id !== id));
-    toast.success("Pengumuman berhasil dihapus!");
   };
 
   return (
@@ -95,29 +105,43 @@ export function PengumumanModule() {
       </div>
 
       <div className="space-y-3">
-        {list.map((n) => (
-          <Card key={n.id} className="border-border shadow-xs hover:border-primary/30 transition">
-            <CardContent className="p-4 flex items-start gap-4">
-              <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary grid place-items-center shrink-0 mt-0.5 font-bold">
-                <Megaphone className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="font-bold text-foreground">{n.t}</div>
-                    <Badge variant="secondary" className="text-[10px] font-bold bg-primary/10 text-primary border-primary/20">
-                      {n.tag}
-                    </Badge>
-                  </div>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:bg-destructive/10" onClick={() => handleDelete(n.id)}>
-                    Hapus
-                  </Button>
+        {isLoading ? (
+          <div className="p-12 text-center text-xs text-muted-foreground animate-pulse border border-dashed border-border rounded-xl">
+            Memuat pengumuman dari database...
+          </div>
+        ) : list.length === 0 ? (
+          <div className="p-12 text-center border border-dashed border-border rounded-xl bg-card">
+            <Megaphone className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+            <h3 className="font-bold text-sm text-foreground">Belum Ada Pengumuman Diterbitkan</h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+              Tidak ada data pengumuman di database. Klik tombol "+ Tambah Pengumuman Baru" di atas untuk menerbitkan pengumuman resmi madrasah.
+            </p>
+          </div>
+        ) : (
+          list.map((n) => (
+            <Card key={n.id} className="border-border shadow-xs hover:border-primary/30 transition">
+              <CardContent className="p-4 flex items-start gap-4">
+                <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary grid place-items-center shrink-0 mt-0.5 font-bold">
+                  <Megaphone className="h-5 w-5" />
                 </div>
-                <div className="text-sm text-muted-foreground mt-1 leading-relaxed">{n.d}</div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="font-bold text-foreground">{n.t}</div>
+                      <Badge variant="secondary" className="text-[10px] font-bold bg-primary/10 text-primary border-primary/20">
+                        {n.tag}
+                      </Badge>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:bg-destructive/10" onClick={() => handleDelete(n.id)}>
+                      Hapus
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1 leading-relaxed">{n.d}</div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Modal Form Tambah Pengumuman */}

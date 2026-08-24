@@ -150,7 +150,7 @@ export function PresensiKbmTab({
                           key={btn.key}
                           type="button"
                           onClick={() => handleSetSessionStatus(s.id, btn.key)}
-                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
+                          className={`px-2 sm:px-2.5 py-1.5 rounded text-[10px] font-extrabold transition touch-manipulation cursor-pointer ${
                             s.sessionStatus === btn.key
                               ? btn.activeClass
                               : "text-muted-foreground hover:text-foreground"

@@ -1,33 +1,45 @@
+// Use globalThis singleton pattern to prevent dev server HMR from spawning multiple connection pools
+declare global {
+  var __mysqlPool: any | undefined;
+}
+
 let pool: any = null;
 
 if (typeof window === 'undefined') {
-  const mysql = await import('mysql2/promise');
-  pool = mysql.default.createPool({
-    host: process.env.DATABASE_HOST || 'localhost',
-    port: Number(process.env.DATABASE_PORT) || 3306,
-    user: process.env.DATABASE_USER || 'root',
-    password: process.env.DATABASE_PASSWORD || '',
-    database: process.env.DATABASE_NAME || 'db_lms',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-  });
+  if (!globalThis.__mysqlPool) {
+    const mysql = await import('mysql2/promise');
+    globalThis.__mysqlPool = mysql.default.createPool({
+      host: process.env.DATABASE_HOST || 'localhost',
+      port: Number(process.env.DATABASE_PORT) || 3306,
+      user: process.env.DATABASE_USER || 'root',
+      password: process.env.DATABASE_PASSWORD || '',
+      database: process.env.DATABASE_NAME || 'db_lms',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 0,
+    });
 
-  // Graceful shutdown: close MySQL pool connections on termination signals
-  const closePool = async (signal: string) => {
-    if (pool) {
-      console.log(`[Graceful Shutdown] Received ${signal}. Closing MySQL connection pool...`);
-      try {
-        await pool.end();
-        console.log('[Graceful Shutdown] MySQL connection pool closed cleanly.');
-      } catch (err) {
-        console.error('[Graceful Shutdown Error]:', err);
+    // Graceful shutdown: close MySQL pool connections on termination signals
+    const closePool = async (signal: string) => {
+      if (globalThis.__mysqlPool) {
+        console.log(`[Graceful Shutdown] Received ${signal}. Closing MySQL connection pool...`);
+        try {
+          await globalThis.__mysqlPool.end();
+          globalThis.__mysqlPool = undefined;
+          console.log('[Graceful Shutdown] MySQL connection pool closed cleanly.');
+        } catch (err) {
+          console.error('[Graceful Shutdown Error]:', err);
+        }
       }
-    }
-  };
+    };
 
-  process.once('SIGTERM', () => closePool('SIGTERM'));
-  process.once('SIGINT', () => closePool('SIGINT'));
+    process.once('SIGTERM', () => closePool('SIGTERM'));
+    process.once('SIGINT', () => closePool('SIGINT'));
+  }
+
+  pool = globalThis.__mysqlPool;
 }
 
 export async function query<T = any[]>(sql: string, params?: any[]): Promise<T> {

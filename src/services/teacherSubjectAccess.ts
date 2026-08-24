@@ -165,10 +165,13 @@ export function isSubjectAllowedForUser(subjectName: string, user?: UserSession 
 /**
  * Filter daftar Mapel agar hanya menampilkan Mapel yang diampu oleh Guru.
  */
-export function filterSubjectsForUser(allSubjects: string[], user?: UserSession | null): string[] {
+export function filterSubjectsForUser<T extends string | { name: string }>(allSubjects: T[], user?: UserSession | null): T[] {
   const assigned = getTeacherAssignedSubjects(user);
   if (assigned === null) return allSubjects; // Tidak dibatasi (Admin)
 
-  const filtered = allSubjects.filter((s) => isSubjectAllowedForUser(s, user));
-  return filtered.length > 0 ? filtered : assigned;
+  const filtered = allSubjects.filter((item) => {
+    const subjectName = typeof item === "string" ? item : item.name;
+    return isSubjectAllowedForUser(subjectName, user);
+  });
+  return filtered.length > 0 ? filtered : allSubjects;
 }

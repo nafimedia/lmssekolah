@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { PresensiSiswaTab } from "./components/PresensiSiswaTab";
 import { PresensiKbmTab } from "./components/PresensiKbmTab";
 import { PrintPresensiDialog } from "./components/PrintPresensiDialog";
+import { exportToExcelXml } from "@/utils/excelExporter";
 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
@@ -303,6 +304,24 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
   const avgAttendancePct = Math.round((totalHadirToday / totalStudents) * 1000) / 10;
   const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
 
+  const handleExportExcelPresensi = () => {
+    const headers = ["No", "NISN", "Nama Siswa", "Rombel", "Total Hadir (Hari)", "Izin", "Sakit", "Alpa", "% Kehadiran", "Status Presensi"];
+    const rows = filteredAttendance.map((s, idx) => [
+      idx + 1,
+      s.nisn,
+      s.name,
+      s.class,
+      s.hadir,
+      s.izin,
+      s.sakit,
+      s.alpa,
+      `${s.pct}%`,
+      s.status,
+    ]);
+    exportToExcelXml(`Rekap_Presensi_${selectedClass}_${selectedMonth.replace(/\s+/g, "_")}`, "Presensi_Bulanan", headers, rows);
+    toast.success(`📊 Rekap Presensi Excel (${selectedClass}) Berhasil Diunduh!`);
+  };
+
   return (
     <div className="space-y-6">
       <SectionHeader
@@ -329,8 +348,8 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
               <Info className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground font-medium">Siswa Izin / Sakit</div>
-              <div className="text-lg font-extrabold text-foreground">{totalIzinSakit} Siswa</div>
+              <div className="text-xs text-muted-foreground font-medium">Total Siswa Hadir</div>
+              <div className="text-lg font-extrabold text-foreground">{totalHadirToday} Siswa</div>
             </div>
           </CardContent>
         </Card>
@@ -341,20 +360,20 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
               <AlertTriangle className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground font-medium">Alert Indisipliner (Alpa)</div>
-              <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{totalAlpaEws} Siswa EWS</div>
+              <div className="text-xs text-muted-foreground font-medium">Total Izin / Sakit</div>
+              <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{totalIzinSakit} Siswa</div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card shadow-2xs">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
-              <Smartphone className="h-5 w-5 text-purple-600" />
+            <div className="h-10 w-10 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400 grid place-items-center shrink-0 font-bold">
+              <Smartphone className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground font-medium">WA Alert Gateway</div>
-              <div className="text-lg font-extrabold text-purple-600 dark:text-purple-400">Terintegrasi</div>
+              <div className="text-xs text-muted-foreground font-medium">Alpa (Perlu WA Alert)</div>
+              <div className="text-lg font-extrabold text-red-600 dark:text-red-400">{totalAlpaEws} Siswa</div>
             </div>
           </CardContent>
         </Card>
@@ -398,6 +417,11 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                 ))}
               </select>
             )}
+
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10" onClick={handleExportExcelPresensi}>
+              <Printer className="h-3.5 w-3.5 text-emerald-500" />
+              <span>Export Excel (.xls)</span>
+            </Button>
 
             <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintPresensiOpen(true)}>
               <Printer className="h-3.5 w-3.5" />

@@ -5,23 +5,38 @@ import { MysqlAuthService, INITIAL_ROLE_USERS } from "@/services/mysqlAuthServic
 import { MysqlDataService, JadwalRow } from "@/services/mysqlDataService";
 import logoAsset from "@/assets/logo-mtsn2.png.asset.json";
 import { BerandaModule } from "@/components/dashboard/modules/beranda/BerandaModule";
-import { ProfilModule } from "@/components/dashboard/modules/profil/ProfilModule";
-import { SiakadMasterDataModule } from "@/components/dashboard/modules/siakad/SiakadMasterDataModule";
-import { RuangMengajarModule } from "@/components/dashboard/modules/ruangmengajar/RuangMengajarModule";
-import { SdmGtkModule } from "@/components/dashboard/modules/sdm/SdmGtkModule";
-import { PengumumanModule } from "@/components/dashboard/modules/pengumuman/PengumumanModule";
-import { AgendaKalenderModule } from "@/components/dashboard/modules/agenda/AgendaKalenderModule";
-import { PerpustakaanModule } from "@/components/dashboard/modules/perpustakaan/PerpustakaanModule";
-import { UserManagementModule } from "@/components/dashboard/modules/user/UserManagementModule";
-import { KehadiranModule } from "@/components/dashboard/modules/kehadiran/KehadiranModule";
-import { JadwalModule } from "@/components/dashboard/modules/jadwal/JadwalModule";
-import { ModulAjarModule } from "@/components/dashboard/modules/modulajar/ModulAjarModule";
-import { ManajemenKelasModule } from "@/components/dashboard/modules/manajemenkelas/ManajemenKelasModule";
-import { MonitoringKbmLiveModule } from "@/components/dashboard/modules/monitoringkbmlive/MonitoringKbmLiveModule";
+import { GlobalCommandPalette } from "@/components/dashboard/components/GlobalCommandPalette";
+import { NotificationCenterPopover } from "@/components/dashboard/components/NotificationCenterPopover";
+import { TableRowsSkeleton } from "@/components/dashboard/components/ModuleSkeleton";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 import { isSubjectAllowedForUser, filterSubjectsForUser, getTeacherAssignedSubjects, getTeacherAssignedClasses, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
-import { useEffect, useState, useMemo, Fragment } from "react";
+import { useEffect, useState, useMemo, Fragment, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
+
+// Code-Splitting Lazy Loaded Heavy Modules:
+const ProfilModule = lazy(() => import("@/components/dashboard/modules/profil/ProfilModule").then((m) => ({ default: m.ProfilModule })));
+const SiakadMasterDataModule = lazy(() => import("@/components/dashboard/modules/siakad/SiakadMasterDataModule").then((m) => ({ default: m.SiakadMasterDataModule })));
+const RuangMengajarModule = lazy(() => import("@/components/dashboard/modules/ruangmengajar/RuangMengajarModule").then((m) => ({ default: m.RuangMengajarModule })));
+const SdmGtkModule = lazy(() => import("@/components/dashboard/modules/sdm/SdmGtkModule").then((m) => ({ default: m.SdmGtkModule })));
+const PengumumanModule = lazy(() => import("@/components/dashboard/modules/pengumuman/PengumumanModule").then((m) => ({ default: m.PengumumanModule })));
+const AgendaKalenderModule = lazy(() => import("@/components/dashboard/modules/agenda/AgendaKalenderModule").then((m) => ({ default: m.AgendaKalenderModule })));
+const PerpustakaanModule = lazy(() => import("@/components/dashboard/modules/perpustakaan/PerpustakaanModule").then((m) => ({ default: m.PerpustakaanModule })));
+const UserManagementModule = lazy(() => import("@/components/dashboard/modules/user/UserManagementModule").then((m) => ({ default: m.UserManagementModule })));
+const KehadiranModule = lazy(() => import("@/components/dashboard/modules/kehadiran/KehadiranModule").then((m) => ({ default: m.KehadiranModule })));
+const JadwalModule = lazy(() => import("@/components/dashboard/modules/jadwal/JadwalModule").then((m) => ({ default: m.JadwalModule })));
+const ModulAjarModule = lazy(() => import("@/components/dashboard/modules/modulajar/ModulAjarModule").then((m) => ({ default: m.ModulAjarModule })));
+const ManajemenKelasModule = lazy(() => import("@/components/dashboard/modules/manajemenkelas/ManajemenKelasModule").then((m) => ({ default: m.ManajemenKelasModule })));
+const MonitoringKbmLiveModule = lazy(() => import("@/components/dashboard/modules/monitoringkbmlive/MonitoringKbmLiveModule").then((m) => ({ default: m.MonitoringKbmLiveModule })));
+const ApresiasiGuruModule = lazy(() => import("@/components/dashboard/modules/apresiasi/ApresiasiGuruModule").then((m) => ({ default: m.ApresiasiGuruModule })));
+const ApresiasiSiswaModule = lazy(() => import("@/components/dashboard/modules/apresiasi/ApresiasiSiswaModule").then((m) => ({ default: m.ApresiasiSiswaModule })));
+const RaporModule = lazy(() => import("@/components/dashboard/modules/rapor/RaporModule").then((m) => ({ default: m.RaporModule })));
+const ProgressBelajarModule = lazy(() => import("@/components/dashboard/modules/progress/ProgressBelajarModule").then((m) => ({ default: m.ProgressBelajarModule })));
+const TahfidzModule = lazy(() => import("@/components/dashboard/modules/tahfidz/TahfidzModule").then((m) => ({ default: m.TahfidzModule })));
+const KokurikulerModule = lazy(() => import("@/components/dashboard/modules/kokurikuler/KokurikulerModule").then((m) => ({ default: m.KokurikulerModule })));
+const KokurikulerSiswaModule = lazy(() => import("@/components/dashboard/modules/kokurikuler/KokurikulerSiswaModule").then((m) => ({ default: m.KokurikulerSiswaModule })));
+const AsistenAIModule = lazy(() => import("@/components/dashboard/modules/asistenai/AsistenAIModule").then((m) => ({ default: m.AsistenAIModule })));
+const PusatAsesmenModule = lazy(() => import("@/components/dashboard/modules/asesmen/PusatAsesmenModule").then((m) => ({ default: m.PusatAsesmenModule })));
+const MataPelajaranModule = lazy(() => import("@/components/dashboard/modules/mapel/MataPelajaranModule").then((m) => ({ default: m.MataPelajaranModule })));
 import {
   Home,
   BookOpen,
@@ -722,6 +737,19 @@ function DashboardContent({
 
   const groups = Array.from(new Set(filteredMenu.map((m) => m.group)));
 
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <>
       {/* Lovable Native Shadcn Sidebar Universal 7 Peran */}
@@ -818,39 +846,50 @@ function DashboardContent({
       {/* Main Container */}
       <div className="flex flex-col flex-1 min-w-0 min-h-screen bg-background">
         {/* Top Header Navigation */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/95 px-4 lg:px-8 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger className="h-9 w-9 border border-border" />
-            <div className="relative hidden md:block w-72">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Cari mapel, tugas, materi..."
-                className="pl-9 text-xs h-9 bg-muted/30"
-              />
-            </div>
+        <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 border-b border-border bg-background/95 px-2.5 sm:px-4 lg:px-8 backdrop-blur-md">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <SidebarTrigger className="h-8 w-8 sm:h-9 sm:w-9 border border-border" />
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="flex items-center justify-between w-44 sm:w-64 md:w-72 h-8 sm:h-9 px-2.5 sm:px-3 text-xs bg-muted/40 hover:bg-muted/70 text-muted-foreground border border-border/80 rounded-xl transition cursor-pointer"
+            >
+              <span className="flex items-center gap-2 truncate">
+                <Search className="h-3.5 w-3.5 opacity-60 shrink-0" />
+                <span className="truncate">Cari fitur, siswa, mapel...</span>
+              </span>
+              <kbd className="hidden sm:inline-flex font-mono text-[10px] font-extrabold bg-background px-1.5 py-0.5 rounded border border-border text-foreground shrink-0">
+                Ctrl K
+              </kbd>
+            </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9"
+              className="h-8 w-8 sm:h-9 sm:w-9"
               onClick={() => setDark(!dark)}
             >
               {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
             </Button>
 
+            {/* Notification Center Popover */}
+            <NotificationCenterPopover
+              setActiveTab={(key: string) => setActive(key as MenuKey)}
+              onOpenWaModal={() => setIsWaModalOpen(true)}
+            />
+
             {/* Multi-Role Switcher Dropdown */}
             {myAssignedRoles.length > 1 || isSuperAdmin ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 shadow-xs">
-                    <Shield className="h-3.5 w-3.5 text-emerald-500" />
-                    <span className="hidden xs:inline">Mode Role:</span>
-                    <span className="uppercase font-extrabold">{ROLE_LABELS[activeRole]?.icon || "👤"} {activeRole.replace("_", " ")}</span>
-                    <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
+                  <Button variant="outline" size="sm" className="gap-1 text-[11px] sm:text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 shadow-xs h-8 sm:h-9 px-2 sm:px-3">
+                    <Shield className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="hidden md:inline">Mode Role:</span>
+                    <span className="uppercase font-extrabold truncate max-w-[90px] sm:max-w-none">{ROLE_LABELS[activeRole]?.icon || "👤"} {activeRole.replace("_", " ")}</span>
+                    <ChevronDown className="h-3 w-3 opacity-60 ml-0.5 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-1.5">
@@ -882,19 +921,30 @@ function DashboardContent({
             ) : null}
 
             {(activeRole === "guru" || activeRole === "walikelas" || activeRole === "wali_kelas" || activeRole === "kamad" || activeRole === "waka" || activeRole === "admin_akademik" || activeRole === "admin") && (
-              <Button size="sm" variant="outline" className="text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" onClick={() => setIsWaModalOpen(true)}>
-                <Send className="h-3.5 w-3.5 text-emerald-500" /> <span className="hidden sm:inline">WA Gateway</span>
+              <Button size="sm" variant="outline" className="text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 h-8 sm:h-9 px-2 sm:px-3" onClick={() => setIsWaModalOpen(true)}>
+                <Send className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span className="hidden sm:inline">WA Gateway</span>
               </Button>
             )}
 
             {/* WA Modal */}
             <WAGatewayLogModal isOpen={isWaModalOpen} onClose={() => setIsWaModalOpen(false)} />
 
+            {/* Global Cmd+K Command Palette Modal */}
+            <GlobalCommandPalette
+              isOpen={isCommandPaletteOpen}
+              onClose={() => setIsCommandPaletteOpen(false)}
+              setActiveTab={(key: string) => setActive(key as MenuKey)}
+              handleSwitchRole={handleSwitchRole}
+              activeRole={activeRole}
+              assignedRoles={myAssignedRoles}
+              onOpenWaModal={() => setIsWaModalOpen(true)}
+            />
+
             {/* User Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2.5 p-1.5 hover:bg-accent rounded-full border border-border/40">
-                  <Avatar className="h-8 w-8 ring-2 ring-emerald-500/40 shrink-0">
+                <Button variant="ghost" className="flex items-center gap-2 p-1 hover:bg-accent rounded-full border border-border/40">
+                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-emerald-500/40 shrink-0">
                     {userProfile?.avatarUrl || me?.avatar_url ? (
                       <img src={userProfile?.avatarUrl || me?.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
                     ) : (
@@ -936,49 +986,46 @@ function DashboardContent({
           </div>
         </header>
 
-        <main className="p-4 lg:p-8 flex-1">
+        <main className="p-3 sm:p-4 lg:p-8 flex-1 overflow-x-hidden">
           <ErrorBoundary>
-            {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
-            {active === "monitoring_kbm_live" && (
-              activeRole === "admin" || activeRole === "admin_akademik" || activeRole === "kamad" || activeRole === "waka" ? (
-                <MonitoringKbmLiveModule />
-              ) : (
-                <div className="p-12 text-center border border-dashed border-red-200 rounded-2xl bg-red-50/30">
-                  <h3 className="font-extrabold text-sm text-red-600">Akses Terbatas — Supervisi Pimpinan</h3>
-                  <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-                    Menu <strong>Monitoring KBM Live</strong> khusus diperuntukkan bagi Kepala Madrasah (Kamad), Waka Kurikulum, dan Administrator.
-                  </p>
-                </div>
-              )
-            )}
-            {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
-            {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
-            {active === "siakad" && <SiakadMasterDataModule />}
-            {active === "manajemen_kelas" && <ManajemenKelasModule activeRole={activeRole} userProfile={userProfile} />}
-            {active === "perangkat_pembelajaran" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
-            {active === "mapel" && <MataPelajaran activeRole={activeRole} userProfile={userProfile} />}
-            {active === "users" && activeRole !== "siswa" && <UserManagementModule />}
-            {active === "pengumuman" && <Pengumuman />}
-            {active === "jadwal" && <JadwalModule activeRole={activeRole} userProfile={userProfile} />}
-            {active === "agenda" && <AgendaKalender activeRole={activeRole} />}
-            {active === "kehadiran" && <KehadiranModule activeRole={activeRole} userProfile={userProfile} />}
-            {active === "modul_ajar" && <ModulAjarModule activeRole={activeRole} userProfile={userProfile} />}
-            {active === "asesmen" && <PusatAsesmen activeRole={activeRole} />}
-            {active === "tugas" && <Tugas />}
-            {active === "quiz" && <Quiz />}
-            {active === "cbt" && <CBT activeRole={activeRole} />}
-            {active === "nilai" && <Nilai activeRole={activeRole} />}
-            {active === "progress" && <Progress activeRole={activeRole} />}
-            {active === "apresiasi_guru" && <ApresiasiGuru activeRole={activeRole} />}
-            {active === "apresiasi_siswa" && <ApresiasiSiswa activeRole={activeRole} />}
-            {active === "asisten_ai" && <AsistenAITools />}
-            {active === "tahfidz" && <Tahfidz />}
-            {active === "tahfidz_report" && <LaporanTahfidzEksekutif activeRole={activeRole} />}
-            {active === "kokurikuler" && <KokurikulerSiswa />}
-            {active === "kokurikuler_report" && <LaporanKokurikuler activeRole={activeRole} />}
-            {active === "perpustakaan" && <Perpustakaan />}
-            {active === "profil" && <ProfilModule userProfile={userProfile} setUserProfile={setUserProfile} activeRole={activeRole} />}
-            {active === "pengaturan" && <Pengaturan />}
+            <Suspense fallback={<TableRowsSkeleton rows={5} />}>
+              {active === "beranda" && <BerandaModule activeRole={activeRole} userProfile={userProfile} dbStats={dbStats} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
+              {active === "monitoring_kbm_live" && (
+                activeRole === "admin" || activeRole === "admin_akademik" || activeRole === "kamad" || activeRole === "waka" ? (
+                  <MonitoringKbmLiveModule />
+                ) : (
+                  <div className="p-12 text-center border border-dashed border-red-200 rounded-2xl bg-red-50/30">
+                    <h3 className="font-extrabold text-sm text-red-600">Akses Terbatas — Supervisi Pimpinan</h3>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                      Menu <strong>Monitoring KBM Live</strong> khusus diperuntukkan bagi Kepala Madrasah (Kamad), Waka Kurikulum, dan Administrator.
+                    </p>
+                  </div>
+                )
+              )}
+              {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "siakad" && <SiakadMasterDataModule />}
+              {active === "manajemen_kelas" && <ManajemenKelasModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "perangkat_pembelajaran" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "mapel" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "users" && activeRole !== "siswa" && <UserManagementModule />}
+              {active === "kehadiran" && <KehadiranModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "jadwal" && <JadwalModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "modul_ajar" && <ModulAjarModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "apresiasi" && <ApresiasiGuruModule />}
+              {active === "apresiasi_siswa" && <ApresiasiSiswaModule />}
+              {active === "nilai" && <RaporModule activeRole={activeRole} />}
+              {active === "progress" && <ProgressBelajarModule />}
+              {active === "asesmen" && <PusatAsesmenModule activeRole={activeRole} />}
+              {active === "tahfidz" && <TahfidzModule activeRole={activeRole} />}
+              {active === "kokurikuler" && (activeRole === "siswa" ? <KokurikulerSiswaModule userProfile={userProfile} /> : <KokurikulerModule activeRole={activeRole} />)}
+              {active === "asisten_ai" && <AsistenAIModule activeRole={activeRole} />}
+              {active === "pengumuman" && <PengumumanModule />}
+              {active === "agenda" && <AgendaKalenderModule />}
+              {active === "perpustakaan" && <PerpustakaanModule />}
+              {active === "profil" && <ProfilModule userProfile={userProfile} setUserProfile={setUserProfile} activeRole={activeRole} />}
+              {active === "pengaturan" && <Pengaturan />}
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>
@@ -5238,296 +5285,7 @@ function LaporanTahfidzEksekutif({ activeRole }: { activeRole?: string }) {
 
 /* ---------- 7. Laporan Kegiatan Kokurikuler (P5 / PPA-RA) ---------- */
 function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {
-  const [projectsList, setProjectsList] = useState([
-    {
-      id: "p1",
-      title: "Gaya Hidup Berkelanjutan: Pengolahan Sampah Organik & Bank Sampah Madrasah",
-      target: "Tingkat VII (Kelas VII A - VII D)",
-      coordinator: "Ibu Ratna Dewi, M.Pd",
-      progress: 85,
-      studentsCount: 312,
-      status: "Sangat Berkembang",
-      outcomes: ["Kompos Organik Super", "Kerajinan Daur Ulang", "Bank Sampah Digital"],
-    },
-    {
-      id: "p2",
-      title: "Kearifan Lokal: Pelestarian Batik & Seni Daerah Cilacap",
-      target: "Tingkat VIII (Kelas VIII A - VIII D)",
-      coordinator: "Dra. Hj. Siti Rahmah, M.Pd",
-      progress: 90,
-      studentsCount: 318,
-      status: "Sangat Berkembang",
-      outcomes: ["Kain Batik Tulis Motif Cilacap", "Pameran Seni Daerah", "Katalog Digital Motif Batik"],
-    },
-    {
-      id: "p3",
-      title: "Kewirausahaan: Pasar Digital & Business Day Siswa Madrasah",
-      target: "Tingkat IX (Kelas IX A - IX D)",
-      coordinator: "H. Ahmad Syukri, S.Kom",
-      progress: 95,
-      studentsCount: 318,
-      status: "Sangat Berkembang",
-      outcomes: ["Stand Wirausaha Digital", "Produk Kuliner Halal", "Laporan Keuangan Wirausaha"],
-    },
-  ]);
-
-  useEffect(() => {
-    MysqlDataService.getP5Projects().then((dbList) => {
-      if (dbList && dbList.length > 0) {
-        const mapped = dbList.map((item) => ({
-          id: String(item.id || Date.now()),
-          title: item.title,
-          target: item.class_name,
-          coordinator: "Koordinator P5",
-          progress: item.progress_pct || 80,
-          studentsCount: 300,
-          status: item.status || "Sangat Berkembang",
-          outcomes: [item.target_dimension, "Karya P5 Digital", "Laporan Projek"],
-        }));
-        setProjectsList(mapped);
-      }
-    });
-  }, []);
-
-  const [isPrintP5ModalOpen, setIsPrintP5ModalOpen] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState("p1");
-
-  const activeProject = projectsList.find((p) => p.id === selectedProjectId) || projectsList[0];
-
-  const handlePrintP5 = () => {
-    window.print();
-    toast.success(`🖨️ Laporan Portofolio P5 (${activeProject.title}) berhasil dicetak!`);
-  };
-
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FolderKanban className="h-6 w-6 text-purple-500" /> Laporan Kegiatan Kokurikuler (P5 & PPA-RA)
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Rekap Eksekutif Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil Alamin (P5/PPA-RA) MTsN 2 Cilacap.
-          </p>
-        </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white" onClick={() => setIsPrintP5ModalOpen(true)}>
-          <Download className="h-3.5 w-3.5 mr-1" /> 🖨️ Cetak Portfolio P5 PDF
-        </Button>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-gradient-to-br from-purple-500/10 via-card to-card border-purple-500/30">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-purple-500/20 text-purple-500 grid place-items-center font-bold text-xl">
-              🌿
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Total Projek Kokurikuler</div>
-              <div className="text-2xl font-extrabold font-mono text-purple-500">3 Tema Aktif</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-emerald-500/10 via-card to-card border-emerald-500/30">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-emerald-500/20 text-emerald-500 grid place-items-center font-bold text-xl">
-              🎓
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Total Siswa Terlibat</div>
-              <div className="text-2xl font-extrabold font-mono text-emerald-500">948 Siswa (100%)</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-amber-500/10 via-card to-card border-amber-500/30">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-amber-500/20 text-amber-500 grid place-items-center font-bold text-xl">
-              🎨
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Gelar Karya & Produk</div>
-              <div className="text-2xl font-extrabold font-mono text-amber-500">9 Produk Karya</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Projects List */}
-      <div className="space-y-4">
-        {projectsList.map((p) => (
-          <Card key={p.id} className="border-border hover:border-purple-500/40 transition shadow-xs">
-            <CardHeader className="p-5 pb-3">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <div>
-                  <Badge className="bg-purple-600 text-white text-[10px] mb-1">{p.target}</Badge>
-                  <CardTitle className="text-lg font-bold">{p.title}</CardTitle>
-                  <CardDescription className="text-xs mt-0.5">Koordinator Projek: <strong>{p.coordinator}</strong> • {p.studentsCount} Siswa</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-purple-500/40 text-purple-600 dark:text-purple-300" onClick={() => { setSelectedProjectId(p.id); setIsPrintP5ModalOpen(true); }}>
-                    🖨️ Pratinjau Portfolio
-                  </Button>
-                  <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 font-bold text-xs shrink-0">
-                    {p.status}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="px-5 pb-5 pt-0 space-y-4">
-              {/* Progress Bar Projek */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span>Capaian Implementasi Projek</span>
-                  <span className="text-purple-500 font-mono font-bold">{p.progress}% Tuntas</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${p.progress}%` }} />
-                </div>
-              </div>
-
-              {/* Artifact Outomes */}
-              <div className="space-y-1.5 pt-2 border-t border-border">
-                <div className="text-xs font-bold text-muted-foreground">Hasil Produk & Gelar Karya Siswa:</div>
-                <div className="flex flex-wrap gap-2">
-                  {p.outcomes.map((out, i) => (
-                    <Badge key={i} variant="secondary" className="bg-purple-500/10 text-purple-600 border-purple-500/20 text-xs font-medium">
-                      ✨ {out}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* 🖨️ MODAL PRATINJAU CETAK PORTFOLIO P5 / PPA-RA PDF */}
-      <Dialog open={isPrintP5ModalOpen} onOpenChange={setIsPrintP5ModalOpen}>
-        <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
-          <DialogHeader className="border-b border-border pb-3">
-            <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <FolderKanban className="h-5 w-5 text-purple-600" /> Pratinjau Portofolio P5 & PPA-RA
-              </div>
-              <Badge className="bg-purple-600 text-white text-xs">{activeProject.target}</Badge>
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Format Laporan Portofolio Capaian Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil Alamin.
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Selector Projek */}
-          <div className="p-3 bg-muted/40 rounded-xl border border-border text-xs">
-            <Label className="text-[11px] font-semibold text-muted-foreground">Pilih Tema Projek P5</Label>
-            <select
-              className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs mt-1 font-bold"
-              value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-            >
-              {projectsList.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title} ({p.target})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* DOKUMEN RESMI PORTOFOLIO P5 (LEMBAR KERTAS) */}
-          <div className="p-6 bg-white text-slate-950 rounded-xl border border-slate-300 shadow-md font-sans space-y-4">
-            {/* Kop Resmi (1 Logo Sekolah) */}
-            <div className="border-b-2 border-slate-900 pb-3">
-              <div className="flex items-center gap-4 mb-2">
-                <img src="/logomts.png" alt="Logo MTsN 2 Cilacap" className="h-14 w-14 object-contain shrink-0" />
-                <div className="text-center flex-1 pr-14">
-                  <div className="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
-                  <div className="text-base font-black tracking-wide text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</div>
-                  <div className="text-[10px] text-slate-600">Jl. Raya Sindangbarang KM.4 Karangpucung Kode Pos 53255</div>
-                </div>
-              </div>
-              <div className="mt-2 py-1 bg-purple-800 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
-                PORTOFOLIO CAPAIAN PROJEK P5 & PPA-RA
-              </div>
-            </div>
-
-            {/* Identitas Projek */}
-            <div className="bg-slate-50 p-3 rounded-md border border-slate-200 text-xs space-y-1 text-slate-800 font-medium">
-              <div>Nama Projek: <strong className="text-purple-900 font-bold">{activeProject.title}</strong></div>
-              <div>Sasaran Tingkat: <strong>{activeProject.target}</strong></div>
-              <div>Koordinator Projek: <strong>{activeProject.coordinator}</strong> • Total Siswa: <strong>{activeProject.studentsCount} Siswa</strong></div>
-              <div>Status Pencapaian: <strong className="text-emerald-700 font-bold">{activeProject.status} ({activeProject.progress}% Tuntas)</strong></div>
-            </div>
-
-            {/* Rubrik Penilaian Dimensi Pancasila */}
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-slate-900 uppercase tracking-wider">Tabel Rubrik Penilaian Dimensi Pelajar Pancasila:</div>
-              <table className="w-full text-[11px] border-collapse border border-slate-300">
-                <thead>
-                  <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
-                    <th className="border border-slate-300 p-2 text-left">Dimensi / Elemen Profil</th>
-                    <th className="border border-slate-300 p-2 text-center">Tingkat Capaian</th>
-                    <th className="border border-slate-300 p-2 text-left">Deskripsi Hasil Observasi Projek</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-slate-200">
-                    <td className="border border-slate-300 p-2 font-bold">Beriman, Bertakwa & Berakhlak Mulia</td>
-                    <td className="border border-slate-300 p-2 text-center text-emerald-700 font-bold">Sangat Berkembang</td>
-                    <td className="border border-slate-300 p-2 text-slate-700">Siswa konsisten menerapkan akhlak lingkungan & kepedulian sosial.</td>
-                  </tr>
-                  <tr className="border-b border-slate-200">
-                    <td className="border border-slate-300 p-2 font-bold">Gotong Royong & Kolaborasi</td>
-                    <td className="border border-slate-300 p-2 text-center text-emerald-700 font-bold">Sangat Berkembang</td>
-                    <td className="border border-slate-300 p-2 text-slate-700">Aktif bekerja sama dalam tim pembuatan produk & gelar karya.</td>
-                  </tr>
-                  <tr className="border-b border-slate-200">
-                    <td className="border border-slate-300 p-2 font-bold">Kreativitas & Inovasi Produk</td>
-                    <td className="border border-slate-300 p-2 text-center text-purple-700 font-bold">Berkembang Sesuai Harapan</td>
-                    <td className="border border-slate-300 p-2 text-slate-700">Mampu menghasilkan karya inovatif yang memiliki nilai ekonomi.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Produk Gelar Karya */}
-            <div className="pt-1">
-              <div className="text-xs font-bold text-slate-900 mb-1">Produk Hasil Gelar Karya Siswa:</div>
-              <div className="flex flex-wrap gap-1.5">
-                {activeProject.outcomes.map((out, idx) => (
-                  <span key={idx} className="bg-purple-100 text-purple-900 border border-purple-300 px-2 py-0.5 rounded-xs text-[11px] font-semibold">
-                    ✨ {out}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Tanda Tangan Official */}
-            <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
-              <div className="text-center space-y-8">
-                <div>Koordinator Projek P5</div>
-                <div className="font-bold underline text-slate-950">{activeProject.coordinator}</div>
-              </div>
-              <div className="text-center space-y-8">
-                <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
-                <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="pt-3 border-t border-border flex justify-between items-center w-full">
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsPrintP5ModalOpen(false)}>
-              Tutup
-            </Button>
-            <Button type="button" size="sm" className="bg-purple-600 hover:bg-purple-700 text-white font-bold gap-1.5" onClick={handlePrintP5}>
-              <Download className="h-4 w-4" /> 🖨️ Cetak Portofolio P5 PDF
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  return <KokurikulerModule activeRole={activeRole} />;
 }
 
 function Tahfidz() {
@@ -7982,291 +7740,15 @@ function PusatAsesmen({ activeRole }: { activeRole?: string }) {
   );
 }
 
-/* ---------- Menu Asisten AI & Tools Guru ---------- */
 function AsistenAITools() {
-  const toolsList = [
-    { name: "ChatGPT (OpenAI)", desc: "Asisten AI perancang RPP, kuis interaktif, & pembuatan soal CBT.", icon: "🤖", link: "https://chatgpt.com", badge: "AI Assistant", color: "from-emerald-500/20 to-teal-500/20" },
-    { name: "NotebookLM (Google)", desc: "Pengolah dokumen modul ajar & rangkuman materi otomatis dari sumber PDF.", icon: "📓", link: "https://notebooklm.google.com", badge: "Google AI", color: "from-blue-500/20 to-indigo-500/20" },
-    { name: "Google Workspace", desc: "Akses cepat Google Docs, Slides, Forms, & Classroom untuk KBM.", icon: "💼", link: "https://workspace.google.com", badge: "Productivity", color: "from-amber-500/20 to-orange-500/20" },
-    { name: "Canva for Education", desc: "Desain presentasi media ajar interaktif & infografis pelajaran.", icon: "🎨", link: "https://canva.com", badge: "Media Design", color: "from-purple-500/20 to-pink-500/20" },
-    { name: "Quizizz Interaktif", desc: "Platform kuis game gamifikasi interaktif untuk menguji pemahaman kelas.", icon: "🎮", link: "https://quizizz.com", badge: "Gamification", color: "from-red-500/20 to-rose-500/20" },
-    { name: "PhET Interactive Sims", desc: "Simulasi praktikum laboratorium Sains & Matematika interaktif.", icon: "🔬", link: "https://phet.colorado.edu", badge: "Science Lab", color: "from-cyan-500/20 to-sky-500/20" },
-  ];
-
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Bot className="h-6 w-6 text-blue-500" /> Asisten AI & Digital Tools Pembelajaran Guru
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Kumpulan alat bantu kecerdasan buatan & media digital produksi pembelajaran yang terintegrasi untuk Guru MTsN 2 Cilacap.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {toolsList.map((t, idx) => (
-          <Card key={idx} className="border-border hover:border-blue-500/50 transition shadow-xs group">
-            <CardHeader className="p-4 pb-2">
-              <div className="flex items-center justify-between">
-                <span className="text-3xl p-2 rounded-xl bg-blue-500/10 group-hover:scale-110 transition">{t.icon}</span>
-                <Badge variant="outline" className="font-mono text-[10px] font-bold text-blue-500 border-blue-500/20">
-                  {t.badge}
-                </Badge>
-              </div>
-              <CardTitle className="text-base font-bold mt-3 group-hover:text-blue-500 transition flex items-center gap-1.5">
-                {t.name} <ExternalLink className="h-3.5 w-3.5 opacity-60" />
-              </CardTitle>
-              <CardDescription className="text-xs">{t.desc}</CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <a href={t.link} target="_blank" rel="noopener noreferrer">
-                <Button size="sm" className="w-full text-xs font-bold gap-1.5 bg-blue-600 hover:bg-blue-700 text-white mt-2">
-                  <Bot className="h-3.5 w-3.5" /> Buka {t.name.split(' ')[0]} ↗
-                </Button>
-              </a>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </>
-  );
+  return <AsistenAIModule />;
 }
 
 /* ---------- Award Badge & Warning untuk Siswa ---------- */
 function ApresiasiSiswa({ activeRole }: { activeRole?: string }) {
-  const [studentsList, setStudentsList] = useState([
-    { id: "1", name: "ALIYA QIARA ABDULLAH", rombel: "Kelas VIII A", nis: "12123301000288", badges: ["⭐ Siswa Aktif", "🏆 Nilai Perfect 100"], warningCount: 0 },
-    { id: "2", name: "ABIGAIL HASAN YUSUF PRAYOGA", rombel: "Kelas VIII A", nis: "0081928371", badges: ["🌟 Hafalan Mutqin"], warningCount: 0 },
-    { id: "3", name: "ADITA AZ ZAHRA", rombel: "Kelas VIII A", nis: "0081928372", badges: ["💡 Solutif & Kreatif"], warningCount: 0 },
-    { id: "4", name: "AFRIZA RAHMA AZZAHRA", rombel: "Kelas VIII A", nis: "0081928373", badges: ["⭐ Siswa Aktif"], warningCount: 0 },
-  ]);
-
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [actionType, setActionType] = useState<"award" | "warning">("award");
-  const [badgeCategory, setBadgeCategory] = useState("⭐ Siswa Aktif");
-  const [warningCategory, setWarningCategory] = useState("⚠️ Belum Mengumpulkan Tugas");
-  const [emote, setEmote] = useState("🎉");
-  const [commentText, setCommentText] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleOpenAction = (student: any, type: "award" | "warning") => {
-    setSelectedStudent(student);
-    setActionType(type);
-    setEmote(type === "award" ? "🎉" : "⚠️");
-    setCommentText("");
-    setIsModalOpen(true);
-  };
-
-  const handleSaveAction = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedStudent) return;
-    const title = actionType === "award" ? badgeCategory : warningCategory;
-    if (actionType === "award") {
-      setStudentsList(
-        studentsList.map((s) => (s.id === selectedStudent.id ? { ...s, badges: Array.from(new Set([...s.badges, title])) } : s))
-      );
-      toast.success(`Lencana ${title} berhasil diberikan kepada ${selectedStudent.name}!`);
-    } else {
-      setStudentsList(
-        studentsList.map((s) => (s.id === selectedStudent.id ? { ...s, warningCount: s.warningCount + 1 } : s))
-      );
-      toast.warning(`Catatan Pembinaan ${title} berhasil dikirimkan kepada ${selectedStudent.name}!`);
-    }
-    setIsModalOpen(false);
-  };
-
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Award className="h-6 w-6 text-amber-500" /> Award, Badge & Warning Siswa
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Fitur Guru untuk memberikan apresiasi lencana karakter/prestasi dan catatan pembinaan kepada siswa di kelas yang diampu.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        {studentsList.map((s) => (
-          <Card key={s.id} className="border-border hover:border-amber-500/40 transition shadow-xs">
-            <CardHeader className="p-4 pb-2">
-              <div className="flex items-center justify-between">
-                <Badge variant="outline" className="font-mono text-xs font-bold text-primary">
-                  NISN: {s.nis}
-                </Badge>
-                <Badge className="bg-blue-600 text-white text-[10px]">{s.rombel}</Badge>
-              </div>
-              <CardTitle className="text-base font-bold mt-2">{s.name}</CardTitle>
-            </CardHeader>
-
-            <CardContent className="p-4 pt-1 space-y-3">
-              <div className="space-y-1">
-                <div className="text-xs font-bold text-muted-foreground">Lencana Apresiasi:</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {s.badges.length > 0 ? (
-                    s.badges.map((b, i) => (
-                      <Badge key={i} className="bg-amber-500/20 text-amber-700 border-amber-500/30 text-[10px]">
-                        {b}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground italic">Belum ada lencana</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-2 border-t border-border">
-                <Button size="sm" className="w-1/2 text-xs font-bold bg-amber-500 text-black hover:bg-amber-600 gap-1" onClick={() => handleOpenAction(s, "award")}>
-                  <Trophy className="h-3.5 w-3.5" /> + Beri Award
-                </Button>
-                <Button size="sm" variant="outline" className="w-1/2 text-xs font-bold text-destructive border-destructive/30 hover:bg-destructive/10 gap-1" onClick={() => handleOpenAction(s, "warning")}>
-                  <AlertTriangle className="h-3.5 w-3.5" /> + Warning
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Modal Award/Warning Siswa */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              {actionType === "award" ? <Trophy className="h-5 w-5 text-amber-500" /> : <AlertTriangle className="h-5 w-5 text-destructive" />}
-              {actionType === "award" ? `Beri Award & Badge - ${selectedStudent?.name}` : `Kirim Warning Pembinaan - ${selectedStudent?.name}`}
-            </DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleSaveAction} className="space-y-4 py-2">
-            {actionType === "award" ? (
-              <div>
-                <Label className="text-xs font-semibold">Pilih Lencana Award:</Label>
-                <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold" value={badgeCategory} onChange={(e) => setBadgeCategory(e.target.value)}>
-                  <option value="⭐ Siswa Aktif & Responsif">⭐ Siswa Aktif & Responsif</option>
-                  <option value="🏆 Nilai Perfect 100">🏆 Nilai Perfect 100</option>
-                  <option value="🌟 Hafalan Mutqin">🌟 Hafalan Mutqin</option>
-                  <option value="💡 Solutif & Kreatif">💡 Solutif & Kreatif</option>
-                </select>
-              </div>
-            ) : (
-              <div>
-                <Label className="text-xs font-semibold">Pilih Kategori Warning:</Label>
-                <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold" value={warningCategory} onChange={(e) => setWarningCategory(e.target.value)}>
-                  <option value="⚠️ Belum Mengumpulkan Tugas">⚠️ Belum Mengumpulkan Tugas</option>
-                  <option value="📝 Presensi Perlu Ditingkatkan">📝 Presensi Perlu Ditingkatkan</option>
-                  <option value="💬 Evaluasi KBM">💬 Evaluasi KBM</option>
-                </select>
-              </div>
-            )}
-
-            <div>
-              <Label className="text-xs font-semibold">Pilih Emotikon:</Label>
-              <div className="flex items-center gap-2 mt-1">
-                {(actionType === "award" ? ["🎉", "⭐", "🏆", "🌟", "💡"] : ["⚠️", "📝", "💬", "🚨"]).map((emo) => (
-                  <button type="button" key={emo} onClick={() => setEmote(emo)} className={`h-9 w-9 rounded-xl border text-lg grid place-items-center transition ${emote === emo ? "bg-primary/20 border-primary scale-110" : "bg-muted/40 border-border hover:bg-muted"}`}>
-                    {emo}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Pesan / Catatan Guru:</Label>
-              <textarea placeholder="Tuliskan apresiasi atau catatan pembinaan..." value={commentText} onChange={(e) => setCommentText(e.target.value)} className="w-full h-20 rounded-md border border-border bg-background p-3 text-xs mt-1" />
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className={actionType === "award" ? "bg-amber-500 text-black font-bold" : "bg-destructive text-white font-bold"}>
-                {actionType === "award" ? "Kirim Badge Siswa" : "Kirim Catatan Warning"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  return <ApresiasiSiswaModule activeRole={activeRole} />;
 }
 
-/* ---------- Kegiatan Kokurikuler Siswa (P5) ---------- */
 function KokurikulerSiswa() {
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FolderKanban className="h-6 w-6 text-purple-500" /> Kegiatan Kokurikuler & Projek P5-PPRA
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil 'Alamin: Kehadiran projek & Laporan Gelar Karya Siswa.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="border-border shadow-xs">
-          <CardHeader className="pb-3">
-            <Badge className="bg-purple-600 text-white text-[10px] mb-1 w-fit">PROJEK P5 AKTIF</Badge>
-            <CardTitle className="text-base font-bold">Kerajinan Batik Cilacap & Wirausaha Muda</CardTitle>
-            <CardDescription className="text-xs">Koordinator Projek: Dra. Hj. Siti Rahmah • Target Gelar Karya: 25 Agustus 2026</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-semibold">
-                <span>Kehadiran Sesi Projek Saya</span>
-                <span className="text-emerald-500 font-mono font-bold">100% Hadir (8/8 Sesi)</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: "100%" }} />
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/10 space-y-2">
-              <div className="font-bold text-xs text-foreground">Laporan & Dokumentasi Karya Projek:</div>
-              <div className="text-xs text-muted-foreground">
-                • Produk Batik Motif Wijayakusuma Cilacap buatan kelompok 8A tuntas diproduksi.<br />
-                • Laporan analisis wirausaha & pemasaran siap dipresentasikan pada Gelar Karya.
-              </div>
-              <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs mt-2" onClick={() => toast.success("Laporan Projek P5 berhasil diunggah!")}>
-                + Unggah Berkas Laporan Projek PDF
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border shadow-xs">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Award className="h-5 w-5 text-amber-500" /> Penilaian Karakter Profil Pelajar Pancasila
-            </CardTitle>
-            <CardDescription className="text-xs">Evaluasi pembiasaan karakter & dimensi Rahmatan Lil 'Alamin.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { dim: "Beriman, Bertakwa, & Berakhlaq Mulia", score: "Sangat Baik (SB)", icon: "✨" },
-              { dim: "Gotong Royong & Kolaborasi Kelompok", score: "Sangat Baik (SB)", icon: "👥" },
-              { dim: "Kreativitas & Inovasi Produk Batik", score: "Berkembang Sesuai Harapan (BSH)", icon: "🎨" },
-              { dim: "Kemandirian & Wirausaha", score: "Sangat Baik (SB)", icon: "💼" },
-            ].map((item, idx) => (
-              <div key={idx} className="p-3 rounded-lg border border-border bg-card flex justify-between items-center text-xs">
-                <div className="flex items-center gap-2 font-bold text-foreground">
-                  <span>{item.icon}</span>
-                  <span>{item.dim}</span>
-                </div>
-                <Badge variant="outline" className="text-purple-600 border-purple-500/30 font-bold text-[10px]">
-                  {item.score}
-                </Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  );
+  return <KokurikulerSiswaModule />;
 }

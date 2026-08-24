@@ -15,6 +15,7 @@ import {
 import { getTeacherAssignedSubjects, isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { CardStatsSkeleton } from "@/components/dashboard/components/ModuleSkeleton";
 
 interface GuruDashboardViewProps {
   userName: string;
@@ -118,68 +119,72 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card
-          className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 hover:border-emerald-500/60 transition cursor-pointer"
-          onClick={() => jadwalHariIni.length > 0 && setSelectedJadwalModal(jadwalHariIni[0])}
-        >
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
-              <span>Jadwal Mengajar Saya Hari Ini</span>
-              <CalendarClock className="h-4 w-4" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
-              {jadwalHariIni.length} Sesi KBM
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-            <div className="font-bold text-slate-800 dark:text-slate-200">
-              {jadwalHariIni.length > 0 ? `${jadwalHariIni.map((j: any) => j.rombel).join(" & ")} (${activeSubjectName})` : `Tidak ada jadwal KBM (${activeSubjectName})`}
-            </div>
-            <div>{jadwalHariIni.length > 0 ? `Sesi aktif: ${jadwalHariIni[0]?.jam || jadwalHariIni[0]?.jam_ke || "Sesuai Roster"}` : "Hari ini tidak ada jam mengajar terdaftar"}</div>
-          </CardContent>
-        </Card>
+      {isLoading ? (
+        <CardStatsSkeleton count={3} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card
+            className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 hover:border-emerald-500/60 transition cursor-pointer"
+            onClick={() => jadwalHariIni.length > 0 && setSelectedJadwalModal(jadwalHariIni[0])}
+          >
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                <span>Jadwal Mengajar Saya Hari Ini</span>
+                <CalendarClock className="h-4 w-4" />
+              </CardDescription>
+              <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                {jadwalHariIni.length} Sesi KBM
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <div className="font-bold text-slate-800 dark:text-slate-200">
+                {jadwalHariIni.length > 0 ? `${jadwalHariIni.map((j: any) => j.rombel).join(" & ")} (${activeSubjectName})` : `Tidak ada jadwal KBM (${activeSubjectName})`}
+              </div>
+              <div>{jadwalHariIni.length > 0 ? `Sesi aktif: ${jadwalHariIni[0]?.jam || jadwalHariIni[0]?.jam_ke || "Sesuai Roster"}` : "Hari ini tidak ada jam mengajar terdaftar"}</div>
+            </CardContent>
+          </Card>
 
-        <Card
-          className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-500/60 transition cursor-pointer"
-          onClick={() => tugasPerluDiperiksa.length > 0 && setSelectedTugasModal(tugasPerluDiperiksa[0])}
-        >
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center justify-between">
-              <span>Tugas & LKPD Saya</span>
-              <CheckSquare className="h-4 w-4" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
-              {tugasPerluDiperiksa.length} Berkas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-            <div className="font-bold text-slate-800 dark:text-slate-200">
-              {tugasPerluDiperiksa.length > 0 ? `${tugasPerluDiperiksa.length} Tugas LKPD Digital` : "Belum ada tugas pending"}
-            </div>
-            <div>{tugasPerluDiperiksa.length > 0 ? "Perlu penilaian & koreksi nilai harian" : "Semua tugas di mapel pengampu telah diperiksa"}</div>
-          </CardContent>
-        </Card>
+          <Card
+            className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-500/60 transition cursor-pointer"
+            onClick={() => tugasPerluDiperiksa.length > 0 && setSelectedTugasModal(tugasPerluDiperiksa[0])}
+          >
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center justify-between">
+                <span>Tugas & LKPD Saya</span>
+                <CheckSquare className="h-4 w-4" />
+              </CardDescription>
+              <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                {tugasPerluDiperiksa.length} Berkas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <div className="font-bold text-slate-800 dark:text-slate-200">
+                {tugasPerluDiperiksa.length > 0 ? `${tugasPerluDiperiksa.length} Tugas LKPD Digital` : "Belum ada tugas pending"}
+              </div>
+              <div>{tugasPerluDiperiksa.length > 0 ? "Perlu penilaian & koreksi nilai harian" : "Semua tugas di mapel pengampu telah diperiksa"}</div>
+            </CardContent>
+          </Card>
 
-        <Card
-          className="border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20 hover:border-purple-500/60 transition cursor-pointer"
-          onClick={() => setSelectedCapaianModal({ materi: activeSubjectName, journalCount })}
-        >
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs font-semibold text-purple-600 dark:text-purple-400 flex items-center justify-between">
-              <span>Jurnal Mengajar Terisi</span>
-              <LineChart className="h-4 w-4" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
-              {isLoading ? "..." : `${journalCount} Jurnal`}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-            <div className="font-bold text-slate-800 dark:text-slate-200">{journalCount > 0 ? `${journalCount} Pertemuan KBM Tercatat` : "Belum ada jurnal terisi"}</div>
-            <div>Tersimpan di database MySQL KBM</div>
-          </CardContent>
-        </Card>
-      </div>
+          <Card
+            className="border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20 hover:border-purple-500/60 transition cursor-pointer"
+            onClick={() => setSelectedCapaianModal({ materi: activeSubjectName, journalCount })}
+          >
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs font-semibold text-purple-600 dark:text-purple-400 flex items-center justify-between">
+                <span>Jurnal Mengajar Terisi</span>
+                <LineChart className="h-4 w-4" />
+              </CardDescription>
+              <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                {`${journalCount} Jurnal`}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <div className="font-bold text-slate-800 dark:text-slate-200">{journalCount > 0 ? `${journalCount} Pertemuan KBM Tercatat` : "Belum ada jurnal terisi"}</div>
+              <div>Tersimpan di database MySQL KBM</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">

@@ -12,6 +12,8 @@ import { EditJadwalDialog } from "./components/EditJadwalDialog";
 import { PrintJadwalDialog } from "./components/PrintJadwalDialog";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
+import { isSameClass } from "@/utils/classNormalization";
+
 export function JadwalModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
   const isGuru = activeRole === "guru";
@@ -242,7 +244,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
             const listForDay = (jadwalList || []).filter((s) => {
               if (s.hari !== h) return false;
               const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
-              const matchRombel = filterRombel === "Semua" || s.rombel === filterRombel;
+              const matchRombel = filterRombel === "Semua" || isSameClass(s.rombel, filterRombel);
               return matchKelas && matchRombel;
             });
 

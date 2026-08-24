@@ -425,16 +425,20 @@ function Dashboard() {
   // Multi-Role list allocated to currently logged-in user (Superadmin All Roles Access)
   const myAssignedRoles = useMemo(() => {
     if (!me) return ["siswa"];
-    const cleanEmail = me.email ? me.email.toLowerCase() : "";
+    const cleanEmail = me.email ? me.email.toLowerCase().trim() : "";
     const isSuperAdminUser =
       me.role === "admin" ||
       me.role === "superadmin" ||
-      cleanEmail === "admin@mail.com" ||
-      cleanEmail.includes("superadmin");
+      cleanEmail === "admin@mail.com";
 
     // Superadmin has access to ALL 7 roles in the system
     if (isSuperAdminUser) {
       return ["admin", "admin_akademik", "kamad", "waka", "walikelas", "guru", "siswa"];
+    }
+
+    // Siswa Role Isolation
+    if (me.role === "siswa" || cleanEmail.includes("siswa@")) {
+      return ["siswa"];
     }
 
     let savedRolesMap: Record<string, string[]> = {};
@@ -464,7 +468,7 @@ function Dashboard() {
     roles.forEach((r: string) => {
       const lower = r.toLowerCase().trim();
       if (lower === "admin" || lower === "superadmin") {
-        set.add("admin");
+        if (isSuperAdminUser) set.add("admin");
       } else if (lower === "admin_akademik") {
         set.add("admin_akademik");
         set.add("guru");
@@ -478,12 +482,7 @@ function Dashboard() {
         set.add("guru");
       } else if (lower === "guru" || lower === "guru_mapel") {
         set.add("guru");
-        if (me.class_name || (me as any).assigned_class) {
-          set.add("walikelas");
-        }
-      } else if (lower !== "siswa") {
-        set.add(lower);
-      } else {
+      } else if (lower === "siswa") {
         set.add("siswa");
       }
     });
@@ -491,6 +490,11 @@ function Dashboard() {
     if (set.has("kamad")) {
       // Catatan Client: "Masa Kamad mulang lah" -> Kamad is strictly executive monitoring only (1 role: kamad)
       return ["kamad"];
+    }
+
+    if (set.has("siswa") && set.size > 1) {
+      // If user has 'siswa' role, force pure student role isolation
+      return ["siswa"];
     }
 
     if (set.size === 0) set.add("guru");

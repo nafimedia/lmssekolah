@@ -185,12 +185,12 @@ function AuthPage() {
                   <Input
                     id="si-email"
                     name="email"
-                    type="email"
+                    type="text"
                     autoComplete="username"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@mtsn2cilacap.sch.id"
+                    placeholder="Email / NIP / Username Resmi"
                     className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
                   />
                 </div>
@@ -381,11 +381,13 @@ function AuthPage() {
                       "Kuat": "text-emerald-400 bg-emerald-500",
                       "Sangat Kuat": "text-emerald-300 bg-emerald-400",
                     };
+                    const labelKey = (strength.label || "Sedang") as keyof typeof colorMap;
+                    const activeColorClass = colorMap[labelKey] || "text-amber-400 bg-amber-500";
                     return (
                       <div className="space-y-1 pt-1">
                         <div className="flex justify-between text-[10px]">
                           <span className="text-slate-400">Kekuatan:</span>
-                          <span className={`font-bold ${colorMap[strength.label].split(" ")[0]}`}>
+                          <span className={`font-bold ${activeColorClass.split(" ")[0]}`}>
                             {strength.label}
                           </span>
                         </div>
@@ -393,7 +395,7 @@ function AuthPage() {
                           {[1, 2, 3, 4].map((bar) => (
                             <div
                               key={bar}
-                              className={`h-full transition-all ${strength.score >= bar ? colorMap[strength.label].split(" ")[1] : "bg-transparent"
+                              className={`h-full transition-all ${strength.score >= bar ? activeColorClass.split(" ")[1] : "bg-transparent"
                                 }`}
                             />
                           ))}

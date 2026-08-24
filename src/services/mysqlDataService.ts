@@ -150,6 +150,8 @@ export type {
   HealthStatusResponse,
 };
 
+import { getPersistedUserProfileOverrides } from "./mysqlAuthService";
+
 export class MysqlDataService {
   static async getHealthStatus(): Promise<HealthStatusResponse> {
     try {
@@ -176,8 +178,25 @@ export class MysqlDataService {
   // Users
   static async getUsers(): Promise<UserRow[]> {
     try {
-      const res = await getUsersFn();
-      return res || [];
+      const res = (await getUsersFn()) || [];
+      const overrides = getPersistedUserProfileOverrides();
+      if (Object.keys(overrides).length === 0) return res;
+
+      return res.map((u) => {
+        const cleanEmail = (u.email || "").toLowerCase().trim();
+        const cleanId = String(u.id || "").trim();
+        const override = overrides[cleanEmail] || overrides[cleanId];
+        if (override) {
+          return {
+            ...u,
+            email: override.email || u.email,
+            full_name: override.full_name || u.full_name,
+            nis_nip: override.nis_nip || u.nis_nip,
+            class_name: override.class_name || u.class_name,
+          };
+        }
+        return u;
+      });
     } catch (e) {
       console.error("getUsersFn failed:", e);
       return [];

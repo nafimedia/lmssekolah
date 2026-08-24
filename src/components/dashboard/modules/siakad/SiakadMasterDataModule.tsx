@@ -22,6 +22,7 @@ import { PengampuTab } from "./components/PengampuTab";
 import { MasterRombelTab } from "./components/MasterRombelTab";
 import { TahunAjaranTab } from "./components/TahunAjaranTab";
 import { KktpSkemaTab } from "./components/KktpSkemaTab";
+import { EditWaliKelasDialog } from "./components/EditWaliKelasDialog";
 
 export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isKamad = activeRole === "kamad";
@@ -29,17 +30,39 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
   const [dbTeachersList, setDbTeachersList] = useState<string[]>([]);
   const [pengampuList, setPengampuList] = useState<PengampuRow[]>([]);
 
+  const [isEditWaliOpen, setIsEditWaliOpen] = useState(false);
+  const [editingRombel, setEditingRombel] = useState<any>(null);
+
   const [rombelList, setRombelList] = useState([
     { id: "r1", name: "Rombel 7A", grade: "Kelas VII", waliKelas: "MISBAH AHMAD DANI, S.Pd", studentCount: 32 },
-    { id: "r2", name: "Rombel 7B", grade: "Kelas VII", waliKelas: "ENDAH SUPRIHATIN, S.Pd", studentCount: 32 },
-    { id: "r3", name: "Rombel 8A", grade: "Kelas VIII", waliKelas: "Dra. Hj. Siti Rahmah, M.Pd", studentCount: 32 },
+    { id: "r2", name: "Rombel 7B", grade: "Kelas VII", waliKelas: "ENDAH KURNIAWATI, S.Pd", studentCount: 32 },
+    { id: "r3", name: "Rombel 8A", grade: "Kelas VIII", waliKelas: "Dra. Hj. SITI RAHMAH, M.Pd", studentCount: 32 },
     { id: "r4", name: "Rombel 8B", grade: "Kelas VIII", waliKelas: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", studentCount: 32 },
     { id: "r5", name: "Rombel 9A", grade: "Kelas IX", waliKelas: "SOBIYATI, S.Pd", studentCount: 32 },
-    { id: "r6", name: "Rombel 9B", grade: "Kelas IX", waliKelas: "SAYONO, S.Pd., M.Pd.", studentCount: 32 },
+    { id: "r6", name: "Rombel 9B", grade: "Kelas IX", waliKelas: "SAYONO, S.Pd.I", studentCount: 32 },
   ]);
 
   useEffect(() => {
     let isMounted = true;
+
+    // Load persisted Wali Kelas overrides from localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const savedOverrides: Record<string, string> = JSON.parse(
+          localStorage.getItem("lms_rombel_wali_overrides") || "{}"
+        );
+        if (Object.keys(savedOverrides).length > 0) {
+          setRombelList((prev) =>
+            prev.map((r) =>
+              savedOverrides[r.id]
+                ? { ...r, waliKelas: savedOverrides[r.id] }
+                : r
+            )
+          );
+        }
+      } catch (e) {}
+    }
+
     MysqlDataService.getUsers()
       .then((users) => {
         if (!isMounted) return;
@@ -58,6 +81,32 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       isMounted = false;
     };
   }, []);
+
+  const handleSaveWaliKelas = (rombelId: string, newWaliKelas: string) => {
+    if (isKamad) {
+      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+      return;
+    }
+
+    setRombelList((prev) =>
+      prev.map((r) => (r.id === rombelId ? { ...r, waliKelas: newWaliKelas } : r))
+    );
+
+    if (typeof window !== "undefined") {
+      try {
+        const current = JSON.parse(
+          localStorage.getItem("lms_rombel_wali_overrides") || "{}"
+        );
+        current[rombelId] = newWaliKelas;
+        localStorage.setItem("lms_rombel_wali_overrides", JSON.stringify(current));
+      } catch (e) {}
+    }
+
+    const targetRombel = rombelList.find((r) => r.id === rombelId);
+    toast.success(
+      `✅ Wali Kelas ${targetRombel?.name || "Rombel"} berhasil diperbarui menjadi "${newWaliKelas}"!`
+    );
+  };
 
   const handleDeletePengampu = (id: string, name: string) => {
     if (isKamad) {
@@ -141,6 +190,15 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         <MasterRombelTab
           rombelList={rombelList}
           onOpenAddModal={() => toast.success("Rombel baru siap ditambahkan!")}
+          onEditWali={(r) => {
+            if (isKamad) {
+              toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+              return;
+            }
+            setEditingRombel(r);
+            setIsEditWaliOpen(true);
+          }}
+          isKamad={isKamad}
         />
       )}
 
@@ -182,6 +240,15 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
           </CardContent>
         </Card>
       )}
+
+      {/* MODAL EDIT WALI KELAS UNTUK ADMIN AKADEMIK */}
+      <EditWaliKelasDialog
+        isOpen={isEditWaliOpen}
+        onOpenChange={setIsEditWaliOpen}
+        rombel={editingRombel}
+        teacherList={dbTeachersList}
+        onSave={handleSaveWaliKelas}
+      />
     </div>
   );
 }

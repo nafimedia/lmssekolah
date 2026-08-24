@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { saveUserProfileOverride } from "@/services/mysqlAuthService";
 import { toast } from "sonner";
 import { Save, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -78,16 +79,30 @@ export function EditUserDialog({
         phone: phone || "",
       };
 
-      // Persist updates to MySQL database / cache
+      // 1. Immediately persist profile override locally so login with new email works
+      saveUserProfileOverride(user.email, {
+        id: user.id,
+        email: email.trim().toLowerCase(),
+        full_name: fullName,
+        nis_nip: nisNip,
+        class_name: userClass || "Semua",
+        roles: user.roles,
+        phone: phone || "",
+      });
+
+      // 2. Persist updates to MySQL database / cache
       await MysqlDataService.updateUserProfile({
+        originalEmail: user.email,
         id: user.id,
         fullName: fullName,
         email: email.trim().toLowerCase(),
+        nipNis: nisNip,
         phone: phone || "",
+        className: userClass,
       }).catch(() => {});
 
       onUserUpdated(updatedUserObj);
-      toast.success(`✅ Data pengguna "${fullName}" berhasil diperbarui!`);
+      toast.success(`✅ Data pengguna "${fullName}" (${email}) berhasil diperbarui!`);
       onOpenChange(false);
     } catch (err) {
       toast.error("Gagal memperbarui data pengguna. Silakan coba lagi.");

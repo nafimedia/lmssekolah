@@ -49,13 +49,16 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
     { code: "UMM-04", mapel: "Ilmu Pengetahuan Alam", teacher: "Dra. Hj. SITI RAHMAH, M.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Baik", tugas: 89, kuis: 87, cbt: 88, avg: 88, kkm: "Tuntas (≥75)" },
     { code: "UMM-05", mapel: "Ilmu Pengetahuan Sosial", teacher: "UMI KHAFSOH, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 92, kuis: 90, cbt: 91, avg: 91, kkm: "Tuntas (≥75)" },
     { code: "UMM-06", mapel: "Pendidikan Kewarganegaraan", teacher: "SAYONO, S.Pd.I", pertemuan: "17/18 Pertemuan (94%)", cp: "Sangat Baik", tugas: 90, kuis: 89, cbt: 91, avg: 90, kkm: "Tuntas (≥75)" },
-    { code: "UMM-07", mapel: "PJOK", teacher: "MISBAHUDIN, S.Pd.I", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 95, kuis: 93, cbt: 94, avg: 94, kkm: "Tuntas (≥75)" },
+    { code: "UMM-07", mapel: "PJOK", teacher: "MISBAH AHMAD DANI, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 95, kuis: 93, cbt: 94, avg: 94, kkm: "Tuntas (≥75)" },
     { code: "UMM-08", mapel: "Seni Budaya", teacher: "SITI NURJANAH, S.Pd", pertemuan: "16/18 Pertemuan (88%)", cp: "Sangat Baik", tugas: 93, kuis: 91, cbt: 92, avg: 92, kkm: "Tuntas (≥75)" },
     { code: "UMM-09", mapel: "Informatika", teacher: "FAHRUR ROZI, S.Kom", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 94, kuis: 92, cbt: 93, avg: 93, kkm: "Tuntas (≥75)" },
     { code: "ML-01", mapel: "Bahasa Jawa", teacher: "TRI WAHYUNI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "Baik", tugas: 88, kuis: 90, cbt: 89, avg: 89, kkm: "Tuntas (≥75)" },
   ];
 
-  const getCpDescription = (mapelName: string, score: number) => {
+  const getCpDescription = (mapelName: string, score: number | null | undefined) => {
+    if (score === null || score === undefined || isNaN(score) || score === 0) {
+      return `Belum ada tes / evaluasi yang diikuti pada mata pelajaran ${mapelName}.`;
+    }
     if (score >= 90) {
       return `Menunjukkan penguasaan sangat baik dalam pemahaman dan penerapan kompetensi dasar ${mapelName}.`;
     }

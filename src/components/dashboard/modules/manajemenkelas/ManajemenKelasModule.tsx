@@ -23,7 +23,7 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
 }
 
 const ROMBEL_MASTER_LIST = [
-  { id: "r7a", name: "Rombel 7A", grade: "Kelas VII", wali: "MISBAHUDIN, S.Pd.I", count: 32, hadirPct: 96.8, statusKbm: "🟢 Live KBM", progressRapor: 88 },
+  { id: "r7a", name: "Rombel 7A", grade: "Kelas VII", wali: "MISBAH AHMAD DANI, S.Pd", count: 32, hadirPct: 96.8, statusKbm: "🟢 Live KBM", progressRapor: 88 },
   { id: "r7b", name: "Rombel 7B", grade: "Kelas VII", wali: "ENDAH KURNIAWATI, S.Pd", count: 31, hadirPct: 94.5, statusKbm: "🟢 Live KBM", progressRapor: 82 },
   { id: "r8a", name: "Rombel 8A", grade: "Kelas VIII", wali: "SITI RAHMAH, S.Pd", count: 32, hadirPct: 98.2, statusKbm: "🟢 Live KBM", progressRapor: 95 },
   { id: "r8b", name: "Rombel 8B", grade: "Kelas VIII", wali: "ACHMAD MAKMUN, S.Pd.I", count: 32, hadirPct: 97.1, statusKbm: "🔵 Tuntas", progressRapor: 90 },

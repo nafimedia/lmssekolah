@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { toast } from "sonner";
-import { Shield, Search, UserCog, Save, KeyRound, Trash2, Users, GraduationCap, UserCheck, ShieldCheck, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Shield, Search, UserCog, Save, KeyRound, Trash2, Users, GraduationCap, UserCheck, ShieldCheck, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { AddUserDialog } from "./components/AddUserDialog";
 import { EditRolesDialog } from "./components/EditRolesDialog";
 import { ResetPasswordDialog } from "./components/ResetPasswordDialog";
 import { DeleteUserDialog } from "./components/DeleteUserDialog";
+import { EditUserDialog, UserItem } from "./components/EditUserDialog";
 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
@@ -43,10 +44,13 @@ function setPersistedRoleOverride(identifier: string, roles: string[]) {
 export function UserManagementModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isKamad = activeRole === "kamad";
   const [search, setSearch] = useState("");
-  const [usersList, setUsersList] = useState<Array<{ id: string; full_name: string; email: string; nis: string; class: string; roles: string[] }>>([]);
+  const [usersList, setUsersList] = useState<Array<UserItem>>([]);
 
   // Dialog States
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+
+  const [userToEditData, setUserToEditData] = useState<UserItem | null>(null);
+  const [isEditDataModalOpen, setIsEditDataModalOpen] = useState(false);
 
   const [userToEditRoles, setUserToEditRoles] = useState<{ id: string; full_name: string; email: string; nis: string; roles: string[] } | null>(null);
   const [isEditRoleModalOpen, setIsEditRoleModalOpen] = useState(false);
@@ -108,6 +112,12 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
   const handleUserCreated = (newUser: { id: string; full_name: string; email: string; nis: string; class: string; roles: string[] }) => {
     MysqlDataService.updateUserRole(newUser.id, newUser.roles, newUser.email).catch(() => {});
     setUsersList((prev) => [newUser, ...prev]);
+  };
+
+  const handleUserUpdated = (updatedUser: UserItem) => {
+    setUsersList((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
+    );
   };
 
   const handleSaveRoles = async (userId: string, userEmail: string, newRoles: string[]) => {
@@ -439,6 +449,19 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
                             <Button
                               size="sm"
                               variant="outline"
+                              className="h-7 px-2.5 text-xs font-bold text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 border-amber-500/30 gap-1"
+                              onClick={() => {
+                                setUserToEditData(u);
+                                setIsEditDataModalOpen(true);
+                              }}
+                              title="Edit Profile Data Pengguna (Nama, NISN/NIP, Email, Kelas)"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" /> Edit Data
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
                               className="h-7 px-2.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30 gap-1"
                               onClick={() => {
                                 setUserToEditRoles(u);
@@ -504,6 +527,13 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
         isOpen={isAddUserOpen}
         onOpenChange={setIsAddUserOpen}
         onUserCreated={handleUserCreated}
+      />
+
+      <EditUserDialog
+        isOpen={isEditDataModalOpen}
+        onOpenChange={setIsEditDataModalOpen}
+        user={userToEditData}
+        onUserUpdated={handleUserUpdated}
       />
 
       <EditRolesDialog

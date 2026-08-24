@@ -56,12 +56,12 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
   const statusText = presensiStatus
     ? `Presensi Hari Ini: ${presensiStatus}`
     : "Presensi Hari Ini: BELUM ABSEN";
-  const statusVariant = presensiStatus === "HADIR"
+  const statusVariant: "success" | "warning" | "info" | "neutral" = presensiStatus === "HADIR"
     ? "success"
     : presensiStatus === "SAKIT" || presensiStatus === "IZIN"
-    ? "warning"
+    ? "info"
     : presensiStatus === "ALPA"
-    ? "danger"
+    ? "warning"
     : "warning";
 
   return (

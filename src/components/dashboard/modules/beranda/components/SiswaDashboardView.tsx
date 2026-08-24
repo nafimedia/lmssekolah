@@ -76,9 +76,9 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className={`border-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-500/30 bg-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-50/50 dark:bg-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-950/20`}>
+        <Card className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20">
           <CardHeader className="pb-2">
-            <CardDescription className={`text-xs font-semibold text-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-600 dark:text-${statusVariant === "success" ? "emerald" : statusVariant === "danger" ? "red" : "amber"}-400 flex items-center justify-between`}>
+            <CardDescription className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
               <span>Kehadiran Presensi Saya</span>
               <CheckCircle2 className="h-4 w-4" />
             </CardDescription>

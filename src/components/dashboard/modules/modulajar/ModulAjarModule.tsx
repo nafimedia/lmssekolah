@@ -16,6 +16,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
   const isGuru = activeRole === "guru" || activeRole === "guru_mapel";
   const isWakaOrAdmin = activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik" || activeRole === "kamad";
   const isWaka = activeRole === "waka";
+  const isKamad = activeRole === "kamad";
 
   const me = MysqlAuthService.getActiveUser();
   const rawClass = userProfile?.class_name || (me as any)?.class_name || "VIII-A";
@@ -195,12 +196,22 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
               : "Pengelolaan modul ajar Kurikulum Merdeka per mata pelajaran dan jenjang."}
           </p>
         </div>
-        {!isSiswa && (
+        {!isSiswa && !isKamad && (
           <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs" onClick={() => setIsUploadOpen(true)}>
             <Upload className="h-3.5 w-3.5" /> Unggah Modul Ajar PDF
           </Button>
         )}
       </div>
+
+      {isKamad && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold mb-6">
+          <span className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Read-Only. Memantau modul ajar PDF guru tanpa melakukan pengunggahan/penghapusan.</span>
+          </span>
+          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
+        </div>
+      )}
 
       {isWakaOrAdmin && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -322,7 +333,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                 </Button>
               </div>
 
-              {(isWakaOrAdmin || isGuru) && (
+              {(isWakaOrAdmin || isGuru) && !isKamad && (
                 <Button
                   size="sm"
                   variant="ghost"

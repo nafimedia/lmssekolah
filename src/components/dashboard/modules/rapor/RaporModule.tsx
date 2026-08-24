@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { getTeacherAssignedSubjects, getTeacherAssignedClasses, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
 import { exportToExcelXml } from "@/utils/excelExporter";
 import { toast } from "sonner";
@@ -94,61 +95,81 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
     { name: "Kelas IX B", wali: "SAYONO, S.Pd., M.Pd.", siswa: 32, avg: 88.5, icon: "🎓", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
   ];
 
+  const renderGradeCell = (val: number | null | undefined) => {
+    if (val === null || val === undefined || isNaN(val) || val === 0) {
+      return <span className="text-muted-foreground font-mono italic text-xs">-</span>;
+    }
+    return <span className="font-mono font-bold">{val}</span>;
+  };
+
   return (
     <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Award className="h-6 w-6 text-primary" /> Transkrip & E-Rapor Kurikulum Merdeka
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Rekapitulasi Penilaian Formatif, Sumatif, Asesmen CBT, & Cetak Lembar E-Rapor Resmi MTsN 2 Cilacap.
-          </p>
+      {activeRole === "siswa" ? (
+        <StudentHeaderBanner
+          title="Rekap Nilai & E-Rapor Saya"
+          subtitle="Transkrip nilai tugas, kuis, CBT, dan lembar Rapor Hasil Belajar Kurikulum Merdeka"
+          icon={Award}
+          studentClass="Kelas VIII A"
+          statusText="Status KKTP: 100% Tuntas"
+          statusVariant="success"
+          actionButtons={
+            <Button size="sm" onClick={() => setIsPrintRaporOpen(true)} className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs">
+              <FileText className="h-4 w-4" /> Cetak E-Rapor PDF
+            </Button>
+          }
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Award className="h-6 w-6 text-primary" /> E-Rapor & Penilaian Kurikulum Merdeka
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Rekap nilai leger, cetak rapor resmi, dan monitoring ketuntasan KKTP siswa.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportExcelLeger} className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20">
+              <Download className="h-4 w-4 text-emerald-500" /> Unduh Leger Excel
+            </Button>
+            <Button size="sm" onClick={() => setIsPrintRaporOpen(true)} className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground">
+              <FileText className="h-4 w-4" /> Cetak E-Rapor PDF
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10" onClick={handleExportExcelLeger}>
-            <Download className="h-3.5 w-3.5 mr-1 text-emerald-500" /> 📊 Export Leger Excel (.xls)
-          </Button>
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setIsPrintRaporOpen(true)}>
-            <Download className="h-3.5 w-3.5 mr-1" /> 🖨️ Cetak E-Rapor PDF
-          </Button>
-        </div>
-      </div>
+      )}
 
-      <Card className="border-border shadow-xs mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-bold flex items-center justify-between">
-            <span>Daftar Transkrip Nilai Akademik</span>
-            <Badge className="bg-emerald-600 text-white text-xs">Status: Tuntas 100%</Badge>
+      <Card className="border-border shadow-sm">
+        <CardHeader className="border-b border-border pb-4">
+          <CardTitle className="text-base font-bold flex items-center gap-2">
+            <Award className="h-5 w-5 text-primary" /> Rekap Leger Nilai Siswa (Tahun Ajaran 2026/2027)
           </CardTitle>
           <CardDescription className="text-xs">
-            Rincian akumulasi nilai per mata pelajaran Kurikulum Merdeka MTsN 2 Cilacap.
+            Nilai tugas, kuis, CBT, dan nilai akhir mata pelajaran Kurikulum Merdeka.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="bg-muted text-muted-foreground font-bold text-left">
+            <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
               <tr>
-                <th className="p-3">Kode</th>
-                <th className="p-3">Mata Pelajaran</th>
-                <th className="p-3">Guru Pengampu</th>
-                <th className="p-3 text-center">Tugas (30%)</th>
-                <th className="p-3 text-center">Kuis (30%)</th>
-                <th className="p-3 text-center">CBT (40%)</th>
-                <th className="p-3 text-center font-extrabold text-foreground">Nilai Rapor</th>
-                <th className="p-3 text-right">KKM</th>
+                <th className="py-3 px-4">Mata Pelajaran</th>
+                <th className="py-3 px-3">Guru Pengampu</th>
+                <th className="py-3 px-3 text-center">Tugas</th>
+                <th className="py-3 px-3 text-center">Kuis</th>
+                <th className="py-3 px-3 text-center">CBT</th>
+                <th className="py-3 px-3 text-center">Nilai Akhir</th>
+                <th className="py-3 px-4 text-right">KKTP Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {mapelDetails.map((m, idx) => (
-                <tr key={idx} className="hover:bg-muted/30 transition">
-                  <td className="p-3 font-mono font-bold text-muted-foreground">{m.code}</td>
-                  <td className="p-3 font-bold text-foreground">{m.mapel}</td>
-                  <td className="p-3 text-muted-foreground">{m.teacher}</td>
-                  <td className="p-3 text-center font-mono">{m.tugas}</td>
-                  <td className="p-3 text-center font-mono">{m.kuis}</td>
-                  <td className="p-3 text-center font-mono">{m.cbt}</td>
-                  <td className="p-3 text-center font-extrabold font-mono text-primary text-sm">{m.avg}</td>
+              {mapelDetails.map((m) => (
+                <tr key={m.code} className="hover:bg-muted/30 transition">
+                  <td className="py-3 px-4 font-bold text-foreground">{m.mapel}</td>
+                  <td className="py-3 px-3 text-muted-foreground">{m.teacher}</td>
+                  <td className="py-3 px-3 text-center">{renderGradeCell(m.tugas)}</td>
+                  <td className="py-3 px-3 text-center">{renderGradeCell(m.kuis)}</td>
+                  <td className="py-3 px-3 text-center">{renderGradeCell(m.cbt)}</td>
+                  <td className="py-3 px-3 text-center text-primary text-sm">{renderGradeCell(m.avg)}</td>
                   <td className="p-3 text-right">
                     <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 font-bold">
                       {m.kkm}

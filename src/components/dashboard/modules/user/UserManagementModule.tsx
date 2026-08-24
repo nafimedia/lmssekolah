@@ -40,7 +40,8 @@ function setPersistedRoleOverride(identifier: string, roles: string[]) {
   } catch {}
 }
 
-export function UserManagementModule() {
+export function UserManagementModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+  const isKamad = activeRole === "kamad";
   const [search, setSearch] = useState("");
   const [usersList, setUsersList] = useState<Array<{ id: string; full_name: string; email: string; nis: string; class: string; roles: string[] }>>([]);
 
@@ -220,6 +221,16 @@ export function UserManagementModule() {
     <div className="space-y-6">
       <SectionHeader title="Manajemen Pengguna & Hak Akses (Role)" sub="Kelola akun pengguna, pengelompokan peran, dan hak akses sistem." />
 
+      {isKamad && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold">
+          <span className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Read-Only. Kepala Madrasah memantau direktori user & wewenang role tanpa mengubah data.</span>
+          </span>
+          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
+        </div>
+      )}
+
       <Card className="border-border shadow-sm">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
@@ -240,9 +251,11 @@ export function UserManagementModule() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button size="sm" className="gap-1.5 shrink-0 bg-primary text-primary-foreground font-bold" onClick={() => setIsAddUserOpen(true)}>
-              <UserPlus className="h-4 w-4" /> Tambah User Baru
-            </Button>
+            {!isKamad && (
+              <Button size="sm" className="gap-1.5 shrink-0 bg-primary text-primary-foreground font-bold" onClick={() => setIsAddUserOpen(true)}>
+                <UserPlus className="h-4 w-4" /> Tambah User Baru
+              </Button>
+            )}
           </div>
         </CardHeader>
 
@@ -417,59 +430,66 @@ export function UserManagementModule() {
                       </td>
 
                       <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30 gap-1"
-                            onClick={() => {
-                              setUserToEditRoles(u);
-                              setIsEditRoleModalOpen(true);
-                            }}
-                            title="Kelola Peran (Role) Pengguna"
-                          >
-                            <UserCog className="h-3.5 w-3.5" /> Kelola Role
-                          </Button>
-
-                          {currentIsAdmin && (
+                        {isKamad ? (
+                          <Badge variant="outline" className="text-[10px] font-mono text-amber-700 dark:text-amber-400 border-amber-500/40 bg-amber-500/10">
+                            👁️ READ-ONLY MONITORING
+                          </Badge>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 px-2.5 text-xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 border-teal-500/30 gap-1"
+                              className="h-7 px-2.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30 gap-1"
                               onClick={() => {
-                                setUserToResetPass(u);
-                                setIsResetPassModalOpen(true);
+                                setUserToEditRoles(u);
+                                setIsEditRoleModalOpen(true);
                               }}
-                              title="Ubah / Reset Kata Sandi"
+                              title="Kelola Peran (Role) Pengguna"
                             >
-                              <KeyRound className="h-3.5 w-3.5" /> Sandi
+                              <UserCog className="h-3.5 w-3.5" /> Kelola Role
                             </Button>
-                          )}
 
-                          {isSuperAdmin || isSelf ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              disabled
-                              className="h-7 px-2.5 text-xs text-muted-foreground opacity-40 cursor-not-allowed"
-                              title={isSuperAdmin ? "Super Admin Utama dilindungi dari penghapusan" : "Tidak dapat menghapus akun sendiri"}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 px-2.5 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
-                              onClick={() => {
-                                setUserToDelete(u);
-                                setIsDeleteModalOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
-                            </Button>
-                          )}
-                        </div>
+                            {currentIsAdmin && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2.5 text-xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 border-teal-500/30 gap-1"
+                                onClick={() => {
+                                  setUserToResetPass(u);
+                                  setIsResetPassModalOpen(true);
+                                }}
+                                title="Ubah / Reset Kata Sandi"
+                              >
+                                <KeyRound className="h-3.5 w-3.5" /> Sandi
+                              </Button>
+                            )}
+
+                            {isSuperAdmin || isSelf ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled
+                                className="h-7 px-2.5 text-xs text-muted-foreground opacity-40 cursor-not-allowed"
+                                title={isSuperAdmin ? "Super Admin Utama dilindungi dari penghapusan" : "Tidak dapat menghapus akun sendiri"}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-500/30 gap-1"
+                                onClick={() => {
+                                  setUserToDelete(u);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                                title="Hapus Akun Pengguna"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" /> Hapus
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );

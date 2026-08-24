@@ -1,27 +1,63 @@
-import { useState } from "react";
-import { ClipboardCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ClipboardCheck, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 import { toast } from "sonner";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
-export function PusatAsesmenModule({ activeRole }: { activeRole?: string }) {
-  const [activeTab, setActiveTab] = useState("formatif");
+export function PusatAsesmenModule({ activeRole, initialTab = "formatif" }: { activeRole?: string; initialTab?: string }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  const handleCreateQuiz = () => {
+    const newQuiz = {
+      id: String(Date.now()),
+      title: "Kuis Baru Pembelajaran",
+      soalCount: 10,
+      status: "Live",
+    };
+    setQuizzes((prev) => [newQuiz, ...prev]);
+    toast.success("✅ Kuis Interaktif Baru berhasil dibuat!");
+  };
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <ClipboardCheck className="h-6 w-6 text-primary" /> Pusat Asesmen & Penilaian Pembelajaran
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Reorganisasi modul asesmen Kurikulum Merdeka Kemenag: Formatif, Sumatif, Kuis Interaktif, Tugas Individu, Kelompok, & Tidak Terstruktur.
-          </p>
+      {activeRole === "siswa" ? (
+        <StudentHeaderBanner
+          title={
+            activeTab === "kuis"
+              ? "Kuis Interaktif Live Saya"
+              : activeTab === "individu"
+              ? "Tugas & Submisi LKPD Saya"
+              : "Pusat Asesmen & Penilaian Saya"
+          }
+          subtitle="Portal pengerjaan kuis kilat interaktif, tugas mandiri LKPD digital, dan asesmen Kurikulum Merdeka"
+          icon={ClipboardCheck}
+          studentClass="Kelas VIII A"
+          statusText="Portofolio Asesmen Aktif"
+          statusVariant="success"
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <ClipboardCheck className="h-6 w-6 text-primary" /> Pusat Asesmen & Penilaian Pembelajaran
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Reorganisasi modul asesmen Kurikulum Merdeka Kemenag: Formatif, Sumatif, Kuis Interaktif, Tugas Individu, Kelompok, & Tidak Terstruktur.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 6 Tabs Submenu Asesmen */}
       <Tabs defaultValue="formatif" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -131,22 +167,37 @@ export function PusatAsesmenModule({ activeRole }: { activeRole?: string }) {
                   <CardTitle className="text-base font-bold">Kuis Interaktif Online</CardTitle>
                   <CardDescription className="text-xs">Platform kuis kilat Pilihan Ganda & Isian singkat interaktif.</CardDescription>
                 </div>
-                <Button size="sm" className="text-xs font-bold bg-amber-500 hover:bg-amber-600 text-black" onClick={() => toast.success("Kuis Interaktif Baru dibuat!")}>
-                  + Buat Kuis Baru
-                </Button>
+                {activeRole !== "siswa" && (
+                  <Button size="sm" className="text-xs font-bold bg-amber-500 hover:bg-amber-600 text-black" onClick={handleCreateQuiz}>
+                    + Buat Kuis Baru
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-4">
-              <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex justify-between items-center">
-                <div>
-                  <Badge className="bg-amber-500 text-black text-[10px] font-bold mb-1">⚡ KUIS INTERAKTIF LIVE</Badge>
-                  <div className="font-bold text-base text-foreground">Kuis Tajwid Challenge Pertemuan 16</div>
-                  <div className="text-xs text-muted-foreground">10 Soal Pilihan Ganda • 32 Siswa Siap Mengerjakan</div>
+              {quizzes.length === 0 ? (
+                <div className="p-8 text-center border border-dashed border-border rounded-xl bg-muted/20 space-y-2">
+                  <div className="font-bold text-xs text-foreground">Belum Ada Kuis Interaktif Live</div>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    {activeRole === "siswa"
+                      ? "Belum ada kuis interaktif yang dibuka oleh guru pengampu saat ini."
+                      : "Belum ada kuis yang dibuat. Klik '+ Buat Kuis Baru' di atas untuk membuat sesi kuis baru."}
+                  </p>
                 </div>
-                <Button size="sm" className="bg-amber-500 text-black font-bold text-xs" onClick={() => toast.success("Sesi Kuis Interaktif dimulai!")}>
-                  Mulai Kuis Live ▶
-                </Button>
-              </div>
+              ) : (
+                quizzes.map((q) => (
+                  <div key={q.id} className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex justify-between items-center mb-3">
+                    <div>
+                      <Badge className="bg-amber-500 text-black text-[10px] font-bold mb-1">⚡ KUIS INTERAKTIF LIVE</Badge>
+                      <div className="font-bold text-base text-foreground">{q.title}</div>
+                      <div className="text-xs text-muted-foreground">{q.soalCount} Soal Pilihan Ganda</div>
+                    </div>
+                    <Button size="sm" className="bg-amber-500 text-black font-bold text-xs" onClick={() => toast.success("Sesi Kuis Interaktif dimulai!")}>
+                      Mulai Kuis Live ▶
+                    </Button>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </TabsContent>

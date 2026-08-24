@@ -49,14 +49,11 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           MysqlDataService.getJournals(),
         ]);
 
-        // 1. Filter today's schedule for active teacher
+        // 1. Filter schedule for active teacher
         const myNameLower = (currentUser?.full_name || userName || "").toLowerCase().trim();
         const myNip = (currentUser?.nis_nip || "").trim();
 
-        const todayTeacherSchedule = (dbJadwal || []).filter((j: any) => {
-          const matchDay = (j.hari || "").toLowerCase().trim() === currentDayName.toLowerCase().trim();
-          if (!matchDay) return false;
-
+        const allTeacherSchedule = (dbJadwal || []).filter((j: any) => {
           const jGuruLower = (j.guru || j.teacher_name || "").toLowerCase().trim();
           const isMyName = jGuruLower.includes(myNameLower) || myNameLower.includes(jGuruLower);
           const isMyNip = myNip && jGuruLower.includes(myNip);
@@ -65,7 +62,11 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           return isMyName || isMyNip || isMySubject;
         });
 
-        setJadwalHariIni(todayTeacherSchedule);
+        const todayTeacherSchedule = allTeacherSchedule.filter((j: any) => {
+          return (j.hari || "").toLowerCase().trim() === currentDayName.toLowerCase().trim();
+        });
+
+        setJadwalHariIni(todayTeacherSchedule.length > 0 ? todayTeacherSchedule : allTeacherSchedule);
 
         // 2. Filter LKPD activities for teacher assigned subjects
         const myLkpd = (dbLkpd || []).filter((act: any) => isSubjectAllowedForUser(act.mapel || act.subject || ""));

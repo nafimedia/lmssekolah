@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
@@ -42,30 +43,44 @@ export function ProgressBelajarModule({ activeRole }: { activeRole?: string }) {
       { m: "B. Indonesia", p: 92 },
       { m: "IPA", p: 65 },
       { m: "Fikih", p: 88 },
-      { m: "B. Arab", p: 55 },
+      { m: "B. Arab", p: 85 },
     ];
     return (
-      <>
-        <SectionHeader title="Progress Belajar Saya" sub="Persentase penyelesaian pertemuan per mapel" />
-        <div className="space-y-4">
+      <div className="space-y-6">
+        <StudentHeaderBanner
+          title="Progress Belajar Saya"
+          subtitle="Persentase penyelesaian modul KBM & ketuntasan Capaian Pembelajaran (CP) per mata pelajaran"
+          icon={TrendingUp}
+          studentClass="Kelas VIII A"
+          statusText="Perkembangan Positif (Tuntas 86%)"
+          statusVariant="success"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {studentMapel.map((x, i) => (
-            <Card key={i}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="font-semibold text-sm">{x.m}</div>
-                  <div className="text-xs text-muted-foreground">{x.p}% dari 18 pertemuan</div>
+            <Card key={i} className="border-border/70 shadow-xs hover:border-emerald-500/40 transition">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="font-bold text-sm text-foreground">{x.m}</div>
+                  <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
+                    {x.p}% Selesai
+                  </Badge>
                 </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${x.p}%` }}
-                  />
+                <div className="space-y-1">
+                  <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                      style={{ width: `${x.p}%` }}
+                    />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground font-medium text-right">
+                    {x.p}% dari 18 Pertemuan Semester
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      </>
+      </div>
     );
   }
 

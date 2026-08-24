@@ -10,6 +10,7 @@ import {
   Layers,
   CalendarDays,
   Award,
+  ShieldCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,8 @@ import { MasterRombelTab } from "./components/MasterRombelTab";
 import { TahunAjaranTab } from "./components/TahunAjaranTab";
 import { KktpSkemaTab } from "./components/KktpSkemaTab";
 
-export function SiakadMasterDataModule() {
+export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+  const isKamad = activeRole === "kamad";
   const [activeTab, setActiveTab] = useState<string>("pengampu");
   const [dbTeachersList, setDbTeachersList] = useState<string[]>([]);
   const [pengampuList, setPengampuList] = useState<PengampuRow[]>([]);
@@ -58,11 +60,19 @@ export function SiakadMasterDataModule() {
   }, []);
 
   const handleDeletePengampu = (id: string, name: string) => {
+    if (isKamad) {
+      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+      return;
+    }
     setPengampuList((prev) => prev.filter((p) => p.id !== id));
     toast.success(`🗑️ Plotting pengampu "${name}" berhasil dihapus.`);
   };
 
   const handleAddPengampuClick = () => {
+    if (isKamad) {
+      toast.info("🏛️ Kepala Madrasah berada dalam Mode Monitoring (Read-Only). Pengolahan plotting dilakukan oleh Waka Kurikulum.");
+      return;
+    }
     toast.info("Gunakan tombol tambah pada matriks pengampu untuk mendaftarkan plotting guru baru.");
   };
 
@@ -78,6 +88,16 @@ export function SiakadMasterDataModule() {
           </p>
         </div>
       </div>
+
+      {isKamad && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold">
+          <span className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Read-Only. Kepala Madrasah memantau data master akademik tanpa melakukan pengubahan data.</span>
+          </span>
+          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80">
         {[

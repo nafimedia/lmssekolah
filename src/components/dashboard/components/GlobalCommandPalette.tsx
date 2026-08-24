@@ -60,20 +60,30 @@ export function GlobalCommandPalette({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const navMenuItems = [
+  const rawNavMenuItems = [
     { key: "beranda", label: "Beranda Ringkasan & Dashboard Utama", icon: Home, group: "Modul Utama" },
-    { key: "kehadiran", label: "Presensi Pagi & Sesi Mengajar KBM", icon: UserCheck, group: "Modul Utama" },
+    { key: "kehadiran", label: activeRole === "siswa" ? "Kehadiran Saya" : "Presensi Pagi & Sesi Mengajar KBM", icon: UserCheck, group: "Modul Utama" },
     { key: "ruang_mengajar", label: "Ruang Mengajar, Jurnal & LKPD", icon: BookOpen, group: "Modul Utama" },
     { key: "sdm_gtk", label: "SDM & Direktori Guru Staf MTsN 2", icon: Users, group: "Modul Utama" },
     { key: "modul_ajar", label: "Perangkat Modul Ajar & RPP Merdeka", icon: FileText, group: "Pembelajaran & Nilai" },
-    { key: "nilai", label: "Penilaian & E-Rapor Kurikulum Merdeka", icon: Award, group: "Pembelajaran & Nilai" },
+    { key: "nilai", label: activeRole === "siswa" ? "Rekap Nilai Saya" : "Penilaian & E-Rapor Kurikulum Merdeka", icon: Award, group: "Pembelajaran & Nilai" },
     { key: "asesmen", label: "Pusat Asesmen Formatif & Sumatif", icon: Sparkles, group: "Pembelajaran & Nilai" },
-    { key: "tahfidz", label: "Setoran Hafalan & Rapor Tahfidz Qur'an", icon: BookMarked, group: "Pembelajaran & Nilai" },
+    { key: "tahfidz", label: activeRole === "siswa" ? "Setoran Tahfidz Saya" : "Setoran Hafalan & Rapor Tahfidz Qur'an", icon: BookMarked, group: "Pembelajaran & Nilai" },
     { key: "kokurikuler", label: "Kegiatan Kokurikuler & Projek P5-PPRA", icon: FolderKanban, group: "Pembelajaran & Nilai" },
     { key: "perpustakaan", label: "Perpustakaan Digital & E-Book Buku", icon: Library, group: "Layanan Sekolah" },
     { key: "pengumuman", label: "Pengumuman Resmi & Buletin Madrasah", icon: Bell, group: "Layanan Sekolah" },
     { key: "asisten_ai", label: "Asisten AI & Tools Digital Pembelajaran", icon: Bot, group: "Layanan Sekolah" },
   ];
+
+  // Disallowed menu keys for student role
+  const studentDisallowedKeys = new Set(["ruang_mengajar", "sdm_gtk", "modul_ajar", "siakad", "manajemen_kelas", "users"]);
+  
+  const navMenuItems = rawNavMenuItems.filter((item) => {
+    if (activeRole === "siswa" && studentDisallowedKeys.has(item.key)) {
+      return false;
+    }
+    return true;
+  });
 
   const roleLabels: Record<string, { label: string; icon: string }> = {
     guru: { label: "Guru Pengampu Mapel", icon: "👨‍🏫" },
@@ -111,9 +121,9 @@ export function GlobalCommandPalette({
             className="cursor-pointer text-xs font-semibold gap-2 py-2"
           >
             <BookMarked className="h-4 w-4 text-emerald-500" />
-            <span>Setor Hafalan Tahfidz Baru</span>
+            <span>Setor Hafalan Tahfidz</span>
           </CommandItem>
-          {onOpenWaModal && (
+          {onOpenWaModal && activeRole !== "siswa" && (
             <CommandItem
               onSelect={() => {
                 onOpenWaModal();
@@ -130,15 +140,17 @@ export function GlobalCommandPalette({
             className="cursor-pointer text-xs font-semibold gap-2 py-2"
           >
             <Printer className="h-4 w-4 text-blue-500" />
-            <span>Cetak E-Rapor Kurikulum Merdeka PDF</span>
+            <span>{activeRole === "siswa" ? "Lihat Rekap Nilai Saya" : "Cetak E-Rapor Kurikulum Merdeka PDF"}</span>
           </CommandItem>
-          <CommandItem
-            onSelect={() => handleSelectTab("asisten_ai")}
-            className="cursor-pointer text-xs font-semibold gap-2 py-2"
-          >
-            <Bot className="h-4 w-4 text-purple-500" />
-            <span>Buka Asisten AI & Tools Digital Pembelajaran</span>
-          </CommandItem>
+          {activeRole !== "siswa" && (
+            <CommandItem
+              onSelect={() => handleSelectTab("asisten_ai")}
+              className="cursor-pointer text-xs font-semibold gap-2 py-2"
+            >
+              <Bot className="h-4 w-4 text-purple-500" />
+              <span>Buka Asisten AI & Tools Digital Pembelajaran</span>
+            </CommandItem>
+          )}
         </CommandGroup>
 
         <CommandSeparator className="my-1" />

@@ -30,6 +30,7 @@ import { RiwayatKbmSection } from "./components/RiwayatKbmSection";
 import { TambahJurnalDialog } from "./components/TambahJurnalDialog";
 
 export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+  const isKamad = activeRole === "kamad";
   const [activeTab, setActiveTab] = useState<"jurnal" | "presensi" | "materi" | "aktivitas" | "catatan_siswa" | "riwayat">("jurnal");
   const me = MysqlAuthService.getActiveUser();
   const currentTeacherName = me?.full_name || userProfile?.name || "SOBIYATI, S.Pd";
@@ -56,6 +57,10 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
   }, []);
 
   const handleAddJurnal = (newEntry: { title: string; rombel: string; mapel: string; meeting: string; notes: string }) => {
+    if (isKamad) {
+      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau KBM (Read-Only).");
+      return;
+    }
     const item = {
       id: "j_" + Date.now(),
       title: newEntry.title,
@@ -122,6 +127,16 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
           </select>
         </div>
       </div>
+
+      {isKamad && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold mb-4">
+          <span className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Supervisi KBM. Memantau pelaksanaan KBM, jurnal mengajar, dan aktivitas siswa tanpa melakukan pengisian data.</span>
+          </span>
+          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
+        </div>
+      )}
 
       {/* KBM Hari Ini Live Session Banner Card & Guided 3-Step Flow */}
       <KbmHeaderBanner activeRombel={activeRombel} activeMapel={activeMapel} activeTab={activeTab} onSelectTab={setActiveTab} />

@@ -4,20 +4,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FolderKanban, Award } from "lucide-react";
 import { toast } from "sonner";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
 export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = {}) {
   return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FolderKanban className="h-6 w-6 text-purple-500" /> Kegiatan Kokurikuler & Projek P5-PPRA
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil 'Alamin: Kehadiran projek & Laporan Gelar Karya Siswa.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <StudentHeaderBanner
+        title="Kegiatan Kokurikuler & P5 Saya"
+        subtitle="Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil 'Alamin (P5-PPRA) MTsN 2 Cilacap"
+        icon={FolderKanban}
+        studentClass="Kelas VIII A"
+        statusText="Projek P5 Aktif"
+        statusVariant="info"
+      />
 
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="border-border shadow-xs">
@@ -77,6 +76,6 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }

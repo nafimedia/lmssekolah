@@ -1006,9 +1006,37 @@ export const getJadwalFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<JadwalRow[]> => {
     try {
       await createJadwalTableIfNotExists();
-      const { query } = await import("@/lib/db");
+      const { query, execute } = await import("@/lib/db");
       const rows = await query<JadwalRow[]>("SELECT id, hari, jam, mapel, tingkat, rombel, guru FROM jadwal_pelajaran ORDER BY id ASC");
-      return (rows || []).map(r => ({ ...r, id: String(r.id) }));
+      if (rows && rows.length > 0) {
+        return rows.map(r => ({ ...r, id: String(r.id) }));
+      }
+
+      const initialSeed: JadwalRow[] = [
+        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Al Qur'an Hadis", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        { hari: "Senin", jam: "09:15 - 10:45", mapel: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "SOBIYATI, S.Pd" },
+        { hari: "Senin", jam: "11:00 - 12:30", mapel: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "SAYONO, S.Pd., M.Pd." },
+        { hari: "Selasa", jam: "07:30 - 09:00", mapel: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "MISBAHUL MUNIR, S.Pd" },
+        { hari: "Selasa", jam: "09:15 - 10:45", mapel: "Fikih", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "CARYATI, S.Pd.I" },
+        { hari: "Selasa", jam: "11:00 - 12:30", mapel: "Ilmu Pengetahuan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "NOVANTYA KARTIKAWATI, S.Pd" },
+        { hari: "Rabu", jam: "07:30 - 09:00", mapel: "Akidah Akhlak", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "WAKHIBUN, S.Pd.I" },
+        { hari: "Rabu", jam: "09:15 - 10:45", mapel: "Sejarah Kebudayaan Islam", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "H. DASIRUN, S.Ag., M.Pd.I" },
+        { hari: "Rabu", jam: "11:00 - 12:30", mapel: "Bahasa Arab", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "ENDAH SUPRIHATIN, S.Pd" },
+        { hari: "Kamis", jam: "07:30 - 09:00", mapel: "Pendidikan Kewarganegaraan", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "MISBAH AHMAD DANI, S.Pd" },
+        { hari: "Kamis", jam: "09:15 - 10:45", mapel: "Informatika", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { hari: "Jumat", jam: "07:30 - 09:00", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "TRIYONO, S.Pd" },
+        { hari: "Sabtu", jam: "07:30 - 09:00", mapel: "Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "DRA. ENDAH SRI W" },
+      ];
+
+      for (const s of initialSeed) {
+        await execute(
+          "INSERT INTO jadwal_pelajaran (hari, jam, mapel, tingkat, rombel, guru) VALUES (?, ?, ?, ?, ?, ?)",
+          [s.hari, s.jam, s.mapel, s.tingkat, s.rombel, s.guru || ""]
+        );
+      }
+
+      const freshRows = await query<JadwalRow[]>("SELECT id, hari, jam, mapel, tingkat, rombel, guru FROM jadwal_pelajaran ORDER BY id ASC");
+      return (freshRows || []).map(r => ({ ...r, id: String(r.id) }));
     } catch (e) {
       console.warn("[getJadwalFn error]:", e);
       return [];

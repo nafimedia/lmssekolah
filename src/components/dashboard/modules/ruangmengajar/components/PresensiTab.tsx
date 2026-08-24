@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { isSameClass } from "@/utils/classNormalization";
 
 export interface StudentAttendance {
   id: string;
@@ -47,40 +48,25 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
       if (!isMounted) return;
       const siswaList = (users || []).filter((u: any) => u.role === "siswa");
 
-      const normActive = activeRombel.toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
-      const is7A = normActive.includes("VIIA") || normActive.includes("7A");
-      const is7B = normActive.includes("VIIB") || normActive.includes("7B");
-      const is8A = normActive.includes("VIIIA") || normActive.includes("8A");
-      const is8B = normActive.includes("VIIIB") || normActive.includes("8B");
-      const is9A = normActive.includes("IXA") || normActive.includes("9A");
-      const is9B = normActive.includes("IXB") || normActive.includes("9B");
+      const matchedSiswa = siswaList.filter((u: any) => isSameClass(u.class_name || u.class, activeRombel));
 
-      let matchedSiswa = siswaList.filter((u: any) => {
-        const cls = (u.class_name || u.class || "").toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
-        if (is7A) return cls.includes("VIIA") || cls.includes("7A");
-        if (is7B) return cls.includes("VIIB") || cls.includes("7B");
-        if (is8A) return cls.includes("VIIIA") || cls.includes("8A");
-        if (is8B) return cls.includes("VIIIB") || cls.includes("8B");
-        if (is9A) return cls.includes("IXA") || cls.includes("9A");
-        if (is9B) return cls.includes("IXB") || cls.includes("9B");
-        return cls === normActive || cls.includes(normActive) || normActive.includes(cls);
-      });
+      if (matchedSiswa.length > 0) {
+        const loaded: StudentAttendance[] = matchedSiswa.map((u: any, idx: number) => {
+          const nis = u.nis_nip || u.nis || "-";
+          const match = kbmRows?.find(
+            (r) => r.student_nis === nis || (r.student_name && r.student_name.toLowerCase() === (u.full_name || u.name).toLowerCase())
+          );
+          return {
+            id: u.id || `s_${idx}`,
+            nis: nis,
+            name: u.full_name || u.name,
+            status: match ? match.status : "HADIR",
+            notes: match?.notes || "",
+          };
+        });
 
-      const loaded: StudentAttendance[] = matchedSiswa.map((u: any, idx: number) => {
-        const nis = u.nis_nip || u.nis || "-";
-        const match = kbmRows?.find(
-          (r) => r.student_nis === nis || (r.student_name && r.student_name.toLowerCase() === (u.full_name || u.name).toLowerCase())
-        );
-        return {
-          id: u.id || `s_${idx}`,
-          nis: nis,
-          name: u.full_name || u.name,
-          status: match ? match.status : "HADIR",
-          notes: match?.notes || "",
-        };
-      });
-
-      setStudents(loaded);
+        setStudents(loaded);
+      }
     });
 
     return () => {

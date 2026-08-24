@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService, JadwalRow } from "@/services/mysqlDataService";
 import { toast } from "sonner";
-import { Download, PencilLine, Trash2, Printer, Plus } from "lucide-react";
+import { Download, PencilLine, Trash2, Printer, Plus, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AddJadwalDialog } from "./components/AddJadwalDialog";
 import { EditJadwalDialog } from "./components/EditJadwalDialog";
 import { PrintJadwalDialog } from "./components/PrintJadwalDialog";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
 export function JadwalModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
@@ -147,28 +148,44 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Jadwal Pelajaran {isGuru && <Badge className="bg-emerald-600 text-white font-bold text-xs">📖 Media Informasi Guru (Read-Only)</Badge>}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isGuru
-              ? "Informasi matriks jadwal pelajaran tatap muka dan alokasi ruang kelas MTsN 2 Cilacap."
-              : "Kelola jadwal pelajaran tatap muka dan alokasi ruang kelas."}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
-            <Printer className="h-3.5 w-3.5" /> Cetak Jadwal KBM PDF
-          </Button>
-          {!isReadOnlyRole && (
-            <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-              <Plus className="h-3.5 w-3.5" /> Tambah Jadwal Pelajaran
+      {isSiswa ? (
+        <StudentHeaderBanner
+          title="Jadwal Pelajaran Saya"
+          subtitle="Roster jadwal jam KBM tatap muka & alokasi ruang kelas harian MTsN 2 Cilacap"
+          icon={CalendarClock}
+          studentClass={filterRombel.replace("Rombel", "Kelas")}
+          statusText="Roster Pelajaran Aktif 2026/2027"
+          statusVariant="success"
+          actionButtons={
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
+              <Printer className="h-3.5 w-3.5" /> Cetak Jadwal KBM PDF
             </Button>
-          )}
+          }
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              Jadwal Pelajaran {isGuru && <Badge className="bg-emerald-600 text-white font-bold text-xs">📖 Media Informasi Guru (Read-Only)</Badge>}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isGuru
+                ? "Informasi matriks jadwal pelajaran tatap muka dan alokasi ruang kelas MTsN 2 Cilacap."
+                : "Kelola jadwal pelajaran tatap muka dan alokasi ruang kelas."}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
+              <Printer className="h-3.5 w-3.5" /> Cetak Jadwal KBM PDF
+            </Button>
+            {!isReadOnlyRole && (
+              <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
+                <Plus className="h-3.5 w-3.5" /> Tambah Jadwal Pelajaran
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {!isRestrictedRole ? (
         <div className="p-3.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 shadow-2xs">

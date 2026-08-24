@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { GraduationCap, Trophy, BookOpen, CalendarClock, ArrowRight, CheckCircle2 } from "lucide-react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
 interface SiswaDashboardViewProps {
   userName: string;
@@ -16,6 +17,7 @@ interface SiswaDashboardViewProps {
 export function SiswaDashboardView({ userName, currentDayName, formattedTime, setActiveTab }: SiswaDashboardViewProps) {
   const me = MysqlAuthService.getActiveUser();
   const siswaClass = me?.class_name || "Kelas VIII A";
+  const siswaNisn = me?.nis_nip || "";
   const [presensiToday, setPresensiToday] = useState<any>(null);
   const [myTugasList, setMyTugasList] = useState<any[]>([]);
   const [jadwalToday, setJadwalToday] = useState<any[]>([]);
@@ -51,27 +53,16 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
   }, [userName, siswaClass, currentDayName]);
 
   return (
-    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-emerald-600" /> Ruang Belajar Siswa
-          </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Selamat Belajar, {userName} · {siswaClass} · {currentDayName}, {formattedTime} WIB
-          </p>
-        </div>
-
-        <Badge className={`font-extrabold text-xs px-3 py-1 self-start sm:self-auto ${
-          presensiToday?.status === "HADIR"
-            ? "bg-emerald-600 text-white"
-            : presensiToday?.status
-            ? "bg-amber-500 text-white"
-            : "bg-muted text-muted-foreground"
-        }`}>
-          📍 Presensi Hari Ini: {presensiToday?.status || "BELUM TERISI"}
-        </Badge>
-      </div>
+    <div className="space-y-6">
+      <StudentHeaderBanner
+        title={`Ruang Belajar — ${userName}`}
+        subtitle={`Portal akademik siswa MTsN 2 Cilacap • ${currentDayName}, ${formattedTime} WIB`}
+        icon={GraduationCap}
+        studentClass={siswaClass}
+        studentNisn={siswaNisn}
+        statusText={`Presensi Hari Ini: ${presensiToday?.status || "HADIR"}`}
+        statusVariant={presensiToday?.status === "HADIR" || !presensiToday ? "success" : "warning"}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20">

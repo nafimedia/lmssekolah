@@ -33,6 +33,8 @@ import { filterSubjectsForUser, isSubjectAllowedForUser } from "@/services/teach
 import { GridCardsSkeleton } from "@/components/dashboard/components/ModuleSkeleton";
 import { toast } from "sonner";
 
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
+
 export function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   return <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />;
 }
@@ -472,20 +474,31 @@ startxref
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Mata Pelajaran (KBM)</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Katalog Mata Pelajaran Resmi MTsN 2 Cilacap & Akses Perangkat Pembelajaran Merdeka.
-          </p>
-        </div>
+      {isSiswa ? (
+        <StudentHeaderBanner
+          title="Materi & Modul Ajar Saya"
+          subtitle="Katalog 18 Mata Pelajaran resmi Kurikulum Merdeka MTsN 2 Cilacap & berkas materi KBM digital"
+          icon={BookOpen}
+          studentClass={`Kelas ${kelas} A`}
+          statusText="Modul Digital Terverifikasi"
+          statusVariant="success"
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Mata Pelajaran (KBM)</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Katalog Mata Pelajaran Resmi MTsN 2 Cilacap & Akses Perangkat Pembelajaran Merdeka.
+            </p>
+          </div>
 
-        {(!isSiswa && (activeRole === "admin" || activeRole === "waka" || activeRole === "kamad")) && (
-          <Button size="sm" className="gap-1.5 font-bold text-xs" onClick={handleOpenAddMapel}>
-            <Plus className="h-4 w-4" /> Kelola / Tambah Mapel
-          </Button>
-        )}
-      </div>
+          {(activeRole === "admin" || activeRole === "waka" || activeRole === "kamad") && (
+            <Button size="sm" className="gap-1.5 font-bold text-xs" onClick={handleOpenAddMapel}>
+              <Plus className="h-4 w-4" /> Kelola / Tambah Mapel
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-muted/40 p-2 rounded-xl border border-border">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">

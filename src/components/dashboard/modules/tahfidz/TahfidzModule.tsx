@@ -18,6 +18,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { exportToExcelXml } from "@/utils/excelExporter";
 import { toast } from "sonner";
@@ -193,24 +194,40 @@ export function TahfidzModule({ activeRole }: { activeRole?: string } = {}) {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <BookMarked className="h-6 w-6 text-primary" /> Modul Keagamaan Tahfidz Al-Quran
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Monitoring Target Hafalan, Setoran Ayat, Evaluasi Tajwid, & Pratinjau Cetak Kartu Murojaah MTsN 2 Cilacap
-          </p>
+      {activeRole === "siswa" ? (
+        <StudentHeaderBanner
+          title="Setoran Hafalan Tahfidz Saya"
+          subtitle="Monitoring target hafalan Al-Qur'an, evaluasi tajwid, dan kartu muroja'ah siswa MTsN 2 Cilacap"
+          icon={BookMarked}
+          studentClass="Kelas VIII A"
+          statusText="Target: 85% Mutqin"
+          statusVariant="success"
+          actionButtons={
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" onClick={() => setIsPrintCardOpen(true)}>
+              <Download className="h-3.5 w-3.5 text-emerald-500" /> Cetak Kartu Murojaah PDF
+            </Button>
+          }
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <BookMarked className="h-6 w-6 text-primary" /> Modul Keagamaan Tahfidz Al-Quran
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Monitoring Target Hafalan, Setoran Ayat, Evaluasi Tajwid, & Pratinjau Cetak Kartu Murojaah MTsN 2 Cilacap
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" onClick={() => setIsPrintCardOpen(true)}>
+              <Download className="h-3.5 w-3.5" /> Cetak Kartu Murojaah PDF
+            </Button>
+            <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
+              + Input Setoran Hafalan Baru
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" onClick={() => setIsPrintCardOpen(true)}>
-            <Download className="h-3.5 w-3.5" /> 🖨️ Cetak Kartu Murojaah PDF
-          </Button>
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-            + Input Setoran Hafalan Baru
-          </Button>
-        </div>
-      </div>
+      )}
 
       <Card className="border-border shadow-xs mb-6 bg-linear-to-r from-primary/15 via-card to-card">
         <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">

@@ -37,6 +37,7 @@ const KokurikulerSiswaModule = lazy(() => import("@/components/dashboard/modules
 const AsistenAIModule = lazy(() => import("@/components/dashboard/modules/asistenai/AsistenAIModule").then((m) => ({ default: m.AsistenAIModule })));
 const PusatAsesmenModule = lazy(() => import("@/components/dashboard/modules/asesmen/PusatAsesmenModule").then((m) => ({ default: m.PusatAsesmenModule })));
 const MataPelajaranModule = lazy(() => import("@/components/dashboard/modules/mapel/MataPelajaranModule").then((m) => ({ default: m.MataPelajaranModule })));
+const CBTModule = lazy(() => import("@/components/dashboard/modules/cbt/CBTModule").then((m) => ({ default: m.CBTModule })));
 import {
   Home,
   BookOpen,
@@ -124,7 +125,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { WAGatewayLogModal } from "@/components/dashboard/modules/WAGatewayLogModal";
-import { CBTModule } from "@/components/dashboard/modules/cbt/CBTModule";
 import {
   Dialog,
   DialogContent,
@@ -879,6 +879,8 @@ function DashboardContent({
             <NotificationCenterPopover
               setActiveTab={(key: string) => setActive(key as MenuKey)}
               onOpenWaModal={() => setIsWaModalOpen(true)}
+              activeRole={activeRole}
+              userProfile={userProfile}
             />
 
             {/* Multi-Role Switcher Dropdown */}
@@ -1004,25 +1006,28 @@ function DashboardContent({
               )}
               {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
-              {active === "siakad" && <SiakadMasterDataModule />}
+              {active === "siakad" && <SiakadMasterDataModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "manajemen_kelas" && <ManajemenKelasModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "perangkat_pembelajaran" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "mapel" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
-              {active === "users" && activeRole !== "siswa" && <UserManagementModule />}
+              {active === "users" && activeRole !== "siswa" && <UserManagementModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "kehadiran" && <KehadiranModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "jadwal" && <JadwalModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "modul_ajar" && <ModulAjarModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "apresiasi" && <ApresiasiGuruModule />}
               {active === "apresiasi_siswa" && <ApresiasiSiswaModule />}
               {active === "nilai" && <RaporModule activeRole={activeRole} />}
-              {active === "progress" && <ProgressBelajarModule />}
+              {active === "progress" && <ProgressBelajarModule activeRole={activeRole} />}
               {active === "asesmen" && <PusatAsesmenModule activeRole={activeRole} />}
+              {active === "tugas" && <PusatAsesmenModule activeRole={activeRole} initialTab="individu" />}
+              {active === "quiz" && <PusatAsesmenModule activeRole={activeRole} initialTab="kuis" />}
+              {active === "cbt" && <CBTModule userRole={activeRole} studentName={userProfile?.name || me?.full_name} />}
               {active === "tahfidz" && <TahfidzModule activeRole={activeRole} />}
               {active === "kokurikuler" && (activeRole === "siswa" ? <KokurikulerSiswaModule userProfile={userProfile} /> : <KokurikulerModule activeRole={activeRole} />)}
               {active === "asisten_ai" && <AsistenAIModule activeRole={activeRole} />}
               {active === "pengumuman" && <PengumumanModule />}
               {active === "agenda" && <AgendaKalenderModule />}
-              {active === "perpustakaan" && <PerpustakaanModule />}
+              {active === "perpustakaan" && <PerpustakaanModule activeRole={activeRole} />}
               {active === "profil" && <ProfilModule userProfile={userProfile} setUserProfile={setUserProfile} activeRole={activeRole} />}
               {active === "pengaturan" && <Pengaturan />}
             </Suspense>

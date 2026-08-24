@@ -10,6 +10,7 @@ import { CBTGradeAnalysis } from "./CBTGradeAnalysis";
 import { CBTExamPlayerModal } from "./CBTExamPlayerModal";
 import { CBTExam, CBTQuestion, CBTGradeAnalysisItem } from "@/types/cbt";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
 interface CBTModuleProps {
   userRole?: string;
@@ -23,44 +24,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
   const [activeTab, setActiveTab] = useState<"sesi" | "bank_soal" | "analisis">("sesi");
 
   // State Ujian Active Sessions
-  const [exams, setExams] = useState<CBTExam[]>([
-    {
-      id: "1",
-      title: "CBT PAS Semester Ganjil - Matematika",
-      mapel: "Matematika",
-      kelas: "VIII A",
-      durasi: "90",
-      durationMinutes: 90,
-      soalCount: 20,
-      token: "MTS2-MAT",
-      passingScore: 75,
-      status: "Dibuka",
-    },
-    {
-      id: "2",
-      title: "CBT PTS Ganjil - Fiqih & Keagamaan",
-      mapel: "Fiqih",
-      kelas: "VIII A",
-      durasi: "60",
-      durationMinutes: 60,
-      soalCount: 15,
-      token: "MTS2-FQH",
-      passingScore: 75,
-      status: "Dibuka",
-    },
-    {
-      id: "3",
-      title: "Try Out ASPD - Bahasa Indonesia",
-      mapel: "Bahasa Indonesia",
-      kelas: "IX A",
-      durasi: "120",
-      durationMinutes: 120,
-      soalCount: 40,
-      token: "MTS2-IND",
-      passingScore: 75,
-      status: "Terjadwal",
-    },
-  ]);
+  const [exams, setExams] = useState<CBTExam[]>([]);
 
   React.useEffect(() => {
     MysqlDataService.getCbtExams().then((dbExams) => {
@@ -187,32 +151,42 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <MonitorCheck className="h-6 w-6 text-emerald-600" /> CBT Engine & Assessment Center
-            </h1>
-            <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
-              <ShieldCheck className="h-3 w-3 mr-1" /> RBAC: {getRoleLabel()}
-            </Badge>
+      {userRole === "siswa" ? (
+        <StudentHeaderBanner
+          title="CBT Ujian Online Saya"
+          subtitle="Portal Ujian Berbasis Komputer (CBT), pengerjaan tes, token kuis, dan analisis nilai"
+          icon={MonitorCheck}
+          studentClass="Kelas VIII A"
+          statusText="Sistem CBT Aktif (Anti-Cheat 3x)"
+          statusVariant="success"
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                <MonitorCheck className="h-6 w-6 text-emerald-600" /> CBT Engine & Assessment Center
+              </h1>
+              <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
+                <ShieldCheck className="h-3 w-3 mr-1" /> RBAC: {getRoleLabel()}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Mesin Ujian Berbasis Komputer, Bank Soal Multi-Type, Anti-Cheat 3x, & Analisis Ketuntasan KKM (75)
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Mesin Ujian Berbasis Komputer, Bank Soal Multi-Type, Anti-Cheat 3x, & Analisis Ketuntasan KKM (75)
-          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-bold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+              onClick={() => toast.success("Template Bank Soal Excel Diunduh!")}
+            >
+              <Download className="h-3.5 w-3.5" /> Template Excel
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs font-bold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-            onClick={() => toast.success("Template Bank Soal Excel Diunduh!")}
-          >
-            <Download className="h-3.5 w-3.5" /> Template Excel
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Sub-Tabs Navigation */}
       <div className="flex flex-wrap gap-2 border-b border-border pb-3">

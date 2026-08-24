@@ -1,8 +1,9 @@
-import { CheckCircle2, ShieldCheck, CalendarDays, Clock, ChevronLeft, ChevronRight, Info, Calendar } from "lucide-react";
+import { CheckCircle2, ShieldCheck, CalendarDays, Clock, ChevronLeft, ChevronRight, Info, Calendar, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
 export interface StudentInfo {
   id: string;
@@ -41,20 +42,15 @@ export function PresensiSiswaTab({
 }: PresensiSiswaTabProps) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-3 bg-muted/30 p-4 rounded-xl">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="font-mono text-xs font-bold">
-            KELAS VIII A • NISN: {studentInfo.nisn}
-          </Badge>
-          <Badge className="bg-emerald-600 text-white font-bold flex items-center gap-1">
-            <CheckCircle2 className="h-3.5 w-3.5 text-white" /> PRESENSI HARI INI: HADIR (Dicatat oleh Wali Kelas)
-          </Badge>
-        </div>
-
-        <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-lg border border-border">
-          <ShieldCheck className="h-4 w-4 text-emerald-500" /> Presensi Terintegrasi E-Rapor & Wali Kelas
-        </div>
-      </div>
+      <StudentHeaderBanner
+        title="Kehadiran & Presensi Saya"
+        subtitle="Monitoring rekapitulasi kehadiran harian & sesi mengajar KBM MTsN 2 Cilacap"
+        icon={UserCheck}
+        studentClass={studentInfo.class || "Kelas VIII A"}
+        studentNisn={studentInfo.nisn}
+        statusText="Presensi Terverifikasi Wali Kelas"
+        statusVariant="success"
+      />
 
       <div className="p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-xs text-blue-700 dark:text-blue-300 font-semibold flex items-center gap-2">
         <Info className="h-4 w-4 text-blue-500 shrink-0" />

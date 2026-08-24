@@ -190,12 +190,29 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
       </div>
 
       {/* Exam Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredExams.map((exam) => (
-          <Card
-            key={exam.id}
-            className="hover:shadow-md transition-all border-border bg-card overflow-hidden flex flex-col justify-between"
-          >
+      {filteredExams.length === 0 ? (
+        <Card className="col-span-full border-dashed border-border p-8 text-center bg-muted/20">
+          <CardContent className="space-y-3 p-0">
+            <div className="h-12 w-12 mx-auto rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+              <MonitorCheck className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-foreground">Belum Ada Sesi Ujian CBT Online</h3>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
+                {userRole === "siswa"
+                  ? "Belum ada sesi ujian CBT yang diterbitkan atau dibuka oleh guru pengampu saat ini."
+                  : "Belum ada sesi ujian CBT yang diterbitkan. Klik '+ Terbitkan Sesi CBT Baru' untuk membuat ujian baru."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredExams.map((exam) => (
+            <Card
+              key={exam.id}
+              className="hover:shadow-md transition-all border-border bg-card overflow-hidden flex flex-col justify-between"
+            >
             <CardHeader className="p-4 pb-3">
               <div className="flex items-start justify-between gap-2">
                 <Badge
@@ -272,6 +289,7 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
           </Card>
         ))}
       </div>
+      )}
 
       {/* Token Verification Modal */}
       <Dialog open={isTokenModalOpen} onOpenChange={setIsTokenModalOpen}>

@@ -11,6 +11,8 @@ import { PengumumanKelasTab, PengumumanItem } from "./components/PengumumanKelas
 import { CetakSuratDialog } from "./components/CetakSuratDialog";
 import { PrintDataKelasDialog } from "./components/PrintDataKelasDialog";
 
+import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
+
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
     <div className="mb-6">
@@ -18,21 +20,6 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
       {sub && <p className="text-sm text-muted-foreground mt-1">{sub}</p>}
     </div>
   );
-}
-
-function normalizeRombelName(rawClass?: string | null): string {
-  if (!rawClass) return "Rombel 8A";
-  const upper = rawClass.toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
-  if (upper.includes("VIIIA") || upper.includes("8A")) return "Rombel 8A";
-  if (upper.includes("VIIIB") || upper.includes("8B")) return "Rombel 8B";
-  if (upper.includes("VIIIC") || upper.includes("8C")) return "Rombel 8C";
-  if (upper.includes("VIIA") || upper.includes("7A")) return "Rombel 7A";
-  if (upper.includes("VIIB") || upper.includes("7B")) return "Rombel 7B";
-  if (upper.includes("VIIC") || upper.includes("7C")) return "Rombel 7C";
-  if (upper.includes("IXA") || upper.includes("9A")) return "Rombel 9A";
-  if (upper.includes("IXB") || upper.includes("9B")) return "Rombel 9B";
-  if (upper.includes("IXC") || upper.includes("9C")) return "Rombel 9C";
-  return rawClass.startsWith("Rombel") ? rawClass : `Rombel ${rawClass}`;
 }
 
 export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
@@ -104,7 +91,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
   }, []);
 
   const classStudents = useMemo(() => {
-    return students.filter((s) => selectedClass === "Semua" || s.class === selectedClass);
+    return students.filter((s) => selectedClass === "Semua" || isSameClass(s.class, selectedClass));
   }, [students, selectedClass]);
 
   const handleSendWaAlert = (student: StudentItem) => {

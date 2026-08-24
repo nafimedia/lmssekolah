@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { isSameClass } from "@/utils/classNormalization";
 import { toast } from "sonner";
 
 interface WaliKelasDashboardViewProps {
@@ -82,34 +83,26 @@ export function WaliKelasDashboardView({
       // Filter real students for this rombel
       const classStudents = (dbUsers || []).filter((u: any) => {
         if (u.role !== "siswa") return false;
-        const uCls = (u.class_name || u.class || "").toUpperCase().replace("-", " ").trim();
-        const targetCls = rombelName.toUpperCase().replace("-", " ").trim();
-        return uCls.includes(targetCls) || targetCls.includes(uCls);
+        return isSameClass(u.class_name || u.class, rombelName);
       });
       setStudents(classStudents);
 
       // Filter today presensi for this rombel
       const classPresensi = (dbPresensi || []).filter((p: any) => {
-        const pRombel = (p.rombel || "").toUpperCase().replace("-", " ").trim();
-        const targetCls = rombelName.toUpperCase().replace("-", " ").trim();
-        return pRombel.includes(targetCls) || targetCls.includes(pRombel);
+        return isSameClass(p.rombel, rombelName);
       });
       setTodayPresensi(classPresensi);
 
       // Filter today schedule for this rombel and day
       const classJadwal = (dbJadwal || []).filter((j: any) => {
         const matchDay = (j.hari || "").toLowerCase().trim() === currentDayName.toLowerCase().trim();
-        const jRombel = (j.rombel || "").toUpperCase().replace("-", " ").trim();
-        const targetCls = rombelName.toUpperCase().replace("-", " ").trim();
-        return matchDay && (jRombel.includes(targetCls) || targetCls.includes(jRombel));
+        return matchDay && isSameClass(j.rombel, rombelName);
       });
       setTodaySchedule(classJadwal);
 
       // Filter student notes for this rombel
       const classNotes = (dbNotes || []).filter((n: any) => {
-        const nRombel = (n.rombel || "").toUpperCase().replace("-", " ").trim();
-        const targetCls = rombelName.toUpperCase().replace("-", " ").trim();
-        return nRombel.includes(targetCls) || targetCls.includes(nRombel);
+        return isSameClass(n.rombel, rombelName);
       });
       setStudentNotes(classNotes);
     } catch (e) {

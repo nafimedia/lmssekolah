@@ -42,7 +42,9 @@ function parseMediaUrl(url: string): { embedUrl: string; provider: "youtube" | "
   return { embedUrl: url, provider: "direct" };
 }
 
-export function PerpustakaanModule() {
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
+
+export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {}) {
   const [filterTag, setFilterTag] = useState("Semua");
   const [activeMediaModal, setActiveMediaModal] = useState<any | null>(null);
   const [activePdfModal, setActivePdfModal] = useState<any | null>(null);
@@ -215,19 +217,30 @@ export function PerpustakaanModule() {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Library className="h-6 w-6 text-primary" /> Perpustakaan Digital & E-Resources
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Koleksi PDF E-Book, Modul Digital, Embed Video YouTube & Google Drive, serta Audio Murottal Streaming MTsN 2 Cilacap.
-          </p>
+      {activeRole === "siswa" ? (
+        <StudentHeaderBanner
+          title="E-Library & Buku Digital Saya"
+          subtitle="Akses e-book modul pelajaran, video tutorial KBM, audio murottal, dan buku digital MTsN 2 Cilacap"
+          icon={Library}
+          studentClass="Kelas VIII A"
+          statusText="Buku Digital Terverifikasi"
+          statusVariant="success"
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Library className="h-6 w-6 text-primary" /> Perpustakaan Digital & E-Resources
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Koleksi PDF E-Book, Modul Digital, Embed Video YouTube & Google Drive, serta Audio Murottal Streaming MTsN 2 Cilacap.
+            </p>
+          </div>
+          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => setIsOpen(true)}>
+            + Tautkan / Unggah Berkas E-Library
+          </Button>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => setIsOpen(true)}>
-          + Tautkan / Unggah Berkas E-Library
-        </Button>
-      </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-border pb-3">
         {["Semua", "PDF Modul", "Video YouTube", "Video G-Drive", "Audio Murottal", "E-Book"].map((t) => (

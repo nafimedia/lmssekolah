@@ -7,6 +7,8 @@ import { GuruDashboardView } from "./components/GuruDashboardView";
 import { SiswaDashboardView } from "./components/SiswaDashboardView";
 import { AdminDashboardView } from "./components/AdminDashboardView";
 import { WaliKelasDashboardView } from "./components/WaliKelasDashboardView";
+import { KamadDashboardView } from "./components/KamadDashboardView";
+import { AdminAkademikDashboardView } from "./components/AdminAkademikDashboardView";
 
 interface BerandaModuleProps {
   activeRole: string;
@@ -63,6 +65,32 @@ export function BerandaModule({
     return (
       <GuruDashboardView
         userName={userName}
+        currentDayName={currentDayName}
+        formattedTime={formattedTime}
+        setActiveTab={setActiveTab}
+      />
+    );
+  }
+
+  if (role === "kamad" || role === "kepala_madrasah") {
+    return (
+      <KamadDashboardView
+        userName={userName}
+        role={role}
+        stats={stats}
+        currentDayName={currentDayName}
+        formattedTime={formattedTime}
+        setActiveTab={setActiveTab}
+      />
+    );
+  }
+
+  if (role === "admin_akademik" || role === "adminakademik") {
+    return (
+      <AdminAkademikDashboardView
+        userName={userName}
+        role={role}
+        stats={stats}
         currentDayName={currentDayName}
         formattedTime={formattedTime}
         setActiveTab={setActiveTab}

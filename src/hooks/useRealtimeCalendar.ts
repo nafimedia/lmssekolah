@@ -7,6 +7,7 @@ export interface CalendarDayCell {
   isCurrentMonth: boolean;
   isToday: boolean;
   isWeekend: boolean;
+  isSunday: boolean;
   dayOfWeekName: string;
 }
 
@@ -26,13 +27,13 @@ export const INDONESIAN_MONTH_NAMES = [
 ];
 
 export const INDONESIAN_DAY_NAMES = [
+  "Minggu",
   "Senin",
   "Selasa",
   "Rabu",
   "Kamis",
   "Jumat",
   "Sabtu",
-  "Minggu",
 ];
 
 export function useRealtimeCalendar() {
@@ -83,15 +84,23 @@ export function useRealtimeCalendar() {
 
   const currentDayName = now.toLocaleDateString("id-ID", { weekday: "long" });
 
-  // Generate calendar grid for the view month (Monday-start)
+  const formatDateString = (d: Date): string => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const isTodayCheck = (d: Date, y: number, m: number, dt: number): boolean => {
+    return d.getFullYear() === y && d.getMonth() === m && d.getDate() === dt;
+  };
+
+  // Generate calendar grid for the view month (Sunday-start)
   const getCalendarDays = (): CalendarDayCell[] => {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
 
-    const jsFirstDayOfWeek = firstDayOfMonth.getDay(); // 0 (Sun) - 6 (Sat)
-    // Convert to Monday=0, Sunday=6
-    const startingDayOffset = (jsFirstDayOfWeek + 6) % 7;
-
+    const startingDayOffset = firstDayOfMonth.getDay(); // 0 (Sun) - 6 (Sat)
     const daysInMonth = lastDayOfMonth.getDate();
 
     // Previous month filler days
@@ -102,15 +111,16 @@ export function useRealtimeCalendar() {
       const dayNum = prevMonthLastDay - i;
       const date = new Date(currentYear, currentMonth - 1, dayNum);
       const dateString = formatDateString(date);
-      const dayOfWeekIdx = (date.getDay() + 6) % 7;
+      const jsDay = date.getDay();
       cells.push({
         date,
         dayNumber: dayNum,
         dateString,
         isCurrentMonth: false,
         isToday: isTodayCheck(date, todayYear, todayMonth, todayDate),
-        isWeekend: dayOfWeekIdx === 6,
-        dayOfWeekName: INDONESIAN_DAY_NAMES[dayOfWeekIdx],
+        isWeekend: jsDay === 0 || jsDay === 6,
+        isSunday: jsDay === 0,
+        dayOfWeekName: INDONESIAN_DAY_NAMES[jsDay],
       });
     }
 
@@ -118,15 +128,16 @@ export function useRealtimeCalendar() {
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(currentYear, currentMonth, d);
       const dateString = formatDateString(date);
-      const dayOfWeekIdx = (date.getDay() + 6) % 7;
+      const jsDay = date.getDay();
       cells.push({
         date,
         dayNumber: d,
         dateString,
         isCurrentMonth: true,
         isToday: isTodayCheck(date, todayYear, todayMonth, todayDate),
-        isWeekend: dayOfWeekIdx === 6,
-        dayOfWeekName: INDONESIAN_DAY_NAMES[dayOfWeekIdx],
+        isWeekend: jsDay === 0 || jsDay === 6,
+        isSunday: jsDay === 0,
+        dayOfWeekName: INDONESIAN_DAY_NAMES[jsDay],
       });
     }
 
@@ -135,15 +146,16 @@ export function useRealtimeCalendar() {
     for (let d = 1; d <= remainingCells; d++) {
       const date = new Date(currentYear, currentMonth + 1, d);
       const dateString = formatDateString(date);
-      const dayOfWeekIdx = (date.getDay() + 6) % 7;
+      const jsDay = date.getDay();
       cells.push({
         date,
         dayNumber: d,
         dateString,
         isCurrentMonth: false,
         isToday: isTodayCheck(date, todayYear, todayMonth, todayDate),
-        isWeekend: dayOfWeekIdx === 6,
-        dayOfWeekName: INDONESIAN_DAY_NAMES[dayOfWeekIdx],
+        isWeekend: jsDay === 0 || jsDay === 6,
+        isSunday: jsDay === 0,
+        dayOfWeekName: INDONESIAN_DAY_NAMES[jsDay],
       });
     }
 

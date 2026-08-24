@@ -32,6 +32,7 @@ const ApresiasiSiswaModule = lazy(() => import("@/components/dashboard/modules/a
 const RaporModule = lazy(() => import("@/components/dashboard/modules/rapor/RaporModule").then((m) => ({ default: m.RaporModule })));
 const ProgressBelajarModule = lazy(() => import("@/components/dashboard/modules/progress/ProgressBelajarModule").then((m) => ({ default: m.ProgressBelajarModule })));
 const TahfidzModule = lazy(() => import("@/components/dashboard/modules/tahfidz/TahfidzModule").then((m) => ({ default: m.TahfidzModule })));
+const LaporanTahfidzEksekutif = lazy(() => import("@/components/dashboard/modules/tahfidz/TahfidzModule").then((m) => ({ default: m.LaporanTahfidzEksekutif })));
 const KokurikulerModule = lazy(() => import("@/components/dashboard/modules/kokurikuler/KokurikulerModule").then((m) => ({ default: m.KokurikulerModule })));
 const KokurikulerSiswaModule = lazy(() => import("@/components/dashboard/modules/kokurikuler/KokurikulerSiswaModule").then((m) => ({ default: m.KokurikulerSiswaModule })));
 const AsistenAIModule = lazy(() => import("@/components/dashboard/modules/asistenai/AsistenAIModule").then((m) => ({ default: m.AsistenAIModule })));
@@ -378,7 +379,6 @@ const ROLE_PERMISSIONS: Record<
       { key: "beranda", label: "Dashboard Siswa", group: "Ruang Belajar" },
       { key: "mapel", label: "Materi & Modul Ajar", group: "Ruang Belajar" },
       { key: "jadwal", label: "Jadwal Pelajaran", group: "Ruang Belajar" },
-      { key: "kehadiran", label: "Kehadiran Saya", group: "Ruang Belajar" },
       { key: "tugas", label: "Tugas & Submisi LKPD", group: "Evaluasi & Ujian" },
       { key: "quiz", label: "Kuis Interaktif Live", group: "Evaluasi & Ujian" },
       { key: "cbt", label: "CBT Ujian Online", group: "Evaluasi & Ujian" },
@@ -437,7 +437,7 @@ function Dashboard() {
     }
 
     // Siswa Role Isolation
-    if (me.role === "siswa" || cleanEmail.includes("siswa@")) {
+    if (me.role === "siswa" || cleanEmail.includes("siswa@") || cleanEmail.endsWith("@siswa.mtsn2cilacap.sch.id")) {
       return ["siswa"];
     }
 
@@ -502,19 +502,52 @@ function Dashboard() {
   }, [me]);
 
   const [activeRole, setActiveRole] = useState<string>(() => {
+    let candidate = "";
     if (typeof window !== "undefined") {
-      const savedPref = localStorage.getItem("lms_active_role_pref");
-      if (savedPref) return savedPref;
+      candidate = localStorage.getItem("lms_active_role_pref") || "";
     }
     const activeUserSession = MysqlAuthService.getActiveUser();
-    if (!activeUserSession) return "siswa";
-    if (activeUserSession.role && activeUserSession.role.includes(",")) {
-      return activeUserSession.role.split(",")[0].trim();
+    if (!candidate) {
+      if (activeUserSession?.role && activeUserSession.role.includes(",")) {
+        candidate = activeUserSession.role.split(",")[0].trim();
+      } else {
+        candidate = activeUserSession?.role || "siswa";
+      }
     }
-    return activeUserSession.role || "siswa";
+    return candidate || "siswa";
   });
 
+  // Strict RBAC Guard: Keep activeRole strictly within myAssignedRoles!
+  useEffect(() => {
+    if (myAssignedRoles && myAssignedRoles.length > 0) {
+      if (!myAssignedRoles.includes(activeRole)) {
+        const fallbackRole = myAssignedRoles[0];
+        setActiveRole(fallbackRole);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("lms_active_role_pref", fallbackRole);
+        }
+      }
+    }
+  }, [myAssignedRoles, activeRole]);
+
+  // Auth Diagnostic Log (Requirement #11)
+  useEffect(() => {
+    if (me) {
+      console.log("[AUTH DEBUG]", {
+        userId: me.id,
+        email: me.email,
+        databaseRole: me.role,
+        myAssignedRoles,
+        resolvedActiveRole: activeRole,
+      });
+    }
+  }, [me, myAssignedRoles, activeRole]);
+
   const handleSwitchRole = (newRole: string) => {
+    if (!myAssignedRoles.includes(newRole)) {
+      toast.error("❌ Anda tidak memiliki wewenang untuk peran ini!");
+      return;
+    }
     setActiveRole(newRole);
     if (typeof window !== "undefined") {
       localStorage.setItem("lms_active_role_pref", newRole);
@@ -1019,19 +1052,25 @@ function DashboardContent({
               {active === "perangkat_pembelajaran" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "mapel" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "users" && activeRole !== "siswa" && <UserManagementModule activeRole={activeRole} userProfile={userProfile} />}
-              {active === "kehadiran" && <KehadiranModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "kehadiran" && activeRole !== "siswa" && <KehadiranModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "jadwal" && <JadwalModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "modul_ajar" && <ModulAjarModule activeRole={activeRole} userProfile={userProfile} />}
-              {active === "apresiasi" && <ApresiasiGuruModule />}
+              {(active === "apresiasi" || active === "apresiasi_guru") && <ApresiasiGuruModule activeRole={activeRole} />}
               {active === "apresiasi_siswa" && <ApresiasiSiswaModule />}
               {active === "nilai" && <RaporModule activeRole={activeRole} />}
-              {active === "progress" && <ProgressBelajarModule activeRole={activeRole} />}
-              {active === "asesmen" && <PusatAsesmenModule activeRole={activeRole} />}
-              {active === "tugas" && <PusatAsesmenModule activeRole={activeRole} initialTab="individu" />}
-              {active === "quiz" && <PusatAsesmenModule activeRole={activeRole} initialTab="kuis" />}
+              {active === "progress" && <ProgressBelajarModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "asesmen" && <PusatAsesmenModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "tugas" && <PusatAsesmenModule activeRole={activeRole} initialTab="individu" userProfile={userProfile} />}
+              {active === "quiz" && <PusatAsesmenModule activeRole={activeRole} initialTab="kuis" userProfile={userProfile} />}
               {active === "cbt" && <CBTModule userRole={activeRole} studentName={userProfile?.name || me?.full_name} />}
-              {active === "tahfidz" && <TahfidzModule activeRole={activeRole} />}
-              {active === "kokurikuler" && (activeRole === "siswa" ? <KokurikulerSiswaModule userProfile={userProfile} /> : <KokurikulerModule activeRole={activeRole} />)}
+              {(active === "tahfidz" || active === "laporan_tahfidz" || active === "tahfidz_report") && (
+                activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik" ? (
+                  <LaporanTahfidzEksekutif activeRole={activeRole} userProfile={userProfile} />
+                ) : (
+                  <TahfidzModule activeRole={activeRole} userProfile={userProfile} />
+                )
+              )}
+              {(active === "kokurikuler" || active === "kokurikuler_report") && (activeRole === "siswa" ? <KokurikulerSiswaModule userProfile={userProfile} /> : <KokurikulerModule activeRole={activeRole} />)}
               {active === "asisten_ai" && <AsistenAIModule activeRole={activeRole} />}
               {active === "pengumuman" && <PengumumanModule />}
               {active === "agenda" && <AgendaKalenderModule />}
@@ -5171,130 +5210,7 @@ function AgendaKalender({ activeRole }: { activeRole?: string }) {
 }
 
 /* ---------- 6. Laporan Tahfidz Qur'an Eksekutif ---------- */
-function LaporanTahfidzEksekutif({ activeRole }: { activeRole?: string }) {
-  const [selectedJuz, setSelectedJuz] = useState("Juz 30");
-
-  const tahfidzClassSummary = [
-    { class: "Kelas VII A", total: 32, mutqin: "28 Siswa (87.5%)", avgScore: 92.4, status: "Sangat Baik", topStudent: "ALIYA QIARA ABDULLAH" },
-    { class: "Kelas VII B", total: 32, mutqin: "26 Siswa (81.2%)", avgScore: 89.8, status: "Baik", topStudent: "ADITA AZ ZAHRA" },
-    { class: "Kelas VIII A", total: 32, mutqin: "30 Siswa (93.7%)", avgScore: 95.1, status: "Sangat Baik", topStudent: "ABIGAIL HASAN YUSUF PRAYOGA" },
-    { class: "Kelas VIII B", total: 31, mutqin: "27 Siswa (87.0%)", avgScore: 91.2, status: "Sangat Baik", topStudent: "AFRIZA RAHMA AZZAHRA" },
-    { class: "Kelas IX A", total: 32, mutqin: "32 Siswa (100%)", avgScore: 97.5, status: "Sangat Baik", topStudent: "AHMAD ZULFIKAR" },
-    { class: "Kelas IX B", total: 31, mutqin: "29 Siswa (93.5%)", avgScore: 93.8, status: "Sangat Baik", topStudent: "AILEEN CALISTA SELENA" },
-  ];
-
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <BookMarked className="h-6 w-6 text-emerald-500" /> Laporan Eksekutif Tahfidz Al-Quran
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Monitoring Kepala Madrasah atas capaian target hafalan siswa per Juz, ketuntasan tajwid, dan leaderboard Rombel MTsN 2 Cilacap.
-          </p>
-        </div>
-        <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => toast.success("PDF Rekap Tahfidz Eksekutif Madrasah berhasil diunduh!")}>
-          <Download className="h-3.5 w-3.5 mr-1" /> 🖨️ Export PDF Rekap Tahfidz
-        </Button>
-      </div>
-
-      {/* Target Juz Selector */}
-      <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
-        <span className="text-xs font-bold text-muted-foreground mr-1">Target Juz Eksekutif:</span>
-        {["Juz 30", "Juz 29", "Juz 1"].map((j) => (
-          <Button
-            key={j}
-            size="sm"
-            variant={selectedJuz === j ? "default" : "outline"}
-            className="text-xs font-bold"
-            onClick={() => setSelectedJuz(j)}
-          >
-            📖 {j}
-          </Button>
-        ))}
-      </div>
-
-      {/* Executive Tahfidz Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-gradient-to-br from-emerald-500/10 via-card to-card border-emerald-500/30">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-emerald-500/20 text-emerald-500 grid place-items-center font-bold text-xl">
-              📖
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Total Siswa Mutqin ({selectedJuz})</div>
-              <div className="text-2xl font-extrabold font-mono text-emerald-500">172 Siswa (89.5%)</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500/10 via-card to-card border-blue-500/30">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-blue-500/20 text-blue-500 grid place-items-center font-bold text-xl">
-              🌟
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Rata-rata Nilai Tajwid</div>
-              <div className="text-2xl font-extrabold font-mono text-blue-500">93.3 (Sangat Baik)</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500/10 via-card to-card border-purple-500/30">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-purple-500/20 text-purple-500 grid place-items-center font-bold text-xl">
-              🕌
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Total Setoran Terverifikasi</div>
-              <div className="text-2xl font-extrabold font-mono text-purple-500">1,840 Surah</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabel Capaian Tahfidz per Rombel */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-bold">Matriks Capaian Tahfidz Al-Quran per Rombel ({selectedJuz})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="bg-muted text-muted-foreground font-bold text-left">
-              <tr>
-                <th className="p-3">Nama Rombel</th>
-                <th className="p-3 text-center">Jumlah Siswa</th>
-                <th className="p-3 text-center">Siswa Mutqin</th>
-                <th className="p-3 text-center">Rata-rata Tajwid</th>
-                <th className="p-3">Top Hafiz Rombel</th>
-                <th className="p-3 text-right font-semibold">Evaluasi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {tahfidzClassSummary.map((t, idx) => (
-                <tr key={idx} className="hover:bg-muted/30 transition">
-                  <td className="p-3 font-bold text-foreground">{t.class}</td>
-                  <td className="p-3 text-center font-mono">{t.total}</td>
-                  <td className="p-3 text-center">
-                    <Badge className="bg-emerald-600 text-white font-mono">{t.mutqin}</Badge>
-                  </td>
-                  <td className="p-3 text-center font-bold font-mono text-primary text-sm">{t.avgScore}</td>
-                  <td className="p-3 font-semibold text-foreground">👑 {t.topStudent}</td>
-                  <td className="p-3 text-right">
-                    <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 font-bold">
-                      {t.status}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
-    </>
-  );
-}
+// Delegates directly to LaporanTahfidzEksekutif component inside TahfidzModule
 
 /* ---------- 7. Laporan Kegiatan Kokurikuler (P5 / PPA-RA) ---------- */
 function LaporanKokurikuler({ activeRole }: { activeRole?: string }) {

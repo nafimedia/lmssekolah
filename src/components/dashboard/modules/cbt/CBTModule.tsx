@@ -156,7 +156,6 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
           title="CBT Ujian Online Saya"
           subtitle="Portal Ujian Berbasis Komputer (CBT), pengerjaan tes, token kuis, dan analisis nilai"
           icon={MonitorCheck}
-          studentClass="Kelas VIII A"
           statusText="Sistem CBT Aktif (Anti-Cheat 3x)"
           statusVariant="success"
         />

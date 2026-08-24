@@ -58,7 +58,6 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         title={`Ruang Belajar — ${userName}`}
         subtitle={`Portal akademik siswa MTsN 2 Cilacap • ${currentDayName}, ${formattedTime} WIB`}
         icon={GraduationCap}
-        studentClass={siswaClass}
         studentNisn={siswaNisn}
         statusText={`Presensi Hari Ini: ${presensiToday?.status || "HADIR"}`}
         statusVariant={presensiToday?.status === "HADIR" || !presensiToday ? "success" : "warning"}

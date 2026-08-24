@@ -1,127 +1,109 @@
 import { useState, useEffect, useMemo } from "react";
-import { useRealtimeCalendar } from "@/hooks/useRealtimeCalendar";
-import { MysqlAuthService } from "@/services/mysqlAuthService";
-import { MysqlDataService } from "@/services/mysqlDataService";
-import { toast } from "sonner";
-import { UserCheck, Printer, Send, CheckCircle2, Info, AlertTriangle, Smartphone, Zap, Save, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  CalendarCheck,
+  Search,
+  Filter,
+  Download,
+  Printer,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  Send,
+  MessageSquare,
+  Sparkles,
+  ArrowUpDown,
+  BookOpen,
+  Users,
+  Inbox,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-
-import { PresensiSiswaTab } from "./components/PresensiSiswaTab";
-import { PresensiKbmTab } from "./components/PresensiKbmTab";
-import { PrintPresensiDialog } from "./components/PrintPresensiDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { MysqlDataService } from "@/services/mysqlDataService";
+import { normalizeRombelName, isSameClass } from "@/utils/classNormalization";
 import { exportToExcelXml } from "@/utils/excelExporter";
+import { toast } from "sonner";
 
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
-  return (
-    <div className="mb-6">
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      {sub && <p className="text-sm text-muted-foreground mt-1">{sub}</p>}
-    </div>
-  );
+export interface AttendanceStudentRow {
+  id: string;
+  nisn: string;
+  name: string;
+  class: string;
+  hadir: number;
+  izin: number;
+  sakit: number;
+  alpa: number;
+  pct: number;
+  parentWa: string;
+  status: string;
+  today: string;
+  sessionStatus: string;
+  note: string;
 }
 
-function normalizeRombelName(rawClass?: string | null): string {
-  if (!rawClass) return "Rombel 8A";
-  const upper = rawClass.toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
-  if (upper.includes("VIIIA") || upper.includes("8A")) return "Rombel 8A";
-  if (upper.includes("VIIIB") || upper.includes("8B")) return "Rombel 8B";
-  if (upper.includes("VIIIC") || upper.includes("8C")) return "Rombel 8C";
-  if (upper.includes("VIIA") || upper.includes("7A")) return "Rombel 7A";
-  if (upper.includes("VIIB") || upper.includes("7B")) return "Rombel 7B";
-  if (upper.includes("VIIC") || upper.includes("7C")) return "Rombel 7C";
-  if (upper.includes("IXA") || upper.includes("9A")) return "Rombel 9A";
-  if (upper.includes("IXB") || upper.includes("9B")) return "Rombel 9B";
-  if (upper.includes("IXC") || upper.includes("9C")) return "Rombel 9C";
-  return rawClass.startsWith("Rombel") ? rawClass : `Rombel ${rawClass}`;
-}
+export function KehadiranModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any } = {}) {
+  const [selectedRombelFilter, setSelectedRombelFilter] = useState("Semua Rombel");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isWaLogModalOpen, setIsWaLogModalOpen] = useState(false);
+  const [waLogMessage, setWaLogMessage] = useState("");
+  const [selectedStudentForWa, setSelectedStudentForWa] = useState<AttendanceStudentRow | null>(null);
 
-export function KehadiranModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
-  const {
-    currentMonthName,
-    currentYear,
-    formattedTime,
-    goToNextMonth,
-    goToPrevMonth,
-    goToToday,
-    getCalendarDays,
-  } = useRealtimeCalendar();
-
-  const isSiswa = activeRole === "siswa";
-  const isGuruMapel = activeRole === "guru" || activeRole === "guru_mapel";
-
-  const resolvedWaliClass = useMemo(() => {
-    const activeUser = MysqlAuthService.getActiveUser();
-    const cleanName = (activeUser?.full_name || "").toLowerCase();
-    const cleanNip = (activeUser?.nis_nip || "").trim();
-
-    if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
-    if (cleanName.includes("misbah")) return "Rombel 7A";
-    if (cleanName.includes("endah")) return "Rombel 7B";
-    if (cleanName.includes("siti rahmah")) return "Rombel 8A";
-    if (cleanName.includes("sobiyati")) return "Rombel 9A";
-    if (cleanName.includes("sayono")) return "Rombel 9B";
-
-    if (userProfile?.assignedClass) {
-      return normalizeRombelName(userProfile.assignedClass);
-    }
-    return "Rombel 8A";
-  }, [userProfile]);
-
-  const [selectedClass, setSelectedClass] = useState(resolvedWaliClass);
-
-  useEffect(() => {
-    setSelectedClass(resolvedWaliClass);
-  }, [resolvedWaliClass]);
-
-  const [selectedMonth] = useState(`${currentMonthName} ${currentYear}`);
-  const [isPrintPresensiOpen, setIsPrintPresensiOpen] = useState(false);
-
-  const [selectedKbmSession, setSelectedKbmSession] = useState("s1");
-  const kbmSessions = [
-    { id: "s1", mapel: "Al-Quran Hadits", class: "Rombel 8A", time: "07:30 - 09:00 WIB (Jam 1-2)", meeting: "Pertemuan 16", topic: "Hukum Bacaan Mad Silah & Mad Badal", room: "Ruang A.02", status: "AKTIF" },
-    { id: "s2", mapel: "Fiqih Kebangsaan", class: "Rombel 9C", time: "10:15 - 11:45 WIB (Jam 5-6)", meeting: "Pertemuan 18", topic: "Ketentuan Sembelihan Hewan Kurban", room: "Ruang C.04", status: "MENDATANG" },
-  ];
-  const activeSession = kbmSessions.find((s) => s.id === selectedKbmSession) || kbmSessions[0];
-
-  const [attendanceData, setAttendanceData] = useState([
-    { id: "s1", nisn: "12123301000288", name: "ALIYA QIARA ABDULLAH", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567890", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir", note: "" },
-    { id: "s2", nisn: "0081928371", name: "ABIGAIL HASAN YUSUF PRAYOGA", class: "Rombel 8A", hadir: 21, izin: 0, sakit: 0, alpa: 0, pct: 100.0, parentWa: "081234567894", status: "Sempurna (100%)", today: "hadir", sessionStatus: "hadir", note: "" },
-    { id: "s3", nisn: "0081928372", name: "ADITA AZ ZAHRA", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567895", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir", note: "" },
-    { id: "s4", nisn: "0081928373", name: "AFRIZA RAHMA AZZAHRA", class: "Rombel 8A", hadir: 20, izin: 1, sakit: 0, alpa: 0, pct: 95.2, parentWa: "081234567896", status: "Sangat Baik (A)", today: "hadir", sessionStatus: "hadir", note: "" },
-    { id: "s5", nisn: "0081928374", name: "AHMAD ZULFIKAR", class: "Rombel 8B", hadir: 19, izin: 1, sakit: 1, alpa: 0, pct: 90.5, parentWa: "081234567897", status: "Baik (B)", today: "hadir", sessionStatus: "hadir", note: "Surat Dokter" },
-  ]);
+  // Clean state: initialize with empty array - strictly no dummy fallbacks
+  const [attendanceData, setAttendanceData] = useState<AttendanceStudentRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    MysqlDataService.getUsers().then((users) => {
-      if (!isMounted || !users || users.length === 0) return;
-      const siswaList = users.filter((u: any) => u.role === "siswa");
-      if (siswaList.length > 0) {
-        const formatted = siswaList.map((s: any, idx: number) => {
-          const studentClass = normalizeRombelName(s.class_name || s.class);
-          return {
-            id: s.id || `s_${idx}`,
-            nisn: s.nis_nip || s.nis || `008192${1000 + idx}`,
-            name: s.full_name || s.name,
-            class: studentClass,
-            hadir: 0,
-            izin: 0,
-            sakit: 0,
-            alpa: 0,
-            pct: 100.0,
-            parentWa: s.phone || "081234567890",
-            status: "Baik",
-            today: "hadir",
-            sessionStatus: "hadir",
-            note: "",
-          };
-        });
-        setAttendanceData(formatted);
-      }
-    }).catch(() => {});
+    setIsLoading(true);
+
+    MysqlDataService.getUsers()
+      .then((users) => {
+        if (!isMounted) return;
+        if (users && users.length > 0) {
+          const siswaList = users.filter((u: any) => u.role === "siswa");
+          if (siswaList.length > 0) {
+            const formatted: AttendanceStudentRow[] = siswaList.map((s: any, idx: number) => {
+              const studentClass = normalizeRombelName(s.class_name || s.class);
+              return {
+                id: s.id || `s_${idx}`,
+                nisn: s.nis_nip || s.nis || "-",
+                name: s.full_name || s.name,
+                class: studentClass,
+                hadir: 0,
+                izin: 0,
+                sakit: 0,
+                alpa: 0,
+                pct: 100.0,
+                parentWa: s.phone || "081234567890",
+                status: "Baik",
+                today: "hadir",
+                sessionStatus: "hadir",
+                note: "",
+              };
+            });
+            setAttendanceData(formatted);
+          } else {
+            setAttendanceData([]);
+          }
+        } else {
+          setAttendanceData([]);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setAttendanceData([]);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
 
     return () => {
       isMounted = false;
@@ -140,173 +122,43 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
     }
   };
 
-  const filteredAttendance = attendanceData.filter((a) => selectedClass === "Semua" || a.class === selectedClass);
+  const filteredData = useMemo(() => {
+    let list = [...attendanceData];
+    if (selectedRombelFilter !== "Semua Rombel") {
+      list = list.filter((item) => isSameClass(item.class, selectedRombelFilter));
+    }
 
-  const sortedAttendance = useMemo(() => {
-    return [...filteredAttendance].sort((a, b) => {
-      let valA: any = "";
-      let valB: any = "";
-      const effHadirA = a.hadir + (a.today === "hadir" ? 1 : 0);
-      const effHadirB = b.hadir + (b.today === "hadir" ? 1 : 0);
-      const effIzinA = a.izin + (a.today === "izin" ? 1 : 0);
-      const effIzinB = b.izin + (b.today === "izin" ? 1 : 0);
-      const effSakitA = a.sakit + (a.today === "sakit" ? 1 : 0);
-      const effSakitB = b.sakit + (b.today === "sakit" ? 1 : 0);
-      const effAlpaA = a.alpa + (a.today === "alpa" ? 1 : 0);
-      const effAlpaB = b.alpa + (b.today === "alpa" ? 1 : 0);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (item) => item.name.toLowerCase().includes(q) || item.nisn.includes(q)
+      );
+    }
 
-      if (sortColumn === "name") {
-        valA = a.name.toLowerCase();
-        valB = b.name.toLowerCase();
-      } else if (sortColumn === "nisn") {
-        valA = a.nisn;
-        valB = b.nisn;
-      } else if (sortColumn === "hadir") {
-        valA = effHadirA;
-        valB = effHadirB;
-      } else if (sortColumn === "izin") {
-        valA = effIzinA;
-        valB = effIzinB;
-      } else if (sortColumn === "sakit") {
-        valA = effSakitA;
-        valB = effSakitB;
-      } else if (sortColumn === "alpa") {
-        valA = effAlpaA;
-        valB = effAlpaB;
-      } else if (sortColumn === "pct") {
-        valA = (effHadirA / (effHadirA + effIzinA + effSakitA + effAlpaA || 1));
-        valB = (effHadirB / (effHadirB + effIzinB + effSakitB + effAlpaB || 1));
+    list.sort((a: any, b: any) => {
+      let valA = a[sortColumn];
+      let valB = b[sortColumn];
+
+      if (typeof valA === "string") {
+        valA = valA.toLowerCase();
+        valB = (valB || "").toLowerCase();
       }
 
       if (valA < valB) return sortDir === "asc" ? -1 : 1;
       if (valA > valB) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
-  }, [filteredAttendance, sortColumn, sortDir]);
 
-  const handleSetTodayStatus = (studentId: string, status: string) => {
-    setAttendanceData((prev) =>
-      prev.map((item) => {
-        if (item.id !== studentId) return item;
-        let defaultNote = item.note;
-        if (status === "hadir") defaultNote = "";
-        else if (status === "izin" && (!item.note || item.note === "Surat Dokter" || item.note === "Tanpa Keterangan")) defaultNote = "Izin Resmi";
-        else if (status === "sakit" && (!item.note || item.note === "Izin Resmi" || item.note === "Tanpa Keterangan")) defaultNote = "Surat Dokter";
-        else if (status === "alpa" && (!item.note || item.note === "Izin Resmi" || item.note === "Surat Dokter")) defaultNote = "Tanpa Keterangan";
+    return list;
+  }, [attendanceData, selectedRombelFilter, searchQuery, sortColumn, sortDir]);
 
-        return { ...item, today: status, note: defaultNote };
-      })
-    );
-  };
-
-  const handleSetTodayNote = (studentId: string, note: string) => {
-    setAttendanceData((prev) =>
-      prev.map((item) => (item.id === studentId ? { ...item, note } : item))
-    );
-  };
-
-  const handleSetSessionStatus = (studentId: string, status: string) => {
-    setAttendanceData((prev) =>
-      prev.map((item) => (item.id === studentId ? { ...item, sessionStatus: status } : item))
-    );
-  };
-
-  const handleMarkAllHadir = () => {
-    setAttendanceData((prev) => prev.map((item) => ({ ...item, today: "hadir", sessionStatus: "hadir" })));
-    toast.success("Seluruh siswa terfilter berhasil ditandai HADIR!");
-  };
-
-  const handleSavePresensiHarianPagi = () => {
-    filteredAttendance.forEach((s) => {
-      MysqlDataService.recordPresensi({
-        studentId: s.id,
-        studentName: s.name,
-        rombel: s.class,
-        status: s.today,
-        note: "Presensi Harian Pagi oleh Wali Kelas",
-      }).catch(() => {});
-    });
-    toast.success(`Presensi Harian Pagi (${selectedClass}) berhasil disimpan oleh Wali Kelas!`, {
-      description: "Data terhubung langsung dengan E-Rapor & WA Gateway EWS.",
-    });
-  };
-
-  const handleSavePresensiSesiKbm = () => {
-    filteredAttendance.forEach((s) => {
-      MysqlDataService.recordPresensi({
-        studentId: s.id,
-        studentName: s.name,
-        rombel: s.class,
-        status: s.sessionStatus,
-        note: `Presensi Tatap Muka KBM: ${activeSession.mapel} ${activeSession.meeting}`,
-      }).catch(() => {});
-    });
-    toast.success(`Presensi Sesi KBM (${activeSession.mapel} - ${activeSession.meeting}) Berhasil Disimpan!`, {
-      description: `Tercatat pada Jurnal Mengajar ${activeSession.class} (${activeSession.time}).`,
-    });
-  };
-
-  const handlePrintPresensi = () => {
-    window.print();
-    toast.success(`Rekap Presensi Bulanan (${selectedClass} - ${selectedMonth}) berhasil dicetak!`);
-  };
-
-  const handleSendWaPresensiAlert = (student: any) => {
-    MysqlDataService.saveWaLog({
-      parent_name: `Orang Tua ${student.name}`,
-      phone: student.parentWa,
-      student_name: student.name,
-      category: "ALERT PRESENSI",
-      message: `[ALERT PRESENSI MTsN 2 CILACAP]: Bpk/Ibu Orang Tua ${student.name}, disampaikan bahwa ananda hari ini tercatat ${student.today.toUpperCase()} di presensi harian pagi. Rekap bulan ${selectedMonth}: Hadir: ${student.hadir} hari, Izin: ${student.izin}, Sakit: ${student.sakit}, Alpa: ${student.alpa} hari (${student.pct}% Kehadiran).`,
-      status: "TERKIRIM",
-    }).catch(() => {});
-
-    toast.success(`WA Alert Presensi Berhasil Dikirim ke Orang Tua ${student.name} (${student.parentWa})!`);
-  };
-
-  const calendarDays = getCalendarDays();
-
-  if (isSiswa) {
-    return (
-      <PresensiSiswaTab
-        studentInfo={attendanceData[0]}
-        currentMonthName={currentMonthName}
-        currentYear={currentYear}
-        formattedTime={formattedTime}
-        goToPrevMonth={goToPrevMonth}
-        goToNextMonth={goToNextMonth}
-        goToToday={goToToday}
-        calendarDays={calendarDays}
-      />
-    );
-  }
-
-  if (isGuruMapel) {
-    const sessionStudents = attendanceData.filter((a) => activeSession.class === "Semua" || a.class === activeSession.class);
-    return (
-      <PresensiKbmTab
-        activeSession={activeSession}
-        selectedKbmSession={selectedKbmSession}
-        setSelectedKbmSession={setSelectedKbmSession}
-        kbmSessions={kbmSessions}
-        sessionStudents={sessionStudents}
-        handleMarkAllHadir={handleMarkAllHadir}
-        handleSavePresensiSesiKbm={handleSavePresensiSesiKbm}
-        handleSetSessionStatus={handleSetSessionStatus}
-      />
-    );
-  }
-
-  const totalStudents = filteredAttendance.length || 1;
-  const totalHadirToday = filteredAttendance.filter((s) => s.today === "hadir").length;
-  const totalIzinSakit = filteredAttendance.filter((s) => s.today === "izin" || s.today === "sakit").length;
-  const totalAlpaEws = filteredAttendance.filter((s) => s.today === "alpa").length;
-  const avgAttendancePct = Math.round((totalHadirToday / totalStudents) * 1000) / 10;
-  const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
-
-  const handleExportExcelPresensi = () => {
-    const headers = ["No", "NISN", "Nama Siswa", "Rombel", "Total Hadir (Hari)", "Izin", "Sakit", "Alpa", "% Kehadiran", "Status Presensi"];
-    const rows = filteredAttendance.map((s, idx) => [
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) {
+      toast.error("Tidak ada data presensi untuk di-export.");
+      return;
+    }
+    const headers = ["No", "NISN", "Nama Siswa", "Rombel", "Total Hadir", "Izin", "Sakit", "Alpa", "% Kehadiran", "Status Presensi"];
+    const rows = filteredData.map((s, idx) => [
       idx + 1,
       s.nisn,
       s.name,
@@ -318,281 +170,121 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
       `${s.pct}%`,
       s.status,
     ]);
-    exportToExcelXml(`Rekap_Presensi_${selectedClass}_${selectedMonth.replace(/\s+/g, "_")}`, "Presensi_Bulanan", headers, rows);
-    toast.success(`📊 Rekap Presensi Excel (${selectedClass}) Berhasil Diunduh!`);
+    exportToExcelXml("Rekap_Presensi_Siswa_MTsN2Cilacap", "Presensi_Siswa", headers, rows);
+    toast.success("File Excel Rekap Presensi Siswa Berhasil Diunduh!");
   };
 
   return (
     <div className="space-y-6">
-      <SectionHeader
-        title={`Kehadiran & Presensi Harian ${selectedClass}`}
-        sub="Pencatatan presensi harian siswa dan pemantauan rekapitulasi kehadiran."
-      />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <CalendarCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Presensi & Kehadiran Siswa
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Rekapitulasi Presensi Harian Siswa Terhubung Sistem WhatsApp Gateway MTsN 2 Cilacap.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-border bg-card shadow-2xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Rata-Rata Kehadiran</div>
-              <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{avgAttendancePct}% Hadir</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-2xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
-              <Info className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Total Siswa Hadir</div>
-              <div className="text-lg font-extrabold text-foreground">{totalHadirToday} Siswa</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-2xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Total Izin / Sakit</div>
-              <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{totalIzinSakit} Siswa</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-2xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400 grid place-items-center shrink-0 font-bold">
-              <Smartphone className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Alpa (Perlu WA Alert)</div>
-              <div className="text-lg font-extrabold text-red-600 dark:text-red-400">{totalAlpaEws} Siswa</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
+            onClick={handleExportExcel}
+            disabled={filteredData.length === 0}
+          >
+            <Download className="h-3.5 w-3.5" /> Export Excel (.xls)
+          </Button>
+        </div>
       </div>
 
-      <Card className="border-border shadow-sm">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-          <div>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-emerald-600" /> Presensi Harian Pagi ({selectedClass})
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Satu pintu input presensi hari ini ({new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}). Terhubung otomatis ke Kalender Siswa & E-Rapor.
-            </CardDescription>
-          </div>
+      {/* Filter Bar */}
+      <div className="p-4 bg-card rounded-xl border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Cari nama atau NISN..."
+            className="pl-8 h-9 text-xs"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button size="sm" variant="outline" className="text-xs font-bold gap-1.5" onClick={handleMarkAllHadir}>
-              <Zap className="h-3.5 w-3.5 text-amber-500" />
-              <span>Tandai Semua Hadir</span>
-            </Button>
-            <Button size="sm" className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5" onClick={handleSavePresensiHarianPagi}>
-              <Save className="h-3.5 w-3.5" />
-              <span>Simpan & Sync Kalender</span>
-            </Button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <select
+            className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+            value={selectedRombelFilter}
+            onChange={(e) => setSelectedRombelFilter(e.target.value)}
+          >
+            <option value="Semua Rombel">Semua Rombel</option>
+            <option value="Rombel 7A">Rombel 7A</option>
+            <option value="Rombel 7B">Rombel 7B</option>
+            <option value="Rombel 8A">Rombel 8A</option>
+            <option value="Rombel 8B">Rombel 8B</option>
+            <option value="Rombel 9A">Rombel 9A</option>
+            <option value="Rombel 9B">Rombel 9B</option>
+          </select>
+        </div>
+      </div>
 
-            {isWaliKelas ? (
-              <Badge variant="outline" className="h-9 px-3 text-xs font-extrabold bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-                🔒 {resolvedWaliClass} (Rombel Binaan)
-              </Badge>
-            ) : (
-              <select
-                className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-              >
-                {["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B", "Semua"].map((cls) => (
-                  <option key={cls} value={cls}>
-                    {cls === resolvedWaliClass ? `${cls} (Rombel Binaan)` : cls === "Semua" ? "Semua Rombel Sekolah" : cls}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10" onClick={handleExportExcelPresensi}>
-              <Printer className="h-3.5 w-3.5 text-emerald-500" />
-              <span>Export Excel (.xls)</span>
-            </Button>
-
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintPresensiOpen(true)}>
-              <Printer className="h-3.5 w-3.5" />
-              <span>Cetak PDF</span>
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
-              <tr>
-                <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("name")}>
-                  <div className="flex items-center gap-1.5">
-                    <span>NISN & Nama Siswa</span>
-                    {sortColumn === "name" ? (
-                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                    ) : (
-                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                    )}
-                  </div>
-                </th>
-                <th className="py-3 px-3">Rombel</th>
-                <th className="py-3 px-3 text-center">Presensi Hari Ini</th>
-                <th className="py-3 px-3">Keterangan / Catatan Wali Kelas</th>
-                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("hadir")}>
-                  <div className="flex items-center justify-center gap-1.5">
-                    <span>Hadir (H)</span>
-                    {sortColumn === "hadir" ? (
-                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                    ) : (
-                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                    )}
-                  </div>
-                </th>
-                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("izin")}>
-                  <div className="flex items-center justify-center gap-1.5">
-                    <span>Izin (I)</span>
-                    {sortColumn === "izin" ? (
-                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                    ) : (
-                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                    )}
-                  </div>
-                </th>
-                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("sakit")}>
-                  <div className="flex items-center justify-center gap-1.5">
-                    <span>Sakit (S)</span>
-                    {sortColumn === "sakit" ? (
-                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                    ) : (
-                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                    )}
-                  </div>
-                </th>
-                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("alpa")}>
-                  <div className="flex items-center justify-center gap-1.5">
-                    <span>Alpa (A)</span>
-                    {sortColumn === "alpa" ? (
-                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                    ) : (
-                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                    )}
-                  </div>
-                </th>
-                <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("pct")}>
-                  <div className="flex items-center justify-center gap-1.5">
-                    <span>% Kehadiran</span>
-                    {sortColumn === "pct" ? (
-                      sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                    ) : (
-                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                    )}
-                  </div>
-                </th>
-                <th className="py-3 px-4 text-right">Aksi WA Ortu</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {sortedAttendance.map((s) => {
-                const effHadir = s.hadir + (s.today === "hadir" ? 1 : 0);
-                const effIzin = s.izin + (s.today === "izin" ? 1 : 0);
-                const effSakit = s.sakit + (s.today === "sakit" ? 1 : 0);
-                const effAlpa = s.alpa + (s.today === "alpa" ? 1 : 0);
-                const totDays = effHadir + effIzin + effSakit + effAlpa || 1;
-                const effPct = Math.round((effHadir / totDays) * 1000) / 10;
-
-                return (
-                  <tr key={s.id} className="hover:bg-muted/30 transition">
-                    <td className="py-3 px-4 font-semibold">
-                      <div className="font-bold text-foreground">{s.name}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">{s.nisn}</div>
-                    </td>
-                    <td className="py-3 px-3 font-bold">{s.class}</td>
-                    <td className="py-3 px-3 text-center">
-                      <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border">
-                        <button
-                          onClick={() => handleSetTodayStatus(s.id, "hadir")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                            s.today === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          HADIR
-                        </button>
-                        <button
-                          onClick={() => handleSetTodayStatus(s.id, "izin")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                            s.today === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          IZIN
-                        </button>
-                        <button
-                          onClick={() => handleSetTodayStatus(s.id, "sakit")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                            s.today === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          SAKIT
-                        </button>
-                        <button
-                          onClick={() => handleSetTodayStatus(s.id, "alpa")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                            s.today === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          ALPA
-                        </button>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 min-w-[200px]">
-                      <Input
-                        placeholder="Catatan Wali Kelas..."
-                        value={s.note || ""}
-                        onChange={(e) => handleSetTodayNote(s.id, e.target.value)}
-                        className="h-7 text-xs bg-background/80 border-border"
-                      />
-                    </td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{effHadir}</td>
-                    <td className="py-3 px-3 text-center font-mono">{effIzin}</td>
-                    <td className="py-3 px-3 text-center font-mono">{effSakit}</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-red-600">{effAlpa}</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-primary text-sm">{effPct}%</td>
-                    <td className="py-3 px-4 text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className={`h-7 text-[11px] font-bold gap-1 border-purple-500/40 ${
-                          s.today !== "hadir" ? "bg-purple-600 text-white hover:bg-purple-700 font-extrabold shadow-xs" : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
-                        }`}
-                        onClick={() => handleSendWaPresensiAlert(s)}
-                      >
-                        <Send className="h-3 w-3" /> WA Alert Ortu
-                      </Button>
-                    </td>
+      {/* Table Presensi Siswa */}
+      <Card className="border-border shadow-xs bg-card">
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-8 text-center text-xs text-muted-foreground">Memuat data presensi dari database...</div>
+          ) : filteredData.length === 0 ? (
+            <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 m-4">
+              <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+              <div className="font-semibold text-foreground text-sm">Belum Ada Data Siswa Terdaftar pada {selectedRombelFilter}</div>
+              <p>Database saat ini tidak memiliki akun siswa terdaftar untuk filter ini. Tampilan dikosongkan secara jujur tanpa data sampel/dummy.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-muted/50 text-muted-foreground font-bold border-b border-border">
+                    <th className="py-3 px-4 w-12 text-center">No</th>
+                    <th className="py-3 px-4 cursor-pointer" onClick={() => handleSort("nisn")}>
+                      <div className="flex items-center gap-1">NISN <ArrowUpDown className="h-3 w-3" /></div>
+                    </th>
+                    <th className="py-3 px-4 cursor-pointer" onClick={() => handleSort("name")}>
+                      <div className="flex items-center gap-1">Nama Siswa <ArrowUpDown className="h-3 w-3" /></div>
+                    </th>
+                    <th className="py-3 px-4">Rombel</th>
+                    <th className="py-3 px-4 text-center">Hadir</th>
+                    <th className="py-3 px-4 text-center">Izin</th>
+                    <th className="py-3 px-4 text-center">Sakit</th>
+                    <th className="py-3 px-4 text-center">Alpa</th>
+                    <th className="py-3 px-4 text-center">% Kehadiran</th>
+                    <th className="py-3 px-4 text-center">Status</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredData.map((row, idx) => (
+                    <tr key={row.id} className="hover:bg-muted/30 transition">
+                      <td className="py-3 px-4 text-center font-mono font-medium">{idx + 1}</td>
+                      <td className="py-3 px-4 font-mono font-semibold text-muted-foreground">{row.nisn}</td>
+                      <td className="py-3 px-4 font-bold text-foreground">{row.name}</td>
+                      <td className="py-3 px-4 font-semibold text-muted-foreground">{row.class}</td>
+                      <td className="py-3 px-4 text-center font-mono text-emerald-600 font-bold">{row.hadir}</td>
+                      <td className="py-3 px-4 text-center font-mono text-blue-600 font-bold">{row.izin}</td>
+                      <td className="py-3 px-4 text-center font-mono text-amber-600 font-bold">{row.sakit}</td>
+                      <td className="py-3 px-4 text-center font-mono text-rose-600 font-bold">{row.alpa}</td>
+                      <td className="py-3 px-4 text-center font-mono font-extrabold text-emerald-600">{row.pct}%</td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold text-[10px]">
+                          {row.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      <PrintPresensiDialog
-        isOpen={isPrintPresensiOpen}
-        onOpenChange={setIsPrintPresensiOpen}
-        selectedClass={selectedClass}
-        selectedMonth={selectedMonth}
-        filteredAttendance={filteredAttendance}
-        onPrint={handlePrintPresensi}
-      />
     </div>
   );
 }

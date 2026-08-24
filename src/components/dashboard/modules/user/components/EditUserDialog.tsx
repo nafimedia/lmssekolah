@@ -66,7 +66,7 @@ export function EditUserDialog({
 
     setIsLoading(true);
     try {
-      const isSiswa = user.roles.includes("siswa");
+      const isSiswa = user.roles.length === 1 && user.roles.includes("siswa");
       const idPrefix = isSiswa ? "NISN. " : "NIP. ";
       const formattedNis = nisNip ? `${idPrefix}${nisNip}` : user.nis;
 

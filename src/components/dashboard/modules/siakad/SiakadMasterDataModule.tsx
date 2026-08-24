@@ -1,31 +1,17 @@
-import { useState, useMemo, useEffect } from "react";
-import { MysqlDataService, PengampuRow, RuangRow, JadwalRow } from "@/services/mysqlDataService";
-import {
-  Sparkles,
-  CheckCircle2,
-  Plus,
-  Building2,
-  BookOpen,
-  Users,
-  Layers,
-  CalendarDays,
-  Award,
-  ShieldCheck,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Database, Users, Calendar, ShieldCheck, CheckCircle2, Plus, Edit, Trash2, ArrowUpDown, BookOpen, Layers, Inbox } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
+import { MysqlDataService, PengampuRow } from "@/services/mysqlDataService";
 
-import { PengampuTab } from "./components/PengampuTab";
-import { MasterRombelTab } from "./components/MasterRombelTab";
+import { EditWaliKelasDialog } from "./components/EditWaliKelasDialog";
 import { TahunAjaranTab } from "./components/TahunAjaranTab";
 import { KktpSkemaTab } from "./components/KktpSkemaTab";
-import { EditWaliKelasDialog } from "./components/EditWaliKelasDialog";
 
-export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
-  const isKamad = activeRole === "kamad";
+export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any } = {}) {
   const [activeTab, setActiveTab] = useState<string>("pengampu");
   const [dbTeachersList, setDbTeachersList] = useState<string[]>([]);
   const [pengampuList, setPengampuList] = useState<PengampuRow[]>([]);
@@ -33,135 +19,112 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
   const [isEditWaliOpen, setIsEditWaliOpen] = useState(false);
   const [editingRombel, setEditingRombel] = useState<any>(null);
 
-  const [rombelList, setRombelList] = useState([
-    { id: "r1", name: "Rombel 7A", grade: "Kelas VII", waliKelas: "MISBAH AHMAD DANI, S.Pd", studentCount: 32 },
-    { id: "r2", name: "Rombel 7B", grade: "Kelas VII", waliKelas: "ENDAH KURNIAWATI, S.Pd", studentCount: 32 },
-    { id: "r3", name: "Rombel 8A", grade: "Kelas VIII", waliKelas: "Dra. Hj. SITI RAHMAH, M.Pd", studentCount: 32 },
-    { id: "r4", name: "Rombel 8B", grade: "Kelas VIII", waliKelas: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", studentCount: 32 },
-    { id: "r5", name: "Rombel 9A", grade: "Kelas IX", waliKelas: "SOBIYATI, S.Pd", studentCount: 32 },
-    { id: "r6", name: "Rombel 9B", grade: "Kelas IX", waliKelas: "SAYONO, S.Pd.I", studentCount: 32 },
-  ]);
+  // Clean state: initialize with empty array - strictly no dummy fallbacks
+  const [rombelList, setRombelList] = useState<any[]>([]);
+  const [isLoadingRombel, setIsLoadingRombel] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
+    setIsLoadingRombel(true);
 
-    // Load persisted Wali Kelas overrides from localStorage
-    if (typeof window !== "undefined") {
-      try {
-        const savedOverrides: Record<string, string> = JSON.parse(
-          localStorage.getItem("lms_rombel_wali_overrides") || "{}"
-        );
-        if (Object.keys(savedOverrides).length > 0) {
-          setRombelList((prev) =>
-            prev.map((r) =>
-              savedOverrides[r.id]
-                ? { ...r, waliKelas: savedOverrides[r.id] }
-                : r
-            )
-          );
-        }
-      } catch (e) {}
-    }
-
-    MysqlDataService.getUsers()
-      .then((users) => {
+    Promise.all([
+      (MysqlDataService as any).getRombels?.() || Promise.resolve([]),
+      MysqlDataService.getUsers(),
+      MysqlDataService.getPengampuList(),
+    ])
+      .then(([dbRombels, users, pengampu]) => {
         if (!isMounted) return;
+
         if (users && users.length > 0) {
-          const teachers = users.filter((u) => u.role !== "siswa").map((u) => u.full_name);
+          const teachers = users.filter((u: any) => u.role !== "siswa").map((u: any) => u.full_name);
           if (teachers.length > 0) setDbTeachersList(teachers);
         }
-      })
-      .catch(() => {});
 
-    MysqlDataService.getPengampuList().then((data) => {
-      if (isMounted && data && data.length > 0) setPengampuList(data);
-    });
+        if (pengampu && pengampu.length > 0) {
+          setPengampuList(pengampu);
+        }
+
+        if (dbRombels && dbRombels.length > 0) {
+          const siswaList = (users || []).filter((u: any) => u.role === "siswa");
+          const mapped = dbRombels.map((r: any) => {
+            const count = siswaList.filter((s: any) => (s.class_name || s.class || "").toLowerCase() === r.name.toLowerCase()).length;
+            return {
+              id: String(r.id),
+              name: r.name,
+              grade: r.grade_level || "Kelas VIII",
+              waliKelas: r.wali_kelas_name || "Belum Ditentukan",
+              studentCount: count,
+            };
+          });
+          setRombelList(mapped);
+        } else {
+          setRombelList([]);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setRombelList([]);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingRombel(false);
+      });
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const handleSaveWaliKelas = (rombelId: string, newWaliKelas: string) => {
-    if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
-      return;
-    }
+  const handleEditWaliClick = (rombelItem: any) => {
+    setEditingRombel(rombelItem);
+    setIsEditWaliOpen(true);
+  };
 
+  const handleSaveWaliKelas = (rombelId: string, newWaliName: string) => {
     setRombelList((prev) =>
-      prev.map((r) => (r.id === rombelId ? { ...r, waliKelas: newWaliKelas } : r))
+      prev.map((r) => (r.id === rombelId ? { ...r, waliKelas: newWaliName } : r))
     );
 
     if (typeof window !== "undefined") {
       try {
-        const current = JSON.parse(
+        const savedOverrides: Record<string, string> = JSON.parse(
           localStorage.getItem("lms_rombel_wali_overrides") || "{}"
         );
-        current[rombelId] = newWaliKelas;
-        localStorage.setItem("lms_rombel_wali_overrides", JSON.stringify(current));
+        savedOverrides[rombelId] = newWaliName;
+        localStorage.setItem("lms_rombel_wali_overrides", JSON.stringify(savedOverrides));
       } catch (e) {}
     }
 
-    const targetRombel = rombelList.find((r) => r.id === rombelId);
-    toast.success(
-      `✅ Wali Kelas ${targetRombel?.name || "Rombel"} berhasil diperbarui menjadi "${newWaliKelas}"!`
-    );
-  };
-
-  const handleDeletePengampu = (id: string, name: string) => {
-    if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
-      return;
-    }
-    setPengampuList((prev) => prev.filter((p) => p.id !== id));
-    toast.success(`🗑️ Plotting pengampu "${name}" berhasil dihapus.`);
-  };
-
-  const handleAddPengampuClick = () => {
-    if (isKamad) {
-      toast.info("🏛️ Kepala Madrasah berada dalam Mode Monitoring (Read-Only). Pengolahan plotting dilakukan oleh Waka Kurikulum.");
-      return;
-    }
-    toast.info("Gunakan tombol tambah pada matriks pengampu untuk mendaftarkan plotting guru baru.");
+    toast.success(`Wali Kelas ${editingRombel?.name || "Rombel"} berhasil diperbarui ke ${newWaliName}!`);
+    setIsEditWaliOpen(false);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Layers className="h-6 w-6 text-primary" /> Akademik Madrasah
+            <Database className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Data Master SIAKAD & Akademik
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Pengelolaan data master akademik madrasah, tahun ajaran & periode, KKTP & skema nilai, rombel, dan matriks pengampu.
+            Pengelolaan Rombongan Belajar (Rombel), Wali Kelas, Tahun Ajaran, & Skema Kriteria Ketuntasan (KKTP).
           </p>
         </div>
       </div>
 
-      {isKamad && (
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold">
-          <span className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-amber-600 shrink-0" />
-            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Read-Only. Kepala Madrasah memantau data master akademik tanpa melakukan pengubahan data.</span>
-          </span>
-          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80">
+      {/* Tabs Selector */}
+      <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80 w-fit flex-wrap">
         {[
-          { id: "pengampu", label: "Matriks Pengampu", icon: Users },
-          { id: "tahun_ajaran", label: "Tahun Ajaran & Periode", icon: CalendarDays },
-          { id: "kktp_skema", label: "KKTP & Skema Nilai", icon: Sparkles },
-          { id: "rombel", label: "Kelas & Rombel", icon: Building2 },
-          { id: "mapel", label: "Master Mapel", icon: BookOpen },
+          { id: "pengampu", label: "Daftar Rombel & Wali Kelas", icon: Users },
+          { id: "tahun_ajaran", label: "Tahun Ajaran & Semester", icon: Calendar },
+          { id: "kktp_skema", label: "Kriteria Ketuntasan (KKTP)", icon: ShieldCheck },
         ].map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setActiveTab(t.id)}
-            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === t.id ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === t.id
+                ? "bg-emerald-600 text-white shadow-xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             <t.icon className="h-4 w-4" />
@@ -170,85 +133,76 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         ))}
       </div>
 
+      {/* Tab 1: Daftar Rombel & Wali Kelas */}
       {activeTab === "pengampu" && (
-        <PengampuTab
-          pengampuList={pengampuList.length > 0 ? pengampuList : [
-            { id: "p1", guru: "SAYONO, S.Pd., M.Pd.", mapel: "Matematika", rombel: "Rombel 8A", jam: "4 JP" },
-            { id: "p2", guru: "SOBIYATI, S.Pd", mapel: "Bahasa Indonesia", rombel: "Rombel 8A", jam: "4 JP" },
-            { id: "p3", guru: "AH. SYARIF HIDAYAH, S.Pd.I", mapel: "Al Qur'an Hadis", rombel: "Rombel 8A", jam: "2 JP" },
-          ]}
-          onOpenAddModal={handleAddPengampuClick}
-          onDeletePengampu={handleDeletePengampu}
-        />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Daftar Rombongan Belajar (Rombel) MTsN 2 Cilacap:
+            </div>
+          </div>
+
+          {isLoadingRombel ? (
+            <div className="p-8 text-center text-xs text-muted-foreground">Memuat data rombel dari database...</div>
+          ) : rombelList.length === 0 ? (
+            <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 bg-card">
+              <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+              <div className="font-semibold text-foreground text-sm">Belum Ada Rombel Terdaftar</div>
+              <p>Database saat ini tidak memiliki data rombel terdaftar. Tampilan dikosongkan secara jujur tanpa data sampel/dummy.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {rombelList.map((r) => (
+                <Card key={r.id} className="border-border hover:border-emerald-500/40 transition shadow-xs bg-card">
+                  <CardHeader className="p-4 pb-2 border-b border-border flex flex-row items-center justify-between">
+                    <div>
+                      <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-600 mb-1">
+                        {r.grade}
+                      </Badge>
+                      <CardTitle className="text-base font-bold text-foreground">{r.name}</CardTitle>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 gap-1"
+                      onClick={() => handleEditWaliClick(r)}
+                    >
+                      <Edit className="h-3.5 w-3.5" /> Edit Wali
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Wali Kelas:</span>
+                      <strong className="text-foreground">{r.waliKelas}</strong>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-border">
+                      <span className="text-muted-foreground">Jumlah Siswa:</span>
+                      <strong className="font-mono text-emerald-600">{r.studentCount} Siswa</strong>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
-      {activeTab === "tahun_ajaran" && <TahunAjaranTab isKamad={isKamad} />}
+      {/* Tab 2: Tahun Ajaran */}
+      {activeTab === "tahun_ajaran" && <TahunAjaranTab />}
 
+      {/* Tab 3: KKTP Skema */}
       {activeTab === "kktp_skema" && <KktpSkemaTab />}
 
-      {activeTab === "rombel" && (
-        <MasterRombelTab
-          rombelList={rombelList}
-          onOpenAddModal={() => toast.success("Rombel baru siap ditambahkan!")}
-          onEditWali={(r) => {
-            if (isKamad) {
-              toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
-              return;
-            }
-            setEditingRombel(r);
-            setIsEditWaliOpen(true);
-          }}
-          isKamad={isKamad}
+      {/* Edit Wali Kelas Dialog */}
+      {editingRombel && (
+        <EditWaliKelasDialog
+          isOpen={isEditWaliOpen}
+          onOpenChange={setIsEditWaliOpen}
+          rombel={editingRombel}
+          onSave={(rombelId, newWali) => handleSaveWaliKelas(rombelId, newWali)}
+          teacherList={dbTeachersList}
         />
       )}
-
-      {activeTab === "mapel" && (
-        <Card className="border-border shadow-sm bg-card">
-          <CardHeader className="border-b border-border pb-4">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" /> Master Mata Pelajaran Kurikulum Merdeka
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Daftar 18 Mata Pelajaran resmi Kurikulum Merdeka MTsN 2 Cilacap.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
-                <tr>
-                  <th className="py-3 px-4">Mata Pelajaran</th>
-                  <th className="py-3 px-3">Kode Mapel</th>
-                  <th className="py-3 px-3 text-center">Kelompok</th>
-                  <th className="py-3 px-3 text-center">KKTP Standard</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {INITIAL_MASTER_MAPEL.map((m) => (
-                  <tr key={m.code} className="hover:bg-muted/30 transition">
-                    <td className="py-3 px-4 font-bold text-foreground">{m.name}</td>
-                    <td className="py-3 px-3 font-mono font-semibold">{m.code}</td>
-                    <td className="py-3 px-3 text-center">
-                      <Badge variant="outline" className="text-[10px] font-bold">
-                        {m.category || "PAI / Umum"}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">75</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* MODAL EDIT WALI KELAS UNTUK ADMIN AKADEMIK */}
-      <EditWaliKelasDialog
-        isOpen={isEditWaliOpen}
-        onOpenChange={setIsEditWaliOpen}
-        rombel={editingRombel}
-        teacherList={dbTeachersList}
-        onSave={handleSaveWaliKelas}
-      />
     </div>
   );
 }

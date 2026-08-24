@@ -9,9 +9,10 @@ interface PengampuTabProps {
   pengampuList: PengampuRow[];
   onOpenAddModal: () => void;
   onDeletePengampu: (id: string, name: string) => void;
+  isKamad?: boolean;
 }
 
-export function PengampuTab({ pengampuList, onOpenAddModal, onDeletePengampu }: PengampuTabProps) {
+export function PengampuTab({ pengampuList, onOpenAddModal, onDeletePengampu, isKamad }: PengampuTabProps) {
   const [search, setSearch] = useState("");
 
   const filtered = pengampuList.filter(
@@ -39,9 +40,15 @@ export function PengampuTab({ pengampuList, onOpenAddModal, onDeletePengampu }: 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Button size="sm" className="bg-primary text-primary-foreground font-bold text-xs gap-1" onClick={onOpenAddModal}>
-            <Plus className="h-4 w-4" /> Tambah Plotting Pengampu
-          </Button>
+          {!isKamad ? (
+            <Button size="sm" className="bg-primary text-primary-foreground font-bold text-xs gap-1" onClick={onOpenAddModal}>
+              <Plus className="h-4 w-4" /> Tambah Plotting Pengampu
+            </Button>
+          ) : (
+            <Badge variant="outline" className="text-[10px] text-muted-foreground font-bold shrink-0">
+              🔒 Read-Only (Kamad)
+            </Badge>
+          )}
         </div>
       </CardHeader>
 
@@ -70,15 +77,21 @@ export function PengampuTab({ pengampuList, onOpenAddModal, onDeletePengampu }: 
                 <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">{item.guru}</td>
                 <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{item.jam || "4 JP"}</td>
                 <td className="py-3 px-4 text-center">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                    onClick={() => onDeletePengampu(item.id || String(idx), `${item.guru} (${item.mapel})`)}
-                    title="Hapus Plotting"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {!isKamad ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                      onClick={() => onDeletePengampu(item.id || String(idx), `${item.guru} (${item.mapel})`)}
+                      title="Hapus Plotting"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                      🔒 Read-Only
+                    </Badge>
+                  )}
                 </td>
               </tr>
             ))}

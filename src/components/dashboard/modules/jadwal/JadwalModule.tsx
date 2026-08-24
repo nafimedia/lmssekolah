@@ -155,7 +155,6 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
           title="Jadwal Pelajaran Saya"
           subtitle="Roster jadwal jam KBM tatap muka & alokasi ruang kelas harian MTsN 2 Cilacap"
           icon={CalendarClock}
-          studentClass={filterRombel.replace("Rombel", "Kelas")}
           statusText="Roster Pelajaran Aktif 2026/2027"
           statusVariant="success"
           actionButtons={

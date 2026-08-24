@@ -9,18 +9,18 @@ import { MysqlDataService } from "@/services/mysqlDataService";
 import { AddAgendaDialog } from "./components/AddAgendaDialog";
 
 const NATIONAL_ISLAMIC_HOLIDAYS = [
-  { id: "nat-1", title: "Hari Kemerdekaan Republik Indonesia (HUT RI)", category: "libur", date: "17 Agustus 2026", rawDate: "2026-08-17", desc: "Upacara Bendera Peringatan Kemerdekaan RI & Libur Resmi Nasional.", badge: "🟢 Libur Nasional" },
-  { id: "nat-2", title: "Hari Santri Nasional (HSN)", category: "libur", date: "22 Oktober 2026", rawDate: "2026-10-22", desc: "Apel Hari Santri & Kegiatan Keagamaan Madrasah.", badge: "🟢 Hari Besar Islam" },
-  { id: "nat-3", title: "Hari Guru Nasional (HGN)", category: "libur", date: "25 November 2026", rawDate: "2026-11-25", desc: "Penghargaan Guru & Tenaga Kependidikan Madrasah.", badge: "🟢 Hari Peringatan" },
-  { id: "nat-4", title: "Hari Amal Bhakti (HAB) Kemenag RI", category: "libur", date: "03 Januari 2027", rawDate: "2027-01-03", desc: "Upacara Peringatan HAB Kementerian Agama Republik Indonesia.", badge: "🟢 Hari Besar Kemenag" },
-  { id: "nat-5", title: "Tahun Baru Islam (1 Muharram 1448 H)", category: "libur", date: "16 Juni 2026", rawDate: "2026-06-16", desc: "Pawai Ta'aruf & Doa Bersama Tahun Baru Hijriah.", badge: "🟢 Hari Besar Islam" },
-  { id: "nat-6", title: "Maulid Nabi Muhammad SAW (12 Rabiul Awal)", category: "libur", date: "25 Agustus 2026", rawDate: "2026-08-25", desc: "Peringatan Maulid Nabi Muhammad SAW.", badge: "🟢 Hari Besar Islam" },
-  { id: "nat-7", title: "Isra Mi'raj Nabi Muhammad SAW (27 Rajab)", category: "libur", date: "05 Februari 2027", rawDate: "2027-02-05", desc: "Pengajian & Peringatan Isra Mi'raj Nabi Muhammad SAW.", badge: "🟢 Hari Besar Islam" },
-  { id: "nat-8", title: "Hari Raya Idul Fitri 1448 H", category: "libur", date: "20 Maret 2027", rawDate: "2027-03-20", desc: "Hari Raya Idul Fitri & Libur Resmi Kemenag.", badge: "🟢 Hari Besar Islam" },
-  { id: "nat-9", title: "Hari Raya Idul Adha 1448 H", category: "libur", date: "27 Mei 2027", rawDate: "2027-05-27", desc: "Penyembelihan Hewan Kurban & Sholat Idul Adha.", badge: "🟢 Hari Besar Islam" },
-  { id: "nat-10", title: "Tahun Baru Masehi 2027", category: "libur", date: "01 Januari 2027", rawDate: "2027-01-01", desc: "Libur Nasional Tahun Baru Masehi.", badge: "🟢 Libur Nasional" },
-  { id: "nat-11", title: "Hari Lahir Pancasila", category: "libur", date: "01 Juni 2026", rawDate: "2026-06-01", desc: "Upacara Peringatan Hari Lahir Pancasila.", badge: "🟢 Libur Nasional" },
-  { id: "nat-12", title: "Hari Buruh Internasional", category: "libur", date: "01 Mei 2026", rawDate: "2026-05-01", desc: "Libur Nasional Hari Buruh.", badge: "🟢 Libur Nasional" },
+  { id: "nat-1", title: "Hari Kemerdekaan Republik Indonesia (HUT RI)", category: "libur", date: "17 Agustus 2026", rawDate: "2026-08-17", desc: "Upacara Bendera Peringatan Kemerdekaan RI & Libur Resmi Nasional.", badge: "🔴 Libur Nasional" },
+  { id: "nat-2", title: "Hari Santri Nasional (HSN)", category: "libur", date: "22 Oktober 2026", rawDate: "2026-10-22", desc: "Apel Hari Santri & Kegiatan Keagamaan Madrasah.", badge: "🔴 Hari Besar Islam" },
+  { id: "nat-3", title: "Hari Guru Nasional (HGN)", category: "libur", date: "25 November 2026", rawDate: "2026-11-25", desc: "Penghargaan Guru & Tenaga Kependidikan Madrasah.", badge: "🔴 Hari Peringatan" },
+  { id: "nat-4", title: "Hari Amal Bhakti (HAB) Kemenag RI", category: "libur", date: "03 Januari 2027", rawDate: "2027-01-03", desc: "Upacara Peringatan HAB Kementerian Agama Republik Indonesia.", badge: "🔴 Hari Besar Kemenag" },
+  { id: "nat-5", title: "Tahun Baru Islam (1 Muharram 1448 H)", category: "libur", date: "16 Juni 2026", rawDate: "2026-06-16", desc: "Pawai Ta'aruf & Doa Bersama Tahun Baru Hijriah.", badge: "🔴 Hari Besar Islam" },
+  { id: "nat-6", title: "Maulid Nabi Muhammad SAW (12 Rabiul Awal)", category: "libur", date: "25 Agustus 2026", rawDate: "2026-08-25", desc: "Peringatan Maulid Nabi Muhammad SAW.", badge: "🔴 Hari Besar Islam" },
+  { id: "nat-7", title: "Isra Mi'raj Nabi Muhammad SAW (27 Rajab)", category: "libur", date: "05 Februari 2027", rawDate: "2027-02-05", desc: "Pengajian & Peringatan Isra Mi'raj Nabi Muhammad SAW.", badge: "🔴 Hari Besar Islam" },
+  { id: "nat-8", title: "Hari Raya Idul Fitri 1448 H", category: "libur", date: "20 Maret 2027", rawDate: "2027-03-20", desc: "Hari Raya Idul Fitri & Libur Resmi Kemenag.", badge: "🔴 Hari Besar Islam" },
+  { id: "nat-9", title: "Hari Raya Idul Adha 1448 H", category: "libur", date: "27 Mei 2027", rawDate: "2027-03-27", desc: "Penyembelihan Hewan Kurban & Sholat Idul Adha.", badge: "🔴 Hari Besar Islam" },
+  { id: "nat-10", title: "Tahun Baru Masehi 2027", category: "libur", date: "01 Januari 2027", rawDate: "2027-01-01", desc: "Libur Nasional Tahun Baru Masehi.", badge: "🔴 Libur Nasional" },
+  { id: "nat-11", title: "Hari Lahir Pancasila", category: "libur", date: "01 Juni 2026", rawDate: "2026-06-01", desc: "Upacara Peringatan Hari Lahir Pancasila.", badge: "🔴 Libur Nasional" },
+  { id: "nat-12", title: "Hari Buruh Internasional", category: "libur", date: "01 Mei 2026", rawDate: "2026-05-01", desc: "Libur Nasional Hari Buruh.", badge: "🔴 Libur Nasional" },
 ];
 
 export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
@@ -44,7 +44,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
       if (dbAgendas) {
         const mapped = dbAgendas.map((item) => {
           const cat = item.category || "kbm";
-          const badge = cat === "cbt" ? "🔴 Ujian CBT" : cat === "rapat" ? "🟣 Rapat Dinas" : cat === "kokurikuler" ? "🟡 Kokurikuler P5" : cat === "libur" ? "🟢 Libur Resmi" : "🔵 KBM Efektif";
+          const badge = cat === "cbt" ? "🔴 Ujian CBT" : cat === "rapat" ? "🟣 Rapat Dinas" : cat === "kokurikuler" ? "🟡 Kokurikuler P5" : cat === "libur" ? "🔴 Libur Resmi" : "🔵 KBM Efektif";
           return {
             id: String(item.id || Date.now()),
             title: item.title,
@@ -68,7 +68,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
   const handleAddAgenda = (data: { title: string; category: string; selectedDate: string; desc: string }) => {
     const dateObj = new Date(data.selectedDate);
     const dateFormatted = dateObj.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-    const badge = data.category === "cbt" ? "🔴 Ujian CBT" : data.category === "rapat" ? "🟣 Rapat Dinas" : data.category === "kokurikuler" ? "🟡 Kokurikuler P5" : data.category === "libur" ? "🟢 Libur Resmi" : "🔵 KBM Efektif";
+    const badge = data.category === "cbt" ? "🔴 Ujian CBT" : data.category === "rapat" ? "🟣 Rapat Dinas" : data.category === "kokurikuler" ? "🟡 Kokurikuler P5" : data.category === "libur" ? "🔴 Libur Resmi" : "🔵 KBM Efektif";
 
     const newEntry = {
       id: String(Date.now()),
@@ -141,9 +141,9 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
           </CardHeader>
 
           <CardContent className="p-4">
-            <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs text-muted-foreground mb-2">
-              {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((d) => (
-                <div key={d} className="py-1.5">{d}</div>
+            <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs mb-2">
+              {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((d, idx) => (
+                <div key={d} className={`py-1.5 ${idx === 0 ? "text-red-600 dark:text-red-400 font-black" : "text-muted-foreground"}`}>{d}</div>
               ))}
             </div>
 
@@ -153,28 +153,44 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                   (ag) => day.isCurrentMonth && (ag.rawDate === day.dateString || ag.rawDate?.startsWith(day.dateString))
                 );
 
+                const hasLiburEvent = dayEvents.some((ev) => ev.category === "libur" || ev.badge?.includes("Libur"));
+                const isRedHoliday = day.isCurrentMonth && (day.isSunday || hasLiburEvent);
+
                 return (
                   <div
                     key={idx}
                     className={`min-h-[70px] p-1.5 rounded-lg border text-left transition flex flex-col justify-between ${
                       day.isCurrentMonth
                         ? day.isToday
-                          ? "bg-primary/10 border-primary font-bold shadow-xs"
+                          ? "bg-emerald-500/20 border-2 border-emerald-600 font-bold shadow-xs"
+                          : isRedHoliday
+                          ? "bg-red-500/10 border-red-500/30 dark:bg-red-950/40 dark:border-red-900/50"
                           : "bg-background border-border hover:border-primary/40"
                         : "bg-muted/30 border-transparent opacity-40"
                     }`}
                   >
-                    <span className={`text-xs ${day.isToday ? "text-primary font-extrabold" : "text-foreground"}`}>
+                    <span className={`text-xs ${
+                      day.isToday
+                        ? "text-emerald-700 dark:text-emerald-300 font-black"
+                        : isRedHoliday
+                        ? "text-red-600 dark:text-red-400 font-bold"
+                        : "text-foreground font-medium"
+                    }`}>
                       {day.dayNumber}
                     </span>
 
                     <div className="space-y-1 mt-1 overflow-hidden">
+                      {day.isCurrentMonth && day.isSunday && dayEvents.length === 0 && (
+                        <Badge className="text-[9px] px-1 py-0 border-none font-bold bg-red-500/20 text-red-600 dark:text-red-400 truncate w-full block">
+                          🔴 Libur Minggu
+                        </Badge>
+                      )}
                       {dayEvents.map((ev) => (
                         <Badge
                           key={ev.id}
-                          className={`text-[9px] px-1 py-0 border-none font-semibold truncate w-full block ${
-                            ev.category === "libur"
-                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          className={`text-[9px] px-1 py-0 border-none font-bold truncate w-full block ${
+                            ev.category === "libur" || ev.badge?.includes("Libur")
+                              ? "bg-red-600 text-white shadow-2xs"
                               : ev.category === "cbt"
                               ? "bg-red-500/15 text-red-600 dark:text-red-400"
                               : ev.category === "rapat"

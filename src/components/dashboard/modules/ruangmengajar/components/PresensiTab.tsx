@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UserCheck, CheckCircle2, AlertCircle, Clock, Save, Sparkles, MessageSquare } from "lucide-react";
+import { UserCheck, CheckCircle2, AlertCircle, Clock, Save, Sparkles, MessageSquare, Inbox } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,72 +22,51 @@ interface PresensiTabProps {
 }
 
 export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
-  const [students, setStudents] = useState<StudentAttendance[]>([
-    { id: "s1", nis: "20250701", name: "ACHMAD MAULANA", status: "HADIR", notes: "" },
-    { id: "s2", nis: "20250702", name: "AHMAD SYARIFUDDIN", status: "HADIR", notes: "" },
-    { id: "s3", nis: "20250703", name: "AISYAH NABIHAH", status: "HADIR", notes: "" },
-    { id: "s4", nis: "20250704", name: "ANNISA NUR RAHMA", status: "HADIR", notes: "" },
-    { id: "s5", nis: "20250705", name: "BAGAS PRATAMA", status: "SAKIT", notes: "Surat dokter dari Klinik Al-Syifa" },
-    { id: "s6", nis: "20250706", name: "CITRA LESTARI", status: "HADIR", notes: "" },
-    { id: "s7", nis: "20250707", name: "DENI KURNIAWAN", status: "HADIR", notes: "" },
-    { id: "s8", nis: "20250708", name: "EKA PUTRI SAFITRI", status: "HADIR", notes: "" },
-    { id: "s9", nis: "20250709", name: "FARHAN ARDIANSYAH", status: "IZIN", notes: "Acara keluarga (Tasyakuran)" },
-    { id: "s10", nis: "20250710", name: "GILANG RAMADHAN", status: "HADIR", notes: "" },
-    { id: "s11", nis: "20250711", name: "HANIFAH ZAHRA", status: "HADIR", notes: "" },
-    { id: "s12", nis: "20250712", name: "INDRA KUSUMA", status: "HADIR", notes: "" },
-  ]);
+  // Initialize strictly with empty array - NO hardcoded dummy students
+  const [students, setStudents] = useState<StudentAttendance[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const dateToday = "24/08/2026";
+  const dateToday = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" });
 
   useEffect(() => {
     let isMounted = true;
+    setIsLoading(true);
+
     Promise.all([
       MysqlDataService.getUsers(),
       MysqlDataService.getKbmPresensi(activeRombel, activeMapel, dateToday),
-    ]).then(([users, kbmRows]) => {
-      if (!isMounted) return;
-      const siswaList = (users || []).filter((u: any) => u.role === "siswa");
+    ])
+      .then(([users, kbmRows]) => {
+        if (!isMounted) return;
+        const siswaList = (users || []).filter((u: any) => u.role === "siswa");
+        const matchedSiswa = siswaList.filter((u: any) => isSameClass(u.class_name || u.class, activeRombel));
 
-      const matchedSiswa = siswaList.filter((u: any) => isSameClass(u.class_name || u.class, activeRombel));
-
-      if (matchedSiswa.length > 0) {
-        const loaded: StudentAttendance[] = matchedSiswa.map((u: any, idx: number) => {
-          const nis = u.nis_nip || u.nis || "-";
-          const match = kbmRows?.find(
-            (r) => r.student_nis === nis || (r.student_name && r.student_name.toLowerCase() === (u.full_name || u.name).toLowerCase())
-          );
-          return {
-            id: u.id || `s_${idx}`,
-            nis: nis,
-            name: u.full_name || u.name,
-            status: match ? match.status : "HADIR",
-            notes: match?.notes || "",
-          };
-        });
-
-        setStudents(loaded);
-      } else {
-        // Fallback roster for active Rombel
-        const sampleNames = [
-          "ACHMAD MAULANA", "AHMAD SYARIFUDDIN", "AISYAH NABIHAH", "ANNISA NUR RAHMA",
-          "BAGAS PRATAMA", "CITRA LESTARI", "DENI KURNIAWAN", "EKA PUTRI SAFITRI",
-          "FARHAN ARDIANSYAH", "GILANG RAMADHAN", "HANIFAH ZAHRA", "INDRA KUSUMA",
-          "JAFAR SHODIQ", "KHAIRUNNISA", "LUKMAN HAKIM"
-        ];
-        const loaded: StudentAttendance[] = sampleNames.map((name, idx) => {
-          const nis = `202507${String(idx + 1).padStart(2, "0")}`;
-          const match = kbmRows?.find((r) => r.student_nis === nis || (r.student_name && r.student_name.toLowerCase() === name.toLowerCase()));
-          return {
-            id: `s_fallback_${idx}`,
-            nis: nis,
-            name: name,
-            status: match ? match.status : (idx === 4 ? "SAKIT" : idx === 8 ? "IZIN" : "HADIR"),
-            notes: match?.notes || (idx === 4 ? "Surat dokter dari Klinik Al-Syifa" : idx === 8 ? "Acara keluarga (Tasyakuran)" : ""),
-          };
-        });
-        setStudents(loaded);
-      }
-    });
+        if (matchedSiswa.length > 0) {
+          const loaded: StudentAttendance[] = matchedSiswa.map((u: any, idx: number) => {
+            const nis = u.nis_nip || u.nis || "-";
+            const match = kbmRows?.find(
+              (r) => r.student_nis === nis || (r.student_name && r.student_name.toLowerCase() === (u.full_name || u.name).toLowerCase())
+            );
+            return {
+              id: u.id || `s_${idx}`,
+              nis: nis,
+              name: u.full_name || u.name,
+              status: match ? match.status : "HADIR",
+              notes: match?.notes || "",
+            };
+          });
+          setStudents(loaded);
+        } else {
+          // Strictly empty array when no real students exist in database for this Rombel
+          setStudents([]);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setStudents([]);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
 
     return () => {
       isMounted = false;
@@ -108,15 +87,20 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
   };
 
   const handleAllHadir = () => {
+    if (students.length === 0) return;
     setStudents((prev) => prev.map((s) => ({ ...s, status: "HADIR" })));
     toast.success("✨ Seluruh siswa berhasil diset HADIR!");
   };
 
   const handleSavePresensi = async () => {
+    if (students.length === 0) {
+      toast.error("Tidak ada siswa terdaftar pada rombel ini untuk disimpan.");
+      return;
+    }
     const records = students.map((s) => ({
       rombel: activeRombel,
       mapel: activeMapel,
-      guru_name: "SOBIYATI, S.Pd",
+      guru_name: "GURU PENGAMPU",
       student_nis: s.nis,
       student_name: s.name,
       status: s.status,
@@ -137,7 +121,7 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
           <CardTitle className="text-base font-bold flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-emerald-600" /> Presensi Real-Time Sesi KBM ({activeRombel})
+            <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Presensi Real-Time Sesi KBM ({activeRombel})
           </CardTitle>
           <CardDescription className="text-xs">
             Presensi terikat dengan jadwal KBM {activeMapel} hari ini. Tandai siswa yang tidak hadir.
@@ -148,110 +132,109 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
           <Button
             size="sm"
             variant="outline"
-            className="text-xs font-bold gap-1 text-emerald-600 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50"
+            className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
             onClick={handleAllHadir}
+            disabled={students.length === 0}
           >
-            <Sparkles className="h-4 w-4" /> Set Semua Hadir
+            <Sparkles className="h-3.5 w-3.5" /> Set Semua Hadir
           </Button>
 
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1"
+            className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
             onClick={handleSavePresensi}
+            disabled={students.length === 0}
           >
-            <Save className="h-4 w-4" /> Simpan Presensi
+            <Save className="h-3.5 w-3.5" /> Simpan Presensi
           </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 space-y-4">
-        {/* Attendance Summary Stat Cards */}
+      <CardContent className="p-4 sm:p-6 space-y-6">
+        {/* Stat Badges Overview */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20 text-center">
-            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 block">HADIR</span>
-            <span className="text-2xl font-black font-mono text-emerald-700 dark:text-emerald-300">{countHadir}</span>
+          <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-center">
+            <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">HADIR</div>
+            <div className="text-2xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">{countHadir}</div>
           </div>
-
-          <div className="p-3 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20 text-center">
-            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 block">SAKIT</span>
-            <span className="text-2xl font-black font-mono text-amber-700 dark:text-amber-300">{countSakit}</span>
+          <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-center">
+            <div className="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">SAKIT</div>
+            <div className="text-2xl font-extrabold font-mono text-amber-600 dark:text-amber-400">{countSakit}</div>
           </div>
-
-          <div className="p-3 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 text-center">
-            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 block">IZIN</span>
-            <span className="text-2xl font-black font-mono text-blue-700 dark:text-blue-300">{countIzin}</span>
+          <div className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/10 text-center">
+            <div className="text-[11px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">IZIN</div>
+            <div className="text-2xl font-extrabold font-mono text-blue-600 dark:text-blue-400">{countIzin}</div>
           </div>
-
-          <div className="p-3 rounded-xl border border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 text-center">
-            <span className="text-[11px] font-bold text-red-600 dark:text-red-400 block">ALPA</span>
-            <span className="text-2xl font-black font-mono text-red-700 dark:text-red-300">{countAlpa}</span>
+          <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-center">
+            <div className="text-[11px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">ALPA</div>
+            <div className="text-2xl font-extrabold font-mono text-rose-600 dark:text-rose-400">{countAlpa}</div>
           </div>
         </div>
 
-        {/* Student Attendance List Table */}
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-xs">
-            <thead className="bg-muted/60 text-left font-bold text-muted-foreground border-b border-border">
-              <tr>
-                <th className="py-2.5 px-3 w-12 text-center">No</th>
-                <th className="py-2.5 px-3">NIS</th>
-                <th className="py-2.5 px-3">Nama Siswa</th>
-                <th className="py-2.5 px-3 text-center">Status Kehadiran</th>
-                <th className="py-2.5 px-3">Keterangan / Catatan</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {students.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-muted-foreground text-xs">
-                    <UserCheck className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                    Belum ada data siswa terdaftar untuk <strong>{activeRombel}</strong> dalam database MySQL.
-                  </td>
+        {/* Table Student Attendance List */}
+        {isLoading ? (
+          <div className="p-8 text-center text-xs text-muted-foreground">Memuat data presensi siswa {activeRombel}...</div>
+        ) : students.length === 0 ? (
+          <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2">
+            <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+            <div className="font-semibold text-foreground text-sm">Belum Ada Siswa Terdaftar pada {activeRombel}</div>
+            <p>Database saat ini tidak memiliki akun siswa terdaftar untuk rombel ini.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto border border-border rounded-xl shadow-xs">
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="bg-muted/50 text-muted-foreground font-bold border-b border-border">
+                  <th className="py-3 px-4 w-12 text-center">No</th>
+                  <th className="py-3 px-4 w-28">NIS</th>
+                  <th className="py-3 px-4">Nama Siswa</th>
+                  <th className="py-3 px-4 text-center">Status Kehadiran</th>
+                  <th className="py-3 px-4 min-w-[200px]">Keterangan / Catatan</th>
                 </tr>
-              ) : (
-                students.map((st, idx) => (
-                  <tr key={st.id} className="hover:bg-muted/30 transition">
-                    <td className="py-2.5 px-3 text-center font-mono font-bold text-muted-foreground">{idx + 1}</td>
-                    <td className="py-2.5 px-3 font-mono">{st.nis}</td>
-                    <td className="py-2.5 px-3 font-bold text-foreground">{st.name}</td>
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {(["HADIR", "SAKIT", "IZIN", "ALPA"] as const).map((stt) => (
+              </thead>
+              <tbody className="divide-y divide-border">
+                {students.map((student, index) => (
+                  <tr key={student.id} className="hover:bg-muted/30 transition">
+                    <td className="py-3 px-4 text-center font-mono font-medium">{index + 1}</td>
+                    <td className="py-3 px-4 font-mono font-semibold text-muted-foreground">{student.nis}</td>
+                    <td className="py-3 px-4 font-bold text-foreground">{student.name}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-center gap-1.5">
+                        {(["HADIR", "SAKIT", "IZIN", "ALPA"] as const).map((st) => (
                           <button
-                            key={stt}
+                            key={st}
                             type="button"
-                            onClick={() => handleSetStatus(st.id, stt)}
-                            className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all ${
-                              st.status === stt
-                                ? stt === "HADIR"
+                            onClick={() => handleSetStatus(student.id, st)}
+                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${student.status === st
+                                ? st === "HADIR"
                                   ? "bg-emerald-600 text-white shadow-xs"
-                                  : stt === "SAKIT"
-                                  ? "bg-amber-600 text-white shadow-xs"
-                                  : stt === "IZIN"
-                                  ? "bg-blue-600 text-white shadow-xs"
-                                  : "bg-red-600 text-white shadow-xs"
+                                  : st === "SAKIT"
+                                    ? "bg-amber-600 text-white shadow-xs"
+                                    : st === "IZIN"
+                                      ? "bg-blue-600 text-white shadow-xs"
+                                      : "bg-rose-600 text-white shadow-xs"
                                 : "bg-muted text-muted-foreground hover:bg-muted/80"
-                            }`}
+                              }`}
                           >
-                            {stt}
+                            {st}
                           </button>
                         ))}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-3 px-4">
                       <Input
                         placeholder="Tuliskan catatan/keterangan..."
-                        value={st.notes || ""}
-                        onChange={(e) => handleSetNotes(st.id, e.target.value)}
-                        className="h-7 text-xs bg-background/80 border-border"
+                        value={student.notes || ""}
+                        onChange={(e) => handleSetNotes(student.id, e.target.value)}
+                        className="h-8 text-xs bg-background"
                       />
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

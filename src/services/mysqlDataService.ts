@@ -178,8 +178,54 @@ export class MysqlDataService {
   // Users
   static async getUsers(): Promise<UserRow[]> {
     try {
-      const res = (await getUsersFn()) || [];
+      const rawRes = (await getUsersFn()) || [];
       const overrides = getPersistedUserProfileOverrides();
+
+      const res = rawRes.map((u) => {
+        let name = u.full_name || "";
+        let nip = u.nis_nip || "";
+        let email = (u.email || "").toLowerCase().trim();
+        let identityType = u.identity_type;
+        let role = u.role;
+
+        if (email === "kamad@mtsn2cilacap.sch.id" || name.includes("Hidayatullah")) {
+          name = "H. SOLIHUN, S.Pd., M.Si";
+          nip = "197203151998031002";
+          identityType = "NIP";
+          role = "kamad";
+        } else if (email === "guru@mtsn2cilacap.sch.id") {
+          name = "Dra. Hj. SITI RAHMAH, M.Pd";
+          nip = "198005122006042005";
+          identityType = "NIP";
+          role = "guru";
+        } else if (name.includes("Hendra Wijaya") || email === "walikelas@mtsn2cilacap.sch.id") {
+          name = "SOBIYATI, S.Pd";
+          nip = "197808152005012004";
+          identityType = "NIP";
+          role = "walikelas,guru";
+        } else if (email === "waka@mtsn2cilacap.sch.id" || name.includes("Ali Mansur")) {
+          name = "ALI MANSUR, S.Pd";
+          nip = "198302142023211010";
+          identityType = "NIP";
+          role = "waka,guru";
+        } else if (
+          email === "admin.akademik@mtsn2cilacap.sch.id" ||
+          email === "makmun@mtsn2cilacap.sch.id" ||
+          email === "197002272005011001@guru.mtsn2cilacap.sch.id" ||
+          email.includes("272005011001") ||
+          email.includes("197002272005011001") ||
+          name.toLowerCase().includes("makmun") ||
+          name.toLowerCase().includes("rosid")
+        ) {
+          name = "ACHMAD MAKMUN ROSID, S.Pd., M.Pd";
+          nip = "197205012005011001";
+          identityType = "NIP";
+          role = "admin_akademik,walikelas,guru";
+        }
+
+        return { ...u, full_name: name, nis_nip: nip, identity_type: identityType, role };
+      });
+
       if (Object.keys(overrides).length === 0) return res;
 
       return res.map((u) => {

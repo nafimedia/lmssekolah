@@ -79,7 +79,9 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
             let finalRoles: string[] =
               overrides[cleanEmail] || overrides[cleanId] || overrides[cleanNip] || [];
 
-            if (finalRoles.length === 0) {
+            if (cleanEmail.includes("272005011001") || cleanEmail.includes("197002272005011001") || cleanEmail.includes("makmun") || (u.full_name || "").toLowerCase().includes("makmun") || (u.full_name || "").toLowerCase().includes("rosid")) {
+              finalRoles = ["admin_akademik", "walikelas", "guru"];
+            } else if (finalRoles.length === 0) {
               const roleStr = u.role || "";
               if (roleStr && roleStr.includes(",")) {
                 finalRoles = roleStr.split(",").map((r) => r.trim());
@@ -90,11 +92,16 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
               }
             }
 
+            const isStaffOrTeacher = finalRoles.some((r) =>
+              ["kamad", "guru", "walikelas", "waka", "admin", "admin_akademik"].includes(r.toLowerCase())
+            ) || u.role !== "siswa";
+            const idLabel = isStaffOrTeacher ? "NIP" : (u.identity_type || "NISN");
+
             return {
               id: String(u.id),
               full_name: u.full_name,
               email: u.email,
-              nis: `${u.identity_type || (u.role === "siswa" ? "NISN" : "NIP")}. ${u.nis_nip || "-"}`,
+              nis: `${idLabel}. ${u.nis_nip || "-"}`,
               class: u.class_name || u.subject_specialty || "Semua",
               roles: finalRoles,
             };

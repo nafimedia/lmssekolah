@@ -473,6 +473,13 @@ export interface HafalanRow {
   ustadz: string;
   tgl: string;
   murojaah?: string;
+  jenis_setoran?: "ziyadah" | "murojaah";
+  score_kelancaran?: number;
+  score_tajwid?: number;
+  score_makhraj?: number;
+  score_fashahah?: number;
+  score_adab?: number;
+  notes?: string;
   created_at?: string;
 }
 
@@ -1406,10 +1413,13 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
         )
       `).catch(() => {});
 
-      // Search user by email OR nis_nip
+      // Extract prefix if identifier is email (e.g. 3122531880@siswa.mtsn2cilacap.sch.id -> 3122531880)
+      const extractedNisNip = cleanIdentifier.includes("@") ? cleanIdentifier.split("@")[0] : cleanIdentifier;
+
+      // Search user by email OR nis_nip OR extracted NIS/NIP
       let user = await queryOne<UserRow & { password_hash?: string }>(
-        "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? LIMIT 1",
-        [cleanIdentifier, cleanIdentifier]
+        "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? OR nis_nip = ? LIMIT 1",
+        [cleanIdentifier, cleanIdentifier, extractedNisNip]
       );
 
       const bcrypt = await import("bcryptjs");
@@ -1420,7 +1430,7 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
       if (!user) {
         const DEFAULT_SEED_USERS: Record<string, { role: string; name: string; class?: string; nis_nip?: string; id_type?: string }> = {
           "admin@mail.com": { role: "admin", name: "Super Administrator MTsN 2", nis_nip: "198501012010011001", id_type: "NIP" },
-          "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik,guru", name: "AH. SYARIF HIDAYAH, S.Pd.I", class: "VIII, IX", nis_nip: "199204042025051002", id_type: "NIP" },
+          "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik,walikelas,guru", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", class: "VIII-B", nis_nip: "197205012005011001", id_type: "NIP" },
           "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197905162006041020", id_type: "NIP" },
           "waka@mtsn2cilacap.sch.id": { role: "waka,guru", name: "ALI MANSUR, S.Pd", class: "VIII", nis_nip: "198302142023211010", id_type: "NIP" },
           "walikelas@mtsn2cilacap.sch.id": { role: "walikelas,guru", name: "SOBIYATI, S.Pd", class: "IX-A", nis_nip: "197906142007102002", id_type: "NIP" },
@@ -1428,7 +1438,7 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
           "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class: "VIII-A", nis_nip: "0127790481", id_type: "NISN" },
         };
 
-        const seedInfo = DEFAULT_SEED_USERS[cleanIdentifier];
+        const seedInfo = DEFAULT_SEED_USERS[cleanIdentifier] || DEFAULT_SEED_USERS[extractedNisNip];
         if (seedInfo) {
           const defaultPass = cleanIdentifier === "admin@mail.com" ? "AdminMTsN2Cilacap2026!" : "MtsN2#2026!Sec";
           const newUserId = `usr-${seedInfo.role}-${Date.now()}`;
@@ -1440,8 +1450,8 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
           ).catch(() => {});
 
           user = await queryOne<UserRow & { password_hash?: string }>(
-            "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? LIMIT 1",
-            [cleanIdentifier, cleanIdentifier]
+            "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? OR nis_nip = ? LIMIT 1",
+            [cleanIdentifier, cleanIdentifier, extractedNisNip]
           );
         }
       }

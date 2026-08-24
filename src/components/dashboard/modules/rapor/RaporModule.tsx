@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Award, Download, FileText, CheckCircle2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Award, Download, FileText, CheckCircle2, Inbox } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { MysqlDataService } from "@/services/mysqlDataService";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { getTeacherAssignedSubjects, getTeacherAssignedClasses, ALL_SCHOOL_SUBJECTS, isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 import { exportToExcelXml } from "@/utils/excelExporter";
@@ -28,9 +29,71 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
   const [selectedEntryModal, setSelectedEntryModal] = useState<any>(null);
 
   const [isPrintRaporOpen, setIsPrintRaporOpen] = useState(false);
-  const [raporStudentName, setRaporStudentName] = useState("ALIYA QIARA ABDULLAH");
-  const [raporNisn, setRaporNisn] = useState("12123301000288");
-  const [raporClass, setRaporClass] = useState("8A (VIII A)");
+  const activeUser = MysqlAuthService.getActiveUser();
+  const [raporStudentName, setRaporStudentName] = useState(activeUser?.full_name || "ALIYA QIARA ABDULLAH");
+  const [raporNisn, setRaporNisn] = useState(activeUser?.nis_nip || "0127790481");
+  const [raporClass, setRaporClass] = useState(activeUser?.class_name || "VIII A");
+
+  const [dbStudentGrades, setDbStudentGrades] = useState<any[]>([]);
+  const [loadingGrades, setLoadingGrades] = useState(false);
+
+  useEffect(() => {
+    if (activeRole === "siswa") {
+      setLoadingGrades(true);
+      Promise.all([
+        MysqlDataService.getSubmissions(),
+        MysqlDataService.getCbtResults(),
+      ])
+        .then(([subs, cbts]) => {
+          const userSession = MysqlAuthService.getActiveUser();
+          const userEmail = (userSession?.email || "").toLowerCase();
+          const userName = (userSession?.full_name || "").toLowerCase();
+
+          const mySubs = (subs || []).filter(
+            (s) => (s.user_id && s.user_id.toLowerCase() === userEmail) || (s.student_name && s.student_name.toLowerCase() === userName)
+          );
+
+          const myCbts = (cbts || []).filter(
+            (c) => (c.user_id && c.user_id.toLowerCase() === userEmail) || (c.student_name && c.student_name.toLowerCase() === userName)
+          );
+
+          const combined: any[] = [];
+          mySubs.forEach((s) => {
+            if (s.score && s.score > 0) {
+              combined.push({
+                code: "SUB-" + s.id,
+                mapel: "Tugas LKPD",
+                teacher: "Guru Pengampu",
+                tugas: s.score,
+                kuis: 0,
+                cbt: 0,
+                avg: s.score,
+                kkm: s.score >= 75 ? "Tuntas (≥75)" : "Belum Tuntas (<75)",
+              });
+            }
+          });
+
+          myCbts.forEach((c) => {
+            if (c.score && c.score > 0) {
+              combined.push({
+                code: "CBT-" + c.id,
+                mapel: c.exam_title || "Kuis / CBT",
+                teacher: "Guru Pengampu",
+                tugas: 0,
+                kuis: c.score,
+                cbt: c.score,
+                avg: c.score,
+                kkm: c.score >= 75 ? "Tuntas (≥75)" : "Belum Tuntas (<75)",
+              });
+            }
+          });
+
+          setDbStudentGrades(combined);
+        })
+        .catch(() => setDbStudentGrades([]))
+        .finally(() => setLoadingGrades(false));
+    }
+  }, [activeRole]);
 
   const handlePrintRapor = () => {
     window.print();
@@ -120,11 +183,34 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
     { name: "Kelas IX B", wali: "SAYONO, S.Pd., M.Pd.", siswa: 32, avg: 88.5, icon: "🎓", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
   ];
 
+  const studentSubjectLeger = useMemo(() => {
+    if (activeRole !== "siswa") return mapelDetails;
+
+    return mapelDetails.map((m) => {
+      const matchedGrade = dbStudentGrades.find(
+        (g) => g.mapel && g.mapel.toLowerCase().includes(m.mapel.toLowerCase())
+      );
+      const tugasScore = matchedGrade?.tugas || 0;
+      const kuisScore = matchedGrade?.kuis || 0;
+      const cbtScore = matchedGrade?.cbt || 0;
+      const avgScore = matchedGrade?.avg || 0;
+
+      return {
+        ...m,
+        tugas: tugasScore,
+        kuis: kuisScore,
+        cbt: cbtScore,
+        avg: avgScore,
+        kkm: avgScore >= 75 ? "Tuntas (≥75)" : "Belum Ada Nilai (0 Poin)",
+      };
+    });
+  }, [activeRole, dbStudentGrades]);
+
   const renderGradeCell = (val: number | null | undefined) => {
     if (val === null || val === undefined || isNaN(val) || val === 0) {
-      return <span className="text-muted-foreground font-mono italic text-xs">-</span>;
+      return <span className="text-muted-foreground font-mono font-semibold text-xs">0</span>;
     }
-    return <span className="font-mono font-bold">{val}</span>;
+    return <span className="font-mono font-bold text-foreground">{val}</span>;
   };
 
   return (
@@ -134,9 +220,8 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
           title="Rekap Nilai & E-Rapor Saya"
           subtitle="Transkrip nilai tugas, kuis, CBT, dan lembar Rapor Hasil Belajar Kurikulum Merdeka"
           icon={Award}
-          studentClass="Kelas VIII A"
-          statusText="Status KKTP: 100% Tuntas"
-          statusVariant="success"
+          statusText={studentSubjectLeger.some((m) => m.avg > 0) ? "Status KKTP: Terverifikasi" : "Status KKTP: Belum Ada Data (0 Poin)"}
+          statusVariant={studentSubjectLeger.some((m) => m.avg > 0) ? "success" : "warning"}
           actionButtons={
             <Button size="sm" onClick={() => setIsPrintRaporOpen(true)} className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs">
               <FileText className="h-4 w-4" /> Cetak E-Rapor PDF
@@ -188,7 +273,7 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {mapelDetails.map((m) => {
+              {(activeRole === "siswa" ? studentSubjectLeger : mapelDetails).map((m) => {
                 const isMySubject = isGuru ? isSubjectAllowedForUser(m.mapel) : true;
                 return (
                   <tr
@@ -211,7 +296,14 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
                     <td className="py-3 px-3 text-center">{renderGradeCell(m.cbt)}</td>
                     <td className="py-3 px-3 text-center text-primary text-sm">{renderGradeCell(m.avg)}</td>
                     <td className="p-3 text-center">
-                      <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 font-bold">
+                      <Badge
+                        variant="outline"
+                        className={
+                          m.avg >= 75
+                            ? "text-emerald-500 border-emerald-500/30 font-bold"
+                            : "text-muted-foreground border-border font-medium"
+                        }
+                      >
                         {m.kkm}
                       </Badge>
                     </td>

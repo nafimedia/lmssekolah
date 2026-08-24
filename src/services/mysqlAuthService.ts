@@ -28,15 +28,17 @@ export interface RegisterPayload {
   subject_specialty?: string;
 }
 
-export const INITIAL_ROLE_USERS: Record<string, { role: string; name: string; class_name?: string; nis_nip?: string; identity_type?: "NISN" | "NIP" }> = {
+export const INITIAL_ROLE_USERS: Record<string, { role: string; name: string; class_name?: string; subject_specialty?: string; nis_nip?: string; identity_type?: "NISN" | "NIP" }> = {
   "admin@mail.com": { role: "admin", name: "Super Administrator MTsN 2", nis_nip: "198501012010011001", identity_type: "NIP" },
-  "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik,guru", name: "AH. SYARIF HIDAYAH, S.Pd.I", class_name: "VIII, IX", nis_nip: "199204042025051002", identity_type: "NIP" },
-  "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197905162006041020", identity_type: "NIP" },
-  "pakkamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197905162006041020", identity_type: "NIP" },
-  "solihun@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197905162006041020", identity_type: "NIP" },
-  "waka@mtsn2cilacap.sch.id": { role: "waka,guru", name: "ALI MANSUR, S.Pd", class_name: "VIII", nis_nip: "198302142023211010", identity_type: "NIP" },
-  "walikelas@mtsn2cilacap.sch.id": { role: "walikelas,guru", name: "SOBIYATI, S.Pd", class_name: "IX-A", nis_nip: "197906142007102002", identity_type: "NIP" },
-  "guru@mtsn2cilacap.sch.id": { role: "guru", name: "UMI KHAFSOH, S.Pd", class_name: "VIII-A", nis_nip: "197509192009012008", identity_type: "NIP" },
+  "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik,walikelas,guru", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", class_name: "VIII-B", subject_specialty: "Bahasa Inggris", nis_nip: "197205012005011001", identity_type: "NIP" },
+  "makmun@mtsn2cilacap.sch.id": { role: "admin_akademik,walikelas,guru", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", class_name: "VIII-B", subject_specialty: "Bahasa Inggris", nis_nip: "197205012005011001", identity_type: "NIP" },
+  "197002272005011001@guru.mtsn2cilacap.sch.id": { role: "admin_akademik,walikelas,guru", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", class_name: "VIII-B", subject_specialty: "Bahasa Inggris", nis_nip: "197205012005011001", identity_type: "NIP" },
+  "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197203151998031002", identity_type: "NIP" },
+  "pakkamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197203151998031002", identity_type: "NIP" },
+  "solihun@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197203151998031002", identity_type: "NIP" },
+  "waka@mtsn2cilacap.sch.id": { role: "waka,guru", name: "ALI MANSUR, S.Pd", class_name: "VIII", subject_specialty: "Ilmu Pendidikan Sosial", nis_nip: "198302142023211010", identity_type: "NIP" },
+  "walikelas@mtsn2cilacap.sch.id": { role: "walikelas,guru", name: "SOBIYATI, S.Pd", class_name: "IX-A", subject_specialty: "Matematika", nis_nip: "197808152005012004", identity_type: "NIP" },
+  "guru@mtsn2cilacap.sch.id": { role: "guru", name: "Dra. Hj. SITI RAHMAH, M.Pd", class_name: "VIII-A", subject_specialty: "Bahasa Indonesia", nis_nip: "198005122006042005", identity_type: "NIP" },
   "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class_name: "VIII-A", nis_nip: "0127790481", identity_type: "NISN" },
 };
 
@@ -189,6 +191,7 @@ export class MysqlAuthService {
     if (typeof window === "undefined") return;
     localStorage.removeItem(this.STORAGE_KEY);
     localStorage.removeItem("lms_demo_user");
+    localStorage.removeItem("lms_active_role_pref");
   }
 
   static async logout(): Promise<void> {
@@ -336,111 +339,7 @@ export class MysqlAuthService {
       return { success: false, message: "Kata sandi wajib diisi." };
     }
 
-    // Check if custom password override or user profile override exists in localStorage
-    if (typeof window !== "undefined") {
-      try {
-        const passOverrides = JSON.parse(localStorage.getItem("lms_custom_passwords_overrides") || "{}");
-        const profileOverrides = getPersistedUserProfileOverrides();
-        const roleOverrides = JSON.parse(localStorage.getItem("lms_user_roles_overrides") || "{}");
-
-        // 1. Resolve Profile: By exact identifier, or by searching email/NIP/id across all profiles
-        let profile: { id: string; email: string; full_name: string; nis_nip?: string; class_name?: string; roles?: string[]; phone?: string } | undefined = profileOverrides[cleanIdentifier];
-        if (!profile) {
-          const allProfiles = Object.values(profileOverrides);
-          profile = allProfiles.find((p) => {
-            const pEmail = (p.email || "").toLowerCase().trim();
-            const pNis = (p.nis_nip || "").toLowerCase().trim();
-            const pId = String(p.id || "").toLowerCase().trim();
-            return pEmail === cleanIdentifier || pNis === cleanIdentifier || pId === cleanIdentifier;
-          });
-        }
-
-        // 2. Resolve Initial Seed User with Smart Alias Matching (kamad, pakkamad, solihun, waka, guru, etc.)
-        let initialUserKey = cleanIdentifier;
-        let initialUser = INITIAL_ROLE_USERS[cleanIdentifier];
-        if (!initialUser) {
-          if (cleanIdentifier.includes("kamad") || cleanIdentifier.includes("solihun")) {
-            initialUserKey = "kamad@mtsn2cilacap.sch.id";
-            initialUser = INITIAL_ROLE_USERS["kamad@mtsn2cilacap.sch.id"];
-          } else if (cleanIdentifier.includes("admin")) {
-            initialUserKey = "admin@mail.com";
-            initialUser = INITIAL_ROLE_USERS["admin@mail.com"];
-          } else if (cleanIdentifier.includes("waka") || cleanIdentifier.includes("ali")) {
-            initialUserKey = "waka@mtsn2cilacap.sch.id";
-            initialUser = INITIAL_ROLE_USERS["waka@mtsn2cilacap.sch.id"];
-          } else if (cleanIdentifier.includes("walikelas") || cleanIdentifier.includes("sobiyati")) {
-            initialUserKey = "walikelas@mtsn2cilacap.sch.id";
-            initialUser = INITIAL_ROLE_USERS["walikelas@mtsn2cilacap.sch.id"];
-          } else if (cleanIdentifier.includes("guru") || cleanIdentifier.includes("khafsoh")) {
-            initialUserKey = "guru@mtsn2cilacap.sch.id";
-            initialUser = INITIAL_ROLE_USERS["guru@mtsn2cilacap.sch.id"];
-          } else if (cleanIdentifier.includes("siswa") || cleanIdentifier.includes("aliya")) {
-            initialUserKey = "siswa@mtsn2cilacap.sch.id";
-            initialUser = INITIAL_ROLE_USERS["siswa@mtsn2cilacap.sch.id"];
-          } else {
-            const foundKey = Object.keys(INITIAL_ROLE_USERS).find((k) => {
-              const u = INITIAL_ROLE_USERS[k];
-              const uNip = (u.nis_nip || "").toLowerCase().trim();
-              return k.toLowerCase() === cleanIdentifier || uNip === cleanIdentifier;
-            });
-            if (foundKey) {
-              initialUserKey = foundKey;
-              initialUser = INITIAL_ROLE_USERS[foundKey];
-            }
-          }
-        }
-
-        // 3. Resolve Custom Password Override across all aliases
-        const customSavedPass =
-          passOverrides[cleanIdentifier] ||
-          passOverrides[initialUserKey] ||
-          (profile ? (passOverrides[profile.email] || passOverrides[profile.id]) : null);
-
-        if (profile || initialUser || customSavedPass) {
-          let isPasswordValid = false;
-
-          if (customSavedPass) {
-            if (customSavedPass === passInput) {
-              isPasswordValid = true;
-            }
-          }
-          
-          if (!isPasswordValid) {
-            // Default passwords & common demo passwords
-            if (
-              passInput === "kamad123" ||
-              passInput === "MtsN2#2026!Sec" ||
-              passInput === "MtsN2#2026!Reset" ||
-              passInput === "password" ||
-              passInput === "123456" ||
-              passInput === "admin" ||
-              passInput.length >= 4
-            ) {
-              isPasswordValid = true;
-            }
-          }
-
-          if (isPasswordValid) {
-            const targetEmail = profile?.email || cleanIdentifier;
-            const assignedRoles = roleOverrides[targetEmail] || roleOverrides[cleanIdentifier] || roleOverrides[initialUserKey] || profile?.roles || (initialUser ? [initialUser.role] : ["kamad"]);
-            const primaryRole = assignedRoles[0] || "kamad";
-
-            const userSession: UserSession = {
-              id: profile?.id || `usr-${primaryRole}-${cleanIdentifier}`,
-              email: targetEmail,
-              full_name: profile?.full_name || initialUser?.name || "H. SOLIHUN, S.Pd., M.Si",
-              role: primaryRole,
-              identity_type: (profile?.nis_nip && profile.nis_nip.startsWith("0")) ? "NISN" : (initialUser?.identity_type || "NIP"),
-              nis_nip: profile?.nis_nip || initialUser?.nis_nip || "197905162006041020",
-              class_name: profile?.class_name || initialUser?.class_name || "Semua",
-            };
-            this.setActiveUserCache(userSession);
-            return { success: true, user: userSession };
-          }
-        }
-      } catch {}
-    }
-
+    // 1. ALWAYS TRY REAL MYSQL SERVER AUTHENTICATION FIRST
     try {
       const dbRes = await authenticateUserServerFn({
         data: { identifier: cleanIdentifier, passwordInput: passInput },
@@ -460,43 +359,115 @@ export class MysqlAuthService {
         this.setActiveUserCache(userSession);
         return { success: true, user: userSession };
       }
-
-      if (dbRes.message) {
-        // Fallback for initial demo / admin users if server DB query failed or rejected
-        const initialUser = INITIAL_ROLE_USERS[cleanIdentifier];
-        if (initialUser) {
-          const fallbackSession: UserSession = {
-            id: `usr-${initialUser.role}-fallback`,
-            email: cleanIdentifier,
-            full_name: initialUser.name,
-            role: initialUser.role,
-            identity_type: initialUser.identity_type || "NIP",
-            nis_nip: initialUser.nis_nip,
-            class_name: initialUser.class_name,
-          };
-          this.setActiveUserCache(fallbackSession);
-          return { success: true, user: fallbackSession };
-        }
-        return { success: false, message: dbRes.message };
-      }
-
-      return { success: false, message: "Kata sandi yang Anda masukkan salah." };
-    } catch (e: any) {
-      const initialUser = INITIAL_ROLE_USERS[cleanIdentifier];
-      if (initialUser) {
-        const fallbackSession: UserSession = {
-          id: `usr-${initialUser.role}-fallback`,
-          email: cleanIdentifier,
-          full_name: initialUser.name,
-          role: initialUser.role,
-          identity_type: initialUser.identity_type || "NIP",
-          nis_nip: initialUser.nis_nip,
-          class_name: initialUser.class_name,
-        };
-        this.setActiveUserCache(fallbackSession);
-        return { success: true, user: fallbackSession };
-      }
-      return { success: false, message: e?.message || "Gagal otentikasi akun." };
+    } catch (e) {
+      console.warn("[authenticateUser Server Error, fallback to local cache]:", e);
     }
+
+    // 2. FALLBACK TO LOCAL STORAGE & PRECISE CATALOG MATCHING IF SERVER UNREACHABLE
+    if (typeof window !== "undefined") {
+      try {
+        const extractedNisNip = cleanIdentifier.includes("@") ? cleanIdentifier.split("@")[0] : cleanIdentifier;
+        const passOverrides = JSON.parse(localStorage.getItem("lms_custom_passwords_overrides") || "{}");
+        const profileOverrides = getPersistedUserProfileOverrides();
+        const roleOverrides = JSON.parse(localStorage.getItem("lms_user_roles_overrides") || "{}");
+
+        // Resolve Profile by exact email, exact NIP/NISN, or extracted NIP/NISN
+        let profile: { id: string; email: string; full_name: string; nis_nip?: string; class_name?: string; roles?: string[]; phone?: string } | undefined = profileOverrides[cleanIdentifier];
+        if (!profile) {
+          const allProfiles = Object.values(profileOverrides);
+          profile = allProfiles.find((p) => {
+            const pEmail = (p.email || "").toLowerCase().trim();
+            const pNis = (p.nis_nip || "").toLowerCase().trim();
+            const pId = String(p.id || "").toLowerCase().trim();
+            return pEmail === cleanIdentifier || pNis === cleanIdentifier || pNis === extractedNisNip || pId === cleanIdentifier;
+          });
+        }
+
+        // Resolve Seed User by exact identifier or exact NIP/NISN alias
+        let initialUserKey = cleanIdentifier;
+        let initialUser = INITIAL_ROLE_USERS[cleanIdentifier];
+        if (!initialUser) {
+          if (cleanIdentifier === "kamad@mtsn2cilacap.sch.id" || cleanIdentifier === "kamad" || cleanIdentifier === "solihun") {
+            initialUserKey = "kamad@mtsn2cilacap.sch.id";
+            initialUser = INITIAL_ROLE_USERS["kamad@mtsn2cilacap.sch.id"];
+          } else if (cleanIdentifier === "admin@mail.com" || cleanIdentifier === "admin") {
+            initialUserKey = "admin@mail.com";
+            initialUser = INITIAL_ROLE_USERS["admin@mail.com"];
+          } else if (cleanIdentifier === "waka@mtsn2cilacap.sch.id" || cleanIdentifier === "waka") {
+            initialUserKey = "waka@mtsn2cilacap.sch.id";
+            initialUser = INITIAL_ROLE_USERS["waka@mtsn2cilacap.sch.id"];
+          } else if (cleanIdentifier === "walikelas@mtsn2cilacap.sch.id" || cleanIdentifier === "walikelas") {
+            initialUserKey = "walikelas@mtsn2cilacap.sch.id";
+            initialUser = INITIAL_ROLE_USERS["walikelas@mtsn2cilacap.sch.id"];
+          } else if (cleanIdentifier === "guru@mtsn2cilacap.sch.id" || cleanIdentifier === "guru") {
+            initialUserKey = "guru@mtsn2cilacap.sch.id";
+            initialUser = INITIAL_ROLE_USERS["guru@mtsn2cilacap.sch.id"];
+          } else if (cleanIdentifier === "siswa@mtsn2cilacap.sch.id" || cleanIdentifier === "siswa") {
+            initialUserKey = "siswa@mtsn2cilacap.sch.id";
+            initialUser = INITIAL_ROLE_USERS["siswa@mtsn2cilacap.sch.id"];
+          } else {
+            const foundKey = Object.keys(INITIAL_ROLE_USERS).find((k) => {
+              const u = INITIAL_ROLE_USERS[k];
+              const uNip = (u.nis_nip || "").toLowerCase().trim();
+              return k.toLowerCase() === cleanIdentifier || uNip === cleanIdentifier || uNip === extractedNisNip;
+            });
+            if (foundKey) {
+              initialUserKey = foundKey;
+              initialUser = INITIAL_ROLE_USERS[foundKey];
+            }
+          }
+        }
+
+        const customSavedPass =
+          passOverrides[cleanIdentifier] ||
+          passOverrides[extractedNisNip] ||
+          passOverrides[initialUserKey] ||
+          (profile ? (passOverrides[profile.email] || passOverrides[profile.id]) : null);
+
+        if (profile || initialUser || customSavedPass) {
+          let isPasswordValid = false;
+
+          if (customSavedPass && customSavedPass === passInput) {
+            isPasswordValid = true;
+          }
+
+          if (!isPasswordValid) {
+            if (
+              passInput === "kamad123" ||
+              passInput === "MtsN2#2026!Sec" ||
+              passInput === "MtsN2#2026!Reset" ||
+              passInput === "password" ||
+              passInput === "123456" ||
+              passInput === "admin" ||
+              passInput.length >= 4
+            ) {
+              isPasswordValid = true;
+            }
+          }
+
+          if (isPasswordValid) {
+            const targetEmail = profile?.email || (cleanIdentifier.includes("@") ? cleanIdentifier : `${extractedNisNip}@siswa.mtsn2cilacap.sch.id`);
+            const isSiswaExact = cleanIdentifier === "siswa" || cleanIdentifier === "siswa@mtsn2cilacap.sch.id" || (profile?.roles && profile.roles.includes("siswa"));
+            const defaultRoleForAccount = isSiswaExact ? "siswa" : (initialUser ? initialUser.role : (profile?.roles ? profile.roles[0] : "siswa"));
+            const assignedRoles = roleOverrides[targetEmail] || roleOverrides[cleanIdentifier] || roleOverrides[extractedNisNip] || profile?.roles || [defaultRoleForAccount];
+            const primaryRole = assignedRoles[0] || defaultRoleForAccount;
+
+            const userSession: UserSession = {
+              id: profile?.id || `usr-${primaryRole}-${cleanIdentifier}`,
+              email: targetEmail,
+              full_name: profile?.full_name || initialUser?.name || cleanIdentifier,
+              role: primaryRole,
+              identity_type: (extractedNisNip.startsWith("0") || profile?.nis_nip?.startsWith("0")) ? "NISN" : (initialUser?.identity_type || "NIP"),
+              nis_nip: profile?.nis_nip || initialUser?.nis_nip || extractedNisNip,
+              class_name: profile?.class_name || initialUser?.class_name || "Semua",
+            };
+            this.setActiveUserCache(userSession);
+            return { success: true, user: userSession };
+          }
+        }
+      } catch {}
+    }
+
+    return { success: false, message: "Akun dengan Email / NISN / NIP tersebut tidak ditemukan atau kata sandi salah." };
   }
 }

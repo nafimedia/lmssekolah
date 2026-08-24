@@ -105,7 +105,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
       toast.success(`📚 Berhasil Meminjam "${bookTitle}"! Tersimpan di MySQL Database.`);
       await loadData();
     } else {
-      toast.error("Gagal mencatat peminjaman ke MySQL.");
+      toast.error("Gagal mencatat peminjaman");
     }
   };
 
@@ -140,7 +140,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("lms_elibrary_books_v2", JSON.stringify(list));
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -222,7 +222,6 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
           title="E-Library & Buku Digital Saya"
           subtitle="Akses e-book modul pelajaran, video tutorial KBM, audio murottal, dan buku digital MTsN 2 Cilacap"
           icon={Library}
-          studentClass="Kelas VIII A"
           statusText="Buku Digital Terverifikasi"
           statusVariant="success"
         />
@@ -403,9 +402,8 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
             {activePdfModal?.url ? (
               <iframe
                 src={activePdfModal.url}
-                className={`w-full rounded-xl border border-border shadow-inner bg-muted/20 ${
-                  isPdfFullScreen ? "h-[80vh]" : "h-[62vh]"
-                }`}
+                className={`w-full rounded-xl border border-border shadow-inner bg-muted/20 ${isPdfFullScreen ? "h-[80vh]" : "h-[62vh]"
+                  }`}
                 title={activePdfModal.t}
               />
             ) : (

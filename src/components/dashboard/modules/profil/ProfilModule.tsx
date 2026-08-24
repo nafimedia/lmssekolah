@@ -34,15 +34,15 @@ export function ProfilModule({
   const [updateNotification, setUpdateNotification] = useState<string | null>(null);
 
   // Form states for biodata
-  const [name, setName] = useState(userProfile?.name || "ABIGAIL HASAN YUSUF PRAYOGA");
-  const [nipNis, setNipNis] = useState(userProfile?.nipNis || "0081928371");
-  const [email, setEmail] = useState(userProfile?.email || "abigail@siswa.mtsn2cilacap.sch.id");
+  const [name, setName] = useState(userProfile?.name || "H. SOLIHUN, S.Pd., M.Si");
+  const [nipNis, setNipNis] = useState(userProfile?.nipNis || "197203151998031002");
+  const [email, setEmail] = useState(userProfile?.email || "kamad@mtsn2cilacap.sch.id");
   const [phone, setPhone] = useState(userProfile?.phone || "081234567890");
   const [address, setAddress] = useState(userProfile?.address || "Jl. Raya Cilacap No. 12, Karangpucung");
-  const [tagline, setTagline] = useState(userProfile?.tagline || "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀");
-  const [classNameState, setClassNameState] = useState(userProfile?.className || "VIII (Delapan)");
-  const [rombelName, setRombelName] = useState(userProfile?.rombelName || "VIII A (Rombel 8A)");
-  const [waliKelas, setWaliKelas] = useState(userProfile?.waliKelas || "Dra. Hj. Siti Rahmah, M.Pd");
+  const [tagline, setTagline] = useState(userProfile?.tagline || "Meningkatkan Kualitas & Prestasi Madrasah MTsN 2 Cilacap 🚀");
+  const [classNameState, setClassNameState] = useState(userProfile?.className || "-");
+  const [rombelName, setRombelName] = useState(userProfile?.rombelName || "-");
+  const [waliKelas, setWaliKelas] = useState(userProfile?.waliKelas || "-");
 
   // Avatar upload states
   const [previewAvatar, setPreviewAvatar] = useState<string | null>(userProfile?.avatarUrl || null);
@@ -53,6 +53,7 @@ export function ProfilModule({
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const isSiswa = activeRole === "siswa";
+  const showAchievementsTab = activeRole === "guru" || activeRole === "walikelas" || activeRole === "siswa";
 
   // Achievements State (MySQL Persisten)
   const [dbAchievements, setDbAchievements] = useState<UserAchievementRow[]>([]);
@@ -66,8 +67,10 @@ export function ProfilModule({
   };
 
   useEffect(() => {
-    loadAchievementsData();
-  }, []);
+    if (showAchievementsTab) {
+      loadAchievementsData();
+    }
+  }, [showAchievementsTab]);
 
   useEffect(() => {
     const activeUser = MysqlAuthService.getActiveUser();
@@ -78,18 +81,18 @@ export function ProfilModule({
       } catch (e) {}
     }
 
-    const currentEmail = activeUser?.email || userProfile?.email || "abigail@siswa.mtsn2cilacap.sch.id";
+    const currentEmail = activeUser?.email || userProfile?.email || "kamad@mtsn2cilacap.sch.id";
     const userBio = savedBio[currentEmail.toLowerCase()] || {};
 
-    setName(userBio.name || userProfile?.name || activeUser?.full_name || "ABIGAIL HASAN YUSUF PRAYOGA");
-    setEmail(userBio.email || userProfile?.email || activeUser?.email || "abigail@siswa.mtsn2cilacap.sch.id");
-    setNipNis(userBio.nipNis || userProfile?.nipNis || activeUser?.nis_nip || "0081928371");
+    setName(userBio.name || userProfile?.name || activeUser?.full_name || "H. SOLIHUN, S.Pd., M.Si");
+    setEmail(userBio.email || userProfile?.email || activeUser?.email || "kamad@mtsn2cilacap.sch.id");
+    setNipNis(userBio.nipNis || userProfile?.nipNis || activeUser?.nis_nip || "197203151998031002");
     setPhone(userBio.phone || userProfile?.phone || "081234567890");
     setAddress(userBio.address || userProfile?.address || "Jl. Raya Cilacap No. 12, Karangpucung");
-    setTagline(userBio.tagline || userProfile?.tagline || "Man Jadda Wajada - Barangsiapa bersungguh-sungguh pasti berhasil 🚀");
-    setClassNameState(userBio.className || userProfile?.className || "VIII (Delapan)");
-    setRombelName(userBio.rombelName || userProfile?.rombelName || "VIII A (Rombel 8A)");
-    setWaliKelas(userBio.waliKelas || userProfile?.waliKelas || "Dra. Hj. Siti Rahmah, M.Pd");
+    setTagline(userBio.tagline || userProfile?.tagline || "Meningkatkan Kualitas & Prestasi Madrasah MTsN 2 Cilacap 🚀");
+    setClassNameState(userBio.className || userProfile?.className || "-");
+    setRombelName(userBio.rombelName || userProfile?.rombelName || "-");
+    setWaliKelas(userBio.waliKelas || userProfile?.waliKelas || "-");
   }, [userProfile]);
 
   const handleSaveBiodata = async (e: React.FormEvent) => {
@@ -259,6 +262,13 @@ export function ProfilModule({
     }
   };
 
+  const profileTabs = [
+    { id: "biodata", label: "Biodata & Identitas", icon: UserIcon },
+    { id: "avatar", label: "Foto Avatar Digital", icon: Shield },
+    { id: "keamanan", label: "Keamanan & Password", icon: KeyRound },
+    ...(showAchievementsTab ? [{ id: "lencana", label: "Lencana & Prestasi", icon: Trophy }] : []),
+  ];
+
   return (
     <div className="space-y-6">
       <SectionHeader title="Profil Saya & Keamanan Akun" sub="Kelola informasi biodata diri, foto profil, dan keamanan akun." />
@@ -287,12 +297,7 @@ export function ProfilModule({
       )}
 
       <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80 w-fit">
-        {[
-          { id: "biodata", label: "Biodata & Identitas", icon: UserIcon },
-          { id: "avatar", label: "Foto Avatar Digital", icon: Shield },
-          { id: "keamanan", label: "Keamanan & Password", icon: KeyRound },
-          { id: "lencana", label: "Lencana & Prestasi", icon: Trophy },
-        ].map((t) => (
+        {profileTabs.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -354,7 +359,7 @@ export function ProfilModule({
         />
       )}
 
-      {activeTab === "lencana" && (
+      {activeTab === "lencana" && showAchievementsTab && (
         <AchievementsCard dbAchievements={dbAchievements} />
       )}
     </div>

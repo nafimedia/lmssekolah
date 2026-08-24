@@ -19,7 +19,7 @@ export function StudentHeaderBanner({
   subtitle,
   icon: Icon,
   iconColorClass = "text-emerald-600 dark:text-emerald-400",
-  studentClass = "Kelas VIII A",
+  studentClass,
   studentNisn,
   statusText = "Siswa Aktif MTsN 2 Cilacap",
   statusVariant = "success",
@@ -48,9 +48,11 @@ export function StudentHeaderBanner({
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
             {title}
           </h1>
-          <Badge className="bg-emerald-600 text-white font-extrabold text-xs px-2.5 py-0.5 shadow-2xs gap-1">
-            <GraduationCap className="h-3.5 w-3.5" /> {studentClass}
-          </Badge>
+          {studentClass && studentClass.trim() !== "" && (
+            <Badge className="bg-emerald-600 text-white font-extrabold text-xs px-2.5 py-0.5 shadow-2xs gap-1">
+              <GraduationCap className="h-3.5 w-3.5" /> {studentClass}
+            </Badge>
+          )}
           {studentNisn && (
             <Badge variant="outline" className="font-mono font-bold text-xs border-border">
               NISN: {studentNisn}

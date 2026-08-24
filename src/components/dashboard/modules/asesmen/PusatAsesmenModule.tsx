@@ -7,8 +7,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 import { toast } from "sonner";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
+import { TugasSiswaModule } from "./TugasSiswaModule";
+import { KuisSiswaModule } from "./KuisSiswaModule";
 
-export function PusatAsesmenModule({ activeRole, initialTab = "formatif" }: { activeRole?: string; initialTab?: string }) {
+export function PusatAsesmenModule({
+  activeRole,
+  initialTab = "formatif",
+  userProfile,
+}: {
+  activeRole?: string;
+  initialTab?: string;
+  userProfile?: any;
+}) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [quizzes, setQuizzes] = useState<any[]>([]);
 
@@ -17,6 +27,13 @@ export function PusatAsesmenModule({ activeRole, initialTab = "formatif" }: { ac
       setActiveTab(initialTab);
     }
   }, [initialTab]);
+
+  if (activeRole === "siswa") {
+    if (initialTab === "kuis" || activeTab === "kuis") {
+      return <KuisSiswaModule userProfile={userProfile} />;
+    }
+    return <TugasSiswaModule userProfile={userProfile} />;
+  }
 
   const handleCreateQuiz = () => {
     const newQuiz = {

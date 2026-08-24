@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-export function KktpSkemaTab() {
+interface KktpSkemaTabProps {
+  isKamad?: boolean;
+}
+
+export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
   const [defaultKktp, setDefaultKktp] = useState<number>(75);
   const [isEditingKktp, setIsEditingKktp] = useState<boolean>(false);
   const [tempKktp, setTempKktp] = useState<string>("75");
@@ -43,6 +47,11 @@ export function KktpSkemaTab() {
   ]);
 
   const handleSaveKktp = () => {
+    if (isKamad) {
+      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data KKTP (Read-Only).");
+      setIsEditingKktp(false);
+      return;
+    }
     const val = parseInt(tempKktp, 10);
     if (isNaN(val) || val < 50 || val > 100) {
       return toast.error("Nilai KKTP standar harus antara 50 s.d. 100!");
@@ -71,7 +80,11 @@ export function KktpSkemaTab() {
               <span className="text-muted-foreground block text-[10px]">KKTP Standar Utama:</span>
               <strong className="text-lg font-black font-mono text-emerald-600">{defaultKktp} / 100</strong>
             </div>
-            {!isEditingKktp ? (
+            {isKamad ? (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground font-bold shrink-0">
+                🔒 Read-Only (Kamad)
+              </Badge>
+            ) : !isEditingKktp ? (
               <Button
                 size="sm"
                 variant="outline"

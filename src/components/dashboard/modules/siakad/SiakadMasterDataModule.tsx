@@ -182,7 +182,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         />
       )}
 
-      {activeTab === "tahun_ajaran" && <TahunAjaranTab />}
+      {activeTab === "tahun_ajaran" && <TahunAjaranTab isKamad={isKamad} />}
 
       {activeTab === "kktp_skema" && <KktpSkemaTab />}
 

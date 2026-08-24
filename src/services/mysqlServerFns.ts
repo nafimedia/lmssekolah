@@ -1020,6 +1020,7 @@ export const getJadwalFn = createServerFn({ method: "GET" }).handler(
       }
 
       const initialSeed: JadwalRow[] = [
+        // Rombel 8A
         { hari: "Senin", jam: "07:30 - 09:00", mapel: "Al Qur'an Hadis", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
         { hari: "Senin", jam: "09:15 - 10:45", mapel: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "SOBIYATI, S.Pd" },
         { hari: "Senin", jam: "11:00 - 12:30", mapel: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "SAYONO, S.Pd., M.Pd." },
@@ -1033,6 +1034,38 @@ export const getJadwalFn = createServerFn({ method: "GET" }).handler(
         { hari: "Kamis", jam: "09:15 - 10:45", mapel: "Informatika", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
         { hari: "Jumat", jam: "07:30 - 09:00", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "TRIYONO, S.Pd" },
         { hari: "Sabtu", jam: "07:30 - 09:00", mapel: "Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "DRA. ENDAH SRI W" },
+
+        // Rombel 9A
+        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Al Qur'an Hadis", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        { hari: "Senin", jam: "09:15 - 10:45", mapel: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "SOBIYATI, S.Pd" },
+        { hari: "Senin", jam: "11:00 - 12:30", mapel: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "SAYONO, S.Pd., M.Pd." },
+        { hari: "Selasa", jam: "07:30 - 09:00", mapel: "Bahasa Inggris", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { hari: "Selasa", jam: "09:15 - 10:45", mapel: "Fikih", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "CARYATI, S.Pd.I" },
+        { hari: "Selasa", jam: "11:00 - 12:30", mapel: "Ilmu Pengetahuan Alam", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "Dra. Hj. SITI RAHMAH, M.Pd" },
+        { hari: "Rabu", jam: "07:30 - 09:00", mapel: "Akidah Akhlak", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "WAKHIBUN, S.Pd.I" },
+        { hari: "Rabu", jam: "09:15 - 10:45", mapel: "Sejarah Kebudayaan Islam", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "H. DASIRUN, S.Ag., M.Pd.I" },
+        { hari: "Rabu", jam: "11:00 - 12:30", mapel: "Bahasa Arab", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "ENDAH SUPRIHATIN, S.Pd" },
+        { hari: "Kamis", jam: "07:30 - 09:00", mapel: "Pendidikan Kewarganegaraan", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "MISBAH AHMAD DANI, S.Pd" },
+        { hari: "Kamis", jam: "09:15 - 10:45", mapel: "Informatika", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "FAHRUR ROZI, S.Kom" },
+        { hari: "Jumat", jam: "07:30 - 09:00", mapel: "PJOK", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "MISBAH AHMAD DANI, S.Pd" },
+        { hari: "Sabtu", jam: "07:30 - 09:00", mapel: "Seni Budaya", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "TRI WAHYUNI, S.Pd" },
+
+        // Rombel 9B
+        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "SOBIYATI, S.Pd" },
+        { hari: "Senin", jam: "09:15 - 10:45", mapel: "Al Qur'an Hadis", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
+        { hari: "Selasa", jam: "07:30 - 09:00", mapel: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "SAYONO, S.Pd., M.Pd." },
+        { hari: "Rabu", jam: "07:30 - 09:00", mapel: "Bahasa Inggris", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { hari: "Kamis", jam: "07:30 - 09:00", mapel: "Fikih", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "CARYATI, S.Pd.I" },
+
+        // Rombel 8B
+        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8B", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+        { hari: "Selasa", jam: "07:30 - 09:00", mapel: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8B", guru: "SAYONO, S.Pd., M.Pd." },
+
+        // Rombel 7A
+        { hari: "Senin", jam: "07:30 - 09:00", mapel: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7A", guru: "MISBAH AHMAD DANI, S.Pd" },
+
+        // Rombel 7B
+        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Bahasa Arab", tingkat: "Kelas VII", rombel: "Rombel 7B", guru: "ENDAH SUPRIHATIN, S.Pd" },
       ];
 
       for (const s of initialSeed) {

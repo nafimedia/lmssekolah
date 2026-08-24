@@ -240,12 +240,53 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
           </div>
         ) : (
           hariList.map((h) => {
-            const listForDay = (jadwalList || []).filter((s) => {
+            let listForDay = (jadwalList || []).filter((s) => {
               if (s.hari !== h) return false;
               const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
               const matchRombel = filterRombel === "Semua" || isSameClass(s.rombel, filterRombel);
               return matchKelas && matchRombel;
             });
+
+            if (listForDay.length === 0 && isSiswa) {
+              const defaultMapels: Record<string, Array<{ jam: string; mapel: string; guru: string }>> = {
+                Senin: [
+                  { jam: "07:30 - 09:00", mapel: "Al Qur'an Hadis", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
+                  { jam: "09:15 - 10:45", mapel: "Bahasa Indonesia", guru: "SOBIYATI, S.Pd" },
+                  { jam: "11:00 - 12:30", mapel: "Matematika", guru: "SAYONO, S.Pd., M.Pd." },
+                ],
+                Selasa: [
+                  { jam: "07:30 - 09:00", mapel: "Bahasa Inggris", guru: "MISBAHUL MUNIR, S.Pd" },
+                  { jam: "09:15 - 10:45", mapel: "Fikih", guru: "CARYATI, S.Pd.I" },
+                  { jam: "11:00 - 12:30", mapel: "Ilmu Pengetahuan Alam", guru: "NOVANTYA KARTIKAWATI, S.Pd" },
+                ],
+                Rabu: [
+                  { jam: "07:30 - 09:00", mapel: "Akidah Akhlak", guru: "WAKHIBUN, S.Pd.I" },
+                  { jam: "09:15 - 10:45", mapel: "Sejarah Kebudayaan Islam", guru: "H. DASIRUN, S.Ag., M.Pd.I" },
+                  { jam: "11:00 - 12:30", mapel: "Bahasa Arab", guru: "ENDAH SUPRIHATIN, S.Pd" },
+                ],
+                Kamis: [
+                  { jam: "07:30 - 09:00", mapel: "Pendidikan Kewarganegaraan", guru: "MISBAH AHMAD DANI, S.Pd" },
+                  { jam: "09:15 - 10:45", mapel: "Informatika", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
+                ],
+                Jumat: [
+                  { jam: "07:30 - 09:00", mapel: "PJOK", guru: "TRIYONO, S.Pd" },
+                ],
+                Sabtu: [
+                  { jam: "07:30 - 09:00", mapel: "Seni Budaya & Bahasa Jawa", guru: "DRA. ENDAH SRI W" },
+                ],
+              };
+
+              const template = defaultMapels[h] || [];
+              listForDay = template.map((item, idx) => ({
+                id: `def-${h}-${idx}`,
+                hari: h,
+                jam: item.jam,
+                mapel: item.mapel,
+                tingkat: filterKelas,
+                rombel: filterRombel,
+                guru: item.guru,
+              }));
+            }
 
             return (
               <Card key={h} className="border-border shadow-xs">

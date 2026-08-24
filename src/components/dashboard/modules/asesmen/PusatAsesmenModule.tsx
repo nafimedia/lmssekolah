@@ -100,14 +100,26 @@ export function PusatAsesmenModule({ activeRole, initialTab = "formatif" }: { ac
                     <td className="p-3 font-medium">{"Al-Quran Hadits (Kelas VIII A)"}</td>
                     <td className="p-3 text-center font-mono">15 Juli 2026</td>
                     <td className="p-3 text-center font-mono font-bold text-emerald-500">32/32 Siswa (100%)</td>
-                    <td className="p-3 text-right"><Badge className="bg-emerald-600 text-white">TUNTAS</Badge></td>
+                    <td className="p-3 text-right">
+                      {isSubjectAllowedForUser("Al-Quran Hadits") ? (
+                        <Badge className="bg-emerald-600 text-white cursor-pointer" onClick={() => toast.success("Edit Nilai Formatif 1 Tajwid")}>✏️ Edit Skor</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 font-bold">🔒 Read-Only (Guru Lain)</Badge>
+                      )}
+                    </td>
                   </tr>
                   <tr className="hover:bg-muted/30 transition">
                     <td className="p-3 font-bold text-foreground">Formatif 2: Diskusi Kelompok Syarat Sembelihan</td>
                     <td className="p-3 font-medium">Fiqih (Kelas IX C)</td>
                     <td className="p-3 text-center font-mono">20 Juli 2026</td>
                     <td className="p-3 text-center font-mono font-bold text-blue-500">28/32 Siswa (87%)</td>
-                    <td className="p-3 text-right"><Badge variant="outline" className="text-blue-500 border-blue-500/30">BERLANGSUNG</Badge></td>
+                    <td className="p-3 text-right">
+                      {isSubjectAllowedForUser("Fikih") ? (
+                        <Badge className="bg-blue-600 text-white cursor-pointer" onClick={() => toast.success("Edit Nilai Formatif 2 Fiqih")}>✏️ Edit Skor</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 font-bold">🔒 Read-Only (Guru Lain)</Badge>
+                      )}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -147,9 +159,9 @@ export function PusatAsesmenModule({ activeRole, initialTab = "formatif" }: { ac
                     <td className="p-3 text-center font-mono font-bold text-primary text-sm">91.4</td>
                     <td className="p-3 text-right">
                       {isSubjectAllowedForUser("Al-Quran Hadits") ? (
-                        <Button size="sm" variant="ghost" className="text-xs text-primary font-bold">Input Skor →</Button>
+                        <Button size="sm" variant="ghost" className="text-xs text-primary font-bold">✏️ Input Skor →</Button>
                       ) : (
-                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30">🔒 Read-Only</Badge>
+                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 font-bold">🔒 Read-Only (Guru Lain)</Badge>
                       )}
                     </td>
                   </tr>

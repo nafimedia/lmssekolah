@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
-import { getTeacherAssignedSubjects, getTeacherAssignedClasses, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
+import { getTeacherAssignedSubjects, getTeacherAssignedClasses, ALL_SCHOOL_SUBJECTS, isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 import { exportToExcelXml } from "@/utils/excelExporter";
 import { toast } from "sonner";
 
@@ -180,25 +180,58 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
                 <th className="py-3 px-3 text-center">Kuis</th>
                 <th className="py-3 px-3 text-center">CBT</th>
                 <th className="py-3 px-3 text-center">Nilai Akhir</th>
-                <th className="py-3 px-4 text-right">KKTP Status</th>
+                <th className="py-3 px-3 text-center">KKTP Status</th>
+                {isGuru && <th className="py-3 px-4 text-right">Aksi Penilaian</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {mapelDetails.map((m) => (
-                <tr key={m.code} className="hover:bg-muted/30 transition">
-                  <td className="py-3 px-4 font-bold text-foreground">{m.mapel}</td>
-                  <td className="py-3 px-3 text-muted-foreground">{m.teacher}</td>
-                  <td className="py-3 px-3 text-center">{renderGradeCell(m.tugas)}</td>
-                  <td className="py-3 px-3 text-center">{renderGradeCell(m.kuis)}</td>
-                  <td className="py-3 px-3 text-center">{renderGradeCell(m.cbt)}</td>
-                  <td className="py-3 px-3 text-center text-primary text-sm">{renderGradeCell(m.avg)}</td>
-                  <td className="p-3 text-right">
-                    <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 font-bold">
-                      {m.kkm}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
+              {mapelDetails.map((m) => {
+                const isMySubject = isGuru ? isSubjectAllowedForUser(m.mapel) : true;
+                return (
+                  <tr
+                    key={m.code}
+                    className={`transition ${
+                      isGuru && isMySubject
+                        ? "bg-emerald-500/5 hover:bg-emerald-500/10 border-l-4 border-l-emerald-500 font-medium"
+                        : "hover:bg-muted/30"
+                    }`}
+                  >
+                    <td className="py-3 px-4 font-bold text-foreground">
+                      {m.mapel}
+                      {isGuru && isMySubject && (
+                        <Badge className="ml-2 bg-emerald-500 text-white text-[9px] font-extrabold">MAPEL SAYA</Badge>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 text-muted-foreground">{m.teacher}</td>
+                    <td className="py-3 px-3 text-center">{renderGradeCell(m.tugas)}</td>
+                    <td className="py-3 px-3 text-center">{renderGradeCell(m.kuis)}</td>
+                    <td className="py-3 px-3 text-center">{renderGradeCell(m.cbt)}</td>
+                    <td className="py-3 px-3 text-center text-primary text-sm">{renderGradeCell(m.avg)}</td>
+                    <td className="p-3 text-center">
+                      <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 font-bold">
+                        {m.kkm}
+                      </Badge>
+                    </td>
+                    {isGuru && (
+                      <td className="p-3 text-right">
+                        {isMySubject ? (
+                          <Button
+                            size="sm"
+                            className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs gap-1"
+                            onClick={() => toast.success(`Form Input Nilai ${m.mapel} dibuka untuk Guru Pengampu!`)}
+                          >
+                            ✏️ Input Nilai Saya
+                          </Button>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 font-bold">
+                            🔒 Read-Only (Guru Lain)
+                          </Badge>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </CardContent>

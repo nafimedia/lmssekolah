@@ -887,17 +887,18 @@ function DashboardContent({
       {/* Main Container */}
       <div className="flex flex-col flex-1 min-w-0 min-h-screen bg-background">
         {/* Top Header Navigation */}
-        <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 border-b border-border bg-background/95 px-2.5 sm:px-4 lg:px-8 backdrop-blur-md">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <SidebarTrigger className="h-8 w-8 sm:h-9 sm:w-9 border border-border" />
+        <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between gap-1.5 sm:gap-4 border-b border-border bg-background/95 px-2 sm:px-4 lg:px-8 backdrop-blur-md">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <SidebarTrigger className="h-8 w-8 sm:h-9 sm:w-9 border border-border shrink-0" />
             <button
               type="button"
               onClick={() => setIsCommandPaletteOpen(true)}
-              className="flex items-center justify-between w-44 sm:w-64 md:w-72 h-8 sm:h-9 px-2.5 sm:px-3 text-xs bg-muted/40 hover:bg-muted/70 text-muted-foreground border border-border/80 rounded-xl transition cursor-pointer"
+              className="flex items-center justify-center sm:justify-between w-8 sm:w-64 md:w-72 h-8 sm:h-9 px-2 sm:px-3 text-xs bg-muted/40 hover:bg-muted/70 text-muted-foreground border border-border/80 rounded-xl transition cursor-pointer shrink-0 sm:shrink"
+              title="Cari fitur, siswa, mapel..."
             >
               <span className="flex items-center gap-2 truncate">
-                <Search className="h-3.5 w-3.5 opacity-60 shrink-0" />
-                <span className="truncate">Cari fitur, siswa, mapel...</span>
+                <Search className="h-3.5 w-3.5 opacity-70 shrink-0" />
+                <span className="hidden sm:inline truncate">Cari fitur, siswa, mapel...</span>
               </span>
               <kbd className="hidden sm:inline-flex font-mono text-[10px] font-extrabold bg-background px-1.5 py-0.5 rounded border border-border text-foreground shrink-0">
                 Ctrl K
@@ -905,12 +906,12 @@ function DashboardContent({
             </button>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2.5 min-w-0">
             {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 sm:h-9 sm:w-9"
+              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
               onClick={() => setDark(!dark)}
             >
               {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
@@ -928,10 +929,10 @@ function DashboardContent({
             {myAssignedRoles.length > 1 || isSuperAdmin ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1 text-[11px] sm:text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 shadow-xs h-8 sm:h-9 px-2 sm:px-3">
-                    <Shield className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <Button variant="outline" size="sm" className="gap-1 text-[10px] sm:text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 shadow-xs h-8 sm:h-9 px-1.5 sm:px-3 shrink-0">
+                    <Shield className="h-3.5 w-3.5 text-emerald-500 shrink-0 hidden xs:inline" />
                     <span className="hidden md:inline">Mode Role:</span>
-                    <span className="uppercase font-extrabold truncate max-w-[90px] sm:max-w-none">{ROLE_LABELS[activeRole]?.icon || "👤"} {activeRole.replace("_", " ")}</span>
+                    <span className="uppercase font-extrabold truncate max-w-[65px] sm:max-w-none">{ROLE_LABELS[activeRole]?.icon || "👤"} {activeRole.replace("_", " ")}</span>
                     <ChevronDown className="h-3 w-3 opacity-60 ml-0.5 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -963,8 +964,8 @@ function DashboardContent({
             ) : null}
 
             {(activeRole === "guru" || activeRole === "walikelas" || activeRole === "wali_kelas" || activeRole === "kamad" || activeRole === "waka" || activeRole === "admin_akademik" || activeRole === "admin") && (
-              <Button size="sm" variant="outline" className="text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 h-8 sm:h-9 px-2 sm:px-3" onClick={() => setIsWaModalOpen(true)}>
-                <Send className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span className="hidden sm:inline">WA Gateway</span>
+              <Button size="sm" variant="outline" className="hidden sm:flex text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 h-8 sm:h-9 px-2 sm:px-3 shrink-0" onClick={() => setIsWaModalOpen(true)}>
+                <Send className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span>WA Gateway</span>
               </Button>
             )}
 

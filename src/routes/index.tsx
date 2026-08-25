@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { Button } from "@/components/ui/button";
@@ -117,9 +117,9 @@ const ROLE_PREVIEWS = [
     badge: "Executive Dashboard",
     icon: Building2,
     color: "from-amber-500 to-emerald-600",
-    description: "Executive monitoring 948+ siswa, statistik presensi 96.8%, progress mengajar guru, dan e-Rapor.",
+    description: "Executive monitoring statistik presensi, progress KBM mengajar guru, dan pengesahan e-Rapor.",
     features: [
-      "Statistik Real-time 948 Siswa & 50+ Pendidik",
+      "Statistik & Dashboard Kehadiran Real-time",
       "Grafik Kehadiran & Early Warning System (EWS)",
       "Monitoring Kelancaran Ujian CBT Online",
       "Pengesahan Digital E-Rapor Madrasah",
@@ -173,6 +173,121 @@ const ROLE_PREVIEWS = [
   },
 ];
 
+/* 🌌 Interactive Particle Constellation Canvas for Landing Hero Banner */
+function LandingParticleCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    const mouse = { x: -1000, y: -1000, radius: 180 };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    };
+
+    const handleMouseLeave = () => {
+      mouse.x = -1000;
+      mouse.y = -1000;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseleave", handleMouseLeave);
+
+    // Generate 75 Particles with random velocities
+    const particleCount = Math.min(85, Math.floor((width * height) / 16000));
+    const particles = Array.from({ length: particleCount }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: (Math.random() - 0.5) * 0.7,
+      radius: Math.random() * 2 + 1.2,
+      color: Math.random() > 0.4 ? "rgba(16, 185, 129, 0.85)" : "rgba(20, 184, 166, 0.85)",
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 135) {
+            const alpha = (1 - dist / 135) * 0.25;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(20, 184, 166, ${alpha})`;
+            ctx.lineWidth = 0.85;
+            ctx.shadowBlur = 0;
+            ctx.stroke();
+          }
+        }
+
+        const mdx = p.x - mouse.x;
+        const mdy = p.y - mouse.y;
+        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+
+        if (mdist < mouse.radius) {
+          const malpha = (1 - mdist / mouse.radius) * 0.5;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.strokeStyle = `rgba(52, 211, 153, ${malpha})`;
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseleave", handleMouseLeave);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
+}
+
 function LandingPage() {
   const [activeRole, setActiveRole] = useState("siswa");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -181,11 +296,15 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-teal-500 selection:text-white font-sans antialiased overflow-x-hidden">
+      {/* 🌌 Interactive Particle Constellation Canvas */}
+      <LandingParticleCanvas />
+
       {/* Dynamic Background Ambient Blobs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-teal-500/15 rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-emerald-500/15 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-amber-500/10 rounded-full blur-[130px]" />
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-teal-500/20 to-emerald-500/15 rounded-full blur-[140px] animate-blob-1" />
+        <div className="absolute top-1/3 -right-40 w-[650px] h-[650px] bg-gradient-to-bl from-emerald-500/20 via-teal-500/15 to-cyan-500/20 rounded-full blur-[160px] animate-blob-2" />
+        <div className="absolute -bottom-40 left-1/3 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[130px] animate-blob-3" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b20_1px,transparent_1px),linear-gradient(to_bottom,#1e293b20_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
       {/* Header Navigation */}
@@ -348,23 +467,6 @@ function LandingPage() {
                   </a>
                 </Button>
               </div>
-
-              {/* Quick Role Badges */}
-              <div className="pt-4 border-t border-slate-800/80">
-                <p className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2.5">
-                  Terintegrasi 7 Peran Pengguna (RBAC Matrix):
-                </p>
-                <div className="flex flex-wrap justify-center lg:justify-start gap-1.5 sm:gap-2">
-                  {["🎓 Siswa", "👨‍🏫 Guru", "👥 Wali Kelas", "🏫 Kamad", "📋 Waka Kurikulum", "💼 Admin Akademik", "⚡ Super Admin"].map((role, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-slate-900 border border-slate-800 text-slate-300 text-[11px] sm:text-xs font-medium hover:border-teal-500/40 transition-colors"
-                    >
-                      {role}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Right Visual Hero Banner Image */}
@@ -397,20 +499,6 @@ function LandingPage() {
                     />
 
                     {/* Floating Overlay Widgets */}
-                    {/* Top Left Widget */}
-                    <div className="absolute top-4 left-4 bg-slate-950/90 backdrop-blur-md border border-teal-500/40 rounded-xl p-3 shadow-xl hidden sm:flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
-                        <GraduationCap className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                          <p className="text-xs font-bold text-white">948+ Siswa Aktif</p>
-                        </div>
-                        <p className="text-[10px] text-slate-400">MTsN 2 Cilacap</p>
-                      </div>
-                    </div>
-
                     {/* Top Right Widget */}
                     <div className="absolute top-4 right-4 bg-slate-950/90 backdrop-blur-md border border-amber-500/40 rounded-xl p-3 shadow-xl hidden sm:flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
@@ -418,7 +506,7 @@ function LandingPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-white">CBT Exam Engine</p>
-                        <p className="text-[10px] text-amber-300 font-mono">Timer: 00:58:42</p>
+                        <p className="text-[10px] text-amber-300 font-mono">Token & Timer Presisi</p>
                       </div>
                     </div>
 
@@ -429,7 +517,7 @@ function LandingPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-white">Tahfidz Al-Qur&apos;an</p>
-                        <p className="text-[10px] text-teal-300">Juz 30, 29, 1 — 98 Mumtaz</p>
+                        <p className="text-[10px] text-teal-300">Modul Setoran Hafalan</p>
                       </div>
                     </div>
 
@@ -451,33 +539,29 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Counter Bar */}
-      <section className="py-10 border-y border-teal-900/40 bg-slate-900/60 backdrop-blur-md">
+      {/* Feature Value Highlights Bar (Clean & Professional) */}
+      <section className="py-8 border-y border-teal-900/40 bg-slate-900/60 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div className="p-4 rounded-xl bg-slate-950/50 border border-teal-900/30">
-              <p className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-teal-300 to-emerald-400 bg-clip-text text-transparent">
-                948+
-              </p>
-              <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">Siswa Terdaftar</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-teal-900/30 flex flex-col items-center justify-center space-y-1">
+              <Building2 className="w-6 h-6 text-teal-400 mb-1" />
+              <p className="text-sm font-extrabold text-white">Integrasi SIAKAD</p>
+              <p className="text-[11px] text-slate-400">Master Data & Rombel</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-950/50 border border-teal-900/30">
-              <p className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-emerald-300 to-amber-300 bg-clip-text text-transparent">
-                50+
-              </p>
-              <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">Pendidik & Staff</p>
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-teal-900/30 flex flex-col items-center justify-center space-y-1">
+              <Zap className="w-6 h-6 text-emerald-400 mb-1" />
+              <p className="text-sm font-extrabold text-white">CBT Exam Engine</p>
+              <p className="text-[11px] text-slate-400">Auto-Grading & Remedial</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-950/50 border border-teal-900/30">
-              <p className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">
-                96.8%
-              </p>
-              <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">Presensi Digital</p>
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-teal-900/30 flex flex-col items-center justify-center space-y-1">
+              <BookMarked className="w-6 h-6 text-amber-400 mb-1" />
+              <p className="text-sm font-extrabold text-white">Modul Tahfidz</p>
+              <p className="text-[11px] text-slate-400">Tracker Setoran Hafalan</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-950/50 border border-teal-900/30">
-              <p className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-amber-300 to-emerald-300 bg-clip-text text-transparent">
-                100%
-              </p>
-              <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">E-Rapor Kemenag</p>
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-teal-900/30 flex flex-col items-center justify-center space-y-1">
+              <FileCheck className="w-6 h-6 text-teal-300 mb-1" />
+              <p className="text-sm font-extrabold text-white">E-Rapor Kemenag</p>
+              <p className="text-[11px] text-slate-400">Kurikulum Merdeka PDF</p>
             </div>
           </div>
         </div>

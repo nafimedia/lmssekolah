@@ -177,3 +177,40 @@
     border: none !important;
   }
 }
+
+/* Auth Page Floating Background Animations */
+@keyframes float-blob-1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(60px, -60px) scale(1.12); }
+  66% { transform: translate(-40px, 40px) scale(0.92); }
+}
+
+@keyframes float-blob-2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(-50px, 50px) scale(1.15); }
+  66% { transform: translate(40px, -30px) scale(0.88); }
+}
+
+@keyframes float-blob-3 {
+  0%, 100% { transform: translate(0px, 0px) scale(0.95); }
+  50% { transform: translate(30px, 30px) scale(1.2); }
+}
+
+.animate-blob-1 {
+  animation: float-blob-1 14s ease-in-out infinite;
+}
+.animate-blob-2 {
+  animation: float-blob-2 18s ease-in-out infinite 3s;
+}
+.animate-blob-3 {
+  animation: float-blob-3 22s ease-in-out infinite 6s;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 35s linear infinite;
+}

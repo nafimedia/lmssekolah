@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { MysqlDataService, PengampuRow } from "@/services/mysqlDataService";
 
@@ -21,58 +22,61 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
   const [isEditWaliOpen, setIsEditWaliOpen] = useState(false);
   const [editingRombel, setEditingRombel] = useState<any>(null);
 
+  // Modal Tambah Rombel State
+  const [isAddRombelOpen, setIsAddRombelOpen] = useState(false);
+  const [newRombelName, setNewRombelName] = useState("");
+  const [newRombelGrade, setNewRombelGrade] = useState("Kelas VII");
+  const [newRombelWali, setNewRombelWali] = useState("");
+  const [newRombelRoom, setNewRombelRoom] = useState("");
+
   // Clean state: initialize with empty array - strictly no dummy fallbacks
   const [rombelList, setRombelList] = useState<any[]>([]);
   const [isLoadingRombel, setIsLoadingRombel] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadData = async () => {
     setIsLoadingRombel(true);
+    try {
+      const [dbRombels, users, pengampu] = await Promise.all([
+        MysqlDataService.getMasterRombels(),
+        MysqlDataService.getUsers(),
+        MysqlDataService.getPengampuList(),
+      ]);
 
-    Promise.all([
-      MysqlDataService.getMasterRombels(),
-      MysqlDataService.getUsers(),
-      MysqlDataService.getPengampuList(),
-    ])
-      .then(([dbRombels, users, pengampu]) => {
-        if (!isMounted) return;
+      if (users && users.length > 0) {
+        const teachers = users.filter((u: any) => u.role !== "siswa").map((u: any) => u.full_name);
+        if (teachers.length > 0) setDbTeachersList(teachers);
+      }
 
-        if (users && users.length > 0) {
-          const teachers = users.filter((u: any) => u.role !== "siswa").map((u: any) => u.full_name);
-          if (teachers.length > 0) setDbTeachersList(teachers);
-        }
+      if (pengampu && pengampu.length > 0) {
+        setPengampuList(pengampu);
+      }
 
-        if (pengampu && pengampu.length > 0) {
-          setPengampuList(pengampu);
-        }
+      if (dbRombels && dbRombels.length > 0) {
+        const siswaList = (users || []).filter((u: any) => u.role === "siswa");
+        const mapped = dbRombels.map((r: any) => {
+          const count = siswaList.filter((s: any) => isSameClass(s.class_name || s.class, r.name || r.code)).length;
+          return {
+            id: String(r.code || r.id),
+            name: r.name,
+            grade: r.grade || r.grade_level || "Kelas VIII",
+            waliKelas: r.wali_kelas || r.wali_kelas_name || "Belum Ditentukan",
+            studentCount: count,
+            room: r.room || "Ruang Kelas",
+          };
+        });
+        setRombelList(mapped);
+      } else {
+        setRombelList([]);
+      }
+    } catch (e) {
+      setRombelList([]);
+    } finally {
+      setIsLoadingRombel(false);
+    }
+  };
 
-        if (dbRombels && dbRombels.length > 0) {
-          const siswaList = (users || []).filter((u: any) => u.role === "siswa");
-          const mapped = dbRombels.map((r: any) => {
-            const count = siswaList.filter((s: any) => isSameClass(s.class_name || s.class, r.name || r.code)).length;
-            return {
-              id: String(r.code || r.id),
-              name: r.name,
-              grade: r.grade || r.grade_level || "Kelas VIII",
-              waliKelas: r.wali_kelas || r.wali_kelas_name || "Belum Ditentukan",
-              studentCount: count,
-            };
-          });
-          setRombelList(mapped);
-        } else {
-          setRombelList([]);
-        }
-      })
-      .catch(() => {
-        if (isMounted) setRombelList([]);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingRombel(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    loadData();
   }, []);
 
   const handleEditWaliClick = (rombelItem: any) => {
@@ -111,6 +115,43 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
     }
 
     setIsEditWaliOpen(false);
+  };
+
+  const handleCreateRombel = async () => {
+    if (!newRombelName.trim()) {
+      toast.error("Nama Rombel wajib diisi.");
+      return;
+    }
+    const cleanCode = newRombelName.toLowerCase().replace(/\s+/g, "");
+    try {
+      await MysqlDataService.saveMasterRombel({
+        code: cleanCode,
+        name: newRombelName.trim(),
+        grade: newRombelGrade,
+        wali_kelas: newRombelWali || "Belum Ditentukan",
+        room: newRombelRoom.trim() || `Ruang ${newRombelName.replace(/rombel\s*/i, "")}`,
+        siswa_count: 0,
+      });
+      toast.success(`✅ ${newRombelName} berhasil ditambahkan ke database MySQL!`);
+      setIsAddRombelOpen(false);
+      setNewRombelName("");
+      setNewRombelWali("");
+      setNewRombelRoom("");
+      loadData();
+    } catch (e) {
+      toast.error("Gagal menambahkan Rombel ke database.");
+    }
+  };
+
+  const handleDeleteRombel = async (rombelItem: any) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus ${rombelItem.name} dari database MySQL?`)) return;
+    try {
+      await MysqlDataService.deleteMasterRombel(rombelItem.id);
+      toast.success(`🗑️ ${rombelItem.name} berhasil dihapus dari database!`);
+      loadData();
+    } catch (e) {
+      toast.error("Gagal menghapus rombel.");
+    }
   };
 
   return (
@@ -155,6 +196,13 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Daftar Rombongan Belajar (Rombel) MTsN 2 Cilacap:
             </div>
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+              onClick={() => setIsAddRombelOpen(true)}
+            >
+              <Plus className="h-4 w-4" /> Tambah Rombel Baru
+            </Button>
           </div>
 
           {isLoadingRombel ? (
@@ -163,7 +211,14 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
             <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 bg-card">
               <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
               <div className="font-semibold text-foreground text-sm">Belum Ada Rombel Terdaftar</div>
-              <p>Database saat ini tidak memiliki data rombel terdaftar. Tampilan dikosongkan secara jujur tanpa data sampel/dummy.</p>
+              <p>Database saat ini tidak memiliki data rombel terdaftar. Silakan klik tombol <strong>+ Tambah Rombel Baru</strong> untuk mendaftarkan rombel.</p>
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs mt-2"
+                onClick={() => setIsAddRombelOpen(true)}
+              >
+                <Plus className="h-4 w-4" /> Tambah Rombel Pertama
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -176,14 +231,25 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
                       </Badge>
                       <CardTitle className="text-base font-bold text-foreground">{r.name}</CardTitle>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 gap-1"
-                      onClick={() => handleEditWaliClick(r)}
-                    >
-                      <Edit className="h-3.5 w-3.5" /> Edit Wali
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 gap-1"
+                        onClick={() => handleEditWaliClick(r)}
+                      >
+                        <Edit className="h-3.5 w-3.5" /> Edit Wali
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/10"
+                        title="Hapus Rombel dari Database"
+                        onClick={() => handleDeleteRombel(r)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="p-4 space-y-2 text-xs">
                     <div className="flex justify-between">
@@ -207,6 +273,80 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
 
       {/* Tab 3: KKTP Skema */}
       {activeTab === "kktp_skema" && <KktpSkemaTab />}
+
+      {/* Dialog Tambah Rombel Baru */}
+      <Dialog open={isAddRombelOpen} onOpenChange={setIsAddRombelOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-600 font-bold">
+              <Plus className="h-5 w-5" /> Tambah Rombongan Belajar (Rombel) Baru
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Masukkan data Rombel baru untuk didaftarkan secara permanen ke database MySQL.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-bold text-foreground">Nama Rombel *</label>
+              <Input
+                placeholder="Contoh: Rombel 7A, Rombel 8C, Rombel 9I"
+                value={newRombelName}
+                onChange={(e) => setNewRombelName(e.target.value)}
+                className="h-9 text-xs font-semibold"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-bold text-foreground">Tingkat Kelas *</label>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs font-semibold"
+                value={newRombelGrade}
+                onChange={(e) => setNewRombelGrade(e.target.value)}
+              >
+                <option value="Kelas VII">Kelas VII (Tingkat 7)</option>
+                <option value="Kelas VIII">Kelas VIII (Tingkat 8)</option>
+                <option value="Kelas IX">Kelas IX (Tingkat 9)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-bold text-foreground">Wali Kelas Penanggung Jawab</label>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs font-semibold"
+                value={newRombelWali}
+                onChange={(e) => setNewRombelWali(e.target.value)}
+              >
+                <option value="">-- Pilih Wali Kelas --</option>
+                {dbTeachersList.map((t, i) => (
+                  <option key={i} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-bold text-foreground">Ruang Kelas (Opsional)</label>
+              <Input
+                placeholder="Contoh: Ruang 7A, Ruang Lab Komputer"
+                value={newRombelRoom}
+                onChange={(e) => setNewRombelRoom(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setIsAddRombelOpen(false)}>
+              Batal
+            </Button>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold" onClick={handleCreateRombel}>
+              Simpan Rombel Ke Database
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Wali Kelas Dialog */}
       {editingRombel && (

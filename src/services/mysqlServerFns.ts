@@ -522,16 +522,16 @@ export const getDatabaseStatsFn = createServerFn({ method: "GET" }).handler(
       const cbtRes = await queryOne<{ total: number }>("SELECT COUNT(*) as total FROM cbt_exams");
 
       return {
-        totalUsers: userRes?.total || 159,
-        siswaCount: siswaRes?.total || 117,
-        guruStafCount: guruRes?.total || 42,
-        totalRombel: Math.max(1, rombelRes?.total || 27),
-        totalMapel: mapelRes?.total || 18,
-        cbtExamsCount: cbtRes?.total || 12,
+        totalUsers: userRes?.total ?? 0,
+        siswaCount: siswaRes?.total ?? 0,
+        guruStafCount: guruRes?.total ?? 0,
+        totalRombel: rombelRes?.total ?? 0,
+        totalMapel: mapelRes?.total ?? 0,
+        cbtExamsCount: cbtRes?.total ?? 0,
       };
     } catch (e) {
       console.error("[getDatabaseStatsFn Error]:", e);
-      return { totalUsers: 159, siswaCount: 117, guruStafCount: 42, totalRombel: 27, totalMapel: 18, cbtExamsCount: 12 };
+      return { totalUsers: 0, siswaCount: 0, guruStafCount: 0, totalRombel: 0, totalMapel: 0, cbtExamsCount: 0 };
     }
   }
 );

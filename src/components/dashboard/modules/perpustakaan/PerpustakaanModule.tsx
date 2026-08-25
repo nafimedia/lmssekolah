@@ -255,9 +255,16 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((k: any) => {
-          const Icon = k.icon || FileText;
+      {filtered.length === 0 ? (
+        <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-card space-y-2">
+          <Library className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+          <div className="font-semibold text-foreground text-sm">Belum Ada Berkas E-Library Terdaftar</div>
+          <p>Database saat ini tidak memiliki data berkas perpustakaan digital terdaftar. Silakan unggah atau cantumkan berkas baru.</p>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((k: any) => {
+            const Icon = k.icon || FileText;
           const isMedia = k.type === "video" || k.type === "audio";
           const isPdf = k.type === "pdf" || k.tag === "PDF Modul" || k.tag === "E-Book";
 
@@ -330,6 +337,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
           );
         })}
       </div>
+      )}
 
       {/* 🗑️ DIALOG KONFIRMASI HAPUS E-LIBRARY */}
       <Dialog open={!!deleteConfirmBook} onOpenChange={() => setDeleteConfirmBook(null)}>

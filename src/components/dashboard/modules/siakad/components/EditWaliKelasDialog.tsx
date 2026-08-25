@@ -19,25 +19,6 @@ interface EditWaliKelasDialogProps {
   onSave: (rombelId: string, newWaliKelas: string) => void;
 }
 
-const DEFAULT_TEACHER_LIST = [
-  "MISBAH AHMAD DANI, S.Pd",
-  "ENDAH KURNIAWATI, S.Pd",
-  "Dra. Hj. SITI RAHMAH, M.Pd",
-  "ACHMAD MAKMUN ROSID, S.Pd., M.Pd",
-  "SOBIYATI, S.Pd",
-  "SAYONO, S.Pd.I",
-  "AH. SYARIF HIDAYAH, S.Pd.I",
-  "WAKHIBUN, S.P",
-  "CARYATI, S.Pd",
-  "H. DASIRUN, S.Ag., M.Pd.I",
-  "ENDAH SUPRIHATIN, S.Pd",
-  "ALI MANSUR, S.Pd",
-  "UMI KHAFSOH, S.Pd",
-  "SITI NURJANAH, S.Pd",
-  "FAHRUR ROZI, S.Kom",
-  "TRI WAHYUNI, S.Pd",
-];
-
 export function EditWaliKelasDialog({
   isOpen,
   onOpenChange,
@@ -48,9 +29,7 @@ export function EditWaliKelasDialog({
   const [selectedWali, setSelectedWali] = useState("");
   const [customTeacherName, setCustomTeacherName] = useState("");
 
-  const availableTeachers = Array.from(
-    new Set([...(teacherList || []), ...DEFAULT_TEACHER_LIST])
-  );
+  const availableTeachers = Array.from(new Set(teacherList || [])).filter(Boolean);
 
   useEffect(() => {
     if (rombel) {

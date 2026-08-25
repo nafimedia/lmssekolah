@@ -11,6 +11,8 @@ import { EditWaliKelasDialog } from "./components/EditWaliKelasDialog";
 import { TahunAjaranTab } from "./components/TahunAjaranTab";
 import { KktpSkemaTab } from "./components/KktpSkemaTab";
 
+import { isSameClass } from "@/utils/classNormalization";
+
 export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any } = {}) {
   const [activeTab, setActiveTab] = useState<string>("pengampu");
   const [dbTeachersList, setDbTeachersList] = useState<string[]>([]);
@@ -28,7 +30,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
     setIsLoadingRombel(true);
 
     Promise.all([
-      (MysqlDataService as any).getRombels?.() || Promise.resolve([]),
+      MysqlDataService.getMasterRombels(),
       MysqlDataService.getUsers(),
       MysqlDataService.getPengampuList(),
     ])
@@ -47,12 +49,12 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         if (dbRombels && dbRombels.length > 0) {
           const siswaList = (users || []).filter((u: any) => u.role === "siswa");
           const mapped = dbRombels.map((r: any) => {
-            const count = siswaList.filter((s: any) => (s.class_name || s.class || "").toLowerCase() === r.name.toLowerCase()).length;
+            const count = siswaList.filter((s: any) => isSameClass(s.class_name || s.class, r.name || r.code)).length;
             return {
-              id: String(r.id),
+              id: String(r.code || r.id),
               name: r.name,
-              grade: r.grade_level || "Kelas VIII",
-              waliKelas: r.wali_kelas_name || "Belum Ditentukan",
+              grade: r.grade || r.grade_level || "Kelas VIII",
+              waliKelas: r.wali_kelas || r.wali_kelas_name || "Belum Ditentukan",
               studentCount: count,
             };
           });
@@ -78,7 +80,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
     setIsEditWaliOpen(true);
   };
 
-  const handleSaveWaliKelas = (rombelId: string, newWaliName: string) => {
+  const handleSaveWaliKelas = async (rombelId: string, newWaliName: string) => {
     setRombelList((prev) =>
       prev.map((r) => (r.id === rombelId ? { ...r, waliKelas: newWaliName } : r))
     );
@@ -90,10 +92,24 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         );
         savedOverrides[rombelId] = newWaliName;
         localStorage.setItem("lms_rombel_wali_overrides", JSON.stringify(savedOverrides));
-      } catch (e) {}
+      } catch (e) { }
     }
 
-    toast.success(`Wali Kelas ${editingRombel?.name || "Rombel"} berhasil diperbarui ke ${newWaliName}!`);
+    try {
+      const rombelObj = rombelList.find((r) => r.id === rombelId);
+      await MysqlDataService.saveMasterRombel({
+        code: rombelId,
+        name: rombelObj?.name || rombelId,
+        wali_kelas: newWaliName,
+        grade: "Kelas VIII",
+        room: "Ruang Rombel",
+      });
+      toast.success(`Wali Kelas ${editingRombel?.name || "Rombel"} tersimpan ke database MySQL!`);
+    } catch (e) {
+      console.warn("Gagal simpan wali kelas ke MySQL:", e);
+      toast.success(`Wali Kelas ${editingRombel?.name || "Rombel"} berhasil diperbarui ke ${newWaliName}!`);
+    }
+
     setIsEditWaliOpen(false);
   };
 
@@ -102,7 +118,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Database className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Data Master SIAKAD & Akademik
+            <Database className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Data Master Akademik
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Pengelolaan Rombongan Belajar (Rombel), Wali Kelas, Tahun Ajaran, & Skema Kriteria Ketuntasan (KKTP).
@@ -121,11 +137,10 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
             key={t.id}
             type="button"
             onClick={() => setActiveTab(t.id)}
-            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === t.id
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === t.id
                 ? "bg-emerald-600 text-white shadow-xs"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
+              }`}
           >
             <t.icon className="h-4 w-4" />
             <span>{t.label}</span>

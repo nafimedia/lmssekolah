@@ -50,8 +50,34 @@ export interface AttendanceStudentRow {
   note: string;
 }
 
+import { MysqlAuthService } from "@/services/mysqlAuthService";
+
 export function KehadiranModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any } = {}) {
-  const [selectedRombelFilter, setSelectedRombelFilter] = useState("Semua Rombel");
+  const me = MysqlAuthService.getActiveUser();
+  const initialClass = useMemo(() => {
+    const rawClass = userProfile?.assignedClass || me?.class_name;
+    if (rawClass && rawClass !== "Semua" && rawClass !== "Semua Rombel") {
+      return normalizeRombelName(rawClass);
+    }
+    const name = (me?.full_name || userProfile?.name || "").toLowerCase();
+    const cleanNip = (me?.nis_nip || "").trim();
+    if (name.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
+    if (name.includes("sobiyati")) return "Rombel 8A";
+    if (name.includes("novantya")) return "Rombel 9A";
+    if (name.includes("indah nurrohmah")) return "Rombel 9B";
+    if (name.includes("maulidia")) return "Rombel 7A";
+    if (name.includes("rindang")) return "Rombel 7B";
+    return "Semua Rombel";
+  }, [userProfile, me]);
+
+  const [selectedRombelFilter, setSelectedRombelFilter] = useState(initialClass);
+
+  useEffect(() => {
+    if (initialClass) {
+      setSelectedRombelFilter(initialClass);
+    }
+  }, [initialClass]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isWaLogModalOpen, setIsWaLogModalOpen] = useState(false);
   const [waLogMessage, setWaLogMessage] = useState("");
@@ -82,11 +108,11 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                 izin: 0,
                 sakit: 0,
                 alpa: 0,
-                pct: 100.0,
+                pct: 0,
                 parentWa: s.phone || "081234567890",
-                status: "Baik",
-                today: "hadir",
-                sessionStatus: "hadir",
+                status: "Belum ada presensi",
+                today: "belum",
+                sessionStatus: "belum",
                 note: "",
               };
             });
@@ -271,11 +297,17 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                       <td className="py-3 px-4 text-center font-mono text-blue-600 font-bold">{row.izin}</td>
                       <td className="py-3 px-4 text-center font-mono text-amber-600 font-bold">{row.sakit}</td>
                       <td className="py-3 px-4 text-center font-mono text-rose-600 font-bold">{row.alpa}</td>
-                      <td className="py-3 px-4 text-center font-mono font-extrabold text-emerald-600">{row.pct}%</td>
+                      <td className="py-3 px-4 text-center font-mono font-extrabold text-foreground">{row.pct}%</td>
                       <td className="py-3 px-4 text-center">
-                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold text-[10px]">
-                          {row.status}
-                        </Badge>
+                        {row.pct > 0 ? (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold text-[10px]">
+                            {row.status}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-muted/30 text-muted-foreground border-border font-medium text-[10px]">
+                            {row.status}
+                          </Badge>
+                        )}
                       </td>
                     </tr>
                   ))}

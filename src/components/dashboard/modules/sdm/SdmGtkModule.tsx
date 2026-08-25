@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { MysqlDataService, GtkLeaveRow, GtkDocumentRow } from "@/services/mysqlDataService";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import {
   Users,
   UserCheck,
@@ -105,14 +106,31 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
     setIsEditOpen(true);
   };
 
-  const handleSaveGtk = (updated: GtkItem) => {
+  const handleSaveGtk = async (updated: GtkItem) => {
     setGtkList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    try {
+      await MysqlAuthService.registerUser({
+        full_name: updated.name,
+        email: updated.email,
+        nis_nip: updated.nip,
+        role: "guru",
+        password: "123456",
+      });
+      toast.success(`Perubahan data GTK ${updated.name} berhasil tersimpan ke database.`);
+    } catch (e) {
+      console.warn("Gagal simpan GTK ke MySQL:", e);
+    }
   };
 
-  const handleDeleteGtk = (item: GtkItem) => {
+  const handleDeleteGtk = async (item: GtkItem) => {
     if (confirm(`Apakah Anda yakin ingin menghapus data pegawai GTK ${item.name}?`)) {
       setGtkList((prev) => prev.filter((g) => g.id !== item.id));
-      toast.success(`Data pegawai GTK ${item.name} berhasil dihapus!`);
+      try {
+        await MysqlDataService.deleteUser(item.id, item.email);
+        toast.success(`Data pegawai GTK ${item.name} berhasil dihapus dari database.`);
+      } catch (e) {
+        console.warn("Gagal hapus GTK di MySQL:", e);
+      }
     }
   };
 

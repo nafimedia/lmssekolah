@@ -60,11 +60,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
     setSelectedClass(resolvedWaliClass);
   }, [resolvedWaliClass]);
 
-  const [students, setStudents] = useState<StudentItem[]>([
-    { id: "s1", nisn: "12123301000288", name: "ALIYA QIARA ABDULLAH", class: "Rombel 8A", gender: "P", parentName: "Orang Tua Aliya", parentWa: "081234567890", hadirPct: 95.2, statusPresensi: "HADIR" },
-    { id: "s2", nisn: "0081928371", name: "ABIGAIL HASAN YUSUF PRAYOGA", class: "Rombel 8A", gender: "L", parentName: "Orang Tua Abigail", parentWa: "081234567894", hadirPct: 100.0, statusPresensi: "HADIR" },
-    { id: "s3", nisn: "0081928372", name: "ADITA AZ ZAHRA", class: "Rombel 8A", gender: "P", parentName: "Orang Tua Adita", parentWa: "081234567895", hadirPct: 95.2, statusPresensi: "HADIR" },
-  ]);
+  const [students, setStudents] = useState<StudentItem[]>([]);
 
   const [announcements, setAnnouncements] = useState<PengumumanItem[]>([
     { id: "a1", title: "Rapat Koordinasi Wali Murid & Pembagian Rapor Formatif", content: "Disampaikan kepada seluruh orang tua/wali siswa kelas bimbingan untuk hadir pada rapat koordinasi Sabtu mendatang pukul 08:30 WIB di Aula MTsN 2 Cilacap.", date: "23 Agustus 2026", author: waliKelasName },
@@ -90,8 +86,8 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
             gender: idx % 2 === 0 ? "L" : "P",
             parentName: `Bpk/Ibu ${s.full_name.split(" ")[0]}`,
             parentWa: s.phone || "081234567890",
-            hadirPct: Math.round(((20 + (idx % 2)) / 22) * 1000) / 10,
-            statusPresensi: "HADIR",
+            hadirPct: 0,
+            statusPresensi: "BELUM PRESENSI",
           };
         });
         setStudents(formatted);

@@ -65,10 +65,15 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
     setActivities((prev) => [newAct, ...prev]);
   };
 
-  const handleDeleteActivity = (id: string, title: string) => {
+  const handleDeleteActivity = async (id: string, title: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus aktivitas "${title}"?`)) {
       setActivities((prev) => prev.filter((a) => a.id !== id));
-      toast.success(`🗑️ Aktivitas "${title}" berhasil dihapus!`);
+      try {
+        await MysqlDataService.deleteAssignment(id);
+        toast.success(`🗑️ Aktivitas "${title}" berhasil dihapus dari database!`);
+      } catch (e) {
+        console.warn("Gagal hapus aktivitas di database:", e);
+      }
     }
   };
 

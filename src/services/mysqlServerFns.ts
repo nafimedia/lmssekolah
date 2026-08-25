@@ -793,61 +793,9 @@ export const getPengampuFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<PengampuRow[]> => {
     try {
       await createPengampuTableIfNotExists();
-      const { query, execute } = await import("@/lib/db");
+      const { query } = await import("@/lib/db");
       const rows = await query<PengampuRow[]>("SELECT id, guru, mapel, rombel, jam FROM matriks_pengampu ORDER BY id DESC");
-      if (rows && rows.length > 0) {
-        return rows.map(r => ({ ...r, id: String(r.id) }));
-      }
-
-      const initialSeed: PengampuRow[] = [
-        { guru: "AH. SYARIF HIDAYAH, S.Pd.I", mapel: "Al Qur'an Hadis", rombel: "IX A", jam: "2 JP / mgg" },
-        { guru: "MISBAH AHMAD DANI, S.Pd", mapel: "Al Qur'an Hadis", rombel: "VII A", jam: "2 JP / mgg" },
-        { guru: "WAKHIBUN, S.P", mapel: "Akidah Akhlak", rombel: "VIII A", jam: "2 JP / mgg" },
-        { guru: "MAHMUDAH, S.", mapel: "Akidah Akhlak", rombel: "VII B", jam: "2 JP / mgg" },
-        { guru: "CARYATI,", mapel: "Fikih", rombel: "VIII A", jam: "2 JP / mgg" },
-        { guru: "MUHTAMAM, S.Ag., M.Pd.I", mapel: "Fikih", rombel: "IX B", jam: "2 JP / mgg" },
-        { guru: "H. DASIRUN, S.Ag., M.Pd.I", mapel: "Sejarah Kebudayaan Islam", rombel: "VII A", jam: "2 JP / mgg" },
-        { guru: "ENDAH SUPRIHATIN, S.Pd", mapel: "Bahasa Arab", rombel: "VII A", jam: "3 JP / mgg" },
-        { guru: "Hj. SITI MUHSINAH, S", mapel: "Bahasa Arab", rombel: "VIII A", jam: "3 JP / mgg" },
-        { guru: "WAHYUDIN, S", mapel: "Bahasa Arab", rombel: "IX A", jam: "3 JP / mgg" },
-        { guru: "SOBIYATI, S.Pd", mapel: "Bahasa Indonesia", rombel: "VIII A", jam: "4 JP / mgg" },
-        { guru: "DAISAH, S.Pd", mapel: "Bahasa Indonesia", rombel: "VII A", jam: "4 JP / mgg" },
-        { guru: "Hj. NANGIMAH, S.", mapel: "Bahasa Indonesia", rombel: "IX A", jam: "4 JP / mgg" },
-        { guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", mapel: "Bahasa Inggris", rombel: "VII A", jam: "3 JP / mgg" },
-        { guru: "RIDHO ANSHORI, S.Pd., M.Pd", mapel: "Bahasa Inggris", rombel: "VIII A", jam: "3 JP / mgg" },
-        { guru: "CETY MAHARSY, S.Pd", mapel: "Bahasa Inggris", rombel: "VIII B", jam: "3 JP / mgg" },
-        { guru: "SASI VIVIANI, S.Pd", mapel: "Bahasa Inggris", rombel: "VII B", jam: "3 JP / mgg" },
-        { guru: "INDAH NURROHMAH, S.Pd", mapel: "Bahasa Inggris", rombel: "IX A", jam: "3 JP / mgg" },
-        { guru: "SAYONO, S.Pd., M.Pd.", mapel: "Matematika", rombel: "VIII A", jam: "4 JP / mgg" },
-        { guru: "SRIYANI KUNTARI, S.Pd", mapel: "Matematika", rombel: "VII A", jam: "4 JP / mgg" },
-        { guru: "H. ANI YULIANI, S.Pd", mapel: "Matematika", rombel: "IX A", jam: "4 JP / mgg" },
-        { guru: "IFTI NURROHMAH, S.Pd", mapel: "Matematika", rombel: "VII B", jam: "4 JP / mgg" },
-        { guru: "NOVANTYA KARTIKAWATI, S.Pd", mapel: "Ilmu Pendidikan Alam", rombel: "VIII A", jam: "4 JP / mgg" },
-        { guru: "STEFI APRIONITA SETYO ARUM, S.Pd", mapel: "Ilmu Pendidikan Alam", rombel: "VII A", jam: "4 JP / mgg" },
-        { guru: "ILHAM HABIBI, S.Pd", mapel: "Ilmu Pendidikan Alam", rombel: "IX A", jam: "4 JP / mgg" },
-        { guru: "HIKMATUL ASTRI AZKIYA, S.Pd", mapel: "Ilmu Pendidikan Alam", rombel: "VII B", jam: "4 JP / mgg" },
-        { guru: "UMI KHAFSOH, S.Pd", mapel: "Ilmu Pendidikan Sosial", rombel: "VIII A", jam: "3 JP / mgg" },
-        { guru: "NAZIHATUN ZUHRIYAH, S.Pd.", mapel: "Ilmu Pendidikan Sosial", rombel: "VII A", jam: "3 JP / mgg" },
-        { guru: "ALI MANSUR, S.Pd", mapel: "Ilmu Pendidikan Sosial", rombel: "IX A", jam: "3 JP / mgg" },
-        { guru: "ANGGUN NOVTALIA BERLIAN, S.Pd", mapel: "Pendidikan Kewarganegaraan", rombel: "VIII A", jam: "2 JP / mgg" },
-        { guru: "TEGUH WIYONO, S.Pd", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", rombel: "VIII A", jam: "2 JP / mgg" },
-        { guru: "NUR ROCHMAN SHODIQ, S.Pd.I", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", rombel: "VII A", jam: "2 JP / mgg" },
-        { guru: "MASRUKHAN, S.Pd", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", rombel: "IX A", jam: "2 JP / mgg" },
-        { guru: "HASIS SYARIFUDIN, S.Pd", mapel: "Prakarya dan Seni Budaya", rombel: "VIII A", jam: "2 JP / mgg" },
-        { guru: "ISNAENI HASANAH, S.Pd.I", mapel: "Prakarya dan Seni Budaya", rombel: "VII A", jam: "2 JP / mgg" },
-        { guru: "RINDANG FARIHA IDANA, S.Pd", mapel: "Bahasa Jawa", rombel: "VIII A", jam: "2 JP / mgg" },
-        { guru: "ASROR HIDAYAT, S.Pd", mapel: "Bimbingan dan Konseling", rombel: "VIII A", jam: "2 JP / mgg" },
-        { guru: "MAULIDIA NURUL IZATI, S.Pd", mapel: "Bimbingan dan Konseling", rombel: "VII A", jam: "2 JP / mgg" },
-        { guru: "SARAH SAFIRA, S.Pd", mapel: "Bimbingan dan Konseling", rombel: "IX A", jam: "2 JP / mgg" },
-        { guru: "H. SOLIHUN, S.Pd., M.Si", mapel: "Manajemen Sekolah", rombel: "Semua Rombel", jam: "6 JP / mgg" },
-      ];
-
-      for (const s of initialSeed) {
-        await execute("INSERT INTO matriks_pengampu (guru, mapel, rombel, jam) VALUES (?, ?, ?, ?)", [s.guru, s.mapel, s.rombel, s.jam || "2 JP / mgg"]);
-      }
-
-      const freshRows = await query<PengampuRow[]>("SELECT id, guru, mapel, rombel, jam FROM matriks_pengampu ORDER BY id DESC");
-      return (freshRows || []).map(r => ({ ...r, id: String(r.id) }));
+      return (rows || []).map(r => ({ ...r, id: String(r.id) }));
     } catch (e) {
       console.warn("[getPengampuFn error]:", e);
       return [];
@@ -918,30 +866,9 @@ export const getRuangFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<RuangRow[]> => {
     try {
       await createRuangTableIfNotExists();
-      const { query, execute } = await import("@/lib/db");
+      const { query } = await import("@/lib/db");
       const rows = await query<RuangRow[]>("SELECT id, name, type, cap, fas, icon FROM master_ruang ORDER BY id DESC");
-      if (rows && rows.length > 0) {
-        return rows.map(r => ({ ...r, id: String(r.id) }));
-      }
-
-      const initialSeed: RuangRow[] = [
-        { name: "Ruang A.01", type: "Ruang Teori (Kelas VII A)", cap: "36 Siswa", fas: "Proyektor, AC, Papan Tulis", icon: "🏫" },
-        { name: "Ruang A.02", type: "Ruang Teori (Kelas VIII A)", cap: "36 Siswa", fas: "Proyektor, AC, Sound System", icon: "🏫" },
-        { name: "Lab IPA Terpadu", type: "Laboratorium Praktikum", cap: "40 Siswa", fas: "Mikroskop, Alat Bedah, Proyektor", icon: "🔬" },
-        { name: "Lab Komputer CBT", type: "Laboratorium Komputer", cap: "40 Komputer", fas: "LAN, Server CBT, AC, UPS 10kVA", icon: "💻" },
-        { name: "Perpustakaan Digital", type: "E-Library & Ruang Baca", cap: "60 Siswa", fas: "Tablet E-Library, Wi-Fi 100Mbps", icon: "📚" },
-        { name: "Lapangan Olahraga Utama", type: "Fasilitas Outdoor", cap: "500 Siswa", fas: "Garis Futsal, Basket, Voli", icon: "⚽" },
-      ];
-
-      for (const s of initialSeed) {
-        await execute(
-          "INSERT INTO master_ruang (name, type, cap, fas, icon) VALUES (?, ?, ?, ?, ?)",
-          [s.name, s.type, s.cap || "36 Siswa", s.fas || "Proyektor, AC", s.icon || "🏫"]
-        );
-      }
-
-      const freshRows = await query<RuangRow[]>("SELECT id, name, type, cap, fas, icon FROM master_ruang ORDER BY id DESC");
-      return (freshRows || []).map(r => ({ ...r, id: String(r.id) }));
+      return (rows || []).map(r => ({ ...r, id: String(r.id) }));
     } catch (e) {
       console.warn("[getRuangFn error]:", e);
       return [];
@@ -1013,70 +940,9 @@ export const getJadwalFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<JadwalRow[]> => {
     try {
       await createJadwalTableIfNotExists();
-      const { query, execute } = await import("@/lib/db");
+      const { query } = await import("@/lib/db");
       const rows = await query<JadwalRow[]>("SELECT id, hari, jam, mapel, tingkat, rombel, guru FROM jadwal_pelajaran ORDER BY id ASC");
-      if (rows && rows.length > 0) {
-        return rows.map(r => ({ ...r, id: String(r.id) }));
-      }
-
-      const initialSeed: JadwalRow[] = [
-        // Rombel 8A
-        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Al Qur'an Hadis", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        { hari: "Senin", jam: "09:15 - 10:45", mapel: "Bahasa Indonesia", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "SOBIYATI, S.Pd" },
-        { hari: "Senin", jam: "11:00 - 12:30", mapel: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "SAYONO, S.Pd., M.Pd." },
-        { hari: "Selasa", jam: "07:30 - 09:00", mapel: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "MISBAHUL MUNIR, S.Pd" },
-        { hari: "Selasa", jam: "09:15 - 10:45", mapel: "Fikih", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "CARYATI, S.Pd.I" },
-        { hari: "Selasa", jam: "11:00 - 12:30", mapel: "Ilmu Pengetahuan Alam", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "NOVANTYA KARTIKAWATI, S.Pd" },
-        { hari: "Rabu", jam: "07:30 - 09:00", mapel: "Akidah Akhlak", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "WAKHIBUN, S.Pd.I" },
-        { hari: "Rabu", jam: "09:15 - 10:45", mapel: "Sejarah Kebudayaan Islam", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "H. DASIRUN, S.Ag., M.Pd.I" },
-        { hari: "Rabu", jam: "11:00 - 12:30", mapel: "Bahasa Arab", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "ENDAH SUPRIHATIN, S.Pd" },
-        { hari: "Kamis", jam: "07:30 - 09:00", mapel: "Pendidikan Kewarganegaraan", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "MISBAH AHMAD DANI, S.Pd" },
-        { hari: "Kamis", jam: "09:15 - 10:45", mapel: "Informatika", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { hari: "Jumat", jam: "07:30 - 09:00", mapel: "Pendidikan Jasmani, Olahraga dan Kesehatan", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "TRIYONO, S.Pd" },
-        { hari: "Sabtu", jam: "07:30 - 09:00", mapel: "Seni Budaya", tingkat: "Kelas VIII", rombel: "Rombel 8A", guru: "DRA. ENDAH SRI W" },
-
-        // Rombel 9A
-        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Al Qur'an Hadis", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        { hari: "Senin", jam: "09:15 - 10:45", mapel: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "SOBIYATI, S.Pd" },
-        { hari: "Senin", jam: "11:00 - 12:30", mapel: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "SAYONO, S.Pd., M.Pd." },
-        { hari: "Selasa", jam: "07:30 - 09:00", mapel: "Bahasa Inggris", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { hari: "Selasa", jam: "09:15 - 10:45", mapel: "Fikih", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "CARYATI, S.Pd.I" },
-        { hari: "Selasa", jam: "11:00 - 12:30", mapel: "Ilmu Pengetahuan Alam", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "Dra. Hj. SITI RAHMAH, M.Pd" },
-        { hari: "Rabu", jam: "07:30 - 09:00", mapel: "Akidah Akhlak", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "WAKHIBUN, S.Pd.I" },
-        { hari: "Rabu", jam: "09:15 - 10:45", mapel: "Sejarah Kebudayaan Islam", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "H. DASIRUN, S.Ag., M.Pd.I" },
-        { hari: "Rabu", jam: "11:00 - 12:30", mapel: "Bahasa Arab", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "ENDAH SUPRIHATIN, S.Pd" },
-        { hari: "Kamis", jam: "07:30 - 09:00", mapel: "Pendidikan Kewarganegaraan", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "MISBAH AHMAD DANI, S.Pd" },
-        { hari: "Kamis", jam: "09:15 - 10:45", mapel: "Informatika", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "FAHRUR ROZI, S.Kom" },
-        { hari: "Jumat", jam: "07:30 - 09:00", mapel: "PJOK", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "MISBAH AHMAD DANI, S.Pd" },
-        { hari: "Sabtu", jam: "07:30 - 09:00", mapel: "Seni Budaya", tingkat: "Kelas IX", rombel: "Rombel 9A", guru: "TRI WAHYUNI, S.Pd" },
-
-        // Rombel 9B
-        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Bahasa Indonesia", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "SOBIYATI, S.Pd" },
-        { hari: "Senin", jam: "09:15 - 10:45", mapel: "Al Qur'an Hadis", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
-        { hari: "Selasa", jam: "07:30 - 09:00", mapel: "Matematika", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "SAYONO, S.Pd., M.Pd." },
-        { hari: "Rabu", jam: "07:30 - 09:00", mapel: "Bahasa Inggris", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { hari: "Kamis", jam: "07:30 - 09:00", mapel: "Fikih", tingkat: "Kelas IX", rombel: "Rombel 9B", guru: "CARYATI, S.Pd.I" },
-
-        // Rombel 8B
-        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Bahasa Inggris", tingkat: "Kelas VIII", rombel: "Rombel 8B", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-        { hari: "Selasa", jam: "07:30 - 09:00", mapel: "Matematika", tingkat: "Kelas VIII", rombel: "Rombel 8B", guru: "SAYONO, S.Pd., M.Pd." },
-
-        // Rombel 7A
-        { hari: "Senin", jam: "07:30 - 09:00", mapel: "PJOK", tingkat: "Kelas VII", rombel: "Rombel 7A", guru: "MISBAH AHMAD DANI, S.Pd" },
-
-        // Rombel 7B
-        { hari: "Senin", jam: "07:30 - 09:00", mapel: "Bahasa Arab", tingkat: "Kelas VII", rombel: "Rombel 7B", guru: "ENDAH SUPRIHATIN, S.Pd" },
-      ];
-
-      for (const s of initialSeed) {
-        await execute(
-          "INSERT INTO jadwal_pelajaran (hari, jam, mapel, tingkat, rombel, guru) VALUES (?, ?, ?, ?, ?, ?)",
-          [s.hari, s.jam, s.mapel, s.tingkat, s.rombel, s.guru || ""]
-        );
-      }
-
-      const freshRows = await query<JadwalRow[]>("SELECT id, hari, jam, mapel, tingkat, rombel, guru FROM jadwal_pelajaran ORDER BY id ASC");
-      return (freshRows || []).map(r => ({ ...r, id: String(r.id) }));
+      return (rows || []).map(r => ({ ...r, id: String(r.id) }));
     } catch (e) {
       console.warn("[getJadwalFn error]:", e);
       return [];
@@ -1123,7 +989,6 @@ export const deleteJadwalFn = createServerFn({ method: "POST" })
     }
   });
 
-// 3. ANNOUNCEMENTS (PENGUMUMAN)
 export const getAnnouncementsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<AnnouncementRow[]> => {
     try {
@@ -1137,11 +1002,6 @@ export const getAnnouncementsFn = createServerFn({ method: "GET" }).handler(
           date_str VARCHAR(50) NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-      await execute(`
-        INSERT INTO announcements (title, content, tag, date_str)
-        SELECT 'Libur Maulid Nabi', 'Sekolah diliburkan Senin, 27 Juli 2026.', 'Pengumuman', '27/07/2026'
-        WHERE NOT EXISTS (SELECT 1 FROM announcements LIMIT 1);
       `);
       return await query<AnnouncementRow[]>("SELECT * FROM announcements ORDER BY id DESC");
     } catch {
@@ -2600,7 +2460,9 @@ export const getMasterRombelsFn = createServerFn({ method: "GET" }).handler(
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
-      return await query<MasterRombelRow[]>("SELECT * FROM master_rombels ORDER BY code ASC");
+
+      const rows = await query<MasterRombelRow[]>("SELECT * FROM master_rombels ORDER BY code ASC");
+      return rows || [];
     } catch (e) {
       console.error("[getMasterRombelsFn Error]:", e);
       return [];

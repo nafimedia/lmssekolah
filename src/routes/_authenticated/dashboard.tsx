@@ -446,10 +446,10 @@ function Dashboard() {
       try {
         savedRolesMap = JSON.parse(
           localStorage.getItem("lms_user_roles_overrides") ||
-            localStorage.getItem("lms_persisted_user_roles_v2") ||
-            "{}"
+          localStorage.getItem("lms_persisted_user_roles_v2") ||
+          "{}"
         );
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let roles: string[] = savedRolesMap[cleanEmail] || savedRolesMap[me.id] || [];
@@ -947,9 +947,8 @@ function DashboardContent({
                       <DropdownMenuItem
                         key={r}
                         onClick={() => handleSwitchRole(r)}
-                        className={`flex items-center justify-between py-2 px-2.5 rounded-lg text-xs font-semibold cursor-pointer ${
-                          isSelected ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold" : ""
-                        }`}
+                        className={`flex items-center justify-between py-2 px-2.5 rounded-lg text-xs font-semibold cursor-pointer ${isSelected ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold" : ""
+                          }`}
                       >
                         <span className="flex items-center gap-2">
                           <span>{info.icon}</span>
@@ -1117,7 +1116,7 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
 
   const isSiswa = activeRole === "siswa";
   const isGuruMapel = activeRole === "guru" || activeRole === "guru_mapel";
-  
+
   // Assigned Homeroom class for Wali Kelas (Synced dynamically with user profile & GTK assignment)
   const resolvedWaliClass = useMemo(() => {
     const activeUser = MysqlAuthService.getActiveUser();
@@ -1188,7 +1187,7 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
         rombel: s.class,
         status: s.today,
         note: "Presensi Harian Pagi oleh Wali Kelas",
-      }).catch(() => {});
+      }).catch(() => { });
     });
     toast.success(`💾 Presensi Harian Pagi (${selectedClass}) berhasil disimpan oleh Wali Kelas!`, {
       description: "Data terhubung langsung dengan E-Rapor & WA Gateway EWS.",
@@ -1203,7 +1202,7 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
         rombel: s.class,
         status: s.sessionStatus,
         note: `Presensi Tatap Muka KBM: ${activeSession.mapel} ${activeSession.meeting}`,
-      }).catch(() => {});
+      }).catch(() => { });
     });
     toast.success(`✅ Presensi Sesi KBM (${activeSession.mapel} - ${activeSession.meeting}) Berhasil Disimpan!`, {
       description: `Tercatat pada Jurnal Mengajar ${activeSession.class} (${activeSession.time}).`,
@@ -1223,7 +1222,7 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
       category: "ALERT PRESENSI",
       message: `[ALERT PRESENSI MTsN 2 CILACAP]: Bpk/Ibu Orang Tua ${student.name}, disampaikan bahwa ananda hari ini tercatat ${student.today.toUpperCase()} di presensi harian pagi. Rekap bulan ${selectedMonth}: Hadir: ${student.hadir} hari, Izin: ${student.izin}, Sakit: ${student.sakit}, Alpa: ${student.alpa} hari (${student.pct}% Kehadiran).`,
       status: "TERKIRIM",
-    }).catch(() => {});
+    }).catch(() => { });
 
     toast.success(`📱 WA Alert Presensi Berhasil Dikirim ke Orang Tua ${student.name} (${student.parentWa})!`);
   };
@@ -1393,9 +1392,8 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
                       <div
                         key={idx}
                         onClick={() => toast.info(`📅 Presensi Tgl ${cell.dayNumber} ${currentMonthName} ${currentYear}`, { description: note ? `${badgeIcon} Status: ${note}` : undefined })}
-                        className={`p-2 rounded-lg border text-center transition cursor-pointer hover:scale-105 ${bgClass} ${
-                          cell.isToday ? "ring-2 ring-emerald-500 shadow-md font-extrabold bg-emerald-500/30 text-emerald-900 dark:text-emerald-100" : ""
-                        }`}
+                        className={`p-2 rounded-lg border text-center transition cursor-pointer hover:scale-105 ${bgClass} ${cell.isToday ? "ring-2 ring-emerald-500 shadow-md font-extrabold bg-emerald-500/30 text-emerald-900 dark:text-emerald-100" : ""
+                          }`}
                       >
                         <div className="flex justify-between items-center text-[10px] opacity-80">
                           <span className={cell.isToday ? "font-extrabold text-emerald-600 dark:text-emerald-300" : ""}>{cell.dayNumber}</span>
@@ -1521,33 +1519,29 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
                       <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border">
                         <button
                           onClick={() => handleSetSessionStatus(s.id, "hadir")}
-                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
-                            s.sessionStatus === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${s.sessionStatus === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           HADIR
                         </button>
                         <button
                           onClick={() => handleSetSessionStatus(s.id, "izin")}
-                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
-                            s.sessionStatus === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${s.sessionStatus === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           IZIN
                         </button>
                         <button
                           onClick={() => handleSetSessionStatus(s.id, "sakit")}
-                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
-                            s.sessionStatus === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${s.sessionStatus === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           SAKIT
                         </button>
                         <button
                           onClick={() => handleSetSessionStatus(s.id, "alpa")}
-                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${
-                            s.sessionStatus === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`px-2.5 py-1 rounded text-[10px] font-extrabold transition ${s.sessionStatus === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           ALPA
                         </button>
@@ -1707,33 +1701,29 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
                       <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border">
                         <button
                           onClick={() => handleSetTodayStatus(s.id, "hadir")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                            s.today === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${s.today === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           HADIR
                         </button>
                         <button
                           onClick={() => handleSetTodayStatus(s.id, "izin")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                            s.today === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${s.today === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           IZIN
                         </button>
                         <button
                           onClick={() => handleSetTodayStatus(s.id, "sakit")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                            s.today === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${s.today === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           SAKIT
                         </button>
                         <button
                           onClick={() => handleSetTodayStatus(s.id, "alpa")}
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                            s.today === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${s.today === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           ALPA
                         </button>
@@ -1748,9 +1738,8 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
                       <Button
                         size="sm"
                         variant="outline"
-                        className={`h-7 text-[11px] font-bold gap-1 border-purple-500/40 ${
-                          s.today !== "hadir" ? "bg-purple-600 text-white hover:bg-purple-700 font-extrabold shadow-xs" : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
-                        }`}
+                        className={`h-7 text-[11px] font-bold gap-1 border-purple-500/40 ${s.today !== "hadir" ? "bg-purple-600 text-white hover:bg-purple-700 font-extrabold shadow-xs" : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
+                          }`}
                         onClick={() => handleSendWaPresensiAlert(s)}
                       >
                         <Send className="h-3 w-3" /> WA Alert Ortu
@@ -2652,33 +2641,29 @@ startxref
                         <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border">
                           <button
                             onClick={() => handleSetStudentStatus(st.id, "hadir")}
-                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                              st.status === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                            }`}
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${st.status === "hadir" ? "bg-emerald-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                              }`}
                           >
                             HADIR
                           </button>
                           <button
                             onClick={() => handleSetStudentStatus(st.id, "izin")}
-                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                              st.status === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                            }`}
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${st.status === "izin" ? "bg-blue-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                              }`}
                           >
                             IZIN
                           </button>
                           <button
                             onClick={() => handleSetStudentStatus(st.id, "sakit")}
-                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                              st.status === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                            }`}
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${st.status === "sakit" ? "bg-amber-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                              }`}
                           >
                             SAKIT
                           </button>
                           <button
                             onClick={() => handleSetStudentStatus(st.id, "alpa")}
-                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${
-                              st.status === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
-                            }`}
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition ${st.status === "alpa" ? "bg-red-600 text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                              }`}
                           >
                             ALPA
                           </button>
@@ -4831,7 +4816,7 @@ function Progress({ activeRole }: { activeRole?: string }) {
 function ApresiasiGuru({ activeRole }: { activeRole?: string }) {
   const [teachersList, setTeachersList] = useState([
     { id: "1", name: "AH. SYARIF HIDAYAH, S.Pd.I", mapel: "Al Qur'an Hadis", nip: "199204042025051002", badges: ["🏆 Guru Inovatif", "⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
-    { id: "2", name: "WAKHIBUN, S.P", mapel: "Akidah Akhlak", nip: "197205122005011003", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
+    { id: "2", name: ", S.P", mapel: "Akidah Akhlak", nip: "197205122005011003", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
     { id: "3", name: "CARYATI,", mapel: "Fikih", nip: "197807072007102001", badges: ["⭐ Presensi Presisi 100%"], warningCount: 0, status: "Aktif Terpuji" },
     { id: "4", name: "H. DASIRUN, S.Ag., M.Pd.I", mapel: "Sejarah Kebudayaan Islam", nip: "197311232005011004", badges: ["🏆 Guru Inovatif", "💡 Modul Inspiratif"], warningCount: 0, status: "Aktif Terpuji" },
     { id: "5", name: "ENDAH SUPRIHATIN, S.Pd", mapel: "Bahasa Arab", nip: "199405142019032021", badges: ["🌟 Media Ajar Terkreatif"], warningCount: 0, status: "Aktif Terpuji" },
@@ -4886,7 +4871,7 @@ function ApresiasiGuru({ activeRole }: { activeRole?: string }) {
           setTeachersList(mapped);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       isMounted = false;
@@ -5680,7 +5665,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         localStorage.removeItem("lms_rombel_management_v3");
         localStorage.removeItem("lms_rombel_management_v4");
         localStorage.setItem("lms_rombel_management_v5", JSON.stringify(defaultRombels));
-      } catch (e) {}
+      } catch (e) { }
     }
     return defaultRombels;
   });
@@ -5720,7 +5705,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
           if (typeof window !== "undefined") {
             try {
               localStorage.setItem("lms_rombel_management_v4", JSON.stringify(updated));
-            } catch (e) {}
+            } catch (e) { }
           }
           return updated;
         });
@@ -5733,7 +5718,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("lms_rombel_management_v4", JSON.stringify(list));
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -5919,7 +5904,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
       category: "BROADCAST ROMBEL",
       message: `[BROADCAST WA ROMBEL ${targetRombelForWa.name}]: ${waSubject}\n\n${waMessage}`,
       status: "TERKIRIM",
-    }).catch(() => {});
+    }).catch(() => { });
 
     toast.success(`📱 Broadcast WhatsApp Berhasil Dikirim ke ${totalParents} Orang Tua Siswa Rombel ${targetRombelForWa.name}!`, {
       description: "Log pengiriman tercatat di EWS WA Gateway System.",
@@ -6072,11 +6057,10 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
                 key={g}
                 type="button"
                 onClick={() => setGradeFilter(g)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  gradeFilter === g
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${gradeFilter === g
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
+                  }`}
               >
                 <span>{g === "Semua" ? "🌐 Semua Tingkat" : `🎓 Kelas ${g}`}</span>
                 <Badge variant="secondary" className="text-[10px] bg-background/80 text-foreground font-extrabold px-1.5 py-0.2">
@@ -6283,35 +6267,35 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
                                                       )}
                                                     </td>
                                                     <td className="py-2 px-3 text-right">
-                                                       <div className="flex items-center justify-end gap-1">
-                                                         <Button
-                                                           size="sm"
-                                                           variant="ghost"
-                                                           className="h-6 text-[10px] text-emerald-600 hover:bg-emerald-500/10 font-bold gap-1"
-                                                           onClick={() =>
-                                                             setEditingStudent({
-                                                               rombelId: r.id,
-                                                               id: s.id,
-                                                               nisn: s.nisn,
-                                                               name: s.name,
-                                                               gender: s.gender || "L",
-                                                               parentWa: s.parentWa || "081234567890",
-                                                               kkmStatus: s.kkmStatus || "TUNTAS (85)",
-                                                             })
-                                                           }
-                                                         >
-                                                           <PencilLine className="h-3 w-3" /> Edit User Siswa
-                                                         </Button>
-                                                         <Button
-                                                           size="sm"
-                                                           variant="ghost"
-                                                           className="h-6 text-[10px] text-red-600 hover:bg-red-500/10 font-bold"
-                                                           onClick={() => handleRemoveStudent(r.id, s.id, s.name)}
-                                                         >
-                                                           Keluarkan
-                                                         </Button>
-                                                       </div>
-                                                     </td>
+                                                      <div className="flex items-center justify-end gap-1">
+                                                        <Button
+                                                          size="sm"
+                                                          variant="ghost"
+                                                          className="h-6 text-[10px] text-emerald-600 hover:bg-emerald-500/10 font-bold gap-1"
+                                                          onClick={() =>
+                                                            setEditingStudent({
+                                                              rombelId: r.id,
+                                                              id: s.id,
+                                                              nisn: s.nisn,
+                                                              name: s.name,
+                                                              gender: s.gender || "L",
+                                                              parentWa: s.parentWa || "081234567890",
+                                                              kkmStatus: s.kkmStatus || "TUNTAS (85)",
+                                                            })
+                                                          }
+                                                        >
+                                                          <PencilLine className="h-3 w-3" /> Edit User Siswa
+                                                        </Button>
+                                                        <Button
+                                                          size="sm"
+                                                          variant="ghost"
+                                                          className="h-6 text-[10px] text-red-600 hover:bg-red-500/10 font-bold"
+                                                          onClick={() => handleRemoveStudent(r.id, s.id, s.name)}
+                                                        >
+                                                          Keluarkan
+                                                        </Button>
+                                                      </div>
+                                                    </td>
                                                   </tr>
                                                 ))}
                                               </tbody>
@@ -6738,7 +6722,7 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
             return parsed;
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     return defaultList;
   });
@@ -6767,7 +6751,7 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
           if (typeof window !== "undefined") {
             try {
               localStorage.setItem("lms_uploaded_modul_ajar_v2", JSON.stringify(merged));
-            } catch (e) {}
+            } catch (e) { }
           }
           return merged;
         });
@@ -6783,7 +6767,7 @@ function ModulAjar({ activeRole, userProfile }: { activeRole?: string; userProfi
 
   const pdfBlobUrl = useMemo(() => {
     if (!previewModul) return null;
-    
+
     if (previewModul.file_url) {
       const urlStr = previewModul.file_url;
       if (urlStr.startsWith("blob:") || urlStr.startsWith("http://") || urlStr.startsWith("https://")) {
@@ -6941,7 +6925,7 @@ startxref
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("lms_uploaded_modul_ajar_v2", JSON.stringify(nextList));
-        } catch (e) {}
+        } catch (e) { }
       }
       return nextList;
     });
@@ -6953,7 +6937,7 @@ startxref
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("lms_uploaded_modul_ajar_v2", JSON.stringify(nextList));
-        } catch (e) {}
+        } catch (e) { }
       }
       return nextList;
     });
@@ -6964,7 +6948,7 @@ startxref
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("lms_hidden_modul_ajar_v1", JSON.stringify(nextHidden));
-        } catch (e) {}
+        } catch (e) { }
       }
       return nextHidden;
     });
@@ -7015,7 +6999,7 @@ startxref
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("lms_uploaded_modul_ajar_v2", JSON.stringify(updated));
-        } catch (e) {}
+        } catch (e) { }
       }
       return updated;
     });
@@ -7042,7 +7026,7 @@ startxref
       try {
         const saved = localStorage.getItem("lms_hidden_modul_ajar_v1");
         if (saved) return JSON.parse(saved);
-      } catch (e) {}
+      } catch (e) { }
     }
     return [];
   });
@@ -7089,8 +7073,8 @@ startxref
             {isWaka
               ? "Portal verifikasi, evaluasi kesesuaian CP/ATP, dan pengesahan Modul Ajar PDF Kurikulum Merdeka yang diunggah Guru Pengampu."
               : isSiswa
-              ? `Akses berkas PDF Modul Ajar Kurikulum Merdeka khusus Kelas ${rawClass} MTsN 2 Cilacap`
-              : "Unggah dan kelola file PDF Modul Ajar Kurikulum Merdeka per mata pelajaran & jenjang (Kelas VII, VIII, IX)."}
+                ? `Akses berkas PDF Modul Ajar Kurikulum Merdeka khusus Kelas ${rawClass} MTsN 2 Cilacap`
+                : "Unggah dan kelola file PDF Modul Ajar Kurikulum Merdeka per mata pelajaran & jenjang (Kelas VII, VIII, IX)."}
           </p>
         </div>
         {!isSiswa && (
@@ -7203,11 +7187,10 @@ startxref
                   <Button
                     size="sm"
                     variant="outline"
-                    className={`h-7 text-xs font-bold px-2.5 ${
-                      m.status === "Terverifikasi Waka"
+                    className={`h-7 text-xs font-bold px-2.5 ${m.status === "Terverifikasi Waka"
                         ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
                         : "bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold shadow-xs"
-                    }`}
+                      }`}
                     onClick={() => handleToggleVerification(m.id, m.status, m.title)}
                   >
                     {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan"}

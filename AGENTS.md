@@ -1,10 +1,11 @@
 <!-- LOVABLE:BEGIN -->
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
+🔍 Analisis Terlebih Dahulu (Prioritas Utama):
+
+Saya akan melakukan investigasi penuh ke kode dan database, lalu menyampaikan hasil analisisnya secara transparan dan detail kepada Anda terlebih dahulu.
+🤝 Konfirmasi & Diskusi Sebelum Eksekusi:
+
+Saya TIDAK AKAN membuat asumsi, tidak akan menambah data dummy/seed, dan tidak akan langsung mengeksekusi perubahan kode/database sebelum menyepakati langkahnya bersama Anda.
+🗄️ Murni 100% Real Database:
+
+Semua data di layar murni bersumber dari database MySQL yang diinput oleh pengguna asli.
 <!-- LOVABLE:END -->

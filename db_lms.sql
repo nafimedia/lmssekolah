@@ -232,11 +232,6 @@ INSERT INTO `subjects` (`id`, `code`, `name`, `category`, `teacher_name`, `grade
 (8, 'UMM-06', 'Informatika & Coding', 'Umum', 'H. Ahmad Syukri, S.Kom', 'Kelas 8', 2, 75, 'Aktif', '💻')
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 
--- Seed Initial CBT Exam
-INSERT INTO `cbt_exams` (`id`, `title`, `subject_name`, `token`, `duration_minutes`, `passing_score`) VALUES
-(1, 'CBT UTS Semester Ganjil TA 2026/2027', 'Matematika', 'MTS2-MAT', 60, 75)
-ON DUPLICATE KEY UPDATE `title` = VALUES(`title`);
-
 -- Seed Initial Tahfidz Record
 INSERT INTO `tahfidz_records` (`id`, `user_id`, `student_name`, `juz_number`, `surah_name`, `verses`, `status`, `tajwid_score`, `tester_name`) VALUES
 (1, 'usr-siswa-1', 'Muhammad Fairuz Maulana', 30, 'An-Naba\'', '1 - 40', 'Mutqin', 98, 'Ustadz Ahmad Syukri, S.Pd.I')

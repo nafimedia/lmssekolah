@@ -31,42 +31,39 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
   const [deleteConfirmModul, setDeleteConfirmModul] = useState<{ id: string; title: string } | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  const [modulList, setModulList] = useState<Array<any>>([
-    { id: "m1", title: "Modul Ajar Al Qur'an Hadis Pertemuan 1-18", mapel: "Al Qur'an Hadis", jenjang: "Kelas VIII", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", size: "3.4 MB", date: "10 Agustus 2026", status: "Terverifikasi Waka", file_url: "" },
-    { id: "m2", title: "Modul Ajar Fikih Kebangsaan & Ibadah", mapel: "Fikih", jenjang: "Kelas IX", teacher: "CARYATI, S.Pd.I", size: "4.1 MB", date: "09 Agustus 2026", status: "Terverifikasi Waka", file_url: "" },
-    { id: "m3", title: "Modul Ajar Akidah Akhlak Perilaku Terpuji", mapel: "Akidah Akhlak", jenjang: "Kelas VII", teacher: "WAKHIBUN, S.Pd.I", size: "2.8 MB", date: "08 Agustus 2026", status: "Terverifikasi Waka", file_url: "" },
-    { id: "m4", title: "Modul Ajar Matematika Aljabar & Geometri", mapel: "Matematika", jenjang: "Kelas VIII", teacher: "SAYONO, S.Pd., M.Pd.", size: "5.2 MB", date: "07 Agustus 2026", status: "Terverifikasi Waka", file_url: "" },
-    { id: "m5", title: "Modul Ajar Bahasa Indonesia Teks Deskripsi", mapel: "Bahasa Indonesia", jenjang: "Kelas VIII", teacher: "DRA. ENDAH SRI W", size: "3.1 MB", date: "06 Agustus 2026", status: "Terverifikasi Waka", file_url: "" },
-    { id: "m6", title: "Modul Ajar Bahasa Inggris Recount Text", mapel: "Bahasa Inggris", jenjang: "Kelas VIII", teacher: "MISBAHUL MUNIR, S.Pd", size: "3.9 MB", date: "05 Agustus 2026", status: "Terverifikasi Waka", file_url: "" },
-  ]);
+  const [modulList, setModulList] = useState<Array<any>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchMaterials = async () => {
+    setIsLoading(true);
+    try {
+      const items = await MysqlDataService.getMaterials();
+      if (items && items.length > 0) {
+        const dbFormatted = items.map((m) => ({
+          id: String(m.id),
+          title: m.title,
+          mapel: m.subject_name || "Mata Pelajaran",
+          jenjang: m.class_name || "Kelas VIII",
+          teacher: m.uploaded_by || m.teacher_name || "Guru Pengampu",
+          size: m.size || "3.5 MB",
+          date: m.created_at ? new Date(m.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Terbaru",
+          status: "Terverifikasi Waka",
+          file_url: m.file_url || "",
+          file_name: m.filename || `${m.title}.pdf`,
+        }));
+        setModulList(dbFormatted);
+      } else {
+        setModulList([]);
+      }
+    } catch (e) {
+      setModulList([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    MysqlDataService.getMaterials()
-      .then((items) => {
-        if (items && items.length > 0) {
-          const dbFormatted = items.map((m) => ({
-            id: String(m.id),
-            title: m.title,
-            mapel: m.subject_name || "Mata Pelajaran",
-            jenjang: m.class_name || "Kelas VIII",
-            teacher: m.uploaded_by || m.teacher_name || "Guru Pengampu",
-            size: "3.5 MB",
-            date: m.created_at ? new Date(m.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Terbaru",
-            status: "Terverifikasi Waka",
-            file_url: m.file_url || "",
-            file_name: m.filename || `${m.title}.pdf`,
-          }));
-          setModulList((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            const merged = [...prev];
-            dbFormatted.forEach((item) => {
-              if (!existingIds.has(item.id)) merged.push(item);
-            });
-            return merged;
-          });
-        }
-      })
-      .catch(() => {});
+    fetchMaterials();
   }, []);
 
   const handleDownloadModulPdf = (m: any) => {
@@ -115,42 +112,41 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     });
   };
 
-  const handleDeleteModul = (id: string, title: string) => {
+  const handleDeleteModul = async (id: string, title: string) => {
     setModulList((prev) => prev.filter((m) => m.id !== id));
-    MysqlDataService.deleteMaterial(id).catch((err) => console.warn("deleteMaterial DB warning:", err));
-    toast.success(`🗑️ Modul Ajar "${title}" berhasil dihapus dari sistem!`);
+    try {
+      await MysqlDataService.deleteMaterial(id);
+      toast.success(`🗑️ Modul Ajar "${title}" berhasil dihapus dari database!`);
+      await fetchMaterials();
+    } catch (err) {
+      console.warn("deleteMaterial DB warning:", err);
+    }
   };
 
-  const handleUploadSubmit = (data: { title: string; mapel: string; jenjang: string; file: File | null; dataUrl: string }) => {
+  const handleUploadSubmit = async (data: { title: string; mapel: string; jenjang: string; file: File | null; dataUrl: string }) => {
     const calcSize = data.file ? `${(data.file.size / (1024 * 1024)).toFixed(1)} MB` : "3.8 MB";
     const fileUrlToSave = data.dataUrl || "";
+    const newId = "mod_" + Date.now();
 
-    const newModul = {
-      id: "mod_" + Date.now(),
-      title: data.title.trim(),
-      mapel: data.mapel,
-      jenjang: data.jenjang,
-      teacher: currentTeacherName || "SOBIYATI, S.Pd",
-      size: calcSize,
-      date: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-      status: isWakaOrAdmin ? "Terverifikasi Waka" : "Perlu Verifikasi Waka",
-      file_url: fileUrlToSave,
-      file_name: data.file?.name || `${data.title}.pdf`,
-    };
+    try {
+      await MysqlDataService.saveMaterial({
+        id: newId,
+        title: data.title.trim(),
+        subject_name: data.mapel,
+        class_name: data.jenjang,
+        uploaded_by: currentTeacherName || "Guru Pengampu",
+        teacher_name: currentTeacherName || "Guru Pengampu",
+        file_url: fileUrlToSave || ("/uploads/" + newId + ".pdf"),
+        filename: data.file?.name || `${data.title}.pdf`,
+        size: calcSize,
+      });
 
-    setModulList((prev) => [newModul, ...prev]);
-
-    MysqlDataService.saveMaterial({
-      id: newModul.id,
-      title: newModul.title,
-      subject_name: newModul.mapel,
-      class_name: newModul.jenjang,
-      uploaded_by: newModul.teacher,
-      teacher_name: newModul.teacher,
-      file_url: fileUrlToSave || ("/uploads/" + newModul.id + ".pdf"),
-    }).catch((err) => console.warn("Save material DB warning:", err));
-
-    toast.success(`Modul Ajar PDF "${data.title}" berhasil diunggah dan tersimpan permanen! ${!isWakaOrAdmin ? "(Menunggu Verifikasi Waka)" : ""}`);
+      toast.success(`Modul Ajar PDF "${data.title}" berhasil diunggah dan tersimpan permanen ke database!`);
+      await fetchMaterials();
+    } catch (err) {
+      console.warn("Save material DB warning:", err);
+      toast.error("Gagal mengunggah Modul Ajar ke database.");
+    }
   };
 
   const filteredModul = modulList.filter((m) => {
@@ -273,81 +269,93 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         )}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {filteredModul.map((m) => (
-          <Card key={m.id} className="border-border hover:border-emerald-500/50 transition shadow-xs flex flex-col justify-between">
-            <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-12 w-12 rounded-xl bg-emerald-500/15 text-emerald-600 grid place-items-center shrink-0 font-bold text-xl">
-                📄
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 border-emerald-500/30">
-                    {m.jenjang} • {m.mapel}
-                  </Badge>
-                  <Badge className={m.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-[10px] font-bold" : "bg-amber-500 text-white text-[10px] font-bold"}>
-                    {m.status === "Terverifikasi Waka" ? "✓ Terverifikasi Waka" : "⏳ Perlu Verifikasi"}
-                  </Badge>
+      {filteredModul.length === 0 ? (
+        <Card className="border-border border-dashed p-12 text-center bg-card">
+          <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
+          <h3 className="text-base font-bold text-foreground">Belum Ada Modul Ajar PDF Terdaftar</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+            {isLoading
+              ? "Sedang memuat berkas Modul Ajar dari database MySQL..."
+              : "Belum ada berkas Modul Ajar PDF yang diunggah di database. Silakan klik tombol '+ Unggah Modul Ajar PDF' di atas untuk mengunggah berkas baru."}
+          </p>
+        </Card>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {filteredModul.map((m) => (
+            <Card key={m.id} className="border-border hover:border-emerald-500/50 transition shadow-xs flex flex-col justify-between">
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="h-12 w-12 rounded-xl bg-emerald-500/15 text-emerald-600 grid place-items-center shrink-0 font-bold text-xl">
+                  📄
                 </div>
-                <div className="font-bold text-sm text-foreground mt-1.5 leading-snug line-clamp-2">{m.title}</div>
-                <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-between gap-2 flex-wrap">
-                  <span>Penyusun: <strong className="text-foreground font-semibold">{m.teacher}</strong></span>
-                  <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">💾 {m.size}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 border-emerald-500/30">
+                      {m.jenjang} • {m.mapel}
+                    </Badge>
+                    <Badge className={m.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-[10px] font-bold" : "bg-amber-500 text-white text-[10px] font-bold"}>
+                      {m.status === "Terverifikasi Waka" ? "✓ Terverifikasi Waka" : "⏳ Perlu Verifikasi"}
+                    </Badge>
+                  </div>
+                  <div className="font-bold text-sm text-foreground mt-1.5 leading-snug line-clamp-2">{m.title}</div>
+                  <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-between gap-2 flex-wrap">
+                    <span>Penyusun: <strong className="text-foreground font-semibold">{m.teacher}</strong></span>
+                    <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">💾 {m.size}</span>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
 
-            <div className="px-4 pb-3 pt-2.5 border-t border-border/80 flex items-center justify-between flex-wrap gap-2 bg-muted/20">
-              <div className="flex items-center gap-1.5 flex-wrap flex-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 px-2.5 gap-1"
-                  onClick={() => setPreviewModul(m)}
-                >
-                  <Eye className="h-3.5 w-3.5" /> Pratinjau
-                </Button>
-
-                {isWakaOrAdmin && (
+              <div className="px-4 pb-3 pt-2.5 border-t border-border/80 flex items-center justify-between flex-wrap gap-2 bg-muted/20">
+                <div className="flex items-center gap-1.5 flex-wrap flex-1">
                   <Button
                     size="sm"
                     variant="outline"
-                    className={`h-7 text-xs font-bold px-2.5 ${
-                      m.status === "Terverifikasi Waka"
-                        ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
-                        : "bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold shadow-xs"
-                    }`}
-                    onClick={() => handleToggleVerification(m.id, m.status, m.title)}
+                    className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 px-2.5 gap-1"
+                    onClick={() => setPreviewModul(m)}
                   >
-                    {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan"}
+                    <Eye className="h-3.5 w-3.5" /> Pratinjau
+                  </Button>
+
+                  {isWakaOrAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={`h-7 text-xs font-bold px-2.5 ${
+                        m.status === "Terverifikasi Waka"
+                          ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
+                          : "bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold shadow-xs"
+                      }`}
+                      onClick={() => handleToggleVerification(m.id, m.status, m.title)}
+                    >
+                      {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan"}
+                    </Button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 px-2.5 gap-1"
+                    onClick={() => handleDownloadModulPdf(m)}
+                  >
+                    <Download className="h-3.5 w-3.5" /> Unduh PDF
+                  </Button>
+                </div>
+
+                {(isWakaOrAdmin || isGuru) && !isKamad && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/15 hover:text-rose-700 border border-rose-500/30 rounded-lg shrink-0"
+                    onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
+                    title="Hapus Modul Ajar"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 )}
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 px-2.5 gap-1"
-                  onClick={() => handleDownloadModulPdf(m)}
-                >
-                  <Download className="h-3.5 w-3.5" /> Unduh PDF
-                </Button>
               </div>
-
-              {(isWakaOrAdmin || isGuru) && !isKamad && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/15 hover:text-rose-700 border border-rose-500/30 rounded-lg shrink-0"
-                  onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
-                  title="Hapus Modul Ajar"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <UploadModulDialog
         isOpen={isUploadOpen}

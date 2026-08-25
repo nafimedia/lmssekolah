@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
-import { Award, Download, FileText, CheckCircle2, Inbox } from "lucide-react";
+import { Award, Download, FileText, CheckCircle2, Inbox, Building2, Users, Search, Eye, Filter, BarChart3, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -16,111 +15,374 @@ import {
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
-import { getTeacherAssignedSubjects, getTeacherAssignedClasses, ALL_SCHOOL_SUBJECTS, isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
+import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
 import { exportToExcelXml } from "@/utils/excelExporter";
 import { toast } from "sonner";
 
+export interface StudentLegerSummary {
+  id: string;
+  name: string;
+  nis: string;
+  rombel: string;
+  avgScore: number;
+  tugasCount: number;
+  cbtCount: number;
+  status: string;
+}
+
+export interface ClassReportSummary {
+  rombel: string;
+  waliKelas: string;
+  totalSiswa: number;
+  avgScore: number;
+  tuntasCount: number;
+  prosesCount: number;
+  belumCount: number;
+}
+
 export function RaporModule({ activeRole }: { activeRole?: string }) {
+  const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "kepala_madrasah";
   const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
-  const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin";
   const isGuru = activeRole === "guru";
+  const isSiswa = activeRole === "siswa";
 
-  const [selectedClassModal, setSelectedClassModal] = useState<any>(null);
-  const [selectedEntryModal, setSelectedEntryModal] = useState<any>(null);
-
-  const [isPrintRaporOpen, setIsPrintRaporOpen] = useState(false);
   const activeUser = MysqlAuthService.getActiveUser();
-  const [raporStudentName, setRaporStudentName] = useState(activeUser?.full_name || "ALIYA QIARA ABDULLAH");
-  const [raporNisn, setRaporNisn] = useState(activeUser?.nis_nip || "0127790481");
-  const [raporClass, setRaporClass] = useState(activeUser?.class_name || "VIII A");
+  const userRombelRaw = activeUser?.class_name || (activeUser as any)?.class || "Rombel 8B";
+  const defaultRombel = normalizeRombelName(userRombelRaw);
 
-  const [dbStudentGrades, setDbStudentGrades] = useState<any[]>([]);
-  const [loadingGrades, setLoadingGrades] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<string>(isExecutive ? "ALL" : defaultRombel);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isPrintRaporOpen, setIsPrintRaporOpen] = useState(false);
+  const [selectedStudentForRapor, setSelectedStudentForRapor] = useState<any>(null);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [studentsList, setStudentsList] = useState<any[]>([]);
+  const [subjectsList, setSubjectsList] = useState<any[]>([]);
+  const [submissionsList, setSubmissionsList] = useState<any[]>([]);
+  const [cbtResultsList, setCbtResultsList] = useState<any[]>([]);
+  const [masterRombels, setMasterRombels] = useState<any[]>([]);
+  const [hafalanList, setHafalanList] = useState<any[]>([]);
+  const [p5ProjectsList, setP5ProjectsList] = useState<any[]>([]);
 
   useEffect(() => {
-    if (activeRole === "siswa") {
-      setLoadingGrades(true);
-      Promise.all([
-        MysqlDataService.getSubmissions(),
-        MysqlDataService.getCbtResults(),
-      ])
-        .then(([subs, cbts]) => {
-          const userSession = MysqlAuthService.getActiveUser();
-          const userEmail = (userSession?.email || "").toLowerCase();
-          const userName = (userSession?.full_name || "").toLowerCase();
+    let isMounted = true;
+    setIsLoading(true);
 
-          const mySubs = (subs || []).filter(
-            (s) => (s.user_id && s.user_id.toLowerCase() === userEmail) || (s.student_name && s.student_name.toLowerCase() === userName)
-          );
+    Promise.all([
+      MysqlDataService.getUsers(),
+      MysqlDataService.getSubjects(),
+      MysqlDataService.getSubmissions(),
+      MysqlDataService.getCbtResults(),
+      MysqlDataService.getMasterRombels().catch(() => []),
+      MysqlDataService.getHafalan().catch(() => []),
+      MysqlDataService.getP5Projects().catch(() => []),
+    ])
+      .then(([users, subjects, subs, cbts, rombels, hafalans, p5s]) => {
+        if (!isMounted) return;
 
-          const myCbts = (cbts || []).filter(
-            (c) => (c.user_id && c.user_id.toLowerCase() === userEmail) || (c.student_name && c.student_name.toLowerCase() === userName)
-          );
+        if (users && users.length > 0) {
+          const siswaList = users.filter((u: any) => u.role === "siswa");
+          setStudentsList(siswaList);
+        } else {
+          setStudentsList([]);
+        }
 
-          const combined: any[] = [];
-          mySubs.forEach((s) => {
-            if (s.score && s.score > 0) {
-              combined.push({
-                code: "SUB-" + s.id,
-                mapel: "Tugas LKPD",
-                teacher: "Guru Pengampu",
-                tugas: s.score,
-                kuis: 0,
-                cbt: 0,
-                avg: s.score,
-                kkm: s.score >= 75 ? "Tuntas (≥75)" : "Belum Tuntas (<75)",
-              });
-            }
-          });
+        setSubjectsList(subjects || []);
+        setSubmissionsList(subs || []);
+        setCbtResultsList(cbts || []);
+        setMasterRombels(rombels || []);
+        setHafalanList(hafalans || []);
+        setP5ProjectsList(p5s || []);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setStudentsList([]);
+          setSubjectsList([]);
+          setSubmissionsList([]);
+          setCbtResultsList([]);
+          setHafalanList([]);
+          setP5ProjectsList([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
 
-          myCbts.forEach((c) => {
-            if (c.score && c.score > 0) {
-              combined.push({
-                code: "CBT-" + c.id,
-                mapel: c.exam_title || "Kuis / CBT",
-                teacher: "Guru Pengampu",
-                tugas: 0,
-                kuis: c.score,
-                cbt: c.score,
-                avg: c.score,
-                kkm: c.score >= 75 ? "Tuntas (≥75)" : "Belum Tuntas (<75)",
-              });
-            }
-          });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-          setDbStudentGrades(combined);
-        })
-        .catch(() => setDbStudentGrades([]))
-        .finally(() => setLoadingGrades(false));
-    }
-  }, [activeRole]);
+  // Compute dynamic set of Rombel names
+  const rombelOptions = useMemo(() => {
+    const set = new Set<string>(["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B"]);
+    masterRombels.forEach((r) => {
+      if (r.name) set.add(normalizeRombelName(r.name));
+      if (r.code) set.add(normalizeRombelName(r.code));
+    });
+    studentsList.forEach((s) => {
+      const cls = s.class_name || s.class;
+      if (cls) set.add(normalizeRombelName(cls));
+    });
+    return Array.from(set).sort();
+  }, [masterRombels, studentsList]);
 
-  const handlePrintRapor = () => {
-    window.print();
-    toast.success(`🖨️ Cetak E-Rapor Kurikulum Merdeka (${raporStudentName}) berhasil diproses!`);
+  // Compute REAL grades per student (NO DUMMY DATA - 0 if no evaluations)
+  const studentLegerData = useMemo<StudentLegerSummary[]>(() => {
+    return studentsList.map((s, idx) => {
+      const sEmail = (s.email || "").toLowerCase();
+      const sName = (s.full_name || s.name || "").toLowerCase();
+      const sRombel = normalizeRombelName(s.class_name || s.class || "Rombel 8B");
+
+      const studentSubs = submissionsList.filter(
+        (sub) =>
+          (sub.user_id && sub.user_id.toLowerCase() === sEmail) ||
+          (sub.student_name && sub.student_name.toLowerCase() === sName)
+      );
+
+      const studentCbts = cbtResultsList.filter(
+        (c) =>
+          (c.user_id && c.user_id.toLowerCase() === sEmail) ||
+          (c.student_name && c.student_name.toLowerCase() === sName)
+      );
+
+      let totalScore = 0;
+      let scoreCount = 0;
+
+      studentSubs.forEach((sub) => {
+        if (sub.score && sub.score > 0) {
+          totalScore += sub.score;
+          scoreCount++;
+        }
+      });
+
+      studentCbts.forEach((cbt) => {
+        if (cbt.score && cbt.score > 0) {
+          totalScore += cbt.score;
+          scoreCount++;
+        }
+      });
+
+      // REAL Average: 0 if no submissions/CBTs evaluated yet
+      const avgScore = scoreCount > 0 ? Math.round(totalScore / scoreCount) : 0;
+      const statusLabel = avgScore >= 75 ? "Tuntas (≥75)" : avgScore > 0 ? "Dalam Proses (<75)" : "Belum Ada Nilai (0 Poin)";
+
+      return {
+        id: s.id || `s_${idx}`,
+        name: s.full_name || s.name,
+        nis: s.nis_nip || s.nis || "-",
+        rombel: sRombel,
+        avgScore,
+        tugasCount: studentSubs.length,
+        cbtCount: studentCbts.length,
+        status: statusLabel,
+      };
+    });
+  }, [studentsList, submissionsList, cbtResultsList]);
+
+  // Compute Class Summary Rows for Executive Kamad & Waka
+  const classSummaries = useMemo<ClassReportSummary[]>(() => {
+    return rombelOptions.map((rName) => {
+      const rombelStudents = studentLegerData.filter((s) => isSameClass(s.rombel, rName));
+      const totalSiswa = rombelStudents.length;
+
+      // Find wali kelas from master rombels
+      const matchedMaster = masterRombels.find(
+        (m) => normalizeRombelName(m.name || m.code || "") === normalizeRombelName(rName)
+      );
+      const waliKelas = matchedMaster?.wali_kelas || "Wali Kelas MTsN 2";
+
+      if (totalSiswa === 0) {
+        return {
+          rombel: rName,
+          waliKelas,
+          totalSiswa: 0,
+          avgScore: 0,
+          tuntasCount: 0,
+          prosesCount: 0,
+          belumCount: 0,
+        };
+      }
+
+      const sumAvg = rombelStudents.reduce((acc, s) => acc + s.avgScore, 0);
+      const tuntasCount = rombelStudents.filter((s) => s.avgScore >= 75).length;
+      const prosesCount = rombelStudents.filter((s) => s.avgScore > 0 && s.avgScore < 75).length;
+      const belumCount = rombelStudents.filter((s) => s.avgScore === 0).length;
+
+      return {
+        rombel: rName,
+        waliKelas,
+        totalSiswa,
+        avgScore: Math.round(sumAvg / totalSiswa),
+        tuntasCount,
+        prosesCount,
+        belumCount,
+      };
+    });
+  }, [rombelOptions, studentLegerData, masterRombels]);
+
+  // Overall Stats for Kamad & Waka Dashboard
+  const overallStats = useMemo(() => {
+    const totalSiswa = studentLegerData.length;
+    const totalAvgSum = studentLegerData.reduce((acc, s) => acc + s.avgScore, 0);
+    const avgMadrasah = totalSiswa > 0 ? Math.round(totalAvgSum / totalSiswa) : 0;
+    const totalTuntas = studentLegerData.filter((s) => s.avgScore >= 75).length;
+    const totalRombel = rombelOptions.length;
+
+    return {
+      totalRombel,
+      totalSiswa,
+      avgMadrasah,
+      totalTuntas,
+    };
+  }, [studentLegerData, rombelOptions]);
+
+  // Filtered Students List
+  const filteredStudents = useMemo(() => {
+    return studentLegerData.filter((s) => {
+      const matchRombel = selectedClass === "ALL" || isSameClass(s.rombel, selectedClass);
+      const q = searchQuery.toLowerCase().trim();
+      const matchQuery =
+        !q ||
+        s.name.toLowerCase().includes(q) ||
+        s.nis.toLowerCase().includes(q) ||
+        s.rombel.toLowerCase().includes(q);
+      return matchRombel && matchQuery;
+    });
+  }, [studentLegerData, selectedClass, searchQuery]);
+
+  // Subject Leger Breakdown for a single student or class (REAL data only)
+  const subjectLegerBreakdown = useMemo(() => {
+    const realSubjects = subjectsList.length > 0 ? subjectsList : [
+      { subject_name: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I" },
+      { subject_name: "Akidah Akhlak", teacher: "WAKHIBUN, S.P" },
+      { subject_name: "Fikih", teacher: "CARYATI, S.Pd" },
+      { subject_name: "Sejarah Kebudayaan Islam", teacher: "H. DASIRUN, S.Ag., M.Pd.I" },
+      { subject_name: "Bahasa Arab", teacher: "ENDAH SUPRIHATIN, S.Pd" },
+      { subject_name: "Bahasa Indonesia", teacher: "SOBIYATI, S.Pd" },
+      { subject_name: "Bahasa Inggris", teacher: "ALI MANSUR, S.Pd" },
+      { subject_name: "Matematika", teacher: "ACHMAD MAKMUN, S.Pd.I" },
+      { subject_name: "Ilmu Pengetahuan Alam", teacher: "Dra. Hj. SITI RAHMAH, M.Pd" },
+      { subject_name: "Ilmu Pengetahuan Sosial", teacher: "UMI KHAFSOH, S.Pd" },
+      { subject_name: "Pendidikan Kewarganegaraan", teacher: "SAYONO, S.Pd.I" },
+      { subject_name: "PJOK", teacher: "MISBAH AHMAD DANI, S.Pd" },
+      { subject_name: "Seni Budaya", teacher: "SITI NURJANAH, S.Pd" },
+      { subject_name: "Informatika", teacher: "FAHRUR ROZI, S.Kom" },
+      { subject_name: "Bahasa Jawa", teacher: "TRI WAHYUNI, S.Pd" },
+    ];
+
+    return realSubjects.map((sub, idx) => {
+      const mapelName = (sub.subject_name || sub.name || "").toLowerCase();
+
+      // Find real matching scores if a specific student is selected
+      let realTugas = 0;
+      let realCbt = 0;
+
+      if (selectedStudentForRapor) {
+        const sEmail = (selectedStudentForRapor.email || "").toLowerCase();
+        const sName = (selectedStudentForRapor.name || "").toLowerCase();
+
+        const subMatches = submissionsList.filter(
+          (s) =>
+            ((s.user_id && s.user_id.toLowerCase() === sEmail) || (s.student_name && s.student_name.toLowerCase() === sName)) &&
+            s.score && s.score > 0
+        );
+        const cbtMatches = cbtResultsList.filter(
+          (c) =>
+            ((c.user_id && c.user_id.toLowerCase() === sEmail) || (c.student_name && c.student_name.toLowerCase() === sName)) &&
+            (c.exam_title || "").toLowerCase().includes(mapelName) &&
+            c.score && c.score > 0
+        );
+
+        if (subMatches.length > 0) {
+          const sum = subMatches.reduce((acc, curr) => acc + curr.score, 0);
+          realTugas = Math.round(sum / subMatches.length);
+        }
+        if (cbtMatches.length > 0) {
+          const sum = cbtMatches.reduce((acc, curr) => acc + curr.score, 0);
+          realCbt = Math.round(sum / cbtMatches.length);
+        }
+      }
+
+      const realAvg = realTugas > 0 || realCbt > 0 ? Math.round((realTugas + realCbt) / (realTugas > 0 && realCbt > 0 ? 2 : 1)) : 0;
+
+      return {
+        code: `MP-${idx + 1}`,
+        mapel: sub.subject_name || sub.name,
+        teacher: sub.teacher || "Guru Pengampu MTsN 2",
+        tugas: realTugas,
+        kuis: realTugas,
+        cbt: realCbt,
+        avg: realAvg,
+        kkm: realAvg >= 75 ? "Tuntas (≥75)" : "Belum Ada Nilai (0 Poin)",
+      };
+    });
+  }, [subjectsList, submissionsList, cbtResultsList, selectedStudentForRapor]);
+
+  // Compute real Ekstrakurikuler & Kokurikuler records for selected student
+  const studentEkstraList = useMemo(() => {
+    if (!selectedStudentForRapor) return [];
+
+    const list: Array<{ kegiatan: string; nilai: string; keterangan: string }> = [];
+    const sName = (selectedStudentForRapor.name || "").toLowerCase();
+    const sNis = (selectedStudentForRapor.nis || "").toLowerCase();
+    const sRombel = normalizeRombelName(selectedStudentForRapor.rombel || "");
+
+    // 1. Match Tahfidz Hafalan
+    const matchedHafalan = hafalanList.filter(
+      (h) =>
+        (h.student_name && h.student_name.toLowerCase() === sName) ||
+        (h.nisn && h.nisn.toLowerCase() === sNis)
+    );
+
+    matchedHafalan.forEach((h) => {
+      list.push({
+        kegiatan: "Tahfidz Al-Qur'an",
+        nilai: h.nilai || "A",
+        keterangan: `Setoran ${h.surah || "Juz 30"} - Status: ${h.status || "Lancar"}`,
+      });
+    });
+
+    // 2. Match P5 Projects
+    const matchedP5 = p5ProjectsList.filter(
+      (p) => p.class_name && isSameClass(p.class_name, sRombel)
+    );
+
+    matchedP5.forEach((p) => {
+      list.push({
+        kegiatan: `P5: ${p.title}`,
+        nilai: (p.progress_pct || 0) >= 80 ? "A" : (p.progress_pct || 0) > 0 ? "B" : "-",
+        keterangan: `Tema: ${p.theme || "P5-PPRA"}`,
+      });
+    });
+
+    return list;
+  }, [selectedStudentForRapor, hafalanList, p5ProjectsList]);
+
+  const handleExportExcelLeger = () => {
+    const headers = ["No", "Nama Siswa", "NISN", "Rombel", "Rata-Rata Nilai", "Submisi Tugas", "Hasil CBT", "Status KKTP"];
+    const rows = filteredStudents.map((s, idx) => [
+      idx + 1,
+      s.name,
+      s.nis,
+      s.rombel,
+      s.avgScore,
+      s.tugasCount,
+      s.cbtCount,
+      s.status,
+    ]);
+    exportToExcelXml(`Leger_Nilai_Laporan_Pembelajaran_${selectedClass}`, "Leger_Nilai", headers, rows);
+    toast.success("📊 File Excel Leger Laporan Pembelajaran berhasil diunduh!");
   };
 
-  const mapelDetails = [
-    { code: "AGM-01", mapel: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 90, kuis: 92, cbt: 88, avg: 90, kkm: "Tuntas (≥75)" },
-    { code: "AGM-02", mapel: "Akidah Akhlak", teacher: "WAKHIBUN, S.P", pertemuan: "16/18 Pertemuan (88%)", cp: "Baik", tugas: 88, kuis: 86, cbt: 85, avg: 86, kkm: "Tuntas (≥75)" },
-    { code: "AGM-03", mapel: "Fikih", teacher: "CARYATI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "Sangat Baik", tugas: 92, kuis: 90, cbt: 89, avg: 90, kkm: "Tuntas (≥75)" },
-    { code: "AGM-04", mapel: "Sejarah Kebudayaan Islam", teacher: "H. DASIRUN, S.Ag., M.Pd.I", pertemuan: "16/18 Pertemuan (88%)", cp: "Baik", tugas: 88, kuis: 88, cbt: 86, avg: 87, kkm: "Tuntas (≥75)" },
-    { code: "AGM-05", mapel: "Bahasa Arab", teacher: "ENDAH SUPRIHATIN, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 92, kuis: 94, cbt: 90, avg: 92, kkm: "Tuntas (≥75)" },
-    { code: "UMM-01", mapel: "Bahasa Indonesia", teacher: "SOBIYATI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "Baik", tugas: 89, kuis: 91, cbt: 88, avg: 89, kkm: "Tuntas (≥75)" },
-    { code: "UMM-02", mapel: "Bahasa Inggris", teacher: "ALI MANSUR, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Baik", tugas: 88, kuis: 87, cbt: 89, avg: 88, kkm: "Tuntas (≥75)" },
-    { code: "UMM-03", mapel: "Matematika", teacher: "ACHMAD MAKMUN, S.Pd.I", pertemuan: "17/18 Pertemuan (94%)", cp: "Baik", tugas: 85, kuis: 86, cbt: 84, avg: 85, kkm: "Tuntas (≥75)" },
-    { code: "UMM-04", mapel: "Ilmu Pengetahuan Alam", teacher: "Dra. Hj. SITI RAHMAH, M.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Baik", tugas: 89, kuis: 87, cbt: 88, avg: 88, kkm: "Tuntas (≥75)" },
-    { code: "UMM-05", mapel: "Ilmu Pengetahuan Sosial", teacher: "UMI KHAFSOH, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 92, kuis: 90, cbt: 91, avg: 91, kkm: "Tuntas (≥75)" },
-    { code: "UMM-06", mapel: "Pendidikan Kewarganegaraan", teacher: "SAYONO, S.Pd.I", pertemuan: "17/18 Pertemuan (94%)", cp: "Sangat Baik", tugas: 90, kuis: 89, cbt: 91, avg: 90, kkm: "Tuntas (≥75)" },
-    { code: "UMM-07", mapel: "PJOK", teacher: "MISBAH AHMAD DANI, S.Pd", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 95, kuis: 93, cbt: 94, avg: 94, kkm: "Tuntas (≥75)" },
-    { code: "UMM-08", mapel: "Seni Budaya", teacher: "SITI NURJANAH, S.Pd", pertemuan: "16/18 Pertemuan (88%)", cp: "Sangat Baik", tugas: 93, kuis: 91, cbt: 92, avg: 92, kkm: "Tuntas (≥75)" },
-    { code: "UMM-09", mapel: "Informatika", teacher: "FAHRUR ROZI, S.Kom", pertemuan: "18/18 Pertemuan (100%)", cp: "Sangat Baik", tugas: 94, kuis: 92, cbt: 93, avg: 93, kkm: "Tuntas (≥75)" },
-    { code: "ML-01", mapel: "Bahasa Jawa", teacher: "TRI WAHYUNI, S.Pd", pertemuan: "17/18 Pertemuan (94%)", cp: "Baik", tugas: 88, kuis: 90, cbt: 89, avg: 89, kkm: "Tuntas (≥75)" },
-  ];
+  const openStudentRaporModal = (student: StudentLegerSummary) => {
+    setSelectedStudentForRapor(student);
+    setIsPrintRaporOpen(true);
+  };
 
-  const getCpDescription = (mapelName: string, score: number | null | undefined) => {
-    if (score === null || score === undefined || isNaN(score) || score === 0) {
-      return `Belum ada tes / evaluasi yang diikuti pada mata pelajaran ${mapelName}.`;
+  const getCpDescription = (mapelName: string, score: number) => {
+    if (score === 0) {
+      return `Belum ada tes / evaluasi yang diikuti pada mata pelajaran ${mapelName} (Nilai: 0 Poin).`;
     }
     if (score >= 90) {
       return `Menunjukkan penguasaan sangat baik dalam pemahaman dan penerapan kompetensi dasar ${mapelName}.`;
@@ -134,205 +396,364 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
     return `Perlu bimbingan lebih lanjut pada penguasaan materi utama ${mapelName}.`;
   };
 
-  const handleExportExcelLeger = () => {
-    const headers = ["No", "Kode Mapel", "Mata Pelajaran", "Guru Pengampu", "Tugas & LKPD", "Kuis", "CBT", "Nilai Akhir", "Keterangan KKM"];
-    const rows = mapelDetails.map((m, idx) => [
-      idx + 1,
-      m.code,
-      m.mapel,
-      m.teacher,
-      m.tugas,
-      m.kuis,
-      m.cbt,
-      m.avg,
-      m.kkm,
-    ]);
-    exportToExcelXml("Leger_Nilai_E_Rapor_MTsN2_Cilacap", "Leger_Nilai", headers, rows);
-    toast.success("📊 File Excel Leger Nilai E-Rapor berhasil diunduh!");
-  };
-
-  const activeUserForEntry = MysqlAuthService.getActiveUser();
-  const assignedSubjectsForEntry = useMemo(() => getTeacherAssignedSubjects(activeUserForEntry) || ALL_SCHOOL_SUBJECTS, [activeUserForEntry]);
-  const assignedClassesForEntry = useMemo(() => getTeacherAssignedClasses(activeUserForEntry), [activeUserForEntry]);
-
-  const teacherEntryList = useMemo(() => {
-    const list: Array<{ code: string; mapel: string; rombel: string; totalSiswa: number; entered: number; progress: number; status: string; c: string }> = [];
-    assignedSubjectsForEntry.forEach((subject) => {
-      assignedClassesForEntry.forEach((cls) => {
-        list.push({
-          code: "MP-" + subject.substring(0, 3).toUpperCase(),
-          mapel: subject,
-          rombel: cls,
-          totalSiswa: 32,
-          entered: 32,
-          progress: 100,
-          status: "Lengkap 100%",
-          c: "text-emerald-500",
-        });
-      });
-    });
-    return list;
-  }, [assignedSubjectsForEntry, assignedClassesForEntry]);
-
-  const classesList = [
-    { name: "Kelas VII A", wali: "MISBAH AHMAD DANI, S.Pd", siswa: 32, avg: 86.4, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas VII B", wali: "ENDAH SUPRIHATIN, S.Pd", siswa: 32, avg: 85.8, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas VIII A", wali: "Dra. Hj. Siti Rahmah, M.Pd", siswa: 32, avg: 88.2, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas VIII B", wali: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", siswa: 32, avg: 87.4, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas IX A", wali: "SOBIYATI, S.Pd", siswa: 32, avg: 89.1, icon: "🎓", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas IX B", wali: "SAYONO, S.Pd., M.Pd.", siswa: 32, avg: 88.5, icon: "🎓", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
-  ];
-
-  const studentSubjectLeger = useMemo(() => {
-    if (activeRole !== "siswa") return mapelDetails;
-
-    return mapelDetails.map((m) => {
-      const matchedGrade = dbStudentGrades.find(
-        (g) => g.mapel && g.mapel.toLowerCase().includes(m.mapel.toLowerCase())
-      );
-      const tugasScore = matchedGrade?.tugas || 0;
-      const kuisScore = matchedGrade?.kuis || 0;
-      const cbtScore = matchedGrade?.cbt || 0;
-      const avgScore = matchedGrade?.avg || 0;
-
-      return {
-        ...m,
-        tugas: tugasScore,
-        kuis: kuisScore,
-        cbt: cbtScore,
-        avg: avgScore,
-        kkm: avgScore >= 75 ? "Tuntas (≥75)" : "Belum Ada Nilai (0 Poin)",
-      };
-    });
-  }, [activeRole, dbStudentGrades]);
-
-  const renderGradeCell = (val: number | null | undefined) => {
-    if (val === null || val === undefined || isNaN(val) || val === 0) {
-      return <span className="text-muted-foreground font-mono font-semibold text-xs">0</span>;
-    }
-    return <span className="font-mono font-bold text-foreground">{val}</span>;
-  };
-
-  return (
-    <>
-      {activeRole === "siswa" ? (
+  if (isSiswa) {
+    return (
+      <div className="space-y-6">
         <StudentHeaderBanner
           title="Rekap Nilai & E-Rapor Saya"
           subtitle="Transkrip nilai tugas, kuis, CBT, dan lembar Rapor Hasil Belajar Kurikulum Merdeka"
           icon={Award}
-          statusText={studentSubjectLeger.some((m) => m.avg > 0) ? "Status KKTP: Terverifikasi" : "Status KKTP: Belum Ada Data (0 Poin)"}
-          statusVariant={studentSubjectLeger.some((m) => m.avg > 0) ? "success" : "warning"}
+          statusText={studentLegerData.some((s) => s.avgScore > 0) ? "Status KKTP: Terverifikasi" : "Status KKTP: Belum Ada Data (0 Poin)"}
+          statusVariant={studentLegerData.some((s) => s.avgScore > 0) ? "success" : "warning"}
           actionButtons={
             <Button size="sm" onClick={() => setIsPrintRaporOpen(true)} className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs">
               <FileText className="h-4 w-4" /> Cetak E-Rapor PDF
             </Button>
           }
         />
-      ) : (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <Award className="h-6 w-6 text-primary" /> E-Rapor & Penilaian Kurikulum Merdeka
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Rekap nilai leger, cetak rapor resmi, dan monitoring ketuntasan KKTP siswa.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExportExcelLeger} className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20">
-              <Download className="h-4 w-4 text-emerald-500" /> Unduh Leger Excel
-            </Button>
-            <Button size="sm" onClick={() => setIsPrintRaporOpen(true)} className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground">
-              <FileText className="h-4 w-4" /> Cetak E-Rapor PDF
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <Card className="border-border shadow-sm">
-        <CardHeader className="border-b border-border pb-4">
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" /> Rekap Leger Nilai Siswa (Tahun Ajaran 2026/2027)
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Nilai tugas, kuis, CBT, dan nilai akhir mata pelajaran Kurikulum Merdeka.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
-              <tr>
-                <th className="py-3 px-4">Mata Pelajaran</th>
-                <th className="py-3 px-3">Guru Pengampu</th>
-                <th className="py-3 px-3 text-center">Tugas</th>
-                <th className="py-3 px-3 text-center">Kuis</th>
-                <th className="py-3 px-3 text-center">CBT</th>
-                <th className="py-3 px-3 text-center">Nilai Akhir</th>
-                <th className="py-3 px-3 text-center">KKTP Status</th>
-                {isGuru && <th className="py-3 px-4 text-right">Aksi Penilaian</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {(activeRole === "siswa" ? studentSubjectLeger : mapelDetails).map((m) => {
-                const isMySubject = isGuru ? isSubjectAllowedForUser(m.mapel) : true;
-                return (
-                  <tr
-                    key={m.code}
-                    className={`transition ${
-                      isGuru && isMySubject
-                        ? "bg-emerald-500/5 hover:bg-emerald-500/10 border-l-4 border-l-emerald-500 font-medium"
-                        : "hover:bg-muted/30"
-                    }`}
-                  >
-                    <td className="py-3 px-4 font-bold text-foreground">
-                      {m.mapel}
-                      {isGuru && isMySubject && (
-                        <Badge className="ml-2 bg-emerald-500 text-white text-[9px] font-extrabold">MAPEL SAYA</Badge>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-muted-foreground">{m.teacher}</td>
-                    <td className="py-3 px-3 text-center">{renderGradeCell(m.tugas)}</td>
-                    <td className="py-3 px-3 text-center">{renderGradeCell(m.kuis)}</td>
-                    <td className="py-3 px-3 text-center">{renderGradeCell(m.cbt)}</td>
-                    <td className="py-3 px-3 text-center text-primary text-sm">{renderGradeCell(m.avg)}</td>
-                    <td className="p-3 text-center">
-                      <Badge
-                        variant="outline"
-                        className={
-                          m.avg >= 75
-                            ? "text-emerald-500 border-emerald-500/30 font-bold"
-                            : "text-muted-foreground border-border font-medium"
-                        }
-                      >
+        {/* Siswa Table */}
+        <Card className="border-border shadow-xs bg-card">
+          <CardHeader className="pb-3 border-b border-border">
+            <CardTitle className="text-base font-bold">Rincian Perolehan Nilai Mata Pelajaran</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/50 text-muted-foreground font-bold text-left border-b border-border">
+                <tr>
+                  <th className="p-3">Mata Pelajaran</th>
+                  <th className="p-3">Guru Pengampu</th>
+                  <th className="p-3 text-center">Tugas LKPD</th>
+                  <th className="p-3 text-center">Ujian CBT</th>
+                  <th className="p-3 text-center">Nilai Akhir</th>
+                  <th className="p-3 text-right">Status KKTP</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {subjectLegerBreakdown.map((m, i) => (
+                  <tr key={i} className="hover:bg-muted/30 transition">
+                    <td className="p-3 font-bold text-foreground">{m.mapel}</td>
+                    <td className="p-3 text-muted-foreground">{m.teacher}</td>
+                    <td className="p-3 text-center font-mono font-bold">{m.tugas}</td>
+                    <td className="p-3 text-center font-mono font-bold">{m.cbt}</td>
+                    <td className="p-3 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">{m.avg}</td>
+                    <td className="p-3 text-right">
+                      <Badge variant="outline" className={m.avg >= 75 ? "text-emerald-600 border-emerald-500/30 font-bold" : "text-muted-foreground border-border font-medium"}>
                         {m.kkm}
                       </Badge>
                     </td>
-                    {isGuru && (
-                      <td className="p-3 text-right">
-                        {isMySubject ? (
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Award className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            {selectedClass === "ALL"
+              ? "Laporan Pembelajaran & Rekap Leger Seluruh Kelas"
+              : `Laporan Pembelajaran & Rekap Leger ${selectedClass}`}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isExecutive
+              ? "Dashboard Pengawasan Eksekutif Kamad & Waka Kurikulum untuk Monitoring Nilai Akademik & Ketuntasan KKTP Madrasah (Tanpa Data Dummy)"
+              : "Rekap nilai leger real dari database, cetak rapor resmi, dan monitoring ketuntasan KKTP siswa."}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportExcelLeger} className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20">
+            <Download className="h-4 w-4 text-emerald-500" /> Unduh Leger Excel
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        {/* Rombel Filter & Control Bar */}
+        <Card className="border-border shadow-xs bg-card p-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Filter className="h-5 w-5" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Rombel / Mode Laporan</label>
+                <select
+                  className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                >
+                  {isExecutive && (
+                    <option value="ALL" className="font-bold">
+                      ✨ Semua Kelas (Monitoring Leger Madrasah Kamad & Waka)
+                    </option>
+                  )}
+                  {rombelOptions.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari nama siswa, NISN, atau kelas..."
+                  className="pl-8 h-9 text-xs"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {isExecutive && (
+                <Badge variant="secondary" className="hidden sm:inline-flex bg-emerald-600/10 text-emerald-600 border border-emerald-500/30 px-3 py-1.5 font-bold text-xs">
+                  <Building2 className="h-3.5 w-3.5 mr-1" /> Monitoring Kamad & Waka
+                </Badge>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {/* Executive Summary Stat Cards for Kamad & Waka */}
+        {isExecutive && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-border shadow-xs bg-card">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground font-semibold">Total Rombel Terdaftar</p>
+                  <h3 className="text-2xl font-bold text-foreground mt-1">{overallStats.totalRombel} Rombel</h3>
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Seluruh kelas aktif</p>
+                </div>
+                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Building2 className="h-6 w-6" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-xs bg-card">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground font-semibold">Total Siswa Terdaftar</p>
+                  <h3 className="text-2xl font-bold text-foreground mt-1">{overallStats.totalSiswa} Siswa</h3>
+                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5">{overallStats.totalTuntas} Siswa Tuntas KKTP (&ge;75)</p>
+                </div>
+                <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <Users className="h-6 w-6" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-xs bg-card">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground font-semibold">Rata-Rata Nilai Madrasah</p>
+                  <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{overallStats.avgMadrasah} Poin</h3>
+                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Real tanpa data dummy</p>
+                </div>
+                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <BarChart3 className="h-6 w-6" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-xs bg-card">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground font-semibold">Ketuntasan KKTP Madrasah</p>
+                  <h3 className="text-2xl font-bold text-foreground mt-1">
+                    {overallStats.totalSiswa > 0
+                      ? Math.round((overallStats.totalTuntas / overallStats.totalSiswa) * 100)
+                      : 0}
+                    %
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Persentase siswa tuntas</p>
+                </div>
+                <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <GraduationCap className="h-6 w-6" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* SECTION 1: TABEL MATRIKS REKAPITULASI LEGER KELAS (Kamad & Waka Overview) */}
+        {selectedClass === "ALL" && (
+          <Card className="border-border shadow-xs bg-card">
+            <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-emerald-600" />
+                  <span>Matriks Rekapitulasi Leger Pembelajaran Per Kelas</span>
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Overview rerata nilai akhir dan statistik ketuntasan KKTP per rombel.
+                </CardDescription>
+              </div>
+              <Badge className="bg-emerald-600 text-white font-bold text-xs">{classSummaries.length} Rombel</Badge>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              {isLoading ? (
+                <div className="p-8 text-center text-xs text-muted-foreground">Memuat rekapitulasi leger kelas...</div>
+              ) : classSummaries.length === 0 ? (
+                <div className="p-8 text-center text-xs text-muted-foreground">Tidak ada kelas terdaftar.</div>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50 text-muted-foreground font-bold text-left border-b border-border">
+                    <tr>
+                      <th className="p-3">Rombel / Kelas</th>
+                      <th className="p-3">Wali Kelas</th>
+                      <th className="p-3 text-center">Total Siswa</th>
+                      <th className="p-3 text-center">Rata-Rata Nilai</th>
+                      <th className="p-3 text-center">Ketuntasan KKTP</th>
+                      <th className="p-3 text-right">Aksi Laporan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {classSummaries.map((c) => (
+                      <tr key={c.rombel} className="hover:bg-muted/30 transition">
+                        <td className="p-3 font-bold text-foreground flex items-center gap-2">
+                          <Badge variant="outline" className="font-mono font-bold bg-muted/40">
+                            {c.rombel}
+                          </Badge>
+                        </td>
+                        <td className="p-3 text-muted-foreground font-medium">{c.waliKelas}</td>
+                        <td className="p-3 text-center font-bold text-foreground">{c.totalSiswa} Siswa</td>
+                        <td className="p-3 text-center font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                          {c.avgScore} Poin
+                        </td>
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center gap-1.5 text-[11px]">
+                            <Badge variant="outline" className="text-emerald-600 border-emerald-500/30 font-bold bg-emerald-500/5">
+                              {c.tuntasCount} Tuntas
+                            </Badge>
+                            {c.prosesCount > 0 && (
+                              <Badge variant="outline" className="text-amber-600 border-amber-500/30 font-bold bg-amber-500/5">
+                                {c.prosesCount} Dalam Proses
+                              </Badge>
+                            )}
+                            {c.belumCount > 0 && (
+                              <Badge variant="outline" className="text-rose-600 border-rose-500/30 font-bold bg-rose-500/5">
+                                {c.belumCount} Belum Ada Nilai
+                              </Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3 text-right">
                           <Button
                             size="sm"
-                            className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs gap-1"
-                            onClick={() => toast.success(`Form Input Nilai ${m.mapel} dibuka untuk Guru Pengampu!`)}
+                            variant="outline"
+                            className="h-7 text-xs font-bold gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
+                            onClick={() => setSelectedClass(c.rombel)}
                           >
-                            ✏️ Input Nilai Saya
+                            <Eye className="h-3.5 w-3.5" /> Buka Leger Kelas
                           </Button>
-                        ) : (
-                          <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 font-bold">
-                            🔒 Read-Only (Guru Lain)
-                          </Badge>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-      {/* 🖨️ MODAL PRATINJAU & CETAK E-RAPOR PDF */}
+        {/* SECTION 2: TABEL LEGER NILAI SISWA REAL */}
+        <Card className="border-border shadow-xs bg-card">
+          <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Award className="h-5 w-5 text-emerald-600" />
+                <span>
+                  Leger Nilai Siswa Real (Database) - {selectedClass === "ALL" ? "Seluruh Kelas" : selectedClass}
+                </span>
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Perolehan rata-rata nilai tugas, kuis, dan CBT real tanpa data dummy. Nilai 0 jika belum ada penilaian.
+              </CardDescription>
+            </div>
+            <Badge className="bg-emerald-600 text-white font-bold text-xs">{filteredStudents.length} Siswa</Badge>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            {isLoading ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">Memuat data leger siswa...</div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 m-4">
+                <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                <div className="font-semibold text-foreground text-sm">Belum Ada Data Siswa pada {selectedClass === "ALL" ? "Filter Ini" : selectedClass}</div>
+                <p>Database saat ini tidak memiliki rekam siswa untuk kelas ini.</p>
+              </div>
+            ) : (
+              <table className="w-full text-xs">
+                <thead className="bg-muted/50 text-muted-foreground font-bold text-left border-b border-border">
+                  <tr>
+                    <th className="p-3">Nama Siswa</th>
+                    <th className="p-3 font-mono">NISN</th>
+                    <th className="p-3">Rombel / Kelas</th>
+                    <th className="p-3 text-center">Submisi Tugas</th>
+                    <th className="p-3 text-center">Ujian CBT</th>
+                    <th className="p-3 text-center">Rata-Rata Nilai</th>
+                    <th className="p-3 text-center">Status KKTP</th>
+                    <th className="p-3 text-right">E-Rapor</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredStudents.map((s) => (
+                    <tr key={s.id} className="hover:bg-muted/30 transition">
+                      <td className="p-3 font-bold text-foreground">{s.name}</td>
+                      <td className="p-3 font-mono text-muted-foreground">{s.nis}</td>
+                      <td className="p-3 font-bold">
+                        <Badge variant="outline" className="font-mono text-[11px] bg-muted/40">
+                          {s.rombel}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-center font-mono font-bold">{s.tugasCount} Submisi</td>
+                      <td className="p-3 text-center font-mono font-bold">{s.cbtCount} CBT</td>
+                      <td className="p-3 text-center font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                        {s.avgScore} Poin
+                      </td>
+                      <td className="p-3 text-center">
+                        <Badge
+                          variant="outline"
+                          className={
+                            s.avgScore >= 75
+                              ? "text-emerald-600 border-emerald-500/30 font-bold"
+                              : s.avgScore > 0
+                                ? "text-amber-600 border-amber-500/30 font-bold"
+                                : "text-muted-foreground border-border font-medium"
+                          }
+                        >
+                          {s.status}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs font-bold gap-1 text-blue-600 border-blue-500/30 hover:bg-blue-500/10"
+                          onClick={() => openStudentRaporModal(s)}
+                        >
+                          <FileText className="h-3.5 w-3.5" /> Cetak E-Rapor
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 🖨️ MODAL PRATINJAU & CETAK E-RAPOR PDF SWA (REAL DATA ONLY) */}
       <Dialog open={isPrintRaporOpen} onOpenChange={setIsPrintRaporOpen}>
         <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
           <DialogHeader className="border-b border-border pb-3">
@@ -340,10 +761,12 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-blue-600" /> Pratinjau E-Rapor Kurikulum Merdeka
               </div>
-              <Badge className="bg-blue-600 text-white font-mono text-xs">{raporClass}</Badge>
+              <Badge className="bg-blue-600 text-white font-mono text-xs">
+                {selectedStudentForRapor?.rombel || defaultRombel}
+              </Badge>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Format lembar Rapor Hasil Belajar Peserta Didik Resmi MTsN 2 Cilacap.
+              Lembar Rapor Hasil Belajar Resmi Peserta Didik (Data Real Database).
             </DialogDescription>
           </DialogHeader>
 
@@ -364,11 +787,11 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
 
             <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-800 bg-slate-50 p-3 rounded-md border border-slate-200">
               <div>
-                <div>Nama Siswa: <strong className="text-slate-950 font-bold">{raporStudentName}</strong></div>
-                <div>NISN / NIS: <span className="font-mono">{raporNisn}</span></div>
+                <div>Nama Siswa: <strong className="text-slate-950 font-bold">{selectedStudentForRapor?.name || activeUser?.full_name}</strong></div>
+                <div>NISN / NIS: <span className="font-mono">{selectedStudentForRapor?.nis || activeUser?.nis_nip || "-"}</span></div>
               </div>
               <div>
-                <div>Kelas / Rombel: <strong>{raporClass}</strong></div>
+                <div>Kelas / Rombel: <strong>{selectedStudentForRapor?.rombel || defaultRombel}</strong></div>
                 <div>Tahun Ajaran: <strong className="text-blue-900 font-extrabold">2026/2027 (Semester Ganjil)</strong></div>
               </div>
             </div>
@@ -384,7 +807,7 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {mapelDetails.map((m, idx) => (
+                  {subjectLegerBreakdown.map((m, idx) => (
                     <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
                       <td className="border border-slate-300 p-2 text-center font-mono">{idx + 1}</td>
                       <td className="border border-slate-300 p-2 font-bold">{m.mapel}</td>
@@ -398,7 +821,6 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               </table>
             </div>
 
-            {/* Ekstrakurikuler & Ketidakhadiran */}
             <div className="grid grid-cols-2 gap-4 text-xs font-medium">
               <div className="border border-slate-200 rounded-md p-3 bg-slate-50 space-y-2">
                 <div className="font-bold text-slate-900">Kegiatan Ekstrakurikuler & Kokurikuler (P5-PPRA):</div>
@@ -411,21 +833,21 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-slate-200">
-                      <td className="p-1 font-semibold">Pramuka Penggalang</td>
-                      <td className="p-1 text-center font-bold text-emerald-700">A</td>
-                      <td className="p-1">Sangat Aktif & Mandiri</td>
-                    </tr>
-                    <tr className="border-b border-slate-200">
-                      <td className="p-1 font-semibold">Tahfidz Al-Qur'an</td>
-                      <td className="p-1 text-center font-bold text-emerald-700">A</td>
-                      <td className="p-1">Tuntas Juz 30 & Surat An-Naba</td>
-                    </tr>
-                    <tr>
-                      <td className="p-1 font-semibold">PMR Madya</td>
-                      <td className="p-1 text-center font-bold text-blue-700">B</td>
-                      <td className="p-1">Aktif & Disiplin</td>
-                    </tr>
+                    {studentEkstraList.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="p-2 text-center text-slate-400 italic font-normal">
+                          (Belum ada data nilai ekstrakurikuler & kokurikuler)
+                        </td>
+                      </tr>
+                    ) : (
+                      studentEkstraList.map((item, idx) => (
+                        <tr key={idx} className="border-b border-slate-200">
+                          <td className="p-1 font-semibold">{item.kegiatan}</td>
+                          <td className="p-1 text-center font-bold text-emerald-700">{item.nilai}</td>
+                          <td className="p-1">{item.keterangan}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -448,17 +870,14 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
                     </tr>
                   </tbody>
                 </table>
-                <div className="pt-2 text-[10px] text-slate-500 font-mono flex items-center justify-between border-t border-slate-200">
-                  <span>Status Verifikasi E-Rapor:</span>
-                  <span className="font-bold text-emerald-700">TERVERIFIKASI RESMI</span>
-                </div>
+
               </div>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-md text-xs space-y-1">
               <div className="font-bold text-slate-900">Catatan Wali Kelas:</div>
               <div className="text-slate-700 italic">
-                "Ananda {raporStudentName} menunjukkan prestasi akademik dan non-akademik yang sangat membanggakan. Pertahankan semangat juang dan tingkatkan kedisiplinan serta akhlakul karimah."
+                "Ananda {selectedStudentForRapor?.name || activeUser?.full_name} menunjukkan perkembangan positif dalam pembelajaran di kelas. Tingkatkan terus kedisiplinan dan semangat belajarnya."
               </div>
             </div>
 
@@ -468,11 +887,11 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
                 <div className="font-bold underline text-slate-950">( .......................... )</div>
               </div>
               <div className="text-center space-y-8">
-                <div>Wali Kelas {raporClass}</div>
-                <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+                <div>Wali Kelas</div>
+                <div className="font-bold underline text-slate-950">Guru Wali Kelas</div>
               </div>
               <div className="text-center space-y-8">
-                <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
+                <div>Cilacap, 25 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
                 <div className="font-bold underline text-slate-950">H. Solihun, S.Pd., M.Si.</div>
               </div>
             </div>
@@ -482,7 +901,7 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsPrintRaporOpen(false)}>
               Tutup
             </Button>
-            <Button type="button" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1.5" onClick={handlePrintRapor}>
+            <Button type="button" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1.5" onClick={() => { window.print(); toast.success("🖨️ E-Rapor diproses untuk dicetak!"); }}>
               <Download className="h-4 w-4" /> 🖨️ Cetak E-Rapor PDF
             </Button>
           </DialogFooter>

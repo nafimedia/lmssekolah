@@ -155,67 +155,27 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     };
   }, [isOpen]);
 
-  const defaultQuestions: CBTQuestion[] = [
-    {
-      id: "q-cbt-1",
-      questionType: "pg",
-      questionText: "Hasil dari ( -12 ) × 4 + 72 ÷ ( -6 ) adalah ...",
-      options: { A: "-60", B: "-36", C: "36", D: "60" },
-      correctOption: "A",
-      points: 5,
-      difficulty: "Sedang",
-      mapel: exam?.mapel || "Matematika",
-      author: "Proktor CBT",
-    },
-    {
-      id: "q-cbt-2",
-      questionType: "pg",
-      questionText: "Dua suku berikutnya dari barisan 3, 7, 11, 15, ... adalah ...",
-      options: { A: "18, 22", B: "19, 23", C: "19, 24", D: "20, 25" },
-      correctOption: "B",
-      points: 5,
-      difficulty: "Mudah",
-      mapel: exam?.mapel || "Matematika",
-      author: "Proktor CBT",
-    },
-    {
-      id: "q-cbt-3",
-      questionType: "pg",
-      questionText: "Bentuk sederhana dari 3(x + 2y) - 2(2x - y) adalah ...",
-      options: { A: "-x + 8y", B: "-x + 4y", C: "x + 8y", D: "x + 4y" },
-      correctOption: "A",
-      points: 5,
-      difficulty: "Sedang",
-      mapel: exam?.mapel || "Matematika",
-      author: "Proktor CBT",
-    },
-    {
-      id: "q-cbt-4",
-      questionType: "pg",
-      questionText: "Persamaan garis yang melalui titik (2, 5) dan bergradien 3 adalah ...",
-      options: { A: "y = 3x - 1", B: "y = 3x + 1", C: "y = 3x - 5", D: "y = 3x + 5" },
-      correctOption: "A",
-      points: 5,
-      difficulty: "Sedang",
-      mapel: exam?.mapel || "Matematika",
-      author: "Proktor CBT",
-    },
-    {
-      id: "q-cbt-5",
-      questionType: "pg",
-      questionText: "Nilai dari 2^4 × 2^3 ÷ 2^5 adalah ...",
-      options: { A: "2", B: "4", C: "8", D: "16" },
-      correctOption: "B",
-      points: 5,
-      difficulty: "Mudah",
-      mapel: exam?.mapel || "Matematika",
-      author: "Proktor CBT",
-    },
-  ];
-
-  const activeQuestions = questions && questions.length > 0 ? questions : defaultQuestions;
+  const activeQuestions = questions && questions.length > 0 ? questions : [];
 
   if (!isOpen || !exam) return null;
+
+  if (activeQuestions.length === 0) {
+    return createPortal(
+      <div className="fixed inset-0 z-[99999] bg-background w-screen h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div className="p-8 border border-dashed border-border rounded-xl max-w-md space-y-4 bg-card">
+          <ShieldAlert className="h-10 w-10 text-amber-500 mx-auto" />
+          <h3 className="text-lg font-bold text-foreground">Belum Ada Soal Terpublikasi</h3>
+          <p className="text-xs text-muted-foreground">
+            Sesi ujian <strong>{exam.title}</strong> belum memiliki butir soal terdaftar pada database. Silakan hubungi proktor / guru pengampu.
+          </p>
+          <Button size="sm" onClick={onClose} className="font-bold text-xs">
+            Tutup Portal CBT
+          </Button>
+        </div>
+      </div>,
+      document.body
+    );
+  }
 
   const currentQ = activeQuestions[currentIndex] || activeQuestions[0];
 

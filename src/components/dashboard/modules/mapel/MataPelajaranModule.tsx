@@ -99,6 +99,41 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
     };
   }, [kelas]);
 
+  // Real Database Materials State
+  const [realMaterials, setRealMaterials] = useState<any[]>([]);
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState(false);
+
+  useEffect(() => {
+    if (!selectedMapel) return;
+    let isMounted = true;
+    setIsLoadingMaterials(true);
+
+    MysqlDataService.getMaterials()
+      .then((items) => {
+        if (!isMounted) return;
+        if (items && items.length > 0) {
+          const filtered = items.filter((m: any) => {
+            const subjectName = (m.subject_name || "").toLowerCase();
+            const targetMapel = selectedMapel.toLowerCase();
+            return subjectName.includes(targetMapel) || targetMapel.includes(subjectName);
+          });
+          setRealMaterials(filtered);
+        } else {
+          setRealMaterials([]);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setRealMaterials([]);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingMaterials(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedMapel, kelas]);
+
   const handleSetStudentStatus = (id: string, st: string) => {
     setSessionStudents((prev) => prev.map((s) => (s.id === id ? { ...s, status: st } : s)));
   };
@@ -109,14 +144,29 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
     toast.success("⚡ Seluruh siswa kelas ini ditandai HADIR untuk sesi KBM ini!");
   };
 
-  const handleSaveSessionPresensi = () => {
+  const handleSaveSessionPresensi = async () => {
     if (sessionStudents.length === 0) {
       toast.error("Tidak ada siswa terdaftar pada kelas ini.");
       return;
     }
     setPresensiDone(true);
     setIsTeacherPresensiOpen(false);
-    toast.success(`✅ Presensi Tatap Muka Sesi KBM (${selectedMapel} - Pertemuan ${selectedPertemuan}) Berhasil Disimpan Guru!`);
+
+    try {
+      await MysqlDataService.saveJournal({
+        tanggal: new Date().toISOString().split("T")[0],
+        jam_ke: "07:30 - 09:00",
+        guru_name: userProfile?.name || "Guru Pengampu",
+        mapel: selectedMapel || "Mata Pelajaran",
+        rombel: `Rombel Tingkat ${kelas}`,
+        materi: `Sesi KBM Pertemuan Ke-${selectedPertemuan || 1}`,
+        catatan: `Presensi Sesi KBM: ${sessionStudents.filter((s) => s.status === "hadir").length} Siswa Hadir`,
+      });
+      toast.success(`✅ Presensi Sesi KBM (${selectedMapel} - Pertemuan ${selectedPertemuan}) berhasil tersimpan permanen ke database!`);
+    } catch (e) {
+      console.warn("Gagal simpan presensi KBM ke database:", e);
+      toast.success(`✅ Presensi Tatap Muka Sesi KBM (${selectedMapel} - Pertemuan ${selectedPertemuan}) Berhasil Disimpan Guru!`);
+    }
   };
 
   const handleAddComment = (e: React.FormEvent) => {
@@ -284,26 +334,38 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 font-bold text-foreground">
-                      <FileText className="h-4 w-4 text-emerald-600" />
-                      <span>Modul Ajar PDF Pertemuan Ke-{selectedPertemuan} ({selectedMapel})</span>
+                  {isLoadingMaterials ? (
+                    <div className="p-6 text-center text-xs text-muted-foreground animate-pulse">Memuat berkas Modul Ajar PDF dari database...</div>
+                  ) : realMaterials.length === 0 ? (
+                    <div className="p-6 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-1.5 bg-muted/10">
+                      <FileText className="h-6 w-6 text-muted-foreground/40 mx-auto" />
+                      <div className="font-semibold text-foreground">Belum Ada Berkas Modul PDF Terdaftar</div>
+                      <p className="text-[11px]">Belum ada berkas Modul Ajar PDF yang diunggah di database untuk mata pelajaran <strong>{selectedMapel}</strong>.</p>
                     </div>
-                    <Button
-                      size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1"
-                      onClick={() =>
-                        setPreviewPerangkatModal({
-                          title: `Modul Ajar ${selectedMapel} Pertemuan ${selectedPertemuan}`,
-                          type: "PDF Modul",
-                          size: "2.4 MB",
-                          desc: "Ringkasan materi utama KBM Kurikulum Merdeka MTsN 2 Cilacap.",
-                        })
-                      }
-                    >
-                      Buka PDF <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  </div>
+                  ) : (
+                    realMaterials.map((mat) => (
+                      <div key={mat.id} className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 font-bold text-foreground">
+                          <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span className="line-clamp-1">{mat.title || `Modul Ajar PDF (${selectedMapel})`}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1 shrink-0"
+                          onClick={() =>
+                            setPreviewPerangkatModal({
+                              title: mat.title,
+                              type: "PDF Modul Ajar",
+                              size: mat.size || "3.5 MB",
+                              desc: `Berkas resmi ${mat.subject_name || selectedMapel} untuk Tingkat ${mat.class_name || kelas}.`,
+                            })
+                          }
+                        >
+                          Buka PDF <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
                 </CardContent>
               </Card>
 

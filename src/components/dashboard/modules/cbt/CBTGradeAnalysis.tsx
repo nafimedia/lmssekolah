@@ -168,7 +168,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   // Siswa View Layout (Personal Result Card)
   if (isSiswa) {
     const myGrade = filteredGrades[0] || grades[0];
-    const isPassed = myGrade?.status === "Lulus KKM";
+    const isPassed = myGrade ? myGrade.status === "Lulus KKM" : false;
 
     return (
       <div className="space-y-6">
@@ -182,7 +182,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                 <div>
                   <CardTitle className="text-lg font-bold text-foreground">Transkrip Nilai CBT Saya</CardTitle>
                   <CardDescription className="text-xs">
-                    Siswa: <span className="font-semibold text-foreground">{studentName}</span> | Kelas: VIII A
+                    Siswa: <span className="font-semibold text-foreground">{studentName}</span> | Rombel: {myGrade?.classRombel || "Rombel 8B"}
                   </CardDescription>
                 </div>
               </div>
@@ -204,18 +204,18 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
               <div className="p-4 rounded-xl bg-muted/40 border border-border">
                 <p className="text-xs text-muted-foreground font-semibold">Skor Pilihan Ganda (PG)</p>
-                <h3 className="text-2xl font-extrabold text-foreground mt-1">{myGrade?.pgScore || 85}</h3>
+                <h3 className="text-2xl font-extrabold text-foreground mt-1">{myGrade?.pgScore || 0}</h3>
               </div>
 
               <div className="p-4 rounded-xl bg-muted/40 border border-border">
                 <p className="text-xs text-muted-foreground font-semibold">Skor Koreksi Essay</p>
-                <h3 className="text-2xl font-extrabold text-foreground mt-1">{myGrade?.essayScore || 10}</h3>
+                <h3 className="text-2xl font-extrabold text-foreground mt-1">{myGrade?.essayScore || 0}</h3>
               </div>
 
               <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
                 <p className="text-xs text-muted-foreground font-semibold">Total Nilai Akhir CBT</p>
                 <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                  {myGrade?.totalScore || 95} / 100
+                  {myGrade?.totalScore || 0} / 100
                 </h3>
               </div>
             </div>
@@ -235,7 +235,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {isPassed
                   ? "Capaian evaluasi Anda memenuhi batas KKM. Silakan akses Modul Pengayaan HOTS untuk pendalaman materi."
-                  : "Nilai Anda di bawah KKM 75. Guru pengampu telah menugaskan Ujian Remedial / LKPD Perbaikan untuk menuntaskan nilai."}
+                  : "Nilai Anda di bawah KKM 75 atau belum mengikuti ujian CBT. Hubungi guru pengampu jika memerlukan sesi susulan/remedial."}
               </p>
             </div>
           </CardContent>

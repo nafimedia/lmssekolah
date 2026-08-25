@@ -175,9 +175,15 @@ export function DaftarSiswaKelasTab({
                   <td className="py-3 px-4 text-muted-foreground font-medium">{s.parentName || `Orang Tua ${s.name.split(" ")[0]}`}</td>
                   <td className="py-3 px-3 text-center font-mono font-semibold text-foreground">{s.parentWa}</td>
                   <td className="py-3 px-3 text-center">
-                    <Badge className="bg-emerald-600 text-white font-mono font-bold text-[11px]">
-                      {s.hadirPct}%
-                    </Badge>
+                    {s.hadirPct > 0 ? (
+                      <Badge className="bg-emerald-600 text-white font-mono font-bold text-[11px]">
+                        {s.hadirPct}%
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground border-border">
+                        0%
+                      </Badge>
+                    )}
                   </td>
                   <td className="py-3 px-4 text-right space-x-1">
                     <Button

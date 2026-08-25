@@ -22,6 +22,9 @@ import {
   Eye,
   BellRing,
   Medal,
+  Building2,
+  GraduationCap,
+  ShieldCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -59,16 +62,21 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
   const isSiswa = activeRole === "siswa";
   const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
   const isGuru = activeRole === "guru" || activeRole === "teacher" || activeRole === "pembina";
-  const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik";
+  const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik" || activeRole === "kepala_madrasah";
 
   const userRombelRaw = userProfile?.class_name || userProfile?.class || (isWaliKelas ? "Rombel 8B" : "Rombel 8B");
   const activeRombel = normalizeRombelName(userRombelRaw);
 
-  const [activeTab, setActiveTab] = useState<"dashboard" | "ziyadah" | "murojaah" | "progress" | "riwayat" | "monitoring" | "badges">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "rekap_siswa" | "progress" | "riwayat" | "monitoring" | "badges">(
+    isExecutive ? "rekap_siswa" : "dashboard"
+  );
   const [selectedJuz, setSelectedJuz] = useState<string>("Juz 30");
+  const [selectedRombel, setSelectedRombel] = useState<string>(isExecutive ? "ALL" : activeRombel);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const [hafalanList, setHafalanList] = useState<HafalanRow[]>([]);
   const [realStudents, setRealStudents] = useState<any[]>([]);
+  const [masterRombels, setMasterRombels] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Form states for Ziyadah (Hafalan Baru)
@@ -87,13 +95,10 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
 
   // Form states for Murojaah
   const [isMurojaahOpen, setIsMurojaahOpen] = useState(false);
-  const [murojaahSurah, setMurojaahSurah] = useState("An-Naba'");
-  const [murojaahAyat, setMurojaahAyat] = useState("1 - 40 (Full)");
-  const [murojaahStatus, setMurojaahStatus] = useState<"Mutqin" | "Lancar" | "Perlu Pengulangan">("Mutqin");
-  const [murojaahNotes, setMurojaahNotes] = useState("");
 
   // Detail Modal
   const [selectedHafalanDetail, setSelectedHafalanDetail] = useState<HafalanRow | null>(null);
+  const [selectedStudentHistoryModal, setSelectedStudentHistoryModal] = useState<any | null>(null);
 
   const calculatedNilaiAkhir = useMemo(() => {
     return calculateFinalScore(scoreKelancaran, scoreTajwid, scoreMakhraj, scoreFashahah, scoreAdab);
@@ -102,29 +107,20 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [dbHafalan, dbUsers] = await Promise.all([
-        MysqlDataService.getHafalan(),
-        MysqlDataService.getUsers(),
+      const [dbHafalan, dbUsers, rombels] = await Promise.all([
+        MysqlDataService.getHafalan().catch(() => []),
+        MysqlDataService.getUsers().catch(() => []),
+        MysqlDataService.getMasterRombels().catch(() => []),
       ]);
+
+      if (rombels && rombels.length > 0) {
+        setMasterRombels(rombels);
+      }
 
       const siswaList = (dbUsers || []).filter((u: any) => u.role === "siswa");
       setRealStudents(siswaList);
 
       let records = dbHafalan || [];
-
-      // Filter by Wali Kelas class if role is walikelas
-      if (isWaliKelas) {
-        const waliStudents = siswaList.filter((s: any) => isSameClass(s.class_name || s.class, activeRombel));
-        const waliNisns = new Set(waliStudents.map((s: any) => s.nis_nip || s.nis));
-        const waliNames = new Set(waliStudents.map((s: any) => (s.full_name || s.name || "").toLowerCase()));
-
-        records = records.filter((h) => {
-          const matchClass = isSameClass(h.class_name || "", activeRombel);
-          const matchNisn = h.nisn && waliNisns.has(h.nisn);
-          const matchName = h.student_name && waliNames.has(h.student_name.toLowerCase());
-          return matchClass || matchNisn || matchName;
-        });
-      }
 
       // Filter for Siswa self-view
       if (isSiswa && userProfile) {
@@ -145,30 +141,115 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
 
   useEffect(() => {
     loadData();
-  }, [activeRole, activeRombel]);
+  }, [activeRole]);
+
+  // Compute list of dynamic rombel options
+  const rombelOptions = useMemo(() => {
+    const set = new Set<string>(["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B"]);
+    masterRombels.forEach((r) => {
+      if (r.name) set.add(normalizeRombelName(r.name));
+      if (r.code) set.add(normalizeRombelName(r.code));
+    });
+    realStudents.forEach((s) => {
+      const r = s.class_name || s.class;
+      if (r) set.add(normalizeRombelName(r));
+    });
+    hafalanList.forEach((h) => {
+      if (h.class_name) set.add(normalizeRombelName(h.class_name));
+    });
+    return Array.from(set).sort();
+  }, [masterRombels, realStudents, hafalanList]);
+
+  // Filtered Students by Selected Rombel & Search Query
+  const filteredStudents = useMemo(() => {
+    return realStudents.filter((s: any) => {
+      const sRombel = normalizeRombelName(s.class_name || s.class || "Rombel 8B");
+      const matchRombel = selectedRombel === "ALL" || isSameClass(sRombel, selectedRombel);
+      const q = searchQuery.toLowerCase().trim();
+      const sName = (s.full_name || s.name || "").toLowerCase();
+      const sNis = (s.nis_nip || s.nis || "").toLowerCase();
+      const matchQuery = !q || sName.includes(q) || sNis.includes(q) || sRombel.toLowerCase().includes(q);
+      return matchRombel && matchQuery;
+    });
+  }, [realStudents, selectedRombel, searchQuery]);
+
+  // Filtered Hafalan Records by Selected Rombel & Search Query
+  const filteredHafalan = useMemo(() => {
+    return hafalanList.filter((h) => {
+      const hRombel = normalizeRombelName(h.class_name || "Rombel 8B");
+      const matchRombel = selectedRombel === "ALL" || isSameClass(hRombel, selectedRombel);
+      const q = searchQuery.toLowerCase().trim();
+      const matchQuery =
+        !q ||
+        (h.student_name && h.student_name.toLowerCase().includes(q)) ||
+        (h.surah && h.surah.toLowerCase().includes(q)) ||
+        (h.nisn && h.nisn.toLowerCase().includes(q)) ||
+        hRombel.toLowerCase().includes(q);
+      return matchRombel && matchQuery;
+    });
+  }, [hafalanList, selectedRombel, searchQuery]);
 
   const filteredByJuz = useMemo(() => {
-    return hafalanList.filter((h) => (h.juz || "").toLowerCase().includes(selectedJuz.toLowerCase()));
-  }, [hafalanList, selectedJuz]);
+    return filteredHafalan.filter((h) => (h.juz || "").toLowerCase().includes(selectedJuz.toLowerCase()));
+  }, [filteredHafalan, selectedJuz]);
 
   const ziyadahRecords = useMemo(() => {
-    return hafalanList.filter((h) => h.jenis_setoran === "ziyadah" || !h.murojaah || h.murojaah === "Lancar");
-  }, [hafalanList]);
+    return filteredHafalan.filter((h) => h.jenis_setoran === "ziyadah" || !h.murojaah || h.murojaah === "Lancar");
+  }, [filteredHafalan]);
 
   const murojaahRecords = useMemo(() => {
-    return hafalanList.filter((h) => h.jenis_setoran === "murojaah" || h.murojaah === "Mutqin" || h.murojaah === "Murojaah");
-  }, [hafalanList]);
+    return filteredHafalan.filter((h) => h.jenis_setoran === "murojaah" || h.murojaah === "Mutqin" || h.murojaah === "Murojaah");
+  }, [filteredHafalan]);
 
-  // Overall statistics
+  // Overall statistics based on selected Rombel
   const avgGrade = useMemo(() => {
-    if (hafalanList.length === 0) return 0;
-    const sum = hafalanList.reduce((acc, h) => acc + (parseInt(h.nilai || "85") || 85), 0);
-    return Math.round(sum / hafalanList.length);
-  }, [hafalanList]);
+    if (filteredHafalan.length === 0) return 0;
+    const sum = filteredHafalan.reduce((acc, h) => acc + (parseInt(h.nilai || "85", 10) || 85), 0);
+    return Math.round(sum / filteredHafalan.length);
+  }, [filteredHafalan]);
 
   const mutqinCount = useMemo(() => {
-    return hafalanList.filter((h) => h.status === "Mutqin" || h.murojaah === "Mutqin").length;
-  }, [hafalanList]);
+    return filteredHafalan.filter((h) => h.status === "Mutqin" || h.murojaah === "Mutqin" || h.status === "Lulus").length;
+  }, [filteredHafalan]);
+
+  // Comprehensive Student Tahfidz Summary Matrix (For Executive & Teacher Monitoring)
+  const studentTahfidzSummary = useMemo(() => {
+    return filteredStudents.map((student: any) => {
+      const sName = (student.full_name || student.name || "").toLowerCase();
+      const sNis = (student.nis_nip || student.nis || "").toLowerCase();
+      const sRombel = normalizeRombelName(student.class_name || student.class || "Rombel 8B");
+
+      const matchedRecords = hafalanList.filter(
+        (h) =>
+          (h.student_name && h.student_name.toLowerCase() === sName) ||
+          (h.nisn && h.nisn.toLowerCase() === sNis)
+      );
+
+      const totalSetoran = matchedRecords.length;
+      const lastRecord = matchedRecords[matchedRecords.length - 1] || null;
+      const surahTerakhir = lastRecord ? `QS. ${lastRecord.surah} (${lastRecord.ayat})` : "Belum ada setoran";
+      const isMutqin = matchedRecords.some((h) => h.status === "Mutqin" || h.murojaah === "Mutqin" || h.status === "Lulus");
+      
+      let studentAvg = 0;
+      if (totalSetoran > 0) {
+        const sum = matchedRecords.reduce((acc, curr) => acc + (parseInt(curr.nilai || "85", 10) || 85), 0);
+        studentAvg = Math.round(sum / totalSetoran);
+      }
+
+      return {
+        id: student.id,
+        rawStudent: student,
+        name: student.full_name || student.name,
+        nis: student.nis_nip || student.nis || "-",
+        rombel: sRombel,
+        totalSetoran,
+        surahTerakhir,
+        avgScore: studentAvg,
+        statusMurojaah: isMutqin ? "Mutqin (Lancar)" : totalSetoran > 0 ? "Dalam Proses" : "Belum Setor (0 Poin)",
+        matchedRecords,
+      };
+    });
+  }, [filteredStudents, hafalanList]);
 
   // Active Quran Surah list based on selectedJuz
   const activeQuranSurahs = useMemo(() => {
@@ -202,60 +283,25 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       score_makhraj: scoreMakhraj,
       score_fashahah: scoreFashahah,
       score_adab: scoreAdab,
-      notes: ziyadahNotes,
     };
 
-    const res = await MysqlDataService.saveHafalan(newRecord);
-    if (res) {
-      toast.success(`✨ Setoran Ziyadah QS. ${selectedSurahName} (${ayatStart}-${ayatEnd}) berhasil disimpan ke Database MySQL!`);
-      await loadData();
+    try {
+      await MysqlDataService.saveHafalan(newRecord);
+      toast.success("✅ Setoran Ziyadah Baru Berhasil Disimpan ke MySQL Database!");
       setIsZiyadahOpen(false);
-    } else {
+      loadData();
+    } catch {
       toast.error("Gagal menyimpan setoran ke database.");
     }
   };
 
-  // Handle Input Murojaah Save
-  const handleSaveMurojaah = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const student = realStudents.find((s) => String(s.id) === selectedStudentId) || realStudents[0];
-    const studentName = student ? (student.full_name || student.name) : (userProfile?.name || "Siswa MTsN 2");
-    const nisn = student ? (student.nis_nip || student.nis || "-") : "12123301000288";
-    const className = student ? (student.class_name || student.class || activeRombel) : activeRombel;
-
-    const newRecord: HafalanRow = {
-      student_name: studentName,
-      nisn: nisn,
-      class_name: className,
-      juz: selectedJuz,
-      surah: murojaahSurah,
-      ayat: murojaahAyat,
-      status: murojaahStatus,
-      nilai: murojaahStatus === "Mutqin" ? "95 (Mutqin)" : "85 (Lancar)",
-      ustadz: userProfile?.name || "AH. SYARIF HIDAYAH, S.Pd.I",
-      tgl: new Date().toLocaleDateString("id-ID"),
-      murojaah: murojaahStatus,
-      jenis_setoran: "murojaah",
-      notes: murojaahNotes,
-    };
-
-    const res = await MysqlDataService.saveHafalan(newRecord);
-    if (res) {
-      toast.success(`📖 Record Murojaah QS. ${murojaahSurah} (${murojaahStatus}) berhasil dicatat!`);
-      await loadData();
-      setIsMurojaahOpen(false);
-    } else {
-      toast.error("Gagal mencatat murojaah.");
-    }
-  };
-
   const handleExportExcel = () => {
-    if (hafalanList.length === 0) {
+    if (filteredHafalan.length === 0) {
       toast.error("Belum ada data setoran untuk di-export.");
       return;
     }
     const headers = ["No", "NISN", "Nama Siswa", "Rombel", "Juz", "Surah", "Ayat", "Jenis Setoran", "Nilai Akhir", "Status Evaluasi", "Penguji"];
-    const rows = hafalanList.map((h, idx) => [
+    const rows = filteredHafalan.map((h, idx) => [
       idx + 1,
       h.nisn || "-",
       h.student_name || "-",
@@ -286,13 +332,20 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <BookMarked className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              {isWaliKelas ? `Monitoring Tahfidz Siswa ${activeRombel}` : "Modul Keagamaan Tahfidz Al-Qur'an"}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground">
+                <BookMarked className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                {selectedRombel === "ALL"
+                  ? "Monitoring Laporan Tahfidz Al-Qur'an (Seluruh Kelas)"
+                  : `Monitoring Tahfidz - ${selectedRombel}`}
+              </h1>
+              <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
+                <ShieldCheck className="h-3 w-3 mr-1" /> RBAC: {isExecutive ? "Executive Monitoring (Kamad/Waka)" : isWaliKelas ? "Wali Kelas" : "Guru Tahfidz"}
+              </Badge>
+            </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {isWaliKelas
-                ? `Laporan pencatatan Ziyadah, Murojaah, dan evaluasi tajwid khusus siswa Rombel ${activeRombel}.`
+              {isExecutive
+                ? "Pengawasan Capaian Hafalan Al-Qur'an Eksekutif Kamad & Waka Kurikulum per Rombel dan per Siswa (Real Data Database)"
                 : "Pengelolaan Target Hafalan, Setoran Baru (Ziyadah), Murojaah, & Penilaian 5 Komponen MTsN 2 Cilacap."}
             </p>
           </div>
@@ -303,7 +356,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               variant="outline"
               className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
               onClick={handleExportExcel}
-              disabled={hafalanList.length === 0}
+              disabled={filteredHafalan.length === 0}
             >
               <FileSpreadsheet className="h-3.5 w-3.5" /> Export Excel
             </Button>
@@ -332,10 +385,118 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
         </div>
       )}
 
+      {/* Rombel Filter & Executive Controls (For Kamad, Waka, Admin, Teachers) */}
+      {!isSiswa && (
+        <Card className="border-border shadow-xs bg-card p-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Filter className="h-5 w-5" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Rombel / Mode Tahfidz</label>
+                <select
+                  className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  value={selectedRombel}
+                  onChange={(e) => setSelectedRombel(e.target.value)}
+                >
+                  {isExecutive && (
+                    <option value="ALL" className="font-bold">
+                      ✨ Semua Rombel (Monitoring Eksekutif Kamad & Waka)
+                    </option>
+                  )}
+                  {rombelOptions.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari siswa, NISN, atau surah..."
+                  className="pl-8 h-9 text-xs"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {isExecutive && (
+                <Badge variant="secondary" className="hidden sm:inline-flex bg-emerald-600/10 text-emerald-600 border border-emerald-500/30 px-3 py-1.5 font-bold text-xs">
+                  <Building2 className="h-3.5 w-3.5 mr-1" /> Executive Monitoring
+                </Badge>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Executive Tahfidz KPI Summary Cards (Kamad & Waka View) */}
+      {isExecutive && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-border shadow-xs bg-card">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground font-semibold">Total Siswa Peserta Tahfidz</p>
+                <h3 className="text-2xl font-bold text-foreground mt-1">{filteredStudents.length} Siswa</h3>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Siswa terdaftar di database</p>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Users className="h-6 w-6" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border shadow-xs bg-card">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground font-semibold">Total Setoran Terdaftar</p>
+                <h3 className="text-2xl font-bold text-foreground mt-1">{filteredHafalan.length} Record</h3>
+                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Ziyadah & Murojaah MySQL</p>
+              </div>
+              <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <BookOpen className="h-6 w-6" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border shadow-xs bg-card">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground font-semibold">Rata-Rata Nilai Tahfidz</p>
+                <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{avgGrade > 0 ? `${avgGrade} Poin` : "0 Poin"}</h3>
+                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Evaluasi 5 komponen tajwid</p>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Award className="h-6 w-6" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border shadow-xs bg-card">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground font-semibold">Target Lulus Mutqin</p>
+                <h3 className="text-2xl font-bold text-foreground mt-1">{mutqinCount} Record</h3>
+                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Hafalan lancar & mutqin</p>
+              </div>
+              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <GraduationCap className="h-6 w-6" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Tabs Sub-Nav Navigation */}
       <div className="flex items-center gap-1.5 p-1.5 bg-muted/40 rounded-xl border border-border/80 w-fit flex-wrap">
         {[
           { id: "dashboard", label: "Dashboard & Target", icon: BookMarked },
+          { id: "rekap_siswa", label: "Rekap Capaian Siswa", icon: Users },
           { id: "progress", label: "Visual Progress Surah", icon: Star },
           { id: "riwayat", label: "Riwayat Setoran", icon: Calendar },
           { id: "monitoring", label: "Alert & Pembinaan", icon: BellRing },
@@ -357,21 +518,23 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
         ))}
       </div>
 
-      {/* Selector Target Juz */}
-      <div className="flex items-center gap-2 border-b border-border pb-3">
-        <span className="text-xs font-bold text-muted-foreground mr-1">Target Juz Aktif:</span>
-        {["Juz 30", "Juz 29", "Juz 1"].map((j) => (
-          <Button
-            key={j}
-            size="sm"
-            variant={selectedJuz === j ? "default" : "outline"}
-            className={`text-xs font-bold gap-1 ${selectedJuz === j ? "bg-emerald-600 text-white" : ""}`}
-            onClick={() => setSelectedJuz(j)}
-          >
-            <BookOpen className="h-3.5 w-3.5" /> {j}
-          </Button>
-        ))}
-      </div>
+      {/* Selector Target Juz (hanya untuk tab yang relevan: dashboard, progress, riwayat) */}
+      {(activeTab === "dashboard" || activeTab === "progress" || activeTab === "riwayat") && (
+        <div className="flex items-center gap-2 border-b border-border pb-3">
+          <span className="text-xs font-bold text-muted-foreground mr-1">Target Juz Aktif:</span>
+          {["Juz 30", "Juz 29", "Juz 1"].map((j) => (
+            <Button
+              key={j}
+              size="sm"
+              variant={selectedJuz === j ? "default" : "outline"}
+              className={`text-xs font-bold gap-1 ${selectedJuz === j ? "bg-emerald-600 text-white" : ""}`}
+              onClick={() => setSelectedJuz(j)}
+            >
+              <BookOpen className="h-3.5 w-3.5" /> {j}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* TAB 1: Dashboard & Target */}
       {activeTab === "dashboard" && (
@@ -394,12 +557,12 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               <div className="flex items-center gap-3 shrink-0">
                 <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-center min-w-[90px]">
                   <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase">RATA-RATA</div>
-                  <div className="text-xl font-extrabold font-mono text-emerald-600">{avgGrade > 0 ? avgGrade : "—"}</div>
+                  <div className="text-xl font-extrabold font-mono text-emerald-600">{avgGrade > 0 ? `${avgGrade} Poin` : "0 Poin"}</div>
                 </div>
 
                 <div className="p-3 rounded-xl border border-teal-500/30 bg-teal-500/10 text-center min-w-[90px]">
                   <div className="text-[10px] font-bold text-teal-700 dark:text-teal-300 uppercase">MUTQIN</div>
-                  <div className="text-xl font-extrabold font-mono text-teal-600">{mutqinCount} Siswa</div>
+                  <div className="text-xl font-extrabold font-mono text-teal-600">{mutqinCount} Record</div>
                 </div>
               </div>
             </CardContent>
@@ -430,7 +593,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                       <div key={i} className="p-3 rounded-lg border border-border bg-muted/30 flex justify-between items-center text-xs">
                         <div>
                           <div className="font-bold text-foreground">QS. {r.surah} ({r.ayat})</div>
-                          <div className="text-[11px] text-muted-foreground">{r.student_name} • {r.tgl}</div>
+                          <div className="text-[11px] text-muted-foreground">{r.student_name} • {r.class_name || activeRombel}</div>
                         </div>
                         <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold">
                           {r.nilai}
@@ -465,7 +628,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                       <div key={i} className="p-3 rounded-lg border border-border bg-muted/30 flex justify-between items-center text-xs">
                         <div>
                           <div className="font-bold text-foreground">QS. {r.surah} ({r.ayat})</div>
-                          <div className="text-[11px] text-muted-foreground">{r.student_name} • {r.tgl}</div>
+                          <div className="text-[11px] text-muted-foreground">{r.student_name} • {r.class_name || activeRombel}</div>
                         </div>
                         <Badge variant="outline" className="bg-teal-500/10 text-teal-600 border-teal-500/30 font-bold">
                           {r.murojaah || r.status}
@@ -478,6 +641,91 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
             </Card>
           </div>
         </div>
+      )}
+
+      {/* TAB REKAP SISWA: Matrix Capaian Tahfidz Siswa per Rombel */}
+      {activeTab === "rekap_siswa" && (
+        <Card className="border-border shadow-xs bg-card overflow-hidden">
+          <CardHeader className="p-4 pb-3 border-b border-border flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Users className="h-5 w-5 text-emerald-600" /> Matrix Capaian Tahfidz Per Siswa
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Rekapitulasi total setoran, surah terakhir, rata-rata nilai tajwid, dan status kelancaran siswa.
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
+              {studentTahfidzSummary.length} Siswa Terdaftar
+            </Badge>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            {isLoading ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">Memuat rekap capaian siswa...</div>
+            ) : studentTahfidzSummary.length === 0 ? (
+              <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 m-4">
+                <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                <div className="font-semibold text-foreground text-sm">Tidak Ada Siswa Ditemukan</div>
+                <p>Database tidak menemukan data siswa terdaftar pada rombel ini.</p>
+              </div>
+            ) : (
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-muted/50 text-muted-foreground font-bold border-b border-border">
+                    <th className="py-3 px-4 w-12 text-center">No</th>
+                    <th className="py-3 px-4">Nama Siswa</th>
+                    <th className="py-3 px-4">NISN / NIS</th>
+                    <th className="py-3 px-4">Rombel</th>
+                    <th className="py-3 px-4 text-center">Total Setoran</th>
+                    <th className="py-3 px-4">Surah Terakhir</th>
+                    <th className="py-3 px-4 text-center">Rata-Rata Nilai</th>
+                    <th className="py-3 px-4 text-center">Status Murojaah</th>
+                    <th className="py-3 px-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {studentTahfidzSummary.map((s, idx) => (
+                    <tr key={s.id || idx} className="hover:bg-muted/30 transition">
+                      <td className="py-3 px-4 text-center font-mono font-medium">{idx + 1}</td>
+                      <td className="py-3 px-4 font-bold text-foreground">{s.name}</td>
+                      <td className="py-3 px-4 text-muted-foreground font-mono">{s.nis}</td>
+                      <td className="py-3 px-4 font-semibold text-foreground">{s.rombel}</td>
+                      <td className="py-3 px-4 text-center font-bold text-emerald-700 dark:text-emerald-300">
+                        {s.totalSetoran} Record
+                      </td>
+                      <td className="py-3 px-4 font-medium text-slate-700 dark:text-slate-300">{s.surahTerakhir}</td>
+                      <td className="py-3 px-4 text-center font-mono font-extrabold text-emerald-600">
+                        {s.avgScore > 0 ? `${s.avgScore} Poin` : "0 Poin"}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge
+                          variant="outline"
+                          className={
+                            s.totalSetoran > 0
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold"
+                              : "bg-slate-500/10 text-slate-500 border-slate-300 font-normal"
+                          }
+                        >
+                          {s.statusMurojaah}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs font-bold text-emerald-600 gap-1"
+                          onClick={() => setSelectedStudentHistoryModal(s)}
+                        >
+                          <Eye className="h-3.5 w-3.5" /> Detail Setoran
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* TAB 2: Visual Progress Surah */}
@@ -495,10 +743,10 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
           <CardContent className="p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {activeQuranSurahs.map((surah) => {
-                const isCompleted = hafalanList.some(
+                const isCompleted = filteredHafalan.some(
                   (h) => h.surah.toLowerCase().includes(surah.latin.toLowerCase()) && (h.status === "Mutqin" || h.status === "Lulus")
                 );
-                const isInProgress = hafalanList.some(
+                const isInProgress = filteredHafalan.some(
                   (h) => h.surah.toLowerCase().includes(surah.latin.toLowerCase()) && !isCompleted
                 );
 
@@ -615,7 +863,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
           <CardContent className="p-4">
             {isLoading ? (
               <div className="p-6 text-center text-xs text-muted-foreground">Memuat data monitoring...</div>
-            ) : hafalanList.length === 0 ? (
+            ) : filteredHafalan.length === 0 ? (
               <div className="p-8 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-1">
                 <CheckCircle2 className="h-6 w-6 text-emerald-500 mx-auto" />
                 <div className="font-semibold text-foreground">Tidak Ada Warning / Alert Aktif</div>
@@ -623,7 +871,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               </div>
             ) : (
               <div className="space-y-3">
-                {hafalanList.filter((h) => h.status === "Mengulang" || h.status === "Perlu Pengulangan").map((h, idx) => (
+                {filteredHafalan.filter((h) => h.status === "Mengulang" || h.status === "Perlu Pengulangan").map((h, idx) => (
                   <div key={idx} className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-3">
                       <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
@@ -704,8 +952,8 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <div>
-                <Label className="text-xs font-semibold">Nama Surah</Label>
+              <div className="space-y-1.5 col-span-2">
+                <Label className="text-xs font-semibold">Surah Target</Label>
                 <select
                   className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs font-bold"
                   value={selectedSurahName}
@@ -719,185 +967,200 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                 </select>
               </div>
 
-              <div>
-                <Label className="text-xs font-semibold">Ayat Mulai</Label>
-                <Input type="number" min={1} value={ayatStart} onChange={(e) => setAyatStart(e.target.value)} className="h-8 text-xs" />
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Ayat Selesai</Label>
-                <Input type="number" min={1} value={ayatEnd} onChange={(e) => setAyatEnd(e.target.value)} className="h-8 text-xs" />
-              </div>
-            </div>
-
-            {/* 5 Component Scoring Sliders */}
-            <div className="p-3 bg-muted/40 border border-border rounded-xl space-y-3">
-              <div className="font-bold text-xs text-foreground flex justify-between">
-                <span>Penilaian 5 Komponent Tajwid:</span>
-                <span className="text-emerald-600 font-mono font-extrabold text-sm">Nilai Akhir: {calculatedNilaiAkhir}</span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
-                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground">Kelancaran (30%)</div>
-                  <Input type="number" max={100} value={scoreKelancaran} onChange={(e) => setScoreKelancaran(Number(e.target.value))} className="h-7 text-xs text-center font-mono font-bold" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground">Tajwid (25%)</div>
-                  <Input type="number" max={100} value={scoreTajwid} onChange={(e) => setScoreTajwid(Number(e.target.value))} className="h-7 text-xs text-center font-mono font-bold" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground">Makhraj (20%)</div>
-                  <Input type="number" max={100} value={scoreMakhraj} onChange={(e) => setScoreMakhraj(Number(e.target.value))} className="h-7 text-xs text-center font-mono font-bold" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground">Fashahah (15%)</div>
-                  <Input type="number" max={100} value={scoreFashahah} onChange={(e) => setScoreFashahah(Number(e.target.value))} className="h-7 text-xs text-center font-mono font-bold" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground">Adab (10%)</div>
-                  <Input type="number" max={100} value={scoreAdab} onChange={(e) => setScoreAdab(Number(e.target.value))} className="h-7 text-xs text-center font-mono font-bold" />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Cakupan Ayat</Label>
+                <div className="flex items-center gap-1">
+                  <Input
+                    className="h-8 text-xs font-mono text-center"
+                    placeholder="Awal"
+                    value={ayatStart}
+                    onChange={(e) => setAyatStart(e.target.value)}
+                  />
+                  <span>-</span>
+                  <Input
+                    className="h-8 text-xs font-mono text-center"
+                    placeholder="Akhir"
+                    value={ayatEnd}
+                    onChange={(e) => setAyatEnd(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs font-semibold">Status Evaluasi</Label>
-                <select className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs font-bold" value={statusEvaluasi} onChange={(e) => setStatusEvaluasi(e.target.value as any)}>
-                  <option value="Lulus">Lulus</option>
-                  <option value="Lulus Bersyarat">Lulus Bersyarat</option>
-                  <option value="Mengulang">Mengulang</option>
-                </select>
+            {/* Component Scoring */}
+            <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-3">
+              <div className="font-bold text-xs text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
+                <span>Penilaian 5 Komponen Tajwid & Adab</span>
+                <span className="font-mono text-sm font-extrabold">{calculatedNilaiAkhir} Poin</span>
               </div>
 
-              <div>
-                <Label className="text-xs font-semibold">Catatan Guru Penguji</Label>
-                <Input placeholder="Tuliskan apresiasi/catatan tajwid..." value={ziyadahNotes} onChange={(e) => setZiyadahNotes(e.target.value)} className="h-8 text-xs" />
+              <div className="grid grid-cols-5 gap-2 text-center text-[10px]">
+                <div>
+                  <Label className="text-[10px]">Kelancaran</Label>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs font-bold text-center"
+                    value={scoreKelancaran}
+                    onChange={(e) => setScoreKelancaran(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px]">Tajwid</Label>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs font-bold text-center"
+                    value={scoreTajwid}
+                    onChange={(e) => setScoreTajwid(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px]">Makhraj</Label>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs font-bold text-center"
+                    value={scoreMakhraj}
+                    onChange={(e) => setScoreMakhraj(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px]">Fashahah</Label>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs font-bold text-center"
+                    value={scoreFashahah}
+                    onChange={(e) => setScoreFashahah(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px]">Adab</Label>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs font-bold text-center"
+                    value={scoreAdab}
+                    onChange={(e) => setScoreAdab(Number(e.target.value))}
+                  />
+                </div>
               </div>
             </div>
 
-            <DialogFooter className="pt-2 border-t border-border">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsZiyadahOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Simpan Setoran Ziyadah</Button>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Status Evaluasi</Label>
+              <select
+                className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs font-bold"
+                value={statusEvaluasi}
+                onChange={(e) => setStatusEvaluasi(e.target.value as any)}
+              >
+                <option value="Lulus">Lulus (Tuntas & Mutqin)</option>
+                <option value="Lulus Bersyarat">Lulus Bersyarat (Catatan Murojaah)</option>
+                <option value="Mengulang">Mengulang (Perlu Pembinaan)</option>
+              </select>
+            </div>
+
+            <DialogFooter className="gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsZiyadahOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1">
+                <Check className="h-4 w-4" /> Simpan Ziyadah MySQL
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Input Murojaah */}
-      <Dialog open={isMurojaahOpen} onOpenChange={setIsMurojaahOpen}>
+      {/* Modal Detail Setoran Single Record */}
+      <Dialog open={!!selectedHafalanDetail} onOpenChange={(o) => !o && setSelectedHafalanDetail(null)}>
         <DialogContent className="sm:max-w-md border-border bg-card">
           <DialogHeader className="border-b border-border pb-3">
             <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <RotateCcw className="h-5 w-5 text-teal-600" /> Catat Pengulangan Hafalan (Murojaah)
+              <BookOpen className="h-5 w-5 text-emerald-600" /> Detail Evaluasi Setoran Tahfidz
             </DialogTitle>
-            <DialogDescription className="text-xs">Pencatatan kelancaran murojaah surah yang pernah dihafal sebelumnya.</DialogDescription>
+            <DialogDescription className="text-xs">
+              Transkrip rincian nilai komponen tajwid, fashahah, dan adab setoran.
+            </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveMurojaah} className="space-y-4 pt-2 text-xs">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Pilih Siswa Murojaah</Label>
-              <select
-                className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs font-bold"
-                value={selectedStudentId}
-                onChange={(e) => setSelectedStudentId(e.target.value)}
-              >
-                {realStudents.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name || s.name} ({s.class_name || s.class})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs font-semibold">Surah Murojaah</Label>
-                <select
-                  className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs font-bold"
-                  value={murojaahSurah}
-                  onChange={(e) => setMurojaahSurah(e.target.value)}
-                >
-                  {activeQuranSurahs.map((s) => (
-                    <option key={s.number} value={s.latin}>{s.latin}</option>
-                  ))}
-                </select>
+          {selectedHafalanDetail && (
+            <div className="space-y-4 py-2 text-xs">
+              <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-1">
+                <div className="font-bold text-sm text-foreground">{selectedHafalanDetail.student_name}</div>
+                <div className="text-muted-foreground">NISN: {selectedHafalanDetail.nisn} • Rombel: {selectedHafalanDetail.class_name || activeRombel}</div>
+                <div className="font-semibold text-emerald-600">QS. {selectedHafalanDetail.surah} (Ayat {selectedHafalanDetail.ayat}) • {selectedHafalanDetail.juz}</div>
               </div>
 
-              <div>
-                <Label className="text-xs font-semibold">Cakupan Ayat</Label>
-                <Input value={murojaahAyat} onChange={(e) => setMurojaahAyat(e.target.value)} className="h-8 text-xs" />
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="p-3 rounded-lg border border-border bg-card">
+                  <div className="text-muted-foreground text-[10px]">NILAI AKHIR</div>
+                  <div className="text-lg font-black text-emerald-600">{selectedHafalanDetail.nilai}</div>
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-card">
+                  <div className="text-muted-foreground text-[10px]">STATUS EVALUASI</div>
+                  <div className="text-xs font-bold text-foreground mt-1">{selectedHafalanDetail.status}</div>
+                </div>
+              </div>
+
+              <div className="text-muted-foreground text-[11px]">
+                Penguji / Ustadz: <span className="font-semibold text-foreground">{selectedHafalanDetail.ustadz}</span> • Tanggal: {selectedHafalanDetail.tgl}
               </div>
             </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Status Kelancaran Murojaah</Label>
-              <select className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs font-bold" value={murojaahStatus} onChange={(e) => setMurojaahStatus(e.target.value as any)}>
-                <option value="Mutqin">Mutqin (Hafal Sempurna / Luar Kepala)</option>
-                <option value="Lancar">Lancar (Ada Lupa Kecil 1-2 Ayat)</option>
-                <option value="Perlu Pengulangan">Perlu Pengulangan (Banyak Ragu/Salah)</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Catatan Tambahan Murojaah</Label>
-              <Input placeholder="Tuliskan catatan perbaikan..." value={murojaahNotes} onChange={(e) => setMurojaahNotes(e.target.value)} className="h-8 text-xs" />
-            </div>
-
-            <DialogFooter className="pt-2 border-t border-border">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsMurojaahOpen(false)}>Batal</Button>
-              <Button type="submit" size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-bold">Simpan Record Murojaah</Button>
-            </DialogFooter>
-          </form>
+          )}
         </DialogContent>
       </Dialog>
 
-      {/* Modal Detail Setoran */}
-      {selectedHafalanDetail && (
-        <Dialog open={!!selectedHafalanDetail} onOpenChange={() => setSelectedHafalanDetail(null)}>
-          <DialogContent className="sm:max-w-md border-border bg-card">
-            <DialogHeader className="border-b border-border pb-3">
-              <DialogTitle className="text-base font-bold flex items-center gap-2">
-                <BookMarked className="h-5 w-5 text-emerald-600" /> Detail Evaluasi Setoran Tahfidz
-              </DialogTitle>
-            </DialogHeader>
+      {/* Modal Detail Rekap Setoran Siswa (Student History Modal) */}
+      <Dialog open={!!selectedStudentHistoryModal} onOpenChange={(o) => !o && setSelectedStudentHistoryModal(null)}>
+        <DialogContent className="sm:max-w-lg border-border bg-card">
+          <DialogHeader className="border-b border-border pb-3">
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Users className="h-5 w-5 text-emerald-600" /> Transkrip Complete Setoran Siswa
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Rekam jejak seluruh setoran Ziyadah dan Murojaah yang pernah dilakukan oleh siswa ini.
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-3 py-2 text-xs">
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">Nama Siswa:</span>
-                <strong className="text-foreground">{selectedHafalanDetail.student_name} ({selectedHafalanDetail.class_name})</strong>
-              </div>
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">Target Juz & Surah:</span>
-                <strong className="text-foreground">{selectedHafalanDetail.juz} - QS. {selectedHafalanDetail.surah} ({selectedHafalanDetail.ayat})</strong>
-              </div>
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">Jenis Setoran:</span>
-                <Badge className="bg-emerald-600 text-white font-bold text-[10px]">
-                  {(selectedHafalanDetail.jenis_setoran || "Ziyadah").toUpperCase()}
+          {selectedStudentHistoryModal && (
+            <div className="space-y-4 py-2 text-xs">
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+                <div>
+                  <div className="font-extrabold text-sm text-foreground">{selectedStudentHistoryModal.name}</div>
+                  <div className="text-xs text-muted-foreground">NISN: {selectedStudentHistoryModal.nis} • {selectedStudentHistoryModal.rombel}</div>
+                </div>
+                <Badge className="bg-emerald-600 text-white font-bold">
+                  {selectedStudentHistoryModal.totalSetoran} Record
                 </Badge>
               </div>
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">Nilai Akhir & Status:</span>
-                <strong className="text-emerald-600 font-bold">{selectedHafalanDetail.nilai} — {selectedHafalanDetail.status}</strong>
-              </div>
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">Penguji & Tanggal:</span>
-                <span className="text-muted-foreground">{selectedHafalanDetail.ustadz} • {selectedHafalanDetail.tgl}</span>
+
+              <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
+                {selectedStudentHistoryModal.matchedRecords.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-muted-foreground italic border border-dashed border-border rounded-xl">
+                    (Belum ada rekam setoran hafalan pada database)
+                  </div>
+                ) : (
+                  selectedStudentHistoryModal.matchedRecords.map((h: HafalanRow, idx: number) => (
+                    <div key={idx} className="p-3 rounded-lg border border-border bg-muted/20 space-y-1">
+                      <div className="flex justify-between items-center font-bold">
+                        <span>QS. {h.surah} ({h.ayat})</span>
+                        <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-600">
+                          {h.nilai}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                        <span>Jenis: {(h.jenis_setoran || "Ziyadah").toUpperCase()} • Status: {h.status}</span>
+                        <span>{h.tgl}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-
-            <DialogFooter>
-              <Button size="sm" variant="outline" onClick={() => setSelectedHafalanDetail(null)}>Tutup</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-export function LaporanTahfidzEksekutif({ activeRole, userProfile }: TahfidzModuleProps) {
-  return <TahfidzModule activeRole={activeRole} userProfile={userProfile} />;
+export function LaporanTahfidzEksekutif(props: TahfidzModuleProps) {
+  return <TahfidzModule {...props} />;
 }

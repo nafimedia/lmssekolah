@@ -203,7 +203,7 @@ export class MysqlDataService {
           nip = "197808152005012004";
           identityType = "NIP";
           role = "walikelas,guru";
-        } else if (email === "waka@mtsn2cilacap.sch.id" || name.includes("Ali Mansur")) {
+        } else if (email === "198302142023211010@guru.mtsn2cilacap.sch.id" || name.includes("Ali Mansur")) {
           name = "ALI MANSUR, S.Pd";
           nip = "198302142023211010";
           identityType = "NIP";
@@ -226,9 +226,24 @@ export class MysqlDataService {
         return { ...u, full_name: name, nis_nip: nip, identity_type: identityType, role };
       });
 
-      if (Object.keys(overrides).length === 0) return res;
+      // Deduplicate accounts with the same NIP or full_name to prevent double entries (like duplicate ALI MANSUR)
+      const uniqueMap = new Map<string, UserRow>();
+      res.forEach((u) => {
+        const key = (u.nis_nip && u.nis_nip !== "-" && u.nis_nip.length >= 10) ? u.nis_nip : (u.email || u.id);
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, u);
+        } else {
+          const existing = uniqueMap.get(key)!;
+          if (!existing.subject_specialty && u.subject_specialty) {
+            uniqueMap.set(key, u);
+          }
+        }
+      });
+      const deduplicatedRes = Array.from(uniqueMap.values());
 
-      return res.map((u) => {
+      if (Object.keys(overrides).length === 0) return deduplicatedRes;
+
+      return deduplicatedRes.map((u) => {
         const cleanEmail = (u.email || "").toLowerCase().trim();
         const cleanId = String(u.id || "").trim();
         const override = overrides[cleanEmail] || overrides[cleanId];

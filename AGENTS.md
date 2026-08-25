@@ -8,4 +8,6 @@ Saya TIDAK AKAN membuat asumsi, tidak akan menambah data dummy/seed, dan tidak a
 🗄️ Murni 100% Real Database:
 
 Semua data di layar murni bersumber dari database MySQL yang diinput oleh pengguna asli.
+
+JANGAN GUNAKAN DATA DUMMY
 <!-- LOVABLE:END -->

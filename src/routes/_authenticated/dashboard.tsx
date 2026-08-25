@@ -88,6 +88,7 @@ import {
   FolderKanban,
   Eye,
   EyeOff,
+  Inbox,
   ThumbsUp,
   Save,
   UserCog,

@@ -80,6 +80,8 @@ import {
   getWaGatewayConfigFn,
   saveWaGatewayConfigFn,
   sendTestWaMessageFn,
+  getAuditLogsServerFn,
+  AuditLogItem,
   WaGatewayConfigRow,
   getHealthStatusFn,
   DatabaseStats,
@@ -1097,6 +1099,15 @@ export class MysqlDataService {
       return { success: false, message: e?.message || "Error sending test message" };
     }
   }
+
+  static async getAuditLogs(): Promise<AuditLogItem[]> {
+    try {
+      return await getAuditLogsServerFn();
+    } catch (e) {
+      console.warn("getAuditLogsServerFn failed:", e);
+      return [];
+    }
+  }
 }
 
-export type { WaGatewayConfigRow };
+export type { WaGatewayConfigRow, AuditLogItem };

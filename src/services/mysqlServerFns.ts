@@ -3389,4 +3389,49 @@ export const sendTestWaMessageFn = createServerFn({ method: "POST" })
     }
   });
 
+export interface AuditLogItem {
+  id: string;
+  user: string;
+  act: string;
+  tgl: string;
+  module: string;
+  result: string;
+}
+
+export const getAuditLogsServerFn = createServerFn({ method: "GET" })
+  .handler(async (): Promise<AuditLogItem[]> => {
+    try {
+      const { query } = await import("@/lib/db");
+      const rows = await query<any[]>(`
+        SELECT a.id, a.user_id, a.action, a.module, a.target, a.result, a.details, a.created_at,
+               u.full_name, u.role
+        FROM audit_logs a
+        LEFT JOIN users u ON (LOWER(a.user_id) = LOWER(u.id) OR LOWER(a.user_id) = LOWER(u.email) OR a.user_id = u.nis_nip)
+        ORDER BY a.created_at DESC
+        LIMIT 50
+      `);
+
+      if (!rows || rows.length === 0) return [];
+
+      return rows.map((r) => {
+        const userName = r.full_name ? `${r.full_name} (${(r.role || "user").toUpperCase()})` : r.user_id;
+        const actDetails = [r.module, r.action, r.target, r.details].filter(Boolean).join(" - ");
+        const dateFormatted = r.created_at
+          ? new Date(r.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })
+          : "Baru saja";
+        return {
+          id: String(r.id),
+          user: userName,
+          act: actDetails,
+          tgl: dateFormatted,
+          module: r.module || "System",
+          result: r.result || "SUCCESS",
+        };
+      });
+    } catch (e) {
+      console.warn("Failed fetching audit logs from MySQL:", e);
+      return [];
+    }
+  });
+
 

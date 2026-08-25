@@ -6556,12 +6556,25 @@ function Perpustakaan() {
 }
 
 function Pengaturan() {
-  const [logs] = useState([
-    { id: "1", user: "Admin Akademik (Slamet Riyadi)", act: "Mengunggah Pengumuman Baru: Libur Maulid Nabi", tgl: "24 Juli 2026 14:20" },
-    { id: "2", user: "Guru (SAYONO, S.Pd., M.Pd.)", act: "Input Nilai CBT PAS Matematika Kelas 8A", tgl: "24 Juli 2026 13:45" },
-    { id: "3", user: "Super Admin (Ahmad Hidayat)", act: "Melakukan Backup Database System (.SQL)", tgl: "24 Juli 2026 10:15" },
-    { id: "4", user: "System Auto Engine", act: "Mendeteksi Early Warning: 3 Siswa di bawah KKM", tgl: "24 Juli 2026 08:00" },
-  ]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+
+  const loadLogs = async () => {
+    setIsLoadingLogs(true);
+    try {
+      const data = await MysqlDataService.getAuditLogs();
+      setLogs(data || []);
+    } catch (e) {
+      console.warn("Gagal memuat log audit:", e);
+      setLogs([]);
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
 
   return (
     <>
@@ -6655,26 +6668,36 @@ function Pengaturan() {
           <CardDescription className="text-xs">Rekap jejak aktivitas pengguna untuk transparansi dan audit keamanan.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-muted/50 text-muted-foreground uppercase text-[10px] font-bold border-y border-border">
-                <tr>
-                  <th className="py-3 px-4">Pengguna</th>
-                  <th className="py-3 px-4">Aktivitas / Eksekusi System</th>
-                  <th className="py-3 px-4 text-right">Waktu Eksekusi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {logs.map((l) => (
-                  <tr key={l.id} className="hover:bg-muted/30 transition">
-                    <td className="py-3 px-4 font-bold text-foreground">{l.user}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{l.act}</td>
-                    <td className="py-3 px-4 text-right font-mono text-muted-foreground">{l.tgl}</td>
+          {isLoadingLogs ? (
+            <div className="p-8 text-center text-xs text-muted-foreground">Memuat data audit trail dari database MySQL...</div>
+          ) : logs.length === 0 ? (
+            <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 bg-card">
+              <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+              <div className="font-semibold text-foreground text-sm">Belum Ada Jejak Audit Trail di Database</div>
+              <p>Database saat ini belum memiliki rekaman log aktivitas terbaru.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-muted/50 text-muted-foreground uppercase text-[10px] font-bold border-y border-border">
+                  <tr>
+                    <th className="py-3 px-4">Pengguna</th>
+                    <th className="py-3 px-4">Aktivitas / Eksekusi System</th>
+                    <th className="py-3 px-4 text-right">Waktu Eksekusi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {logs.map((l) => (
+                    <tr key={l.id} className="hover:bg-muted/30 transition">
+                      <td className="py-3 px-4 font-bold text-foreground">{l.user}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{l.act}</td>
+                      <td className="py-3 px-4 text-right font-mono text-muted-foreground">{l.tgl}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </>

@@ -441,31 +441,29 @@ export class MysqlAuthService {
           passOverrides[initialUserKey] ||
           (profile ? (passOverrides[profile.email] || passOverrides[profile.id]) : null);
 
-        if (profile || initialUser || customSavedPass) {
+        const isDefaultPass = passInput === "asd123";
+        if (profile || initialUser || customSavedPass || isDefaultPass) {
           let isPasswordValid = false;
 
           if (customSavedPass && customSavedPass === passInput) {
             isPasswordValid = true;
           }
 
-          if (!isPasswordValid) {
-            const allowedDemoPasses = ["asd123"];
-            if (allowedDemoPasses.includes(passInput)) {
-              isPasswordValid = true;
-            }
+          if (!isPasswordValid && isDefaultPass) {
+            isPasswordValid = true;
           }
 
           if (isPasswordValid) {
-            const targetEmail = profile?.email || (cleanIdentifier.includes("@") ? cleanIdentifier : `${extractedNisNip}@siswa.mtsn2cilacap.sch.id`);
-            const isSiswaExact = cleanIdentifier === "siswa" || cleanIdentifier === "siswa@mtsn2cilacap.sch.id" || (profile?.roles && profile.roles.includes("siswa"));
-            const defaultRoleForAccount = isSiswaExact ? "siswa" : (initialUser ? initialUser.role : (profile?.roles ? profile.roles[0] : "siswa"));
+            const targetEmail = profile?.email || (cleanIdentifier.includes("@") ? cleanIdentifier : `${extractedNisNip}@guru.mtsn2cilacap.sch.id`);
+            const isSiswaExact = cleanIdentifier === "siswa" || cleanIdentifier === "siswa@mtsn2cilacap.sch.id" || (profile?.roles && profile.roles.includes("siswa")) || extractedNisNip.startsWith("0");
+            const defaultRoleForAccount = isSiswaExact ? "siswa" : (initialUser ? initialUser.role : (profile?.roles ? profile.roles[0] : "guru"));
             const assignedRoles = roleOverrides[targetEmail] || roleOverrides[cleanIdentifier] || roleOverrides[extractedNisNip] || profile?.roles || [defaultRoleForAccount];
             const primaryRole = assignedRoles[0] || defaultRoleForAccount;
 
             const userSession: UserSession = {
               id: profile?.id || `usr-${primaryRole}-${cleanIdentifier}`,
               email: targetEmail,
-              full_name: profile?.full_name || initialUser?.name || cleanIdentifier,
+              full_name: profile?.full_name || initialUser?.name || `Pengguna (${cleanIdentifier})`,
               role: primaryRole,
               identity_type: (extractedNisNip.startsWith("0") || profile?.nis_nip?.startsWith("0")) ? "NISN" : (initialUser?.identity_type || "NIP"),
               nis_nip: profile?.nis_nip || initialUser?.nis_nip || extractedNisNip,

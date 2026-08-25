@@ -432,15 +432,14 @@ export class MysqlAuthService {
           }
 
           if (!isPasswordValid) {
-            if (
-              passInput === "kamad123" ||
-              passInput === "MtsN2#2026!Sec" ||
-              passInput === "MtsN2#2026!Reset" ||
-              passInput === "password" ||
-              passInput === "123456" ||
-              passInput === "admin" ||
-              passInput.length >= 4
-            ) {
+            const allowedDemoPasses = [
+              "kamad123",
+              "MtsN2#2026!Sec",
+              "MtsN2#2026!Reset",
+              "AdminMTsN2Cilacap2026!",
+              "admin123",
+            ];
+            if (allowedDemoPasses.includes(passInput)) {
               isPasswordValid = true;
             }
           }

@@ -48,7 +48,7 @@ function AuthPage() {
   const [regRole, setRegRole] = useState<"siswa" | "guru">("siswa");
   const [fullName, setFullName] = useState("");
   const [nisNip, setNisNip] = useState("");
-  const [className, setClassName] = useState("VIII A");
+  const [className, setClassName] = useState("Rombel 8A");
   const [subjectSpecialty, setSubjectSpecialty] = useState("Matematika");
 
   const redirectUser = (role: string) => {
@@ -145,18 +145,11 @@ function AuthPage() {
           <CardTitle className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-teal-300 to-emerald-300 bg-clip-text text-transparent">
             LMS MTsN 2 Cilacap
           </CardTitle>
-          <div className="flex items-center justify-center gap-2 pt-1">
-            <Badge variant="outline" className="text-[10px] border-teal-500/50 text-teal-300 bg-teal-950/60">
-              <Lock className="w-3 h-3 mr-1 text-emerald-400" /> Argon2 Encrypted
-            </Badge>
-            <Badge variant="outline" className="text-[10px] border-amber-500/50 text-amber-300 bg-amber-950/60">
-              MySQL Local Engine
-            </Badge>
-          </div>
+
         </CardHeader>
 
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue="signin" className="w-full" onValueChange={() => setLoginError(null)}>
             <TabsList className="grid grid-cols-2 w-full bg-slate-950 border border-teal-900/40">
               <TabsTrigger value="signin" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white font-bold">
                 Masuk Akun
@@ -197,7 +190,7 @@ function AuthPage() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="si-pass" className="text-slate-300 text-xs font-semibold">
-                    Kata Sandi (Argon2 Verified)
+                    Kata Sandi
                   </Label>
                   <div className="relative">
                     <Input
@@ -227,7 +220,7 @@ function AuthPage() {
                   className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-extrabold text-sm py-2.5 rounded-xl transition-all shadow-lg shadow-teal-500/20"
                   disabled={loading}
                 >
-                  {loading ? "Memverifikasi Argon2..." : "Masuk Ke System LMS"}
+                  {loading ? "Memverifikasi Kata Sandi..." : "Masuk Ke System LMS"}
                 </Button>
               </form>
             </TabsContent>
@@ -243,8 +236,8 @@ function AuthPage() {
                       type="button"
                       onClick={() => setRegRole("siswa")}
                       className={`flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold border transition-all ${regRole === "siswa"
-                          ? "bg-teal-950 border-teal-400 text-teal-300 shadow"
-                          : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                        ? "bg-teal-950 border-teal-400 text-teal-300 shadow"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
                         }`}
                     >
                       <GraduationCap className="w-4 h-4" />
@@ -255,8 +248,8 @@ function AuthPage() {
                       type="button"
                       onClick={() => setRegRole("guru")}
                       className={`flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold border transition-all ${regRole === "guru"
-                          ? "bg-emerald-950 border-emerald-400 text-emerald-300 shadow"
-                          : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                        ? "bg-emerald-950 border-emerald-400 text-emerald-300 shadow"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
                         }`}
                     >
                       <BookOpen className="w-4 h-4" />
@@ -305,12 +298,12 @@ function AuthPage() {
                         <SelectValue placeholder="Pilih Kelas" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                        <SelectItem value="VII A">Kelas VII A</SelectItem>
-                        <SelectItem value="VII B">Kelas VII B</SelectItem>
-                        <SelectItem value="VIII A">Kelas VIII A</SelectItem>
-                        <SelectItem value="VIII B">Kelas VIII B</SelectItem>
-                        <SelectItem value="IX A">Kelas IX A</SelectItem>
-                        <SelectItem value="IX B">Kelas IX B</SelectItem>
+                        <SelectItem value="Rombel 7A">Rombel 7A</SelectItem>
+                        <SelectItem value="Rombel 7B">Rombel 7B</SelectItem>
+                        <SelectItem value="Rombel 8A">Rombel 8A</SelectItem>
+                        <SelectItem value="Rombel 8B">Rombel 8B</SelectItem>
+                        <SelectItem value="Rombel 9A">Rombel 9A</SelectItem>
+                        <SelectItem value="Rombel 9B">Rombel 9B</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -349,7 +342,7 @@ function AuthPage() {
 
                 <div className="space-y-1">
                   <Label htmlFor="su-pass" className="text-slate-300 text-xs font-semibold">
-                    Kata Sandi (Enkripsi Argon2id + Salt)
+                    Kata Sandi
                   </Label>
                   <div className="relative">
                     <Input
@@ -415,7 +408,7 @@ function AuthPage() {
                   className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-sm py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 pt-2"
                   disabled={loading}
                 >
-                  {loading ? "Menyimpan Argon2..." : `Daftar Akun ${regRole === "siswa" ? "Siswa" : "Guru"}`}
+                  {loading ? "Menyimpan Akun Baru..." : `Daftar Akun ${regRole === "siswa" ? "Siswa" : "Guru"}`}
                 </Button>
               </form>
             </TabsContent>

@@ -299,7 +299,7 @@ export function NotificationCenterPopover({
             </h4>
             {unreadCount > 0 && (
               <Badge variant="outline" className="text-[10px] font-extrabold bg-red-500/10 text-red-600 border-red-500/30">
-                {unreadCount} Data Riil
+                {unreadCount}
               </Badge>
             )}
           </div>
@@ -321,11 +321,10 @@ export function NotificationCenterPopover({
             <button
               key={tab.id}
               onClick={() => setFilterCategory(tab.id)}
-              className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 ${
-                filterCategory === tab.id
-                  ? "bg-primary text-primary-foreground font-bold shadow-2xs"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 ${filterCategory === tab.id
+                ? "bg-primary text-primary-foreground font-bold shadow-2xs"
+                : "text-muted-foreground hover:bg-muted"
+                }`}
             >
               {tab.label}
             </button>
@@ -336,7 +335,7 @@ export function NotificationCenterPopover({
         <div className="max-h-80 overflow-y-auto divide-y divide-border/40">
           {isLoading ? (
             <div className="p-8 text-center text-xs text-muted-foreground animate-pulse">
-              Memuat notifikasi data riil database...
+
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="p-8 text-center text-xs text-muted-foreground">
@@ -347,9 +346,8 @@ export function NotificationCenterPopover({
               <div
                 key={item.id}
                 onClick={() => handleNotificationClick(item)}
-                className={`p-3 text-xs flex items-start gap-3 transition cursor-pointer hover:bg-muted/50 ${
-                  !item.isRead ? "bg-emerald-500/5 font-medium" : "opacity-80"
-                }`}
+                className={`p-3 text-xs flex items-start gap-3 transition cursor-pointer hover:bg-muted/50 ${!item.isRead ? "bg-emerald-500/5 font-medium" : "opacity-80"
+                  }`}
               >
                 <div className="p-2 rounded-lg bg-background border border-border shadow-2xs shrink-0 mt-0.5">
                   {getCategoryIcon(item.category)}

@@ -22,24 +22,26 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   );
 }
 
-const ROMBEL_MASTER_LIST = [
-  { id: "r7a", name: "Rombel 7A", grade: "Kelas VII", wali: "MISBAH AHMAD DANI, S.Pd", count: 32, hadirPct: 96.8, statusKbm: "🟢 Live KBM", progressRapor: 88 },
-  { id: "r7b", name: "Rombel 7B", grade: "Kelas VII", wali: "ENDAH KURNIAWATI, S.Pd", count: 31, hadirPct: 94.5, statusKbm: "🟢 Live KBM", progressRapor: 82 },
-  { id: "r8a", name: "Rombel 8A", grade: "Kelas VIII", wali: "SITI RAHMAH, S.Pd", count: 32, hadirPct: 98.2, statusKbm: "🟢 Live KBM", progressRapor: 95 },
-  { id: "r8b", name: "Rombel 8B", grade: "Kelas VIII", wali: "ACHMAD MAKMUN, S.Pd.I", count: 32, hadirPct: 97.1, statusKbm: "🔵 Tuntas", progressRapor: 90 },
-  { id: "r9a", name: "Rombel 9A", grade: "Kelas IX", wali: "SOBIYATI, S.Pd", count: 32, hadirPct: 95.0, statusKbm: "🔵 Tuntas", progressRapor: 100 },
-  { id: "r9b", name: "Rombel 9B", grade: "Kelas IX", wali: "SAYONO, S.Pd.I", count: 30, hadirPct: 96.2, statusKbm: "🔵 Tuntas", progressRapor: 92 },
-];
+export interface RombelExecutiveItem {
+  id: string;
+  name: string;
+  grade: string;
+  wali: string;
+  count: number;
+  hadirPct: number;
+  statusKbm: string;
+  progressRapor: number;
+}
 
 export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const [activeTab, setActiveTab] = useState<"siswa" | "pengumuman" | "rekap_rombel">("siswa");
 
   const me = MysqlAuthService.getActiveUser();
   const waliKelasName = me?.full_name || userProfile?.name || "SOBIYATI, S.Pd";
-  const isKamad = activeRole === "kamad";
+  const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik";
 
   const resolvedWaliClass = useMemo(() => {
-    if (isKamad) return "Semua";
+    if (isExecutive) return "Semua";
     const cleanName = (waliKelasName || "").toLowerCase();
     const cleanNip = (me?.nis_nip || "").trim();
 
@@ -52,9 +54,11 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
 
     if (userProfile?.assignedClass) return normalizeRombelName(userProfile.assignedClass);
     return "Rombel 8A";
-  }, [waliKelasName, userProfile, me, isKamad]);
+  }, [waliKelasName, userProfile, me, isExecutive]);
 
   const [selectedClass, setSelectedClass] = useState(resolvedWaliClass);
+  const [dbRombels, setDbRombels] = useState<RombelExecutiveItem[]>([]);
+  const [isLoadingRombels, setIsLoadingRombels] = useState(true);
 
   useEffect(() => {
     setSelectedClass(resolvedWaliClass);
@@ -72,9 +76,15 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
 
   useEffect(() => {
     let isMounted = true;
-    MysqlDataService.getUsers().then((users) => {
-      if (!isMounted || !users || users.length === 0) return;
-      const siswaList = users.filter((u: any) => u.role === "siswa");
+    setIsLoadingRombels(true);
+
+    Promise.all([
+      MysqlDataService.getMasterRombels().catch(() => []),
+      MysqlDataService.getUsers().catch(() => []),
+    ]).then(([rombelRows, users]) => {
+      if (!isMounted) return;
+
+      const siswaList = (users || []).filter((u: any) => u.role === "siswa");
       if (siswaList.length > 0) {
         const formatted = siswaList.map((s: any, idx: number) => {
           const studentClass = normalizeRombelName(s.class_name || s.class);
@@ -92,7 +102,47 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
         });
         setStudents(formatted);
       }
-    }).catch(() => {});
+
+      if (rombelRows && rombelRows.length > 0) {
+        const mapped = rombelRows.map((r: any) => {
+          const studentInClass = siswaList.filter((s: any) => isSameClass(s.class_name || s.class, r.name));
+          const realCount = studentInClass.length > 0 ? studentInClass.length : (r.siswa_count || 0);
+          return {
+            id: r.code || r.id || r.name,
+            name: r.name,
+            grade: r.grade || (r.name.includes("7") ? "Kelas VII" : r.name.includes("9") ? "Kelas IX" : "Kelas VIII"),
+            wali: r.wali_kelas || "Belum Ditentukan",
+            count: realCount,
+            hadirPct: 0,
+            statusKbm: "⚪ Belum Ada KBM",
+            progressRapor: 0,
+          };
+        });
+        setDbRombels(mapped);
+      } else if (siswaList.length > 0) {
+        const uniqueClasses = Array.from(new Set(siswaList.map((s: any) => normalizeRombelName(s.class_name || s.class)))).filter(Boolean);
+        const mapped = uniqueClasses.map((cName: any, idx: number) => {
+          const studentInClass = siswaList.filter((s: any) => isSameClass(s.class_name || s.class, cName));
+          return {
+            id: `r_fallback_${idx}`,
+            name: cName,
+            grade: cName.includes("7") ? "Kelas VII" : cName.includes("9") ? "Kelas IX" : "Kelas VIII",
+            wali: "Belum Ditentukan",
+            count: studentInClass.length,
+            hadirPct: 0,
+            statusKbm: "⚪ Belum Ada KBM",
+            progressRapor: 0,
+          };
+        });
+        setDbRombels(mapped);
+      } else {
+        setDbRombels([]);
+      }
+    }).catch(() => {
+      if (isMounted) setDbRombels([]);
+    }).finally(() => {
+      if (isMounted) setIsLoadingRombels(false);
+    });
 
     return () => { isMounted = false; };
   }, []);
@@ -162,19 +212,26 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
 
   const totalHadir = classStudents.filter((s) => s.hadirPct >= 90).length;
 
+  const totalRombelAktif = dbRombels.length;
+  const waliTerisiCount = dbRombels.filter((r) => r.wali && r.wali !== "Belum Ditentukan" && r.wali !== "-").length;
+  const avgHadirPct = dbRombels.length > 0 ? (dbRombels.reduce((acc, r) => acc + r.hadirPct, 0) / dbRombels.length).toFixed(1) : "0.0";
+  const avgRaporPct = dbRombels.length > 0 ? (dbRombels.reduce((acc, r) => acc + r.progressRapor, 0) / dbRombels.length).toFixed(1) : "0.0";
+
+  const executiveRoleLabel = activeRole === "waka" ? "Waka" : activeRole === "admin" || activeRole === "admin_akademik" ? "Administrator" : "Kepala Madrasah";
+
   return (
     <div className="space-y-6">
-      {isKamad ? (
+      {isExecutive ? (
         <>
           <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div>
                 <h3 className="font-extrabold text-sm text-foreground">
-                  🏛️ Mode Executive Monitoring Kepala Madrasah (Read-Only)
+                  🏛️ Mode Executive Monitoring {executiveRoleLabel} (Read-Only)
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Supervisi terpadu 27 Rombel MTsN 2 Cilacap: Kehadiran siswa, kelengkapan Wali Kelas, & progres rapor.
+                  Supervisi terpadu {totalRombelAktif} Rombel MTsN 2 Cilacap: Kehadiran siswa, kelengkapan Wali Kelas, & progres rapor.
                 </p>
               </div>
             </div>
@@ -196,7 +253,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground font-medium">Total Rombel Aktif</div>
-                  <div className="text-xl font-extrabold text-foreground">27 Rombel</div>
+                  <div className="text-xl font-extrabold text-foreground">{totalRombelAktif} Rombel</div>
                 </div>
               </CardContent>
             </Card>
@@ -209,7 +266,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground font-medium">Rata-rata Presensi</div>
-                    <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">96.8%</div>
+                    <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{avgHadirPct}%</div>
                   </div>
                 </CardContent>
               </Card>
@@ -222,7 +279,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground font-medium">Kelengkapan Wali Kelas</div>
-                  <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">27 / 27 Rombel</div>
+                  <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{waliTerisiCount} / {totalRombelAktif} Rombel</div>
                 </div>
               </CardContent>
             </Card>
@@ -234,7 +291,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground font-medium">Progres Rapor Terinput</div>
-                  <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">91.2% Tuntas</div>
+                  <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">{avgRaporPct}% Tuntas</div>
                 </div>
               </CardContent>
             </Card>
@@ -243,7 +300,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
           <div className="flex items-center justify-between gap-4 border-b border-border pb-3">
             <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80 w-fit">
               {[
-                { id: "rekap_rombel", label: "Matriks 27 Rombel Terpadu", icon: CheckCircle2 },
+                { id: "rekap_rombel", label: `Matriks ${totalRombelAktif} Rombel Terpadu`, icon: CheckCircle2 },
                 { id: "siswa", label: `Detail Roster (${selectedClass})`, icon: Users },
               ].map((t) => (
                 <button
@@ -267,13 +324,10 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
               >
-                <option value="Semua">Semua 27 Rombel</option>
-                <option value="Rombel 7A">Rombel 7A</option>
-                <option value="Rombel 7B">Rombel 7B</option>
-                <option value="Rombel 8A">Rombel 8A</option>
-                <option value="Rombel 8B">Rombel 8B</option>
-                <option value="Rombel 9A">Rombel 9A</option>
-                <option value="Rombel 9B">Rombel 9B</option>
+                <option value="Semua">Semua {totalRombelAktif} Rombel</option>
+                {dbRombels.map((r) => (
+                  <option key={r.id} value={r.name}>{r.name}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -281,51 +335,61 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
           {(activeTab === "rekap_rombel" || activeTab === "siswa") && (
             <Card className="border-border">
               <CardContent className="p-0 overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-muted/60 text-muted-foreground font-bold border-b border-border">
-                    <tr>
-                      <th className="p-3">Nama Rombel</th>
-                      <th className="p-3">Tingkat Kelas</th>
-                      <th className="p-3">Wali Kelas Penanggung Jawab</th>
-                      <th className="p-3 text-center">Jumlah Siswa</th>
-                      <th className="p-3 text-center">% Presensi Hari Ini</th>
-                      <th className="p-3 text-center">Status KBM Live</th>
-                      <th className="p-3 text-center">Progres Rapor</th>
-                      <th className="p-3 text-right">Supervisi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {ROMBEL_MASTER_LIST.map((rombel) => (
-                      <tr key={rombel.id} className="hover:bg-muted/30 transition">
-                        <td className="p-3 font-bold text-foreground">{rombel.name}</td>
-                        <td className="p-3 font-medium text-muted-foreground">{rombel.grade}</td>
-                        <td className="p-3 font-semibold text-emerald-600 dark:text-emerald-400">{rombel.wali}</td>
-                        <td className="p-3 text-center font-mono font-bold">{rombel.count} Siswa</td>
-                        <td className="p-3 text-center font-mono font-bold text-emerald-500">{rombel.hadirPct}%</td>
-                        <td className="p-3 text-center">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 border border-emerald-500/30">
-                            {rombel.statusKbm}
-                          </span>
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold text-blue-500">{rombel.progressRapor}% Terinput</td>
-                        <td className="p-3 text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-xs text-primary font-bold hover:bg-primary/10"
-                            onClick={() => {
-                              setSelectedClass(rombel.name);
-                              setActiveTab("siswa");
-                              toast.info(`Memantau Detail Data Rombel: ${rombel.name}`);
-                            }}
-                          >
-                            👁️ Pantau Rombel →
-                          </Button>
-                        </td>
+                {isLoadingRombels ? (
+                  <div className="p-8 text-center text-xs text-muted-foreground animate-pulse">
+                    Memuat matriks rombel riil dari database MySQL...
+                  </div>
+                ) : dbRombels.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-muted-foreground">
+                    Belum ada rombel terdaftar di database MySQL.
+                  </div>
+                ) : (
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/60 text-muted-foreground font-bold border-b border-border">
+                      <tr>
+                        <th className="p-3">Nama Rombel</th>
+                        <th className="p-3">Tingkat Kelas</th>
+                        <th className="p-3">Wali Kelas Penanggung Jawab</th>
+                        <th className="p-3 text-center">Jumlah Siswa</th>
+                        <th className="p-3 text-center">% Presensi Hari Ini</th>
+                        <th className="p-3 text-center">Status KBM Live</th>
+                        <th className="p-3 text-center">Progres Rapor</th>
+                        <th className="p-3 text-right">Supervisi</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {dbRombels.map((rombel) => (
+                        <tr key={rombel.id} className="hover:bg-muted/30 transition">
+                          <td className="p-3 font-bold text-foreground">{rombel.name}</td>
+                          <td className="p-3 font-medium text-muted-foreground">{rombel.grade}</td>
+                          <td className="p-3 font-semibold text-emerald-600 dark:text-emerald-400">{rombel.wali}</td>
+                          <td className="p-3 text-center font-mono font-bold">{rombel.count} Siswa</td>
+                          <td className="p-3 text-center font-mono font-bold text-emerald-500">{rombel.hadirPct}%</td>
+                          <td className="p-3 text-center">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-muted text-muted-foreground border border-border">
+                              {rombel.statusKbm}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center font-mono font-bold text-blue-500">{rombel.progressRapor}% Terinput</td>
+                          <td className="p-3 text-right">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-xs text-primary font-bold hover:bg-primary/10"
+                              onClick={() => {
+                                setSelectedClass(rombel.name);
+                                setActiveTab("siswa");
+                                toast.info(`Memantau Detail Data Rombel: ${rombel.name}`);
+                              }}
+                            >
+                              👁️ Pantau Rombel →
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </CardContent>
             </Card>
           )}
@@ -334,7 +398,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
             <DaftarSiswaKelasTab
               classNameTitle={selectedClass}
               students={classStudents}
-              onSendWa={(s) => toast.info("🔒 Mode Monitoring Kamad: Fitur Kirim WA terbatas untuk Wali Kelas.")}
+              onSendWa={(s) => toast.info(`🔒 Mode Monitoring ${executiveRoleLabel}: Fitur Kirim WA terbatas untuk Wali Kelas.`)}
               onOpenCetakSurat={handleOpenCetakSurat}
               onUpdateStudent={handleUpdateStudentParentData}
             />
@@ -424,12 +488,20 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
               >
-                <option value="Rombel 8A">Rombel 8A</option>
-                <option value="Rombel 8B">Rombel 8B</option>
-                <option value="Rombel 7A">Rombel 7A</option>
-                <option value="Rombel 7B">Rombel 7B</option>
-                <option value="Rombel 9A">Rombel 9A</option>
-                <option value="Rombel 9B">Rombel 9B</option>
+                {dbRombels.length > 0 ? (
+                  dbRombels.map((r) => (
+                    <option key={r.id} value={r.name}>{r.name}</option>
+                  ))
+                ) : (
+                  <>
+                    <option value="Rombel 8A">Rombel 8A</option>
+                    <option value="Rombel 8B">Rombel 8B</option>
+                    <option value="Rombel 7A">Rombel 7A</option>
+                    <option value="Rombel 7B">Rombel 7B</option>
+                    <option value="Rombel 9A">Rombel 9A</option>
+                    <option value="Rombel 9B">Rombel 9B</option>
+                  </>
+                )}
                 <option value="Semua">Semua Siswa</option>
               </select>
 

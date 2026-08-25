@@ -221,21 +221,21 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {rombelList.map((r) => (
                 <Card key={r.id} className="border-border hover:border-emerald-500/40 transition shadow-xs bg-card">
-                  <CardHeader className="p-4 pb-2 border-b border-border flex flex-row items-center justify-between">
-                    <div>
+                  <CardHeader className="p-4 pb-3 border-b border-border flex flex-row items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
                       <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-600 mb-1">
                         {r.grade}
                       </Badge>
-                      <CardTitle className="text-base font-bold text-foreground">{r.name}</CardTitle>
+                      <CardTitle className="text-base font-bold text-foreground truncate">{r.name}</CardTitle>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 gap-1"
+                        className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 gap-1 px-2"
                         onClick={() => handleEditWaliClick(r)}
                       >
                         <Edit className="h-3.5 w-3.5" /> Edit Wali
@@ -252,13 +252,13 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
                     </div>
                   </CardHeader>
                   <CardContent className="p-4 space-y-2 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Wali Kelas:</span>
-                      <strong className="text-foreground">{r.waliKelas}</strong>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground shrink-0">Wali Kelas:</span>
+                      <strong className="text-foreground text-right truncate max-w-[200px]" title={r.waliKelas}>{r.waliKelas}</strong>
                     </div>
-                    <div className="flex justify-between pt-1 border-t border-border">
+                    <div className="flex items-center justify-between pt-1 border-t border-border">
                       <span className="text-muted-foreground">Jumlah Siswa:</span>
-                      <strong className="font-mono text-emerald-600">{r.studentCount} Siswa</strong>
+                      <strong className="font-mono text-emerald-600 dark:text-emerald-400">{r.studentCount} Siswa</strong>
                     </div>
                   </CardContent>
                 </Card>

@@ -80,11 +80,7 @@ export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
               <span className="text-muted-foreground block text-[10px]">KKTP Standar Utama:</span>
               <strong className="text-lg font-black font-mono text-emerald-600">{defaultKktp} / 100</strong>
             </div>
-            {isKamad ? (
-              <Badge variant="outline" className="text-[10px] text-muted-foreground font-bold shrink-0">
-                🔒 Read-Only (Kamad)
-              </Badge>
-            ) : !isEditingKktp ? (
+            {isKamad ? null : !isEditingKktp ? (
               <Button
                 size="sm"
                 variant="outline"

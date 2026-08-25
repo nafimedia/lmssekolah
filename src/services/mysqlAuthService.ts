@@ -172,7 +172,16 @@ export class MysqlAuthService {
     const dataStr = localStorage.getItem(this.STORAGE_KEY);
     if (!dataStr) return null;
     try {
-      return JSON.parse(dataStr) as UserSession;
+      const user = JSON.parse(dataStr) as UserSession;
+      if (user) {
+        const cleanEmail = (user.email || "").toLowerCase().trim();
+        if (cleanEmail === "kamad@mtsn2cilacap.sch.id" || cleanEmail === "pakkamad@mtsn2cilacap.sch.id" || cleanEmail === "solihun@mtsn2cilacap.sch.id" || user.full_name?.includes("Hidayatullah")) {
+          user.full_name = "H. SOLIHUN, S.Pd., M.Si";
+          user.nis_nip = "197203151998031002";
+          user.identity_type = "NIP";
+        }
+      }
+      return user;
     } catch {
       return null;
     }
@@ -180,6 +189,14 @@ export class MysqlAuthService {
 
   static setActiveUser(user: UserSession): void {
     if (typeof window === "undefined") return;
+    if (user) {
+      const cleanEmail = (user.email || "").toLowerCase().trim();
+      if (cleanEmail === "kamad@mtsn2cilacap.sch.id" || cleanEmail === "pakkamad@mtsn2cilacap.sch.id" || cleanEmail === "solihun@mtsn2cilacap.sch.id" || user.full_name?.includes("Hidayatullah")) {
+        user.full_name = "H. SOLIHUN, S.Pd., M.Si";
+        user.nis_nip = "197203151998031002";
+        user.identity_type = "NIP";
+      }
+    }
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
   }
 

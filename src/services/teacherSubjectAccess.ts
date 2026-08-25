@@ -1,5 +1,4 @@
 import { MysqlAuthService, UserSession } from "./mysqlAuthService";
-import fallbackUsersCatalog from "./fallbackUsersCatalog.json";
 
 // Authoritative Master List of All School Subjects (Mapel) at MTsN 2 Cilacap
 export const ALL_SCHOOL_SUBJECTS = [
@@ -36,28 +35,14 @@ export function getTeacherAssignedClasses(user?: UserSession | null): string[] {
 
   const roleStr = (activeUser.role || "").toLowerCase();
   const roles = roleStr.split(",").map((r) => r.trim());
-  const userEmail = (activeUser.email || "").toLowerCase();
-  const userName = (activeUser.full_name || (activeUser as any).name || "").toLowerCase();
-  const userNip = activeUser.nis_nip || "";
 
   if (roles.includes("admin") || roles.includes("kamad")) {
     return ALL_SCHOOL_CLASSES;
   }
 
-  const catalogUser = fallbackUsersCatalog.find((u: any) => {
-    if (!u) return false;
-    const uEmail = (u.email || "").toLowerCase();
-    const uName = (u.full_name || u.name || "").toLowerCase();
-    const uNip = u.nis_nip || "";
+  // Pure 100% MySQL Database class_name resolution
+  const rawClass = activeUser.class_name?.trim() || "";
 
-    return (
-      (userEmail && uEmail && uEmail === userEmail) ||
-      (userNip && uNip && uNip === userNip) ||
-      (userName && uName && uName === userName)
-    );
-  });
-
-  const rawClass = activeUser.class_name || catalogUser?.class_name || "";
   if (!rawClass || rawClass === "-") {
     return ALL_SCHOOL_CLASSES;
   }
@@ -73,7 +58,7 @@ export function getTeacherAssignedClasses(user?: UserSession | null): string[] {
   return matchedClasses.length > 0 ? matchedClasses : ALL_SCHOOL_CLASSES;
 }
 
-// Dictionary of Guru -> Assigned Subject(s) built from data_guru.md & catalog
+// Dictionary of Guru -> Assigned Subject(s) built from official data_guru.md
 const GURU_SUBJECT_MAP: Record<string, string[]> = {
   "199204042025051002": ["Al Qur'an Hadis"],
   "196909081998032001": ["Bahasa Indonesia"],
@@ -105,9 +90,7 @@ export function getTeacherAssignedSubjects(user?: UserSession | null): string[] 
 
   const roleStr = (activeUser.role || "").toLowerCase();
   const roles = roleStr.split(",").map((r) => r.trim());
-
-  const userEmail = (activeUser.email || "").toLowerCase();
-  const userName = (activeUser.full_name || (activeUser as any).name || "").toLowerCase();
+  const nip = activeUser.nis_nip || "";
 
   // Super Administrator, Kamad, atau Waka murni memiliki akses penuh ke semua Mapel
   if (roles.includes("admin") || roles.includes("kamad") || roles.includes("waka")) {
@@ -120,7 +103,7 @@ export function getTeacherAssignedSubjects(user?: UserSession | null): string[] 
 
   const assigned: Set<string> = new Set();
 
-  // 1. Cek dari field user.subject_specialty
+  // 1. Pure 100% MySQL Database subject_specialty field
   if (activeUser.subject_specialty && activeUser.subject_specialty.trim()) {
     activeUser.subject_specialty.split(",").forEach((s) => {
       const clean = s.trim();
@@ -128,31 +111,9 @@ export function getTeacherAssignedSubjects(user?: UserSession | null): string[] 
     });
   }
 
-  // 2. Cek dari NIP / Email di GURU_SUBJECT_MAP
-  const nip = activeUser.nis_nip || "";
+  // 2. Check NIP from official GURU_SUBJECT_MAP dictionary
   if (nip && GURU_SUBJECT_MAP[nip]) {
     GURU_SUBJECT_MAP[nip].forEach((s) => assigned.add(s));
-  }
-
-  // 3. Cek dari catalog berdasarkan nama / email
-  const catalogUser = fallbackUsersCatalog.find((u: any) => {
-    if (!u) return false;
-    const uEmail = (u.email || "").toLowerCase();
-    const uName = (u.full_name || u.name || "").toLowerCase();
-    const uNip = u.nis_nip || "";
-
-    return (
-      (userEmail && uEmail && uEmail === userEmail) ||
-      (nip && uNip && uNip === nip) ||
-      (userName && uName && uName === userName)
-    );
-  });
-
-  if (catalogUser && catalogUser.subject_specialty) {
-    catalogUser.subject_specialty.split(",").forEach((s) => {
-      const clean = s.trim();
-      if (clean) assigned.add(clean);
-    });
   }
 
   // Jika guru belum terdaftar spesifik, kembalikan Mapel default bawaannya atau Al Qur'an Hadis

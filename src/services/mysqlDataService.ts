@@ -188,22 +188,22 @@ export class MysqlDataService {
         let identityType = u.identity_type;
         let role = u.role;
 
-        if (email === "kamad@mtsn2cilacap.sch.id" || name.includes("Hidayatullah")) {
+        if (email === "kamad@mtsn2cilacap.sch.id" || name.includes("Hidayatullah") || name.toLowerCase().includes("solihun")) {
           name = "H. SOLIHUN, S.Pd., M.Si";
-          nip = "197203151998031002";
+          nip = "197905162006041020";
           identityType = "NIP";
           role = "kamad";
-        } else if (email === "guru@mtsn2cilacap.sch.id") {
+        } else if (email === "guru@mtsn2cilacap.sch.id" || name.toLowerCase().includes("siti rahmah")) {
           name = "Dra. Hj. SITI RAHMAH, M.Pd";
           nip = "198005122006042005";
           identityType = "NIP";
           role = "guru";
-        } else if (name.includes("Hendra Wijaya") || email === "walikelas@mtsn2cilacap.sch.id") {
+        } else if (name.includes("Hendra Wijaya") || email === "walikelas@mtsn2cilacap.sch.id" || name.toLowerCase().includes("sobiyati")) {
           name = "SOBIYATI, S.Pd";
-          nip = "197808152005012004";
+          nip = "197906142007102002";
           identityType = "NIP";
           role = "walikelas,guru";
-        } else if (email === "198302142023211010@guru.mtsn2cilacap.sch.id" || name.includes("Ali Mansur")) {
+        } else if (email === "198302142023211010@guru.mtsn2cilacap.sch.id" || name.toLowerCase().includes("ali mansur")) {
           name = "ALI MANSUR, S.Pd";
           nip = "198302142023211010";
           identityType = "NIP";
@@ -218,7 +218,7 @@ export class MysqlDataService {
           name.toLowerCase().includes("rosid")
         ) {
           name = "ACHMAD MAKMUN ROSID, S.Pd., M.Pd";
-          nip = "197205012005011001";
+          nip = "197002272005011001";
           identityType = "NIP";
           role = "admin_akademik,walikelas,guru";
         }
@@ -226,15 +226,34 @@ export class MysqlDataService {
         return { ...u, full_name: name, nis_nip: nip, identity_type: identityType, role };
       });
 
-      // Deduplicate accounts with the same NIP or full_name to prevent double entries (like duplicate ALI MANSUR)
+      // Helper function to normalize teacher names for deduplication
+      const normalizeName = (n: string) =>
+        n
+          .toLowerCase()
+          .replace(/^(drs\.|dr\.|h\.|hj\.|hjh\.|dra\.)\s+/gi, "")
+          .replace(/,\s*(s\.pd|m\.pd|m\.si|m\.ag|s\.ag|m\.pd\.i|s\.p|s\.pd\.i)\.?$/gi, "")
+          .replace(/[^a-z0-9]/gi, "")
+          .trim();
+
+      // Deduplicate accounts by NIP or normalized full_name to prevent double entries (e.g., alias demo vs real NIP)
       const uniqueMap = new Map<string, UserRow>();
       res.forEach((u) => {
-        const key = (u.nis_nip && u.nis_nip !== "-" && u.nis_nip.length >= 10) ? u.nis_nip : (u.email || u.id);
+        const isSiswa = u.role === "siswa";
+        const nameKey = normalizeName(u.full_name || "");
+        const nipKey = (u.nis_nip && u.nis_nip !== "-" && u.nis_nip.length >= 10) ? u.nis_nip : "";
+
+        let key = u.id || u.email;
+        if (isSiswa) {
+          key = nipKey || u.email || u.id;
+        } else {
+          key = nameKey || nipKey || u.email || u.id;
+        }
+
         if (!uniqueMap.has(key)) {
           uniqueMap.set(key, u);
         } else {
           const existing = uniqueMap.get(key)!;
-          if (!existing.subject_specialty && u.subject_specialty) {
+          if ((!existing.subject_specialty && u.subject_specialty) || (existing.nis_nip?.length !== 18 && u.nis_nip?.length === 18)) {
             uniqueMap.set(key, u);
           }
         }

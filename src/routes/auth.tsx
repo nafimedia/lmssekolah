@@ -14,16 +14,13 @@ import { Lock, UserCheck, ShieldCheck, GraduationCap, BookOpen, KeyRound, Eye, E
 export const Route = createFileRoute("/auth")({
   ssr: false,
   beforeLoad: async () => {
+    let user = null;
     try {
-      const user = await MysqlAuthService.getValidSession();
-      if (user) {
-        const isAdmin = user.role === "admin";
-        throw redirect({ to: (isAdmin ? "/admin" : "/dashboard") as any });
-      }
-    } catch (err: any) {
-      if (err?.isRedirect || err?.to || err?.statusCode || err?.name === "Redirect" || String(err).includes("Redirect")) {
-        throw err;
-      }
+      user = await MysqlAuthService.getValidSession();
+    } catch {}
+    if (user) {
+      const isAdmin = user.role === "admin";
+      throw redirect({ to: (isAdmin ? "/admin" : "/dashboard") as any });
     }
   },
   head: () => ({
@@ -44,10 +41,13 @@ function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Registration Form States
+  // Registration Form States (Isolated from Sign In)
   const [regRole, setRegRole] = useState<"siswa" | "guru">("siswa");
   const [fullName, setFullName] = useState("");
   const [nisNip, setNisNip] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regShowPassword, setRegShowPassword] = useState(false);
   const [className, setClassName] = useState("Rombel 8A");
   const [subjectSpecialty, setSubjectSpecialty] = useState("Matematika");
 
@@ -81,23 +81,30 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
 
-    if (!nisNip.trim()) {
+    const cleanNisNip = nisNip.trim();
+    if (!cleanNisNip) {
       setLoading(false);
       return toast.error(regRole === "siswa" ? "Wajib mengisikan NIS / NISN!" : "Wajib mengisikan NIP / ID Pendidik!");
     }
 
-    const strength = MysqlAuthService.validatePasswordStrength(password);
+    const finalEmail = regEmail.trim()
+      ? regEmail.trim().toLowerCase()
+      : (regRole === "siswa"
+          ? `${cleanNisNip}@siswa.mtsn2cilacap.sch.id`
+          : `${cleanNisNip}@guru.mtsn2cilacap.sch.id`);
+
+    const strength = MysqlAuthService.validatePasswordStrength(regPassword);
     if (!strength.isValid) {
       setLoading(false);
       return toast.error(`Kata sandi terlalu lemah: ${strength.feedback.join(", ")}`);
     }
 
     const result = await MysqlAuthService.registerUser({
-      email,
-      password,
+      email: finalEmail,
+      password: regPassword,
       full_name: fullName,
       role: regRole,
-      nis_nip: nisNip,
+      nis_nip: cleanNisNip,
       class_name: regRole === "siswa" ? className : undefined,
       subject_specialty: regRole === "guru" ? subjectSpecialty : undefined,
     });
@@ -325,48 +332,48 @@ function AuthPage() {
 
                 <div className="space-y-1">
                   <Label htmlFor="su-email" className="text-slate-300 text-xs font-semibold">
-                    Email Pengguna
+                    {regRole === "siswa" ? "Email Pengguna (Opsional)" : "Email Pengguna (Wajib)"}
                   </Label>
                   <Input
                     id="su-email"
                     name="email"
                     type="email"
                     autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@mtsn2cilacap.sch.id"
-                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white"
+                    required={regRole !== "siswa"}
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    placeholder={regRole === "siswa" ? "Kosongkan untuk otomatisasi email NISN" : "email@mtsn2cilacap.sch.id"}
+                    className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white text-xs"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <Label htmlFor="su-pass" className="text-slate-300 text-xs font-semibold">
-                    Kata Sandi
+                    Kata Sandi (Min 6 Karakter)
                   </Label>
                   <div className="relative">
                     <Input
                       id="su-pass"
                       name="password"
-                      type={showPassword ? "text" : "password"}
+                      type={regShowPassword ? "text" : "password"}
                       autoComplete="new-password"
                       required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min 8 Karakter (Huruf Besar, Kecil & Angka/Simbol)"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="Minimal 6 Karakter (Huruf & Angka/Simbol)"
                       className="bg-slate-950 border-slate-800 focus:border-teal-500 text-white pr-10 text-xs"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setRegShowPassword(!regShowPassword)}
                       className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 transition"
                       tabIndex={-1}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {regShowPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {password && (() => {
-                    const strength = MysqlAuthService.validatePasswordStrength(password);
+                  {regPassword && (() => {
+                    const strength = MysqlAuthService.validatePasswordStrength(regPassword);
                     const colorMap = {
                       "Sangat Lemah": "text-rose-400 bg-rose-500",
                       "Lemah": "text-orange-400 bg-orange-500",

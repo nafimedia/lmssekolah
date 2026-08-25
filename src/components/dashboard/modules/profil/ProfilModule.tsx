@@ -84,7 +84,12 @@ export function ProfilModule({
     const currentEmail = activeUser?.email || userProfile?.email || "kamad@mtsn2cilacap.sch.id";
     const userBio = savedBio[currentEmail.toLowerCase()] || {};
 
-    setName(userBio.name || userProfile?.name || activeUser?.full_name || "H. SOLIHUN, S.Pd., M.Si");
+    let resolvedName = userBio.name || userProfile?.name || activeUser?.full_name || "H. SOLIHUN, S.Pd., M.Si";
+    if (currentEmail === "kamad@mtsn2cilacap.sch.id" || resolvedName.includes("Hidayatullah") || activeRole === "kamad") {
+      resolvedName = "H. SOLIHUN, S.Pd., M.Si";
+    }
+
+    setName(resolvedName);
     setEmail(userBio.email || userProfile?.email || activeUser?.email || "kamad@mtsn2cilacap.sch.id");
     setNipNis(userBio.nipNis || userProfile?.nipNis || activeUser?.nis_nip || "197203151998031002");
     setPhone(userBio.phone || userProfile?.phone || "081234567890");

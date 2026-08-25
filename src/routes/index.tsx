@@ -190,27 +190,27 @@ function LandingPage() {
 
       {/* Header Navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-teal-900/40 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Title */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
+            <div className="relative shrink-0">
               <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 blur opacity-40 group-hover:opacity-75 transition duration-300"></div>
               <img
                 src={logoAsset.url}
                 alt="Logo MTsN 2 Cilacap"
-                className="relative h-11 w-11 rounded-full object-cover border border-teal-400/30 bg-slate-900 p-1"
+                className="relative h-9 w-9 sm:h-11 sm:w-11 rounded-full object-cover border border-teal-400/30 bg-slate-900 p-0.5 sm:p-1"
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-teal-300 via-emerald-200 to-amber-300 bg-clip-text text-transparent">
+                <span className="font-extrabold text-sm sm:text-xl tracking-tight bg-gradient-to-r from-teal-300 via-emerald-200 to-amber-300 bg-clip-text text-transparent truncate">
                   LMS MTsN 2 Cilacap
                 </span>
-                <Badge className="hidden sm:inline-flex bg-teal-950 text-teal-300 border-teal-700/50 text-[10px] px-2 py-0.5">
+                <Badge className="hidden md:inline-flex bg-teal-950 text-teal-300 border-teal-700/50 text-[10px] px-2 py-0.5 shrink-0">
                   v2.5 Kemenag
                 </Badge>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Learning Management System & SIAKAD</p>
+              <p className="hidden sm:block text-[11px] text-slate-400 font-medium truncate">Learning Management System & SIAKAD</p>
             </div>
           </Link>
 
@@ -234,21 +234,22 @@ function LandingPage() {
           </nav>
 
           {/* Action Button */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Button
               asChild
-              className="relative group bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold shadow-lg shadow-teal-900/40 rounded-xl px-5 py-2.5 transition-all duration-300 border border-teal-400/30 hover:scale-[1.02]"
+              className="relative group bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold shadow-lg shadow-teal-900/40 rounded-xl px-3 sm:px-5 py-2 sm:py-2.5 transition-all duration-300 border border-teal-400/30 text-xs sm:text-sm shrink-0"
             >
-              <Link to="/auth" className="flex items-center gap-2">
-                <LogIn className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                <span>Masuk / Register</span>
+              <Link to="/auth" className="flex items-center gap-1.5 sm:gap-2">
+                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-0.5" />
+                <span className="hidden sm:inline">Masuk / Register</span>
+                <span className="sm:hidden">Masuk</span>
               </Link>
             </Button>
 
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-slate-400 hover:text-white rounded-lg focus:outline-none"
+              className="lg:hidden p-1.5 sm:p-2 text-slate-400 hover:text-white rounded-lg focus:outline-none shrink-0"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -298,19 +299,19 @@ function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="relative pt-12 pb-20 md:pt-20 md:pb-28 z-10">
+      <section id="hero" className="relative pt-6 pb-16 sm:pt-12 sm:pb-20 md:pt-20 md:pb-28 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Content */}
-            <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
+            <div className="lg:col-span-6 space-y-5 sm:space-y-6 text-center lg:text-left">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-950/80 border border-teal-500/40 text-teal-300 text-xs sm:text-sm font-medium shadow-inner shadow-teal-500/10">
-                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-                <span>Portal Pembelajaran Digital Modern MTsN 2 Cilacap</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full bg-teal-950/80 border border-teal-500/40 text-teal-300 text-[11px] sm:text-sm font-medium shadow-inner shadow-teal-500/10 max-w-full leading-snug">
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 animate-pulse shrink-0" />
+                <span className="truncate">Portal Pembelajaran Digital Modern MTsN 2 Cilacap</span>
               </div>
 
               {/* Title */}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.15]">
+              <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight sm:leading-[1.15]">
                 Educating The Future Generation with{" "}
                 <span className="bg-gradient-to-r from-teal-300 via-emerald-300 to-amber-300 bg-clip-text text-transparent">
                   Islamic & Tech Excellence
@@ -318,20 +319,20 @@ function LandingPage() {
               </h1>
 
               {/* Description */}
-              <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+              <p className="text-xs sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                 Platform LMS & SIAKAD Terpadu berstandar Kurikulum Merdeka Kemenag. Dilengkapi Computer-Based Test (CBT) Real-time, Modul Tahfidz Al-Qur&apos;an, dan Otomatisasi E-Rapor Madrasah.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
                 <Button
                   asChild
                   size="lg"
-                  className="w-full sm:w-auto bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-extrabold text-base shadow-xl shadow-teal-500/25 rounded-xl px-8 py-6 transition-all duration-300 hover:scale-[1.03]"
+                  className="w-full sm:w-auto bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-extrabold text-sm sm:text-base shadow-xl shadow-teal-500/25 rounded-xl px-6 sm:px-8 py-3.5 sm:py-6 transition-all duration-300 hover:scale-[1.03]"
                 >
-                  <Link to="/auth" className="flex items-center justify-center gap-3">
+                  <Link to="/auth" className="flex items-center justify-center gap-2 sm:gap-3">
                     <span>Masuk ke Portal LMS</span>
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Link>
                 </Button>
 
@@ -339,10 +340,10 @@ function LandingPage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto border-teal-500/40 bg-slate-900/60 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold rounded-xl px-7 py-6 backdrop-blur-sm"
+                  className="w-full sm:w-auto border-teal-500/40 bg-slate-900/60 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold text-xs sm:text-base rounded-xl px-5 sm:px-7 py-3.5 sm:py-6 backdrop-blur-sm"
                 >
                   <a href="#fitur" className="flex items-center justify-center gap-2">
-                    <PlayCircle className="w-5 h-5 text-teal-400" />
+                    <PlayCircle className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
                     <span>Jelajahi Fitur</span>
                   </a>
                 </Button>
@@ -350,14 +351,14 @@ function LandingPage() {
 
               {/* Quick Role Badges */}
               <div className="pt-4 border-t border-slate-800/80">
-                <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-3">
+                <p className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2.5">
                   Terintegrasi 7 Peran Pengguna (RBAC Matrix):
                 </p>
-                <div className="flex flex-wrap justify-center lg:justify-start gap-2">
+                <div className="flex flex-wrap justify-center lg:justify-start gap-1.5 sm:gap-2">
                   {["🎓 Siswa", "👨‍🏫 Guru", "👥 Wali Kelas", "🏫 Kamad", "📋 Waka Kurikulum", "💼 Admin Akademik", "⚡ Super Admin"].map((role, idx) => (
                     <span
                       key={idx}
-                      className="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-slate-300 text-xs font-medium hover:border-teal-500/40 transition-colors"
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-slate-900 border border-slate-800 text-slate-300 text-[11px] sm:text-xs font-medium hover:border-teal-500/40 transition-colors"
                     >
                       {role}
                     </span>

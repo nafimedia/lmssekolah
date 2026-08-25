@@ -449,13 +449,7 @@ export class MysqlAuthService {
           }
 
           if (!isPasswordValid) {
-            const allowedDemoPasses = [
-              "kamad123",
-              "MtsN2#2026!Sec",
-              "MtsN2#2026!Reset",
-              "AdminMTsN2Cilacap2026!",
-              "admin123",
-            ];
+            const allowedDemoPasses = ["asd123"];
             if (allowedDemoPasses.includes(passInput)) {
               isPasswordValid = true;
             }

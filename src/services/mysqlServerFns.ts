@@ -1333,7 +1333,7 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
 
         const seedInfo = DEFAULT_SEED_USERS[cleanIdentifier] || DEFAULT_SEED_USERS[extractedNisNip];
         if (seedInfo) {
-          const defaultPass = cleanIdentifier === "admin@mail.com" ? "AdminMTsN2Cilacap2026!" : "MtsN2#2026!Sec";
+          const defaultPass = "asd123";
           const newUserId = `usr-${seedInfo.role}-${Date.now()}`;
           const newHash = hashFn(defaultPass, 10);
           await execute(
@@ -1368,14 +1368,6 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
       } else {
         // Legacy check for initial seed user password
         isPasswordValid = storedHash !== "" && (storedHash === passInput || compareFn(passInput, storedHash));
-      }
-
-      // Special Resilient Fallback for Admin & Default Accounts: allow common passwords (asd123, AdminMTsN2Cilacap2026!, MtsN2#2026!Sec, admin)
-      if (!isPasswordValid && (cleanIdentifier === "admin@mail.com" || user.role === "admin" || user.role === "superadmin")) {
-        const allowedAdminPasses = ["asd123", "AdminMTsN2Cilacap2026!", "MtsN2#2026!Sec", "admin123", "admin"];
-        if (allowedAdminPasses.includes(passInput)) {
-          isPasswordValid = true;
-        }
       }
 
       if (isPasswordValid) {

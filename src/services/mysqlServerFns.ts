@@ -1309,10 +1309,41 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
       // Extract prefix if identifier is email (e.g. 3122531880@siswa.mtsn2cilacap.sch.id -> 3122531880)
       const extractedNisNip = cleanIdentifier.includes("@") ? cleanIdentifier.split("@")[0] : cleanIdentifier;
 
-      // Search user by email OR nis_nip OR extracted NIS/NIP
+      // Map alias identifiers to specific roles or NIPs
+      let roleAlias: string | null = null;
+      if (cleanIdentifier === "kamad@mtsn2cilacap.sch.id" || cleanIdentifier === "kamad" || cleanIdentifier === "solihun") {
+        roleAlias = "kamad";
+      } else if (cleanIdentifier === "waka@mtsn2cilacap.sch.id" || cleanIdentifier === "waka") {
+        roleAlias = "waka";
+      } else if (cleanIdentifier === "walikelas@mtsn2cilacap.sch.id" || cleanIdentifier === "walikelas") {
+        roleAlias = "walikelas";
+      } else if (cleanIdentifier === "guru@mtsn2cilacap.sch.id" || cleanIdentifier === "guru") {
+        roleAlias = "guru";
+      } else if (cleanIdentifier === "siswa@mtsn2cilacap.sch.id" || cleanIdentifier === "siswa") {
+        roleAlias = "siswa";
+      } else if (cleanIdentifier === "admin@mail.com" || cleanIdentifier === "admin") {
+        roleAlias = "admin";
+      }
+
+      // Search user by email OR nis_nip OR extracted NIS/NIP OR role alias
       let user = await queryOne<UserRow & { password_hash?: string }>(
-        "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? OR nis_nip = ? LIMIT 1",
-        [cleanIdentifier, cleanIdentifier, extractedNisNip]
+        `SELECT * FROM users
+         WHERE LOWER(email) = ?
+            OR nis_nip = ?
+            OR nis_nip = ?
+            OR LOWER(email) LIKE ?
+            OR role = ?
+            OR role LIKE ?
+         ORDER BY (nis_nip IS NOT NULL AND CHAR_LENGTH(nis_nip) >= 10) DESC, id ASC
+         LIMIT 1`,
+        [
+          cleanIdentifier,
+          cleanIdentifier,
+          extractedNisNip,
+          `${cleanIdentifier}%`,
+          roleAlias || cleanIdentifier,
+          roleAlias ? `%${roleAlias}%` : `%${cleanIdentifier}%`,
+        ]
       );
 
       const bcrypt = await import("bcryptjs");
@@ -1331,7 +1362,7 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
           "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class: "VIII-A", nis_nip: "0127790481", id_type: "NISN" },
         };
 
-        const seedInfo = DEFAULT_SEED_USERS[cleanIdentifier] || DEFAULT_SEED_USERS[extractedNisNip];
+        const seedInfo = DEFAULT_SEED_USERS[cleanIdentifier] || DEFAULT_SEED_USERS[extractedNisNip] || (roleAlias ? DEFAULT_SEED_USERS[`${roleAlias}@mtsn2cilacap.sch.id`] : undefined);
         if (seedInfo) {
           const defaultPass = "asd123";
           const newUserId = `usr-${seedInfo.role}-${Date.now()}`;
@@ -1339,12 +1370,12 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
           await execute(
             `INSERT INTO users (id, email, password_hash, full_name, identity_type, nis_nip, class_name, role)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [newUserId, cleanIdentifier, newHash, seedInfo.name, seedInfo.id_type || "NIP", seedInfo.nis_nip || null, seedInfo.class || null, seedInfo.role]
+            [newUserId, cleanIdentifier.includes("@") ? cleanIdentifier : `${cleanIdentifier}@mtsn2cilacap.sch.id`, newHash, seedInfo.name, seedInfo.id_type || "NIP", seedInfo.nis_nip || null, seedInfo.class || null, seedInfo.role]
           ).catch(() => {});
 
           user = await queryOne<UserRow & { password_hash?: string }>(
-            "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? OR nis_nip = ? LIMIT 1",
-            [cleanIdentifier, cleanIdentifier, extractedNisNip]
+            "SELECT * FROM users WHERE LOWER(email) = ? OR nis_nip = ? OR nis_nip = ? OR role = ? LIMIT 1",
+            [cleanIdentifier, cleanIdentifier, extractedNisNip, roleAlias || cleanIdentifier]
           );
         }
       }

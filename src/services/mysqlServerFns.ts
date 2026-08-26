@@ -2989,6 +2989,127 @@ export const saveKbmPresensiBatchFn = createServerFn({ method: "POST" })
     }
   });
 
+// ============================================================================
+// 25B-2. PRESENSI HARIAN ROMBEL BINAAN WALI KELAS
+// ============================================================================
+
+export interface DailyPresensiRow {
+  id?: string;
+  rombel: string;
+  wali_kelas: string;
+  student_nis: string;
+  student_name: string;
+  status: "HADIR" | "SAKIT" | "IZIN" | "ALPA";
+  notes?: string;
+  date_str: string;
+  created_at?: string;
+}
+
+export const getDailyPresensiRombelFn = createServerFn({ method: "POST" })
+  .validator((data: { rombel: string; date_str?: string }) => data)
+  .handler(async ({ data }): Promise<DailyPresensiRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS daily_presensi (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          wali_kelas VARCHAR(255) NOT NULL,
+          student_nis VARCHAR(50) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'HADIR',
+          notes TEXT,
+          date_str VARCHAR(100) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY uk_daily_presensi (student_nis, date_str)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      try {
+        await execute(`ALTER TABLE daily_presensi ADD UNIQUE KEY uk_daily_presensi (student_nis, date_str)`);
+      } catch {}
+
+      let sql = `SELECT * FROM daily_presensi WHERE 1=1`;
+      const params: any[] = [];
+      if (data.rombel && data.rombel !== "ALL") {
+        const cleanRombel = data.rombel.replace("Rombel", "").replace("Kelas", "").replace("-", "").trim();
+        sql += ` AND (rombel = ? OR rombel LIKE ? OR rombel LIKE ?)`;
+        params.push(data.rombel, `%${cleanRombel}%`, `%${data.rombel}%`);
+      }
+      if (data.date_str) {
+        const parts = data.date_str.split("-");
+        let altDate = data.date_str;
+        if (parts.length === 3) {
+          altDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        sql += ` AND (date_str = ? OR date_str = ? OR date_str LIKE ?)`;
+        params.push(data.date_str, altDate, `%${data.date_str}%`);
+      }
+      sql += ` ORDER BY id DESC`;
+      return (await query<DailyPresensiRow[]>(sql, params)) || [];
+    } catch (e) {
+      console.error("[getDailyPresensiRombelFn Error]:", e);
+      return [];
+    }
+  });
+
+export const saveDailyPresensiRombelBatchFn = createServerFn({ method: "POST" })
+  .validator((data: { rombel: string; wali_kelas: string; date_str: string; records: DailyPresensiRow[] }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const sessionUser = await requireAuth();
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS daily_presensi (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          wali_kelas VARCHAR(255) NOT NULL,
+          student_nis VARCHAR(50) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'HADIR',
+          notes TEXT,
+          date_str VARCHAR(100) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY uk_daily_presensi (student_nis, date_str)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      try {
+        await execute(`ALTER TABLE daily_presensi ADD UNIQUE KEY uk_daily_presensi (student_nis, date_str)`);
+      } catch {}
+
+      const parts = data.date_str.split("-");
+      let altDate = data.date_str;
+      if (parts.length === 3) {
+        altDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+
+      for (const item of data.records) {
+        const nis = item.student_nis || item.student_name;
+        const waliName = item.wali_kelas || data.wali_kelas || sessionUser.full_name || "Wali Kelas";
+        const status = item.status || "HADIR";
+        const notes = item.notes || "";
+
+        // Delete old records for this student on this date
+        await execute(
+          `DELETE FROM daily_presensi WHERE (student_nis = ? OR student_name = ?) AND (date_str = ? OR date_str = ?)`,
+          [nis, item.student_name, data.date_str, altDate]
+        );
+
+        // Insert new clean record
+        await execute(
+          `INSERT INTO daily_presensi (rombel, wali_kelas, student_nis, student_name, status, notes, date_str)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [data.rombel, waliName, nis, item.student_name, status, notes, data.date_str]
+        );
+      }
+      return { success: true };
+    } catch (e) {
+      console.error("[saveDailyPresensiRombelBatchFn Error]:", e);
+      return { success: false };
+    }
+  });
+
 // 25C. CATATAN OBSERVASI SISWA CRUD
 export const getStudentKbmNotesFn = createServerFn({ method: "POST" })
   .validator((data: { rombel: string; mapel: string }) => data)

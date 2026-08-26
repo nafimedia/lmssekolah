@@ -31,6 +31,9 @@ import {
 import { toast } from "sonner";
 import { CBTExam } from "@/types/cbt";
 
+import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
+
 interface CBTLiveSessionProps {
   exams: CBTExam[];
   userRole?: string;
@@ -60,13 +63,23 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
   const [newToken, setNewToken] = useState("MTS2-NEW");
   const [newPassingScore, setNewPassingScore] = useState("75");
 
+  const isWaliKelas = userRole === "walikelas" || userRole === "wali_kelas";
+  const me = MysqlAuthService.getActiveUser();
+  const rawClass = me?.class_name || "Rombel 8A";
+  const binaanRombel = normalizeRombelName(rawClass);
+
   const filteredExams = exams.filter((e) => {
     const matchesSearch =
       e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.mapel.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.token.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Role Scope Isolation: Siswa only sees opened/live exams
+    if (isWaliKelas) {
+      const examClass = normalizeRombelName(e.kelas || "");
+      const isClassMatch = isSameClass(examClass, binaanRombel) || examClass.toLowerCase().includes(binaanRombel.toLowerCase().replace("rombel", "").trim());
+      return matchesSearch && isClassMatch;
+    }
+
     if (userRole === "siswa") {
       return matchesSearch && (e.status === "Dibuka" || e.status === "Terjadwal");
     }
@@ -142,17 +155,23 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
               {userRole === "siswa"
                 ? "Siswa (Peserta CBT)"
                 : userRole === "guru"
-                ? "Guru Pengampu (Proktor & Pembuat Sesi)"
-                : userRole === "walikelas" || userRole === "wali_kelas"
-                ? "Wali Kelas (Monitoring Rombel)"
-                : userRole === "kamad"
-                ? "Kepala Madrasah (Executive Monitoring)"
-                : userRole === "waka"
-                ? "Waka Kurikulum (Audit & Proktor)"
-                : "Super Admin (Full Access)"}
+                  ? "Guru Pengampu (Proktor & Pembuat Sesi)"
+                  : userRole === "walikelas" || userRole === "wali_kelas"
+                    ? "Wali Kelas (Monitoring Rombel Binaan)"
+                    : userRole === "kamad"
+                      ? "Kepala Madrasah (Executive Monitoring)"
+                      : userRole === "waka"
+                        ? "Waka Kurikulum (Audit & Proktor)"
+                        : "Super Admin (Full Access)"}
             </span>
           </span>
         </div>
+
+        {/* {isWaliKelas && (
+          <Badge variant="outline" className="bg-emerald-600/10 text-emerald-600 border border-emerald-500/30 px-3 py-1 font-bold text-xs gap-1">
+            <Lock className="h-3.5 w-3.5" /> 🔒 Terkunci Rombel Binaan: {binaanRombel}
+          </Badge>
+        )} */}
 
         {isTeacherOrAdmin && (
           <Button
@@ -213,82 +232,81 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
               key={exam.id}
               className="hover:shadow-md transition-all border-border bg-card overflow-hidden flex flex-col justify-between"
             >
-            <CardHeader className="p-4 pb-3">
-              <div className="flex items-start justify-between gap-2">
-                <Badge
-                  variant={exam.status === "Dibuka" ? "default" : "secondary"}
-                  className={`text-[11px] font-bold ${
-                    exam.status === "Dibuka"
+              <CardHeader className="p-4 pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <Badge
+                    variant={exam.status === "Dibuka" ? "default" : "secondary"}
+                    className={`text-[11px] font-bold ${exam.status === "Dibuka"
                       ? "bg-emerald-500/10 text-emerald-600 border-emerald-300 dark:border-emerald-800"
                       : ""
-                  }`}
-                >
-                  {exam.status === "Dibuka" ? "🟢 Live Sesi" : exam.status}
-                </Badge>
-                <Badge variant="outline" className="text-[11px] font-mono font-bold">
-                  Token: {exam.token}
-                </Badge>
-              </div>
-
-              <CardTitle className="text-base font-bold text-foreground leading-snug mt-2">
-                {exam.title}
-              </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground">
-                Mapel: <span className="font-semibold text-foreground">{exam.mapel}</span> | Kelas: {exam.kelas}
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="p-4 pt-0 space-y-4">
-              <div className="p-3 rounded-lg bg-muted/40 text-xs space-y-1 border border-border/50">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Durasi Ujian:</span>
-                  <span className="font-semibold text-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-emerald-500" /> {exam.durationMinutes} Menit
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Jumlah Soal:</span>
-                  <span className="font-semibold text-foreground">{exam.soalCount} Soal (PG/Essay)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Batas KKM:</span>
-                  <span className="font-bold text-amber-600 dark:text-amber-400">Score {exam.passingScore}</span>
-                </div>
-              </div>
-
-              <div className="pt-1">
-                {userRole === "siswa" ? (
-                  <Button
-                    size="sm"
-                    className="w-full font-bold text-xs gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={() => handleOpenTokenModal(exam)}
+                      }`}
                   >
-                    <PlayCircle className="h-4 w-4" /> Masukkan Token & Kerjakan
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
+                    {exam.status === "Dibuka" ? "🟢 Live Sesi" : exam.status}
+                  </Badge>
+                  <Badge variant="outline" className="text-[11px] font-mono font-bold">
+                    Token: {exam.token}
+                  </Badge>
+                </div>
+
+                <CardTitle className="text-base font-bold text-foreground leading-snug mt-2">
+                  {exam.title}
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Mapel: <span className="font-semibold text-foreground">{exam.mapel}</span> | Kelas: {exam.kelas}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="p-4 pt-0 space-y-4">
+                <div className="p-3 rounded-lg bg-muted/40 text-xs space-y-1 border border-border/50">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Durasi Ujian:</span>
+                    <span className="font-semibold text-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-emerald-500" /> {exam.durationMinutes} Menit
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Jumlah Soal:</span>
+                    <span className="font-semibold text-foreground">{exam.soalCount} Soal (PG/Essay)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Batas KKM:</span>
+                    <span className="font-bold text-amber-600 dark:text-amber-400">Score {exam.passingScore}</span>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  {userRole === "siswa" ? (
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs font-semibold"
+                      className="w-full font-bold text-xs gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() => handleOpenTokenModal(exam)}
                     >
-                      <KeyRound className="h-3.5 w-3.5 text-primary" /> Test Token
+                      <PlayCircle className="h-4 w-4" /> Masukkan Token & Kerjakan
                     </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1 font-bold text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => toast.info(`Memantau Proctor Live CBT: ${exam.title}`)}
-                    >
-                      <Users className="h-3.5 w-3.5" /> Proctor Live
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs font-semibold"
+                        onClick={() => handleOpenTokenModal(exam)}
+                      >
+                        <KeyRound className="h-3.5 w-3.5 text-primary" /> Test Token
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1 font-bold text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => toast.info(`Memantau Proctor Live CBT: ${exam.title}`)}
+                      >
+                        <Users className="h-3.5 w-3.5" /> Proctor Live
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* Token Verification Modal */}

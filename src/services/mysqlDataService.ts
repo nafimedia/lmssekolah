@@ -73,6 +73,8 @@ import {
   getJadwalPelajaranFn,
   getKbmPresensiFn,
   saveKbmPresensiBatchFn,
+  getDailyPresensiRombelFn,
+  saveDailyPresensiRombelBatchFn,
   getStudentKbmNotesFn,
   saveStudentKbmNoteFn,
   deleteStudentKbmNoteFn,
@@ -1015,12 +1017,32 @@ export class MysqlDataService {
     }
   }
 
-  static async saveKbmPresensiBatch(rombel: string, mapel: string, date_str: string, records: KbmPresensiRow[]): Promise<boolean> {
+  static async saveKbmPresensiBatch(rombel: string, mapel: string, date_str: string, records: any[]): Promise<boolean> {
     try {
       const res = await saveKbmPresensiBatchFn({ data: { rombel, mapel, date_str, records } });
       return res.success;
     } catch (e) {
       console.warn("saveKbmPresensiBatchFn failed:", e);
+      return false;
+    }
+  }
+
+  // Presensi Harian Rombel Binaan Wali Kelas
+  static async getDailyPresensiRombel(rombel: string, date_str?: string): Promise<any[]> {
+    try {
+      return await getDailyPresensiRombelFn({ data: { rombel, date_str } });
+    } catch (e) {
+      console.warn("getDailyPresensiRombelFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveDailyPresensiRombelBatch(rombel: string, wali_kelas: string, date_str: string, records: any[]): Promise<boolean> {
+    try {
+      const res = await saveDailyPresensiRombelBatchFn({ data: { rombel, wali_kelas, date_str, records } });
+      return res.success;
+    } catch (e) {
+      console.warn("saveDailyPresensiRombelBatchFn failed:", e);
       return false;
     }
   }

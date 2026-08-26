@@ -47,13 +47,33 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
   const isSiswa = activeRole === "siswa";
 
   const activeUser = MysqlAuthService.getActiveUser();
-  const userRombelRaw = activeUser?.class_name || (activeUser as any)?.class || "Rombel 8B";
-  const defaultRombel = normalizeRombelName(userRombelRaw);
+  const rawClass = (activeUser as any)?.assignedClass || activeUser?.class_name || (activeUser as any)?.class;
+  let binaanRombel = "Rombel 8A";
+  if (rawClass && rawClass !== "Semua" && rawClass !== "Semua Rombel") {
+    binaanRombel = normalizeRombelName(rawClass);
+  } else {
+    const name = (activeUser?.full_name || "").toLowerCase();
+    const cleanNip = (activeUser?.nis_nip || "").trim();
+    if (name.includes("achmad makmun") || cleanNip.includes("272005011001")) binaanRombel = "Rombel 8B";
+    else if (name.includes("sobiyati")) binaanRombel = "Rombel 8A";
+    else if (name.includes("novantya")) binaanRombel = "Rombel 9A";
+    else if (name.includes("indah nurrohmah")) binaanRombel = "Rombel 9B";
+    else if (name.includes("maulidia")) binaanRombel = "Rombel 7A";
+    else if (name.includes("rindang")) binaanRombel = "Rombel 7B";
+  }
 
-  const [selectedClass, setSelectedClass] = useState<string>(isExecutive ? "ALL" : defaultRombel);
+  const defaultRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Rombel 8B");
+
+  const [selectedClass, setSelectedClass] = useState<string>(isWaliKelas ? binaanRombel : isExecutive ? "ALL" : defaultRombel);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isPrintRaporOpen, setIsPrintRaporOpen] = useState(false);
   const [selectedStudentForRapor, setSelectedStudentForRapor] = useState<any>(null);
+
+  useEffect(() => {
+    if (isWaliKelas) {
+      setSelectedClass(binaanRombel);
+    }
+  }, [isWaliKelas, binaanRombel]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [studentsList, setStudentsList] = useState<any[]>([]);
@@ -484,22 +504,29 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Rombel / Mode Laporan</label>
-                <select
-                  className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
-                >
-                  {isExecutive && (
-                    <option value="ALL" className="font-bold">
-                      ✨ Semua Kelas (Monitoring Leger Madrasah Kamad & Waka)
-                    </option>
-                  )}
-                  {rombelOptions.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                {isWaliKelas ? (
+                  <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
+                    <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>🔒 Rombel Binaan Wali Kelas: {binaanRombel}</span>
+                  </div>
+                ) : (
+                  <select
+                    className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    value={selectedClass}
+                    onChange={(e) => setSelectedClass(e.target.value)}
+                  >
+                    {isExecutive && (
+                      <option value="ALL" className="font-bold">
+                        ✨ Semua Kelas (Monitoring Leger Madrasah Kamad & Waka)
+                      </option>
+                    )}
+                    {rombelOptions.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
 

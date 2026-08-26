@@ -45,13 +45,34 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
   const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "kepala_madrasah";
   const isSiswa = activeRole === "siswa";
 
-  // Determine dynamic default Rombel from user profile
-  const userRombelRaw = userProfile?.class_name || userProfile?.class || "Rombel 8B";
-  const defaultRombel = normalizeRombelName(userRombelRaw);
+  const userSession = MysqlAuthService.getActiveUser();
+  const rawClass = userProfile?.assignedClass || userProfile?.class_name || userProfile?.class || userSession?.class_name;
+  
+  let binaanRombel = "Rombel 8A";
+  if (rawClass && rawClass !== "Semua" && rawClass !== "Semua Rombel") {
+    binaanRombel = normalizeRombelName(rawClass);
+  } else {
+    const name = (userSession?.full_name || userProfile?.name || "").toLowerCase();
+    const cleanNip = (userSession?.nis_nip || "").trim();
+    if (name.includes("achmad makmun") || cleanNip.includes("272005011001")) binaanRombel = "Rombel 8B";
+    else if (name.includes("sobiyati")) binaanRombel = "Rombel 8A";
+    else if (name.includes("novantya")) binaanRombel = "Rombel 9A";
+    else if (name.includes("indah nurrohmah")) binaanRombel = "Rombel 9B";
+    else if (name.includes("maulidia")) binaanRombel = "Rombel 7A";
+    else if (name.includes("rindang")) binaanRombel = "Rombel 7B";
+  }
 
-  // Selected filter state: "ALL" for Kamad/executive, or specific rombel
-  const [selectedRombel, setSelectedRombel] = useState<string>(isExecutive ? "ALL" : defaultRombel);
+  const defaultRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Rombel 8B");
+
+  // Selected filter state: "ALL" for Kamad/executive, locked to binaanRombel for Wali Kelas
+  const [selectedRombel, setSelectedRombel] = useState<string>(isWaliKelas ? binaanRombel : isExecutive ? "ALL" : defaultRombel);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  useEffect(() => {
+    if (isWaliKelas) {
+      setSelectedRombel(binaanRombel);
+    }
+  }, [isWaliKelas, binaanRombel]);
 
   const [allStudents, setAllStudents] = useState<StudentProgressRow[]>([]);
   const [rombelListOptions, setRombelListOptions] = useState<string[]>([]);
@@ -297,7 +318,9 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
     <>
       <SectionHeader
         title={
-          selectedRombel === "ALL"
+          isWaliKelas
+            ? `Monitoring Progress Belajar ${binaanRombel}`
+            : selectedRombel === "ALL"
             ? "Monitoring Progress Belajar Seluruh Rombel"
             : `Monitoring Progress Belajar ${selectedRombel}`
         }
@@ -318,22 +341,29 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Rombel / Mode Monitoring</label>
-                <select
-                  className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  value={selectedRombel}
-                  onChange={(e) => setSelectedRombel(e.target.value)}
-                >
-                  {isExecutive && (
-                    <option value="ALL" className="font-bold">
-                      ✨ Semua Rombel (Monitoring Eksekutif Kamad)
-                    </option>
-                  )}
-                  {rombelListOptions.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                {isWaliKelas ? (
+                  <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
+                    <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>🔒 Rombel Binaan Wali Kelas: {binaanRombel}</span>
+                  </div>
+                ) : (
+                  <select
+                    className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    value={selectedRombel}
+                    onChange={(e) => setSelectedRombel(e.target.value)}
+                  >
+                    {isExecutive && (
+                      <option value="ALL" className="font-bold">
+                        ✨ Semua Rombel (Monitoring Eksekutif Kamad)
+                      </option>
+                    )}
+                    {rombelListOptions.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Trophy, BookOpen, CalendarClock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { GraduationCap, Trophy, BookOpen, CalendarClock, ArrowRight, CheckCircle2, UserCheck, Building2, Clock } from "lucide-react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
@@ -171,8 +171,9 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                   className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 hover:border-emerald-500/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 px-3 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex items-center justify-center border border-emerald-500/30 whitespace-nowrap">
-                      ⏰ {displayJam}
+                    <div className="h-9 px-3 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex items-center justify-center gap-1.5 border border-emerald-500/30 whitespace-nowrap">
+                      <Clock className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>{displayJam}</span>
                     </div>
                     <div>
                       <div className="font-extrabold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -180,17 +181,17 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                       </div>
                       <div className="text-xs text-slate-600 dark:text-slate-400 font-medium flex items-center gap-3 mt-0.5">
                         <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
-                          👤 {displayGuru}
+                          <UserCheck className="h-3.5 w-3.5 text-emerald-600" /> {displayGuru}
                         </span>
                         <span className="text-slate-400">•</span>
-                        <span className="text-slate-500">
-                          🏫 {displayRuang}
+                        <span className="flex items-center gap-1 text-slate-500">
+                          <Building2 className="h-3.5 w-3.5 text-slate-400" /> {displayRuang}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-bold self-start sm:self-center">
-                    📖 Jadwal KBM
+                  <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-bold self-start sm:self-center gap-1.5">
+                    <BookOpen className="h-3.5 w-3.5 text-emerald-600" /> Jadwal KBM
                   </Badge>
                 </div>
               );

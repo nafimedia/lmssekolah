@@ -15,6 +15,8 @@ import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
 
+import { MysqlAuthService } from "@/services/mysqlAuthService";
+
 interface CBTModuleProps {
   userRole?: string;
   studentName?: string;
@@ -26,10 +28,36 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
 }) => {
   const isExecutive = userRole === "kamad" || userRole === "waka" || userRole === "admin" || userRole === "kepala_madrasah" || userRole === "admin_akademik";
   const isGuruRole = userRole === "guru" || (userRole || "").includes("guru");
+  const isWaliKelas = userRole === "walikelas" || userRole === "wali_kelas";
+
+  const me = MysqlAuthService.getActiveUser();
+  const rawClass = me?.class_name || (me as any)?.class;
+
+  let binaanRombel = "Rombel 8A";
+  if (rawClass && rawClass !== "Semua" && rawClass !== "Semua Rombel") {
+    binaanRombel = normalizeRombelName(rawClass);
+  } else {
+    const name = (me?.full_name || "").toLowerCase();
+    const cleanNip = (me?.nis_nip || "").trim();
+    if (name.includes("achmad makmun") || cleanNip.includes("272005011001")) binaanRombel = "Rombel 8B";
+    else if (name.includes("sobiyati")) binaanRombel = "Rombel 8A";
+    else if (name.includes("novantya")) binaanRombel = "Rombel 9A";
+    else if (name.includes("indah nurrohmah")) binaanRombel = "Rombel 9B";
+    else if (name.includes("maulidia")) binaanRombel = "Rombel 7A";
+    else if (name.includes("rindang")) binaanRombel = "Rombel 7B";
+  }
+
+  const defaultRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Rombel 8A");
 
   const [activeTab, setActiveTab] = useState<"sesi" | "bank_soal" | "analisis">("sesi");
-  const [selectedRombel, setSelectedRombel] = useState<string>(isExecutive ? "ALL" : "Rombel 8B");
+  const [selectedRombel, setSelectedRombel] = useState<string>(isWaliKelas ? binaanRombel : isExecutive ? "ALL" : defaultRombel);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  useEffect(() => {
+    if (isWaliKelas) {
+      setSelectedRombel(binaanRombel);
+    }
+  }, [isWaliKelas, binaanRombel]);
 
   // State Ujian Active Sessions & Results
   const [exams, setExams] = useState<CBTExam[]>([]);
@@ -259,7 +287,9 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground">
                 <MonitorCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                {selectedRombel === "ALL"
+                {isWaliKelas
+                  ? `Monitoring CBT Engine - ${binaanRombel}`
+                  : selectedRombel === "ALL"
                   ? "Monitoring CBT Engine & Assessment Center (Seluruh Kelas)"
                   : `Monitoring CBT Engine - ${selectedRombel}`}
               </h1>
@@ -296,22 +326,29 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Rombel / Mode CBT</label>
-                <select
-                  className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  value={selectedRombel}
-                  onChange={(e) => setSelectedRombel(e.target.value)}
-                >
-                  {isExecutive && (
-                    <option value="ALL" className="font-bold">
-                      ✨ Semua Rombel (Monitoring Eksekutif Kamad & Waka)
-                    </option>
-                  )}
-                  {rombelOptions.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                {isWaliKelas ? (
+                  <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
+                    <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>🔒 Rombel Binaan Wali Kelas: {binaanRombel}</span>
+                  </div>
+                ) : (
+                  <select
+                    className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    value={selectedRombel}
+                    onChange={(e) => setSelectedRombel(e.target.value)}
+                  >
+                    {isExecutive && (
+                      <option value="ALL" className="font-bold">
+                        ✨ Semua Rombel (Monitoring Eksekutif Kamad & Waka)
+                      </option>
+                    )}
+                    {rombelOptions.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
 

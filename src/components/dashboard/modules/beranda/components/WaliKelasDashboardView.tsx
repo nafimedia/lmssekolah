@@ -230,27 +230,40 @@ export function WaliKelasDashboardView({
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {todaySchedule.map((item, idx) => (
-                    <div
-                      key={item.id || idx}
-                      className="p-3 rounded-xl bg-card border border-border flex items-center justify-between gap-3 shadow-2xs hover:border-emerald-500/50 transition"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex flex-col items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800">
-                          <span>Jam</span>
-                          <span className="text-sm font-black font-mono leading-none">{item.jam || idx + 1}</span>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-extrabold text-foreground">{item.mapel}</h4>
-                          <p className="text-[11px] text-muted-foreground font-medium">👨‍🏫 {item.guru || "Guru Pengampu"}</p>
-                        </div>
-                      </div>
+                  {todaySchedule.map((item, idx) => {
+                    const rawJam = String(item.jam || "").trim();
+                    const matchNum = rawJam.match(/Jam\s*(\d+)/i) || rawJam.match(/^(\d+)/);
+                    const jamNum = matchNum ? matchNum[1] : String(idx + 1);
 
-                      <Badge variant="outline" className="text-[10px] font-mono font-bold bg-muted/50">
-                        {item.jam || "07.30 - 09.00"}
-                      </Badge>
-                    </div>
-                  ))}
+                    const matchTime = rawJam.match(/\(([^)]+)\)/) || rawJam.match(/(\d{2}[.:]\d{2}\s*-\s*\d{2}[.:]\d{2})/);
+                    const timeRange = matchTime ? matchTime[1].trim() : rawJam || "07.30 - 08.10";
+
+                    return (
+                      <div
+                        key={item.id || idx}
+                        className="p-3 rounded-xl bg-card border border-border flex items-center justify-between gap-3 shadow-2xs hover:border-emerald-500/50 transition"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex flex-col items-center justify-center shrink-0 border border-emerald-500/20 shadow-2xs">
+                            <span className="text-[9px] font-bold text-muted-foreground leading-none">Ke-</span>
+                            <span className="text-sm font-black font-mono leading-none">{jamNum}</span>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-extrabold text-foreground">{item.mapel}</h4>
+                            <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1.5 mt-0.5">
+                              <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <span>{item.guru || "Guru Pengampu"}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <Badge variant="outline" className="text-xs font-mono font-bold bg-muted/40 border-border text-foreground px-2.5 py-1 flex items-center gap-1.5 shrink-0">
+                          <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span>{timeRange}</span>
+                        </Badge>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

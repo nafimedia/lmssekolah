@@ -18,7 +18,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
   const isSiswa = activeRole === "siswa";
   const isGuru = activeRole === "guru";
   const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
-  const isRestrictedRole = isSiswa;
+  const isRestrictedRole = isSiswa || isWaliKelas;
   const isReadOnlyRole = isSiswa || isGuru || isWaliKelas;
   const me = MysqlAuthService.getActiveUser();
 
@@ -49,7 +49,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
     if (cleanName.includes("misbah")) return "Rombel 7A";
     if (cleanName.includes("endah")) return "Rombel 7B";
     if (cleanName.includes("sobiyati")) return "Rombel 8A";
-    if (cleanName.includes("sobiyati")) return "Rombel 9A";
+    if (cleanName.includes("novantya")) return "Rombel 9A";
     if (cleanName.includes("sayono")) return "Rombel 9B";
 
     return "Rombel 8A";

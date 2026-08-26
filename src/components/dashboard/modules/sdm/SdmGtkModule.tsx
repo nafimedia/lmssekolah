@@ -40,7 +40,8 @@ export interface GtkItem {
   tugasTambahan: string;
   isSertifikasi: boolean;
   email: string;
-  phone: string;
+  phone?: string;
+  role?: string;
   mapel?: string;
   jabatan?: string;
 }
@@ -75,14 +76,15 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
               nip: u.nis_nip || "-",
               npk: u.nis_nip ? u.nis_nip.substring(0, 11) : "-",
               name: u.full_name,
-              golongan: "Penata (III/c)",
-              statusKepegawaian: (u.role === "admin" ? "PNS" : "PNS") as any,
+              role: u.role || "guru",
+              golongan: "-",
+              statusKepegawaian: "PNS" as any,
               mapelUtama: u.subject_specialty || "Umum",
               totalJp: 24,
-              tugasTambahan: "Guru Pengampu",
-              isSertifikasi: true,
+              tugasTambahan: u.role === "walikelas" ? "Wali Kelas" : u.role === "waka" ? "Waka Kurikulum" : u.role === "kamad" ? "Kepala Madrasah" : "Guru Pengampu",
+              isSertifikasi: false,
               email: u.email,
-              phone: u.phone || "081234567890",
+              phone: u.phone || "-",
             }));
             setGtkList(formatted);
           }
@@ -194,9 +196,10 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
       const matchSearch =
         item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.nip.toLowerCase().includes(search.toLowerCase()) ||
+        item.email.toLowerCase().includes(search.toLowerCase()) ||
         item.mapelUtama.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = filterStatus === "semua" || item.statusKepegawaian === filterStatus;
-      return matchSearch && matchStatus;
+      const matchRole = filterStatus === "semua" || item.role === filterStatus;
+      return matchSearch && matchRole;
     });
 
     return list.sort((a, b) => {
@@ -205,12 +208,9 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
       if (sortColumn === "name") {
         valA = a.name.toLowerCase();
         valB = b.name.toLowerCase();
-      } else if (sortColumn === "status") {
-        valA = a.statusKepegawaian.toLowerCase();
-        valB = b.statusKepegawaian.toLowerCase();
-      } else if (sortColumn === "golongan") {
-        valA = a.golongan.toLowerCase();
-        valB = b.golongan.toLowerCase();
+      } else if (sortColumn === "email") {
+        valA = a.email.toLowerCase();
+        valB = b.email.toLowerCase();
       } else if (sortColumn === "mapel") {
         valA = a.mapelUtama.toLowerCase();
         valB = b.mapelUtama.toLowerCase();
@@ -225,9 +225,8 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
     });
   }, [gtkList, search, filterStatus, sortColumn, sortDir]);
 
-  const totalPns = gtkList.filter((g) => g.statusKepegawaian === "PNS").length;
-  const totalPppk = gtkList.filter((g) => g.statusKepegawaian === "PPPK").length;
-  const totalSertifikasi = gtkList.filter((g) => g.isSertifikasi).length;
+  const totalGuru = gtkList.filter((g) => g.role === "guru" || !g.role).length;
+  const totalWaliWaka = gtkList.filter((g) => g.role === "walikelas" || g.role === "waka" || g.role === "kamad").length;
 
   return (
     <div className="space-y-6">
@@ -235,7 +234,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
         <div>
           <h1 className="text-2xl font-bold tracking-tight">SDM & Data Kepegawaian GTK</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Database kepegawaian guru, sertifikasi, dan administrasi GTK.
+            Database kepegawaian guru, wali kelas, pimpinan, dan administrasi GTK.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -267,8 +266,8 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground font-medium">PNS & PPPK</div>
-              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{totalPns + totalPppk} Orang</div>
+              <div className="text-xs text-muted-foreground font-medium">Guru Pengampu</div>
+              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{totalGuru} Guru</div>
             </div>
           </CardContent>
         </Card>
@@ -279,8 +278,8 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
               <Award className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground font-medium">Tersertifikasi TPG</div>
-              <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">{totalSertifikasi} Guru</div>
+              <div className="text-xs text-muted-foreground font-medium">Wali Kelas & Pimpinan</div>
+              <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">{totalWaliWaka} Akun</div>
             </div>
           </CardContent>
         </Card>
@@ -323,7 +322,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
               <div className="relative flex-1 sm:w-60">
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
                 <Input
-                  placeholder="Cari nama, NIP, mapel..."
+                  placeholder="Cari nama, NIP, email, mapel..."
                   className="pl-9 h-9 text-xs"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -335,10 +334,11 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <option value="semua">Semua Status</option>
-                <option value="PNS">PNS</option>
-                <option value="PPPK">PPPK</option>
-                <option value="GTT / Honor">GTT / Honor</option>
+                <option value="semua">Semua Peran</option>
+                <option value="guru">Guru Pengampu</option>
+                <option value="walikelas">Wali Kelas</option>
+                <option value="waka">Waka Kurikulum</option>
+                <option value="kamad">Kepala Madrasah</option>
               </select>
             </div>
           )}
@@ -352,10 +352,10 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
 
         <CardContent className="p-0 overflow-x-auto">
           {activeTab === "daftar" && (
-            <table className="w-full text-xs">
+            <table className="w-full text-xs min-w-[950px]">
               <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
                 <tr>
-                  <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("name")}>
+                  <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none min-w-[220px]" onClick={() => handleSort("name")}>
                     <div className="flex items-center gap-1.5">
                       <span>Nama Pegawai & NIP</span>
                       {sortColumn === "name" ? (
@@ -365,27 +365,17 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                       )}
                     </div>
                   </th>
-                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("status")}>
+                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none min-w-[200px]" onClick={() => handleSort("email")}>
                     <div className="flex items-center gap-1.5">
-                      <span>Status</span>
-                      {sortColumn === "status" ? (
+                      <span>Email / Username</span>
+                      {sortColumn === "email" ? (
                         sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
                       ) : (
                         <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
                       )}
                     </div>
                   </th>
-                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("golongan")}>
-                    <div className="flex items-center gap-1.5">
-                      <span>Golongan</span>
-                      {sortColumn === "golongan" ? (
-                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("mapel")}>
+                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none min-w-[160px]" onClick={() => handleSort("mapel")}>
                     <div className="flex items-center gap-1.5">
                       <span>Mapel Utama</span>
                       {sortColumn === "mapel" ? (
@@ -395,7 +385,8 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                       )}
                     </div>
                   </th>
-                  <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("bebanJp")}>
+                  <th className="py-3 px-3 min-w-[140px]">Peran / Tugas</th>
+                  <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none whitespace-nowrap" onClick={() => handleSort("bebanJp")}>
                     <div className="flex items-center justify-center gap-1.5">
                       <span>Beban JP</span>
                       {sortColumn === "bebanJp" ? (
@@ -405,8 +396,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                       )}
                     </div>
                   </th>
-                  <th className="py-3 px-3 text-center">Sertifikasi</th>
-                  <th className="py-3 px-4 text-center">Aksi & Kontrol</th>
+                  <th className="py-3 px-4 text-center min-w-[200px] whitespace-nowrap">Aksi & Kontrol</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -418,20 +408,17 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                       </div>
                       <div className="text-[10px] text-muted-foreground font-mono">NIP: {item.nip}</div>
                     </td>
-                    <td className="py-3 px-3">
-                      <Badge className={item.statusKepegawaian === "PNS" ? "bg-emerald-600 text-white" : item.statusKepegawaian === "PPPK" ? "bg-purple-600 text-white" : "bg-amber-600 text-white"}>
-                        {item.statusKepegawaian}
+                    <td className="py-3 px-3 font-mono text-muted-foreground max-w-[210px] truncate" title={item.email}>
+                      {item.email}
+                    </td>
+                    <td className="py-3 px-3 font-bold whitespace-nowrap">{item.mapelUtama}</td>
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <Badge className={item.role === "kamad" ? "bg-amber-600 text-white" : item.role === "waka" ? "bg-purple-600 text-white" : item.role === "walikelas" ? "bg-blue-600 text-white" : "bg-emerald-600 text-white"}>
+                        {item.tugasTambahan || (item.role === "walikelas" ? "Wali Kelas" : item.role === "waka" ? "Waka Kurikulum" : item.role === "kamad" ? "Kepala Madrasah" : "Guru Pengampu")}
                       </Badge>
                     </td>
-                    <td className="py-3 px-3 font-semibold">{item.golongan}</td>
-                    <td className="py-3 px-3 font-bold">{item.mapelUtama}</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-primary">{item.totalJp} JP</td>
-                    <td className="py-3 px-3 text-center">
-                      <Badge variant="outline" className={item.isSertifikasi ? "border-emerald-500 text-emerald-600 bg-emerald-500/10" : "border-muted text-muted-foreground"}>
-                        {item.isSertifikasi ? "✓ TPG" : "-"}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3 px-3 text-center font-mono font-bold text-primary whitespace-nowrap">{item.totalJp} JP</td>
+                    <td className="py-3 px-4 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         <Button
                           size="sm"
@@ -447,7 +434,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                           variant="outline"
                           className="h-7 text-xs font-bold gap-1"
                           onClick={() => handleOpenDetail(item)}
-                          title="Lihat Detail Profil & Berkas SK"
+                          title="Lihat Detail Profil"
                         >
                           <Eye className="h-3.5 w-3.5" /> Detail
                         </Button>

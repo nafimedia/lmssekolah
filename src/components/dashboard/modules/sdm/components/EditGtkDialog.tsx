@@ -93,49 +93,17 @@ export function EditGtkDialog({ selectedGtk, isOpen, onOpenChange, onSaveGtk }: 
             </div>
 
             <div>
-              <Label className="text-xs font-semibold mb-1 block">Status Kepegawaian</Label>
-              <select
-                className="w-full h-8 rounded-md border border-border bg-background px-2.5 text-xs font-semibold"
-                value={formData.statusKepegawaian || "PNS"}
-                onChange={(e) => setFormData({ ...formData, statusKepegawaian: e.target.value as any })}
-              >
-                <option value="PNS">PNS</option>
-                <option value="PPPK">PPPK</option>
-                <option value="GTT / Honor">GTT / Honor</option>
-              </select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold mb-1 block">Pangkat / Golongan</Label>
-              <Input
-                className="h-8 text-xs"
-                value={formData.golongan || ""}
-                onChange={(e) => setFormData({ ...formData, golongan: e.target.value })}
-                placeholder="misal: Pembina (IV/a)"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold mb-1 block">Mapel Utama / Jabatan</Label>
+              <Label className="text-xs font-semibold mb-1 block">Mata Pelajaran Utama</Label>
               <Input
                 className="h-8 text-xs"
                 value={formData.mapelUtama || ""}
                 onChange={(e) => setFormData({ ...formData, mapelUtama: e.target.value })}
+                placeholder="misal: Matematika / Bahasa Indonesia"
               />
             </div>
 
             <div>
-              <Label className="text-xs font-semibold mb-1 block">Beban mengajar (JP/Minggu)</Label>
-              <Input
-                type="number"
-                className="h-8 text-xs font-mono"
-                value={formData.totalJp || 24}
-                onChange={(e) => setFormData({ ...formData, totalJp: Number(e.target.value) })}
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold mb-1 block">Email</Label>
+              <Label className="text-xs font-semibold mb-1 block">Email / Username Resmi</Label>
               <Input
                 type="email"
                 className="h-8 text-xs font-mono"
@@ -150,29 +118,29 @@ export function EditGtkDialog({ selectedGtk, isOpen, onOpenChange, onSaveGtk }: 
                 className="h-8 text-xs font-mono"
                 value={formData.phone || ""}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="081234567890"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold mb-1 block">Beban Mengajar (JP/Minggu)</Label>
+              <Input
+                type="number"
+                className="h-8 text-xs font-mono"
+                value={formData.totalJp || 24}
+                onChange={(e) => setFormData({ ...formData, totalJp: Number(e.target.value) })}
               />
             </div>
           </div>
 
           <div>
-            <Label className="text-xs font-semibold mb-1 block">Tugas Tambahan</Label>
+            <Label className="text-xs font-semibold mb-1 block">Tugas Tambahan / Peran</Label>
             <Input
               className="h-8 text-xs"
               value={formData.tugasTambahan || ""}
               onChange={(e) => setFormData({ ...formData, tugasTambahan: e.target.value })}
-              placeholder="misal: Wali Kelas 8A & Pembina Pramuka"
+              placeholder="misal: Guru Pengampu / Wali Kelas 8A / Pembina OSIS"
             />
-          </div>
-
-          <div className="flex items-center gap-2 p-2.5 bg-muted/40 rounded-lg border border-border">
-            <Checkbox
-              id="isSertifikasi"
-              checked={formData.isSertifikasi || false}
-              onCheckedChange={(checked) => setFormData({ ...formData, isSertifikasi: Boolean(checked) })}
-            />
-            <Label htmlFor="isSertifikasi" className="text-xs font-semibold cursor-pointer">
-              Pegawai sudah memiliki Sertifikat Pendidik (TPG / Lulus Sertifikasi)
-            </Label>
           </div>
 
           <DialogFooter className="pt-3 border-t border-border flex justify-end gap-2">

@@ -6,6 +6,9 @@
 
 export function getClassCode(raw?: string | null): string {
   if (!raw || raw.trim() === "" || raw === "-") return "";
+  const upper = raw.trim().toUpperCase();
+  if (upper === "SEMUA" || upper === "ALL" || upper === "ADMIN") return "";
+
   const cleaned = raw.toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
 
   // Check Grade IX / 9
@@ -25,6 +28,7 @@ export function getClassCode(raw?: string | null): string {
 
   // Generic fallback: strip prefixes like KELAS or ROMBEL
   const stripped = cleaned.replace("KELAS", "").replace("ROMBEL", "").trim();
+  if (stripped === "SEMUA" || stripped === "ALL") return "";
   return stripped || raw.trim();
 }
 

@@ -109,13 +109,15 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
     }
 
     try {
-      const rombelObj = rombelList.find((r) => r.id === rombelId);
+      const rombelObj = rombelList.find((r) => r.id === rombelId || r.code === rombelId);
+      const cleanCode = rombelObj?.code || rombelObj?.name?.toLowerCase().replace(/\s+/g, "") || rombelId;
       await MysqlDataService.saveMasterRombel({
-        code: rombelId,
+        code: cleanCode,
         name: rombelObj?.name || rombelId,
         wali_kelas: newWaliName,
-        grade: "Kelas VIII",
-        room: "Ruang Rombel",
+        grade: rombelObj?.grade || "Kelas VIII",
+        room: rombelObj?.room || "Ruang Rombel",
+        siswa_count: rombelObj?.siswaCount || 0,
       });
       toast.success(`Wali Kelas ${editingRombel?.name || "Rombel"} tersimpan ke database MySQL!`);
     } catch (e) {

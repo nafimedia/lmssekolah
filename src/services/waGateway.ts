@@ -59,11 +59,8 @@ export const waGatewayService = {
       console.warn("[WA Gateway DB Error]:", e);
     }
 
-    // Trigger UI Toast Notification for Live Feedback
-    toast.success(`📲 WhatsApp Sent to ${payload.recipientName} (${payload.recipientPhone})`, {
-      description: payload.messageText.substring(0, 90) + "...",
-      duration: 5000,
-    });
+    // WA Alert Toast Disabled per User Request
+    // toast.success(`📲 WhatsApp Sent to ${payload.recipientName} (${payload.recipientPhone})`);
 
     return newLog;
   },

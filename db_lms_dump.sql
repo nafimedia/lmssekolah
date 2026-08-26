@@ -1,6 +1,6 @@
 -- ========================================================
 -- EXPORT DATABASE LMS (db_lms) - FIX REAL DATA FROM EXCEL
--- Generated: 26/8/2026, 22.32.46
+-- Generated: 26/8/2026, 22.44.28
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -184,7 +184,6 @@ INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-siswa-98', '3110508918@siswa.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'MIKAEL EZRA EL GHAZY', 'NISN', '3110508918', 'IX-B', NULL, 'siswa', NULL, '2026-08-06 16:19:10', '2026-08-25 18:46:46');
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-siswa-99', '3120769475@siswa.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'MUHAMAD NGAFIFUDIN', 'NISN', '3120769475', 'IX-B', NULL, 'siswa', NULL, '2026-08-06 16:19:10', '2026-08-25 18:46:46');
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-waka-1', 'waka@mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'Dra. Hj. Maryam, M.Pd', 'NISN', '197508202002122001', NULL, NULL, 'waka', NULL, '2026-07-28 18:57:36', '2026-08-25 18:46:46');
-INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-walikelas-1', 'walikelas@mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'Bpk. Hendra Wijaya, M.Sc', 'NISN', '198211102009041003', NULL, NULL, 'guru', NULL, '2026-07-28 18:57:36', '2026-08-25 18:46:46');
 
 -- --------------------------------------------------------
 -- Table structure & data for `jadwal_pelajaran`

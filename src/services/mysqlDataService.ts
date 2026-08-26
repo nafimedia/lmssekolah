@@ -200,7 +200,7 @@ export class MysqlDataService {
           nip = "197906142007102002";
           identityType = "NIP";
           role = "guru";
-        } else if (name.includes("Hendra Wijaya") || email === "walikelas@mtsn2cilacap.sch.id" || name.toLowerCase().includes("sobiyati")) {
+        } else if (email === "walikelas@mtsn2cilacap.sch.id" || name.toLowerCase().includes("sobiyati")) {
           name = "SOBIYATI, S.Pd";
           nip = "197906142007102002";
           identityType = "NIP";

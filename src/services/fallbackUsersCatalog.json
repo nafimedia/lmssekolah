@@ -1578,15 +1578,5 @@
     "class_name": null,
     "subject_specialty": null,
     "role": "waka"
-  },
-  {
-    "id": "usr-walikelas-1",
-    "full_name": "Bpk. Hendra Wijaya, M.Sc",
-    "email": "walikelas@mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "198211102009041003",
-    "class_name": null,
-    "subject_specialty": null,
-    "role": "guru"
   }
 ]

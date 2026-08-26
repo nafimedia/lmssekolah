@@ -71,11 +71,9 @@ export function ApresiasiGuruModule({ activeRole }: { activeRole?: string }) {
         });
         if (guruUsers.length > 0) {
           const mapped = guruUsers.map((g, idx) => {
-            let cleanName = g.full_name;
-            if (cleanName.includes("Hendra Wijaya")) cleanName = "SOBIYATI, S.Pd";
             return {
               id: String(g.id || `g-${idx + 1}`),
-              name: cleanName,
+              name: g.full_name,
               mapel: (g as any).assigned_mapel || (g as any).specialization || "Guru Pengampu KBM",
               nip: g.nis_nip || "-",
               badges: [] as string[],

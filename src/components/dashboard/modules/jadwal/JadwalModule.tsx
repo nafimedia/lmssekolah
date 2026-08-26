@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService, JadwalRow } from "@/services/mysqlDataService";
 import { toast } from "sonner";
-import { Download, PencilLine, Trash2, Printer, Plus, CalendarClock } from "lucide-react";
+import { Download, PencilLine, Trash2, Printer, Plus, CalendarClock, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -222,14 +222,11 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
           </div>
         </div>
       ) : (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-xs">
-          <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
-            <span className="text-base">🔒</span>
-            <span>Jadwal Khusus Rombel Binaan Anda: <strong className="text-emerald-700 dark:text-emerald-400 text-sm font-black">{resolvedInitialRombel} ({resolvedInitialGrade})</strong></span>
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-2xs">
+          <div className="flex items-center gap-2.5 text-xs font-extrabold text-emerald-900 dark:text-emerald-200">
+            <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>Jadwal Pelajaran <strong className="text-emerald-700 dark:text-emerald-400 font-black">{resolvedInitialRombel} ({resolvedInitialGrade})</strong></span>
           </div>
-          <Badge className="bg-emerald-700 text-white font-extrabold text-[10px] px-2.5 py-0.5">
-            100% Presisi {isWaliKelas ? "Wali Kelas" : "Siswa"}
-          </Badge>
         </div>
       )}
 

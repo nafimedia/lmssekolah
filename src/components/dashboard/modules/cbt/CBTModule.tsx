@@ -329,7 +329,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
                 {isWaliKelas ? (
                   <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
                     <Building2 className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>🔒 Rombel Binaan Wali Kelas: {binaanRombel}</span>
+                    <span>Rombel Binaan: {binaanRombel}</span>
                   </div>
                 ) : (
                   <select

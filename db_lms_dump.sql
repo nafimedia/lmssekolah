@@ -1,6 +1,6 @@
 -- ========================================================
 -- EXPORT DATABASE LMS (db_lms) - FIX REAL DATA FROM EXCEL
--- Generated: 27/8/2026, 06.01.37
+-- Generated: 27/8/2026, 06.24.24
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;

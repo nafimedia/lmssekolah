@@ -142,8 +142,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         size: calcSize,
       });
 
-      if (res && res.success === false && res.message) {
-        toast.error(res.message);
+      if (res === false) {
+        toast.error("Gagal mengunggah Modul Ajar ke database.");
         return;
       }
 

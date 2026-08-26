@@ -53,15 +53,22 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       }
 
       if (dbRombels && dbRombels.length > 0) {
+        const siswaUsers = (users || []).filter((u: any) => u.role === "siswa");
         const mapped = dbRombels.map((r: any) => {
-          const matchedPengampu = (pengampu as any[]).find((p: any) => isSameClass(p.rombel || p.class_name, r.name));
+          const rCode = (r.code || r.name || "").toUpperCase().replace(/ROMBEL/i, "").trim();
+          const realStudentCount = siswaUsers.filter((s: any) => {
+            const sClass = (s.class_name || "").toUpperCase().replace("-", "").trim();
+            return sClass.includes(rCode) || rCode.includes(sClass);
+          }).length;
+
           return {
             id: r.id,
+            code: r.code,
             name: r.name,
             grade: r.grade || (r.name.includes("7") ? "Kelas VII" : r.name.includes("9") ? "Kelas IX" : "Kelas VIII"),
-            waliKelas: matchedPengampu?.guru || matchedPengampu?.wali_kelas || r.wali_kelas || "Belum Ditentukan",
-            studentCount: r.student_count || 0,
-            room: r.room || "Gedung Utama",
+            waliKelas: r.wali_kelas || r.waliKelas || "Belum Ditentukan",
+            studentCount: realStudentCount > 0 ? realStudentCount : (r.siswa_count || r.student_count || 0),
+            room: r.room || `Ruang ${r.name.replace('Rombel ', '')}`,
           };
         });
         setRombelList(mapped);

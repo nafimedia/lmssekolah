@@ -48,7 +48,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
     if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
     if (cleanName.includes("misbah")) return "Rombel 7A";
     if (cleanName.includes("endah")) return "Rombel 7B";
-    if (cleanName.includes("siti rahmah")) return "Rombel 8A";
+    if (cleanName.includes("sobiyati")) return "Rombel 8A";
     if (cleanName.includes("sobiyati")) return "Rombel 9A";
     if (cleanName.includes("sayono")) return "Rombel 9B";
 

@@ -38,7 +38,7 @@ export const INITIAL_ROLE_USERS: Record<string, { role: string; name: string; cl
   "solihun@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197203151998031002", identity_type: "NIP" },
   "waka@mtsn2cilacap.sch.id": { role: "waka,guru", name: "ALI MANSUR, S.Pd", class_name: "VIII", subject_specialty: "Ilmu Pendidikan Sosial", nis_nip: "198302142023211010", identity_type: "NIP" },
   "walikelas@mtsn2cilacap.sch.id": { role: "walikelas,guru", name: "SOBIYATI, S.Pd", class_name: "IX-A", subject_specialty: "Matematika", nis_nip: "197808152005012004", identity_type: "NIP" },
-  "guru@mtsn2cilacap.sch.id": { role: "guru", name: "Dra. Hj. SITI RAHMAH, M.Pd", class_name: "VIII-A", subject_specialty: "Bahasa Indonesia", nis_nip: "198005122006042005", identity_type: "NIP" },
+  "guru@mtsn2cilacap.sch.id": { role: "guru", name: "SOBIYATI, S.Pd", class_name: "VIII-A", subject_specialty: "Bahasa Indonesia", nis_nip: "197906142007102002", identity_type: "NIP" },
   "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class_name: "VIII-A", nis_nip: "0127790481", identity_type: "NISN" },
 };
 

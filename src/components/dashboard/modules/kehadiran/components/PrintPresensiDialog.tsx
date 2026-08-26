@@ -108,11 +108,13 @@ export function PrintPresensiDialog({
           <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
             <div className="text-center space-y-8">
               <div>Wali Kelas {selectedClass}</div>
-              <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+              <div className="font-bold underline text-slate-950">
+                {selectedClass.includes("7A") ? "MAULIDIA NURUL IZATI, S.Pd" : selectedClass.includes("7B") ? "RINDANG FARIHA IDANA, S.Pd" : selectedClass.includes("8A") ? "SOBIYATI, S.Pd" : selectedClass.includes("8B") ? "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" : selectedClass.includes("9A") ? "NOVANTYA KARTIKAWATI, S.Pd" : selectedClass.includes("9B") ? "INDAH NURROHMAH, S.Pd" : "Wali Kelas MTsN 2 Cilacap"}
+              </div>
             </div>
             <div className="text-center space-y-8">
               <div>Cilacap, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}<br />Kepala MTsN 2 Cilacap</div>
-              <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
+              <div className="font-bold underline text-slate-950">H. SOLIHUN, S.Pd., M.Si</div>
             </div>
           </div>
         </div>

@@ -611,7 +611,7 @@ function Dashboard() {
   if (cleanNameForSidebar.includes("achmad makmun") || cleanNipForSidebar.includes("272005011001")) resolvedWaliRombel = "Rombel 8B";
   else if (cleanNameForSidebar.includes("misbah")) resolvedWaliRombel = "Rombel 7A";
   else if (cleanNameForSidebar.includes("endah")) resolvedWaliRombel = "Rombel 7B";
-  else if (cleanNameForSidebar.includes("siti rahmah")) resolvedWaliRombel = "Rombel 8A";
+  else if (cleanNameForSidebar.includes("sobiyati")) resolvedWaliRombel = "Rombel 8A";
   else if (cleanNameForSidebar.includes("sobiyati")) resolvedWaliRombel = "Rombel 9A";
   else if (cleanNameForSidebar.includes("sayono")) resolvedWaliRombel = "Rombel 9B";
   else if (activeUserForSidebar?.class_name) resolvedWaliRombel = activeUserForSidebar.class_name;
@@ -747,7 +747,7 @@ function DashboardContent({
     if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
     if (cleanName.includes("misbah")) return "Rombel 7A";
     if (cleanName.includes("endah")) return "Rombel 7B";
-    if (cleanName.includes("siti rahmah")) return "Rombel 8A";
+    if (cleanName.includes("sobiyati")) return "Rombel 8A";
     if (cleanName.includes("sobiyati")) return "Rombel 9A";
     if (cleanName.includes("sayono")) return "Rombel 9B";
     if (userProfile?.class_name) return userProfile.class_name;
@@ -1128,7 +1128,7 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
     if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
     if (cleanName.includes("misbah")) return "Rombel 7A";
     if (cleanName.includes("endah")) return "Rombel 7B";
-    if (cleanName.includes("siti rahmah")) return "Rombel 8A";
+    if (cleanName.includes("sobiyati")) return "Rombel 8A";
     if (cleanName.includes("sobiyati")) return "Rombel 9A";
     if (cleanName.includes("sayono")) return "Rombel 9B";
 
@@ -1839,7 +1839,7 @@ function KehadiranSiswa({ activeRole, userProfile }: { activeRole?: string; user
             <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
               <div className="text-center space-y-8">
                 <div>Wali Kelas {selectedClass}</div>
-                <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+                <div className="font-bold underline text-slate-950">SOBIYATI, S.Pd</div>
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}<br />Kepala MTsN 2 Cilacap</div>
@@ -1894,7 +1894,7 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
     if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
     if (cleanName.includes("misbah")) return "Rombel 7A";
     if (cleanName.includes("endah")) return "Rombel 7B";
-    if (cleanName.includes("siti rahmah")) return "Rombel 8A";
+    if (cleanName.includes("sobiyati")) return "Rombel 8A";
     if (cleanName.includes("sobiyati")) return "Rombel 9A";
     if (cleanName.includes("sayono")) return "Rombel 9B";
 
@@ -2406,7 +2406,7 @@ function Jadwal({ activeRole, userProfile }: { activeRole?: string; userProfile?
             <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
               <div className="text-center space-y-8">
                 <div>Waka Kurikulum</div>
-                <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+                <div className="font-bold underline text-slate-950">SOBIYATI, S.Pd</div>
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
@@ -2445,7 +2445,7 @@ function MataPelajaran({ activeRole, userProfile }: { activeRole?: string; userP
   const [forumComment, setForumComment] = useState("");
   const [forumList, setForumList] = useState([
     { name: "Muhammad Fairuz", time: "10 mnt lalu", text: "Assalamu'alaikum ustadzah, untuk hafalan hadits disetorkan dalam bentuk rekaman audio atau video?" },
-    { name: "Dra. Hj. Siti Rahmah, M.Pd", time: "5 mnt lalu", text: "Wa'alaikumsalam Fairuz, boleh berupa rekaman audio MP3 atau video MP4 ya." }
+    { name: "SOBIYATI, S.Pd", time: "5 mnt lalu", text: "Wa'alaikumsalam Fairuz, boleh berupa rekaman audio MP3 atau video MP4 ya." }
   ]);
   const [presensiDone, setPresensiDone] = useState(false);
   const [isTeacherPresensiOpen, setIsTeacherPresensiOpen] = useState(false);
@@ -3044,7 +3044,7 @@ startxref
       code: m.code,
       name: m.name,
       category: m.category,
-      teacher: m.teacher || "Dra. Hj. Siti Rahmah, M.Pd",
+      teacher: m.teacher || "SOBIYATI, S.Pd",
       icon: m.icon || "📖",
       jp: parseInt(m.jp) || 2,
       kkm: 75,
@@ -3888,7 +3888,7 @@ function Nilai({ activeRole }: { activeRole?: string }) {
   const classesList = [
     { name: "Kelas VII A", wali: "MISBAH AHMAD DANI, S.Pd", siswa: 32, avg: 86.4, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
     { name: "Kelas VII B", wali: "ENDAH SUPRIHATIN, S.Pd", siswa: 32, avg: 85.8, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
-    { name: "Kelas VIII A", wali: "Dra. Hj. Siti Rahmah, M.Pd", siswa: 32, avg: 88.2, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
+    { name: "Kelas VIII A", wali: "SOBIYATI, S.Pd", siswa: 32, avg: 88.2, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
     { name: "Kelas VIII B", wali: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", siswa: 32, avg: 87.4, icon: "🏫", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
     { name: "Kelas IX A", wali: "SOBIYATI, S.Pd", siswa: 32, avg: 89.1, icon: "🎓", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
     { name: "Kelas IX B", wali: "SAYONO, S.Pd., M.Pd.", siswa: 32, avg: 88.5, icon: "🎓", mapelsCount: 15, tuntas: "32 Siswa Tuntas" },
@@ -4193,7 +4193,7 @@ function Nilai({ activeRole }: { activeRole?: string }) {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle className="text-base font-bold">Matriks Mata Pelajaran & Progres Pembelajaran Kelas 8A</CardTitle>
-                <CardDescription className="text-xs">Wali Kelas: Dra. Hj. Siti Rahmah, M.Pd • 32 Siswa</CardDescription>
+                <CardDescription className="text-xs">Wali Kelas: SOBIYATI, S.Pd • 32 Siswa</CardDescription>
               </div>
               <Badge className="bg-blue-600 text-white font-mono font-bold text-xs">ROMBEL 8A</Badge>
             </div>
@@ -4291,7 +4291,7 @@ function Nilai({ activeRole }: { activeRole?: string }) {
                     <tbody>
                       <tr><td>1</td><td>Kelas VII A</td><td>Misbah Ahmad Dani, S.Pd</td><td>32 Siswa</td><td>86.4</td><td>100% Tuntas</td></tr>
                       <tr><td>2</td><td>Kelas VII B</td><td>Endah Suprihatin, S.Pd</td><td>32 Siswa</td><td>85.8</td><td>100% Tuntas</td></tr>
-                      <tr><td>3</td><td>Kelas VIII A</td><td>Dra. Hj. Siti Rahmah, M.Pd</td><td>32 Siswa</td><td>88.2</td><td>100% Tuntas</td></tr>
+                      <tr><td>3</td><td>Kelas VIII A</td><td>SOBIYATI, S.Pd</td><td>32 Siswa</td><td>88.2</td><td>100% Tuntas</td></tr>
                       <tr><td>4</td><td>Kelas VIII B</td><td>Achmad Makmun Rosid, S.Pd., M.Pd</td><td>32 Siswa</td><td>87.4</td><td>100% Tuntas</td></tr>
                       <tr><td>5</td><td>Kelas IX A</td><td>Sobiyati, S.Pd</td><td>32 Siswa</td><td>89.1</td><td>100% Tuntas</td></tr>
                       <tr><td>6</td><td>Kelas IX B</td><td>Sayono, S.Pd., M.Pd.</td><td>32 Siswa</td><td>88.5</td><td>100% Tuntas</td></tr>
@@ -4519,7 +4519,7 @@ function Nilai({ activeRole }: { activeRole?: string }) {
               </div>
               <div className="text-center space-y-8">
                 <div>Wali Kelas {raporClass}</div>
-                <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+                <div className="font-bold underline text-slate-950">SOBIYATI, S.Pd</div>
               </div>
               <div className="text-center space-y-8">
                 <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
@@ -4674,7 +4674,7 @@ function Progress({ activeRole }: { activeRole?: string }) {
                 <Users className="h-5 w-5 text-primary" /> Rincian Progress Belajar - {selectedStudentModal?.name}
               </DialogTitle>
               <DialogDescription className="text-xs">
-                NISN: <strong>{selectedStudentModal?.nis}</strong> • Rombel VIII A • Walikelas: Dra. Hj. Siti Rahmah, M.Pd
+                NISN: <strong>{selectedStudentModal?.nis}</strong> • Rombel VIII A • Walikelas: SOBIYATI, S.Pd
               </DialogDescription>
             </DialogHeader>
 
@@ -5596,7 +5596,7 @@ function ManajemenKelas({ activeRole }: { activeRole?: string }) {
         grade: "VIII",
         name: "8A",
         room: "Ruang R-201",
-        waliKelas: "DRA. HJ. SITI RAHMAH, M.Pd",
+        waliKelas: "SOBIYATI, S.Pd",
         capacity: 32,
         tahunAjaran: "2025/2026 Ganjil",
         presensiPct: 98.2,

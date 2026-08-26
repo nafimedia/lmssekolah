@@ -195,9 +195,9 @@ export class MysqlDataService {
           nip = "197905162006041020";
           identityType = "NIP";
           role = "kamad";
-        } else if (email === "guru@mtsn2cilacap.sch.id" || name.toLowerCase().includes("siti rahmah")) {
-          name = "Dra. Hj. SITI RAHMAH, M.Pd";
-          nip = "198005122006042005";
+        } else if (email === "guru@mtsn2cilacap.sch.id" || name.toLowerCase().includes("sobiyati")) {
+          name = "SOBIYATI, S.Pd";
+          nip = "197906142007102002";
           identityType = "NIP";
           role = "guru";
         } else if (name.includes("Hendra Wijaya") || email === "walikelas@mtsn2cilacap.sch.id" || name.toLowerCase().includes("sobiyati")) {

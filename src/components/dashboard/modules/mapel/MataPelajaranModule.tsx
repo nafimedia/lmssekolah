@@ -182,7 +182,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
       code: m.code,
       name: m.name,
       category: m.category,
-      teacher: m.teacher || "Dra. Hj. Siti Rahmah, M.Pd",
+      teacher: m.teacher || "Guru Pengampu MTsN 2",
       icon: m.icon || "📖",
       jp: parseInt(m.jp) || 2,
       kkm: 75,

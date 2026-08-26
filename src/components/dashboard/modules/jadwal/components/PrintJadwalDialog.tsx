@@ -105,11 +105,11 @@ export function PrintJadwalDialog({ isOpen, onOpenChange, filterKelas, filterRom
           <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
             <div className="text-center space-y-8">
               <div>Waka Kurikulum</div>
-              <div className="font-bold underline text-slate-950">Dra. Hj. Siti Rahmah, M.Pd</div>
+              <div className="font-bold underline text-slate-950">ALI MANSUR, S.Pd</div>
             </div>
             <div className="text-center space-y-8">
-              <div>Cilacap, 11 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
-              <div className="font-bold underline text-slate-950">Solihun, S.Pd, M.Si.</div>
+              <div>Cilacap, 26 Agustus 2026<br />Kepala MTsN 2 Cilacap</div>
+              <div className="font-bold underline text-slate-950">H. SOLIHUN, S.Pd., M.Si</div>
             </div>
           </div>
         </div>

@@ -262,7 +262,7 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
       { subject_name: "Bahasa Indonesia", teacher: "SOBIYATI, S.Pd" },
       { subject_name: "Bahasa Inggris", teacher: "ALI MANSUR, S.Pd" },
       { subject_name: "Matematika", teacher: "ACHMAD MAKMUN, S.Pd.I" },
-      { subject_name: "Ilmu Pengetahuan Alam", teacher: "Dra. Hj. SITI RAHMAH, M.Pd" },
+      { subject_name: "Ilmu Pengetahuan Alam", teacher: "NOVANTYA KARTIKAWATI, S.Pd" },
       { subject_name: "Ilmu Pengetahuan Sosial", teacher: "UMI KHAFSOH, S.Pd" },
       { subject_name: "Pendidikan Kewarganegaraan", teacher: "SAYONO, S.Pd.I" },
       { subject_name: "PJOK", teacher: "MISBAH AHMAD DANI, S.Pd" },

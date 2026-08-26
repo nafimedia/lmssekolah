@@ -48,7 +48,7 @@ export function WaliKelasDashboardView({
     if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Kelas VIII B";
     if (cleanName.includes("misbah") || cleanName.includes("maulidia")) return "Kelas VII A";
     if (cleanName.includes("endah") || cleanName.includes("rindang")) return "Kelas VII B";
-    if (cleanName.includes("siti rahmah")) return "Kelas VIII A";
+    if (cleanName.includes("sobiyati")) return "Kelas VIII A";
     if (cleanName.includes("sobiyati")) return "Kelas IX A";
     if (cleanName.includes("sayono")) return "Kelas IX B";
 

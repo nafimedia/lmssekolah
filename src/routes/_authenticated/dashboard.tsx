@@ -918,13 +918,13 @@ function DashboardContent({
               {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
             </Button>
 
-            {/* Notification Center Popover */}
-            <NotificationCenterPopover
+            {/* Notification Center Popover (Disabled for clean header visual per user request) */}
+            {/* <NotificationCenterPopover
               setActiveTab={(key: string) => setActive(key as MenuKey)}
               onOpenWaModal={() => setIsWaModalOpen(true)}
               activeRole={activeRole}
               userProfile={userProfile}
-            />
+            /> */}
 
             {/* Multi-Role Switcher Dropdown */}
             {myAssignedRoles.length > 1 || isSuperAdmin ? (

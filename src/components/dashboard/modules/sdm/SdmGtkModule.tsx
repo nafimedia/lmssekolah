@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { MysqlDataService, GtkLeaveRow, GtkDocumentRow } from "@/services/mysqlDataService";
-import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { MysqlAuthService, saveUserProfileOverride } from "@/services/mysqlAuthService";
 import {
   Users,
   UserCheck,
@@ -109,16 +109,26 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
   const handleSaveGtk = async (updated: GtkItem) => {
     setGtkList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
     try {
-      await MysqlAuthService.registerUser({
-        full_name: updated.name,
+      saveUserProfileOverride(updated.email, {
+        id: updated.id,
         email: updated.email,
+        full_name: updated.name,
         nis_nip: updated.nip,
-        role: "guru",
-        password: "123456",
+        phone: updated.phone || "",
       });
-      toast.success(`Perubahan data GTK ${updated.name} berhasil tersimpan ke database.`);
+
+      await MysqlDataService.updateUserProfile({
+        originalEmail: updated.email,
+        id: updated.id,
+        fullName: updated.name,
+        email: updated.email,
+        nipNis: updated.nip,
+        phone: updated.phone || "",
+      });
+      toast.success(`Perubahan data GTK "${updated.name}" berhasil tersimpan ke database MySQL.`);
     } catch (e) {
       console.warn("Gagal simpan GTK ke MySQL:", e);
+      toast.error("Gagal menyimpan perubahan GTK ke database.");
     }
   };
 
@@ -134,9 +144,22 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
     }
   };
 
-  const handleAddGtk = (newGtk: GtkItem) => {
+  const handleAddGtk = async (newGtk: GtkItem) => {
     setGtkList((prev) => [newGtk, ...prev]);
-    toast.success(`Data pegawai GTK ${newGtk.name} berhasil ditambahkan!`);
+    try {
+      await MysqlAuthService.registerUser({
+        full_name: newGtk.name,
+        email: newGtk.email,
+        nis_nip: newGtk.nip,
+        role: "guru",
+        subject_specialty: newGtk.mapelUtama,
+        phone: newGtk.phone,
+        password: "asd123",
+      });
+      toast.success(`Data pegawai GTK ${newGtk.name} berhasil ditambahkan ke database!`);
+    } catch (e) {
+      console.warn("Gagal tambah GTK ke MySQL:", e);
+    }
   };
 
   const handleAddLeave = (leaveData: { teacherName: string; leaveType: string; startDate: string; endDate: string; reason: string }) => {

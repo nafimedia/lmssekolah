@@ -129,17 +129,23 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     const newId = "mod_" + Date.now();
 
     try {
-      await MysqlDataService.saveMaterial({
+      const res = await MysqlDataService.saveMaterial({
         id: newId,
         title: data.title.trim(),
         subject_name: data.mapel,
         class_name: data.jenjang,
+        type: "Modul Ajar",
         uploaded_by: currentTeacherName || "Guru Pengampu",
         teacher_name: currentTeacherName || "Guru Pengampu",
         file_url: fileUrlToSave || ("/uploads/" + newId + ".pdf"),
         filename: data.file?.name || `${data.title}.pdf`,
         size: calcSize,
       });
+
+      if (res && res.success === false && res.message) {
+        toast.error(res.message);
+        return;
+      }
 
       toast.success(`Modul Ajar PDF "${data.title}" berhasil diunggah dan tersimpan permanen ke database!`);
       await fetchMaterials();
@@ -155,19 +161,6 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       selectedStatusFilter === "semua" ||
       (selectedStatusFilter === "pending" && m.status !== "Terverifikasi Waka") ||
       (selectedStatusFilter === "verified" && m.status === "Terverifikasi Waka");
-
-    if (isGuru) {
-      const cleanTeacher = (currentTeacherName || "").toLowerCase().trim();
-      const cleanMTeacher = m.teacher.toLowerCase().trim();
-      const cleanSubject = (currentSubject || "").toLowerCase().trim();
-      const cleanMMapel = m.mapel.toLowerCase().trim();
-
-      const isNameMatch = cleanTeacher && (cleanMTeacher.includes(cleanTeacher) || cleanTeacher.includes(cleanMTeacher));
-      const isSubjectMatch = cleanSubject && (cleanMMapel.includes(cleanSubject) || cleanSubject.includes(cleanMMapel));
-
-      const isMine = isNameMatch || isSubjectMatch;
-      return matchJenjang && matchStatus && isMine;
-    }
 
     return matchJenjang && matchStatus;
   });

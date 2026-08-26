@@ -1,6 +1,6 @@
 -- ========================================================
 -- EXPORT DATABASE LMS (db_lms) - FIX REAL DATA FROM EXCEL
--- Generated: 27/8/2026, 01.46.50
+-- Generated: 27/8/2026, 02.02.40
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -54,7 +54,7 @@ INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-guru-31', '199611202025211009@guru.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'ILHAM HABIBI, S.Pd', 'NIP', '199611202025211009', NULL, 'Ilmu Pendidikan Alam', 'guru', NULL, '2026-08-06 17:19:33', '2026-08-25 19:46:46');
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-guru-32', '199701112025211009@guru.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'MISBAH AHMAD DANI, S.Pd', 'NIP', '199701112025211009', NULL, 'Al Qur''an Hadis', 'guru', NULL, '2026-08-06 17:19:33', '2026-08-25 19:46:46');
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-guru-33', '199711212025212010@guru.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'SASI VIVIANI, S.Pd', 'NIP', '199711212025212010', NULL, 'Bahasa Inggris', 'guru', NULL, '2026-08-06 17:19:33', '2026-08-25 19:46:46');
-INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-guru-34', '199711302025052006@guru.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'ANGGUN NOVTALIA BERLIAN, S.Pd', 'NIP', '199711302025052006', NULL, 'Pendidikan Kewarganegaraan', 'guru', NULL, '2026-08-06 17:19:33', '2026-08-25 19:46:46');
+INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-guru-34', '199711302025052006@guru.mtsn2cilacap.sch.id', '$2b$10$kEJ7aaiMcwrbu1HhEMECROh/7NOfbMK1kd0LLH7v2z1T43JzPTlyW', 'ANGGUN NOVTALIA BERLIAN, S.Pd', 'NIP', '199711302025052006', NULL, 'Pendidikan Kewarganegaraan', 'guru', NULL, '2026-08-06 17:19:33', '2026-08-26 18:53:34');
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-guru-35', '199712302024212037@guru.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'INDAH NURROHMAH, S.Pd', 'NIP', '199712302024212037', 'IX B', 'Bahasa Inggris', 'walikelas', NULL, '2026-08-06 17:19:33', '2026-08-25 19:46:46');
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-guru-36', '199804202025052007@guru.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'SARAH SAFIRA, S.Pd', 'NIP', '199804202025052007', NULL, 'Bimbingan dan Konseling', 'guru', NULL, '2026-08-06 17:19:33', '2026-08-25 19:46:46');
 INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `identity_type`, `nis_nip`, `class_name`, `subject_specialty`, `role`, `avatar_url`, `created_at`, `updated_at`) VALUES ('usr-guru-37', '199810202025052006@guru.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'HIKMATUL ASTRI AZKIYA, S.Pd', 'NIP', '199810202025052006', NULL, 'Ilmu Pendidikan Alam', 'guru', NULL, '2026-08-06 17:19:33', '2026-08-25 19:46:46');
@@ -471,6 +471,26 @@ INSERT INTO `master_rombels` (`id`, `code`, `name`, `grade`, `wali_kelas`, `room
 INSERT INTO `master_rombels` (`id`, `code`, `name`, `grade`, `wali_kelas`, `room`, `siswa_count`, `created_at`) VALUES (4, '8b', 'Rombel 8B', 'Kelas VIII', 'ACHMAD MAKMUN ROSID, S.Pd., M.Pd', 'Ruang 8B', 28, '2026-08-26 14:32:26');
 INSERT INTO `master_rombels` (`id`, `code`, `name`, `grade`, `wali_kelas`, `room`, `siswa_count`, `created_at`) VALUES (5, '9a', 'Rombel 9A', 'Kelas IX', 'NOVANTYA KARTIKAWATI, S.Pd', 'Ruang 9A', 33, '2026-08-26 14:32:26');
 INSERT INTO `master_rombels` (`id`, `code`, `name`, `grade`, `wali_kelas`, `room`, `siswa_count`, `created_at`) VALUES (6, '9b', 'Rombel 9B', 'Kelas IX', 'INDAH NURROHMAH, S.Pd', 'Ruang 9B', 30, '2026-08-26 14:32:26');
+
+-- --------------------------------------------------------
+-- Table structure & data for `materials`
+-- --------------------------------------------------------
+DROP TABLE IF EXISTS `materials`;
+CREATE TABLE `materials` (
+  `id` varchar(64) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `subject_name` varchar(100) NOT NULL,
+  `class_name` varchar(50) NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `size` varchar(50) DEFAULT '2.5 MB',
+  `filename` varchar(255) NOT NULL,
+  `file_url` text,
+  `uploaded_by` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `materials` (`id`, `title`, `subject_name`, `class_name`, `type`, `size`, `filename`, `file_url`, `uploaded_by`, `created_at`) VALUES ('mod_sample_1', 'Modul Ajar Pendidikan Kewarganegaraan Kelas VII Bab 1', 'Pendidikan Kewarganegaraan', 'Kelas VII', 'Modul Ajar', '2.8 MB', 'Modul_PKn_Kelas_VII.pdf', '/uploads/mod_sample_1.pdf', 'ANGGUN NOVTALIA BERLIAN, S.Pd', '2026-08-26 19:02:33');
 
 -- --------------------------------------------------------
 -- Table structure & data for `audit_logs`

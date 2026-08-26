@@ -153,7 +153,6 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
         nis_nip: newGtk.nip,
         role: "guru",
         subject_specialty: newGtk.mapelUtama,
-        phone: newGtk.phone,
         password: "asd123",
       });
       toast.success(`Data pegawai GTK ${newGtk.name} berhasil ditambahkan ke database!`);

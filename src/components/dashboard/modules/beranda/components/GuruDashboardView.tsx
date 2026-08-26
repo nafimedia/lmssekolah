@@ -49,24 +49,24 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           MysqlDataService.getJournals(),
         ]);
 
-        // 1. Filter schedule for active teacher
+        // 1. Filter schedule strictly for active teacher
         const myNameLower = (currentUser?.full_name || userName || "").toLowerCase().trim();
+        const myFirstName = myNameLower.split(" ")[0] || "";
         const myNip = (currentUser?.nis_nip || "").trim();
 
         const allTeacherSchedule = (dbJadwal || []).filter((j: any) => {
           const jGuruLower = (j.guru || j.teacher_name || "").toLowerCase().trim();
-          const isMyName = jGuruLower.includes(myNameLower) || myNameLower.includes(jGuruLower);
+          if (!jGuruLower) return false;
+          const isMyName = jGuruLower.includes(myNameLower) || myNameLower.includes(jGuruLower) || (myFirstName.length >= 3 && jGuruLower.includes(myFirstName));
           const isMyNip = myNip && jGuruLower.includes(myNip);
-          const isMySubject = isSubjectAllowedForUser(j.mapel || j.subject_name || "");
-
-          return isMyName || isMyNip || isMySubject;
+          return isMyName || isMyNip;
         });
 
         const todayTeacherSchedule = allTeacherSchedule.filter((j: any) => {
           return (j.hari || "").toLowerCase().trim() === currentDayName.toLowerCase().trim();
         });
 
-        setJadwalHariIni(todayTeacherSchedule.length > 0 ? todayTeacherSchedule : allTeacherSchedule);
+        setJadwalHariIni(todayTeacherSchedule);
 
         // 2. Filter LKPD activities for teacher assigned subjects
         const myLkpd = (dbLkpd || []).filter((act: any) => isSubjectAllowedForUser(act.mapel || act.subject || ""));
@@ -75,7 +75,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
         // 3. Count journals completed by this teacher
         const myJournals = (dbJournals || []).filter((j: any) => {
           const jGuruLower = (j.guru_name || j.guru || "").toLowerCase().trim();
-          return jGuruLower.includes(myNameLower) || myNameLower.includes(jGuruLower);
+          return jGuruLower.includes(myNameLower) || myNameLower.includes(jGuruLower) || (myFirstName.length >= 3 && jGuruLower.includes(myFirstName));
         });
         setJournalCount(myJournals.length);
 
@@ -87,6 +87,9 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
     }
     loadRealData();
   }, [currentDayName, userName]);
+
+  const uniqueRombelsHariIni = Array.from(new Set(jadwalHariIni.map((j: any) => j.rombel).filter(Boolean)));
+  const rombelsTextDisplay = uniqueRombelsHariIni.join(", ");
 
   return (
     <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
@@ -130,7 +133,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           >
             <CardHeader className="pb-2">
               <CardDescription className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
-                <span>Jadwal Mengajar Saya Hari Ini</span>
+                <span>Jadwal Mengajar Saya Hari Ini ({currentDayName})</span>
                 <CalendarClock className="h-4 w-4" />
               </CardDescription>
               <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
@@ -138,10 +141,10 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
               </CardTitle>
             </CardHeader>
             <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-              <div className="font-bold text-slate-800 dark:text-slate-200">
-                {jadwalHariIni.length > 0 ? `${jadwalHariIni.map((j: any) => j.rombel).join(" & ")} (${activeSubjectName})` : `Tidak ada jadwal KBM (${activeSubjectName})`}
+              <div className="font-bold text-slate-800 dark:text-slate-200 truncate" title={rombelsTextDisplay}>
+                {uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${activeSubjectName})` : `Tidak ada jadwal mengajar (${activeSubjectName})`}
               </div>
-              <div>{jadwalHariIni.length > 0 ? `Sesi aktif: ${jadwalHariIni[0]?.jam || jadwalHariIni[0]?.jam_ke || "Sesuai Roster"}` : "Hari ini tidak ada jam mengajar terdaftar"}</div>
+              <div>{jadwalHariIni.length > 0 ? `Sesi aktif: ${jadwalHariIni[0]?.jam || "Sesuai Roster"}` : `Jadwal KBM ${currentDayName}: 0 Jam`}</div>
             </CardContent>
           </Card>
 

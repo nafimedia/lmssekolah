@@ -10,203 +10,53 @@
     "role": "admin"
   },
   {
-    "id": "usr-guru-25",
-    "full_name": "AH. SYARIF HIDAYAH, S.Pd.I",
-    "email": "199204042025051002@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199204042025051002",
-    "class_name": "VIII, IX",
-    "subject_specialty": "Al Qur'an Hadis",
-    "role": "admin_akademik,guru"
+    "id": "usr-guru-1",
+    "full_name": "H. SOLIHUN, S.Pd., M.Si",
+    "email": "guru@mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "198005122006042005",
+    "class_name": "VIII A",
+    "subject_specialty": null,
+    "role": "kamad"
   },
   {
-    "id": "usr-guru-34",
-    "full_name": "ANGGUN NOVTALIA BERLIAN, S.Pd",
-    "email": "199711302025052006@guru.mtsn2cilacap.sch.id",
+    "id": "usr-guru-10",
+    "full_name": "UMI KHAFSOH, S.Pd",
+    "email": "197509192009012008@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
-    "nis_nip": "199711302025052006",
-    "class_name": "VII, VIII, IX",
-    "subject_specialty": "Pendidikan Kewarganegaraan",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-22",
-    "full_name": "ASROR HIDAYAT, S.Pd",
-    "email": "198409142023211019@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "198409142023211019",
-    "class_name": "IX",
-    "subject_specialty": "Bimbingan dan Konseling",
-    "role": "guru"
-  },
-  {
-    "id": "usr-walikelas-1",
-    "full_name": "SOBIYATI, S.Pd",
-    "email": "walikelas@mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197808152005012004",
-    "class_name": "IX-A",
-    "subject_specialty": "Bahasa Indonesia",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-16",
-    "full_name": "CARYATI,",
-    "email": "197807072007102001@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197807072007102001",
+    "nis_nip": "197509192009012008",
     "class_name": null,
-    "subject_specialty": "Fikih",
+    "subject_specialty": "Ilmu Pendidikan Sosial",
     "role": "guru"
   },
   {
-    "id": "usr-guru-20",
-    "full_name": "CETY MAHARSY, S.Pd",
-    "email": "198102062007102003@guru.mtsn2cilacap.sch.id",
+    "id": "usr-guru-11",
+    "full_name": "WAKHIBUN, S.P",
+    "email": "197602012007011019@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
-    "nis_nip": "198102062007102003",
-    "class_name": "VII",
-    "subject_specialty": "Bahasa Inggris",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-18",
-    "full_name": "DAISAH, S.Pd",
-    "email": "198002152007102002@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "198002152007102002",
-    "class_name": "IX",
-    "subject_specialty": "Bahasa Indonesia",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-29",
-    "full_name": "ENDAH SUPRIHATIN, S.Pd",
-    "email": "199405142019032021@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199405142019032021",
-    "class_name": null,
-    "subject_specialty": "Bahasa Arab",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-19",
-    "full_name": "H. ANI YULIANI, S.Pd",
-    "email": "198007172005012001@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "198007172005012001",
-    "class_name": "VIII",
-    "subject_specialty": "Matematika",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-6",
-    "full_name": "H. DASIRUN, S.Ag., M.Pd.I",
-    "email": "197311232005011004@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197311232005011004",
-    "class_name": null,
-    "subject_specialty": "Sejarah Kebudayaan Islam",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-24",
-    "full_name": "HASIS SYARIFUDIN, S.Pd",
-    "email": "199202022023211045@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199202022023211045",
-    "class_name": "VII, VIII, IX",
-    "subject_specialty": "Prakarya dan Seni Budaya",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-37",
-    "full_name": "HIKMATUL ASTRI AZKIYA, S.Pd",
-    "email": "199810202025052006@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199810202025052006",
-    "class_name": "VIII",
-    "subject_specialty": "Ilmu Pendidikan Alam",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-2",
-    "full_name": "Hj. NANGIMAH, S.",
-    "email": "196909081998032001@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "196909081998032001",
-    "class_name": "VII",
-    "subject_specialty": "Bahasa Indonesia",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-5",
-    "full_name": "Hj. SITI MUHSINAH, S",
-    "email": "197109302007012011@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197109302007012011",
-    "class_name": "IX",
-    "subject_specialty": "Bahasa Arab",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-27",
-    "full_name": "IFTI NURROHMAH, S.Pd",
-    "email": "199301292025212006@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199301292025212006",
-    "class_name": null,
-    "subject_specialty": "Matematika",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-31",
-    "full_name": "ILHAM HABIBI, S.Pd",
-    "email": "199611202025211009@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199611202025211009",
-    "class_name": null,
-    "subject_specialty": "Ilmu Pendidikan Alam",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-4",
-    "full_name": "MAHMUDAH, S.",
-    "email": "197004082007012025@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197004082007012025",
+    "nis_nip": "197602012007011019",
     "class_name": null,
     "subject_specialty": "Akidah Akhlak",
     "role": "guru"
   },
   {
-    "id": "usr-guru-28",
-    "full_name": "MASRUKHAN, S.Pd",
-    "email": "199309192023211016@guru.mtsn2cilacap.sch.id",
+    "id": "usr-guru-12",
+    "full_name": "SAYONO, S.Pd., M.Pd.",
+    "email": "197705132007101002@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
-    "nis_nip": "199309192023211016",
+    "nis_nip": "197705132007101002",
     "class_name": null,
-    "subject_specialty": "Pendidikan Jasmani, Olahraga dan Kesehatan",
+    "subject_specialty": "Matematika",
     "role": "guru"
   },
   {
-    "id": "usr-guru-32",
-    "full_name": "MISBAH AHMAD DANI, S.Pd",
-    "email": "199701112025211009@guru.mtsn2cilacap.sch.id",
+    "id": "usr-guru-13",
+    "full_name": "WAHYUDIN, S",
+    "email": "197710212007101001@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
-    "nis_nip": "199701112025211009",
-    "class_name": "VII",
-    "subject_specialty": "Al Qur'an Hadis",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-9",
-    "full_name": "MUHTAMAM, S.Ag., M.Pd.I",
-    "email": "197405022007101003@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197405022007101003",
-    "class_name": "VII, IX",
-    "subject_specialty": "Fikih",
+    "nis_nip": "197710212007101001",
+    "class_name": null,
+    "subject_specialty": "Bahasa Arab",
     "role": "guru"
   },
   {
@@ -215,7 +65,7 @@
     "email": "197804212009012004@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
     "nis_nip": "197804212009012004",
-    "class_name": "VII",
+    "class_name": null,
     "subject_specialty": "Ilmu Pendidikan Sosial",
     "role": "guru"
   },
@@ -230,13 +80,193 @@
     "role": "guru"
   },
   {
-    "id": "usr-guru-36",
-    "full_name": "SARAH SAFIRA, S.Pd",
-    "email": "199804202025052007@guru.mtsn2cilacap.sch.id",
+    "id": "usr-guru-16",
+    "full_name": "CARYATI, S.Pd.",
+    "email": "197807072007102001@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
-    "nis_nip": "199804202025052007",
-    "class_name": "VIII",
+    "nis_nip": "197807072007102001",
+    "class_name": "Fikih",
+    "subject_specialty": "Fikih",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-17",
+    "full_name": "SOBIYATI, S.Pd",
+    "email": "197906142007102002@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "197906142007102002",
+    "class_name": "VIII A",
+    "subject_specialty": "Bahasa Indonesia",
+    "role": "walikelas"
+  },
+  {
+    "id": "usr-guru-18",
+    "full_name": "DAISAH, S.Pd",
+    "email": "198002152007102002@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "198002152007102002",
+    "class_name": null,
+    "subject_specialty": "Bahasa Indonesia",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-19",
+    "full_name": "H. ANI YULIANI, S.Pd",
+    "email": "198007172005012001@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "198007172005012001",
+    "class_name": null,
+    "subject_specialty": "Matematika",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-2",
+    "full_name": "Hj. NANGIMAH, S.",
+    "email": "196909081998032001@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "196909081998032001",
+    "class_name": null,
+    "subject_specialty": "Bahasa Indonesia",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-20",
+    "full_name": "CETY MAHARSY, S.Pd",
+    "email": "198102062007102003@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "198102062007102003",
+    "class_name": null,
+    "subject_specialty": "Bahasa Inggris",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-21",
+    "full_name": "ALI MANSUR, S.Pd",
+    "email": "198302142023211010@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "198302142023211010",
+    "class_name": null,
+    "subject_specialty": "Ilmu Pendidikan Sosial",
+    "role": "waka"
+  },
+  {
+    "id": "usr-guru-22",
+    "full_name": "ASROR HIDAYAT, S.Pd",
+    "email": "198409142023211019@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "198409142023211019",
+    "class_name": null,
     "subject_specialty": "Bimbingan dan Konseling",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-23",
+    "full_name": "NOVANTYA KARTIKAWATI, S.Pd",
+    "email": "199011022025212013@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199011022025212013",
+    "class_name": "IX A",
+    "subject_specialty": "Ilmu Pendidikan Alam",
+    "role": "walikelas"
+  },
+  {
+    "id": "usr-guru-24",
+    "full_name": "HASIS SYARIFUDIN, S.Pd",
+    "email": "199202022023211045@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199202022023211045",
+    "class_name": null,
+    "subject_specialty": "Prakarya dan Seni Budaya",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-25",
+    "full_name": "AH. SYARIF HIDAYAH, S.Pd.I",
+    "email": "199204042025051002@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199204042025051002",
+    "class_name": null,
+    "subject_specialty": "Al Qur'an Hadis",
+    "role": "admin_akademik,guru,walikelas"
+  },
+  {
+    "id": "usr-guru-26",
+    "full_name": "STEFI APRIONITA SETYO ARUM, S.Pd",
+    "email": "199204152023212049@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199204152023212049",
+    "class_name": null,
+    "subject_specialty": "Ilmu Pendidikan Alam",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-27",
+    "full_name": "IFTI NURROHMAH, S.Pd",
+    "email": "199301292025212006@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199301292025212006",
+    "class_name": null,
+    "subject_specialty": "Matematika",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-28",
+    "full_name": "MASRUKHAN, S.Pd",
+    "email": "199309192023211016@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199309192023211016",
+    "class_name": null,
+    "subject_specialty": "Pendidikan Jasmani, Olahraga dan Kesehatan",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-29",
+    "full_name": "ENDAH SUPRIHATIN, S.Pd",
+    "email": "199405142019032021@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199405142019032021",
+    "class_name": null,
+    "subject_specialty": "Bahasa Arab",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-3",
+    "full_name": "ACHMAD MAKMUN ROSID, S.Pd., M.Pd",
+    "email": "197002272005011001@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "197002272005011001",
+    "class_name": "VIII B",
+    "subject_specialty": "Bahasa Inggris",
+    "role": "walikelas"
+  },
+  {
+    "id": "usr-guru-30",
+    "full_name": "MAULIDIA NURUL IZATI, S.Pd",
+    "email": "199508182023212044@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199508182023212044",
+    "class_name": "VII A",
+    "subject_specialty": "Bimbingan dan Konseling",
+    "role": "walikelas"
+  },
+  {
+    "id": "usr-guru-31",
+    "full_name": "ILHAM HABIBI, S.Pd",
+    "email": "199611202025211009@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199611202025211009",
+    "class_name": null,
+    "subject_specialty": "Ilmu Pendidikan Alam",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-32",
+    "full_name": "MISBAH AHMAD DANI, S.Pd",
+    "email": "199701112025211009@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199701112025211009",
+    "class_name": null,
+    "subject_specialty": "Al Qur'an Hadis",
     "role": "guru"
   },
   {
@@ -250,13 +280,83 @@
     "role": "guru"
   },
   {
-    "id": "usr-guru-12",
-    "full_name": "SAYONO, S.Pd., M.Pd.",
-    "email": "197705132007101002@guru.mtsn2cilacap.sch.id",
+    "id": "usr-guru-34",
+    "full_name": "ANGGUN NOVTALIA BERLIAN, S.Pd",
+    "email": "199711302025052006@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
-    "nis_nip": "197705132007101002",
-    "class_name": "IX",
-    "subject_specialty": "Matematika",
+    "nis_nip": "199711302025052006",
+    "class_name": null,
+    "subject_specialty": "Pendidikan Kewarganegaraan",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-35",
+    "full_name": "INDAH NURROHMAH, S.Pd",
+    "email": "199712302024212037@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199712302024212037",
+    "class_name": "IX B",
+    "subject_specialty": "Bahasa Inggris",
+    "role": "walikelas"
+  },
+  {
+    "id": "usr-guru-36",
+    "full_name": "SARAH SAFIRA, S.Pd",
+    "email": "199804202025052007@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199804202025052007",
+    "class_name": null,
+    "subject_specialty": "Bimbingan dan Konseling",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-37",
+    "full_name": "HIKMATUL ASTRI AZKIYA, S.Pd",
+    "email": "199810202025052006@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "199810202025052006",
+    "class_name": null,
+    "subject_specialty": "Ilmu Pendidikan Alam",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-38",
+    "full_name": "RINDANG FARIHA IDANA, S.Pd",
+    "email": "12345678@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "12345678",
+    "class_name": "VII B",
+    "subject_specialty": "Bahasa Jawa",
+    "role": "walikelas"
+  },
+  {
+    "id": "usr-guru-4",
+    "full_name": "MAHMUDAH, S.",
+    "email": "197004082007012025@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "197004082007012025",
+    "class_name": null,
+    "subject_specialty": "Akidah Akhlak",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-5",
+    "full_name": "Hj. SITI MUHSINAH, S",
+    "email": "197109302007012011@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "197109302007012011",
+    "class_name": null,
+    "subject_specialty": "Bahasa Arab",
+    "role": "guru"
+  },
+  {
+    "id": "usr-guru-6",
+    "full_name": "H. DASIRUN, S.Ag., M.Pd.I",
+    "email": "197311232005011004@guru.mtsn2cilacap.sch.id",
+    "identity_type": "NIP",
+    "nis_nip": "197311232005011004",
+    "class_name": null,
+    "subject_specialty": "Sejarah Kebudayaan Islam",
     "role": "guru"
   },
   {
@@ -270,16 +370,6 @@
     "role": "guru"
   },
   {
-    "id": "usr-guru-26",
-    "full_name": "STEFI APRIONITA SETYO ARUM, S.Pd",
-    "email": "199204152023212049@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199204152023212049",
-    "class_name": null,
-    "subject_specialty": "Ilmu Pendidikan Alam",
-    "role": "guru"
-  },
-  {
     "id": "usr-guru-8",
     "full_name": "TEGUH WIYONO, S.Pd",
     "email": "197312112007011021@guru.mtsn2cilacap.sch.id",
@@ -290,154 +380,24 @@
     "role": "guru"
   },
   {
-    "id": "usr-guru-10",
-    "full_name": "UMI KHAFSOH, S.Pd",
-    "email": "197509192009012008@guru.mtsn2cilacap.sch.id",
+    "id": "usr-guru-9",
+    "full_name": "MUHTAMAM, S.Ag., M.Pd.I",
+    "email": "197405022007101003@guru.mtsn2cilacap.sch.id",
     "identity_type": "NIP",
-    "nis_nip": "197509192009012008",
+    "nis_nip": "197405022007101003",
     "class_name": null,
-    "subject_specialty": "Ilmu Pendidikan Sosial",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-13",
-    "full_name": "WAHYUDIN, S",
-    "email": "197710212007101001@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197710212007101001",
-    "class_name": null,
-    "subject_specialty": "Bahasa Arab",
-    "role": "guru"
-  },
-  {
-    "id": "usr-guru-11",
-    "full_name": "WAKHIBUN, S.P",
-    "email": "197602012007011019@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197602012007011019",
-    "class_name": null,
-    "subject_specialty": "Akidah Akhlak",
+    "subject_specialty": "Fikih",
     "role": "guru"
   },
   {
     "id": "usr-kamad-1",
     "full_name": "H. SOLIHUN, S.Pd., M.Si",
     "email": "kamad@mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
+    "identity_type": "NISN",
     "nis_nip": "197203151998031002",
-    "class_name": null,
+    "class_name": "-",
     "subject_specialty": null,
     "role": "kamad"
-  },
-  {
-    "id": "usr-guru-1",
-    "full_name": "H. SOLIHUN, S.Pd., M.Si",
-    "email": "guru@mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "198005122006042005",
-    "class_name": "VIII A",
-    "subject_specialty": null,
-    "role": "kamad"
-  },
-  {
-    "id": "usr-siswa-55",
-    "full_name": "ABIGAIL HASAN YUSUF PUTRA INDONESIA",
-    "email": "3123334074@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3123334074",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-56",
-    "full_name": "ABIMAIL HUSEN IBRAHIM PUTRA INDONESIA",
-    "email": "3121121358@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3121121358",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-27",
-    "full_name": "AFFANDI ANGGIT PRATAMA",
-    "email": "0133420828@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0133420828",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-28",
-    "full_name": "AFINDA MULIA ROKHMAH",
-    "email": "3121224054@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3121224054",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-88",
-    "full_name": "AHMAD DAFFA",
-    "email": "0121082428@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0121082428",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-57",
-    "full_name": "AHMAD NIZAM NUR FAIZIN",
-    "email": "3121331541@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3121331541",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-58",
-    "full_name": "AHMAD SABIHIS",
-    "email": "0127071279@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0127071279",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-29",
-    "full_name": "AISYAH NUR WAHYUNI",
-    "email": "3138661737@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3138661737",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-30",
-    "full_name": "ALIFAH KALTSUM ZAHRANI PURNOMO",
-    "email": "0139847558@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0139847558",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-59",
-    "full_name": "ALIKA SYAFA AZAHRA",
-    "email": "3122531880@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3122531880",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
   },
   {
     "id": "usr-siswa-1",
@@ -445,406 +405,6 @@
     "email": "siswa@mtsn2cilacap.sch.id",
     "identity_type": "NISN",
     "nis_nip": "0127790481",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-31",
-    "full_name": "ALIZA OKTAVIANI PUTRI",
-    "email": "0127191673@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0127191673",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-60",
-    "full_name": "ANNISA NUR RIFA",
-    "email": "0127115017@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0127115017",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-2",
-    "full_name": "AQILAA AAMIRATUL YUMNA",
-    "email": "0132249055@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0132249055",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-89",
-    "full_name": "ARDHANI SATRIADJI AKHMAD",
-    "email": "0127641678@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0127641678",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-61",
-    "full_name": "AZKA APRILIA HARTONO",
-    "email": "0117944345@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0117944345",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-90",
-    "full_name": "AZKA SYAFIQ NUR SHIDQI",
-    "email": "0125314520@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0125314520",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-91",
-    "full_name": "AZKIA KUSUMA AYU",
-    "email": "3112049996@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3112049996",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-62",
-    "full_name": "CALLISTA RIZKIA PUTRI",
-    "email": "0121576974@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0121576974",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-3",
-    "full_name": "CITRA FEBI HASIFA",
-    "email": "3137647595@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3137647595",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-32",
-    "full_name": "DAFFA ADYASTA DANISH SETYAWAN",
-    "email": "3133675161@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3133675161",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-92",
-    "full_name": "DAVINA NITA BAHRI",
-    "email": "0107113166@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0107113166",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-93",
-    "full_name": "DHIA WAFI AZALIA SAPUTRI",
-    "email": "3122014751@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3122014751",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-33",
-    "full_name": "DHIYA MAITSA PUTRI NURISTA",
-    "email": "0126160636@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0126160636",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-34",
-    "full_name": "DIMAS SEPTA AZHARI",
-    "email": "0129348095@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0129348095",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-4",
-    "full_name": "DINA FAJRIA ASSA NASSAKI",
-    "email": "3130470613@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3130470613",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-35",
-    "full_name": "DINDA IMANIAR HERLANA",
-    "email": "3129995907@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3129995907",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-63",
-    "full_name": "DURROTUN NAFISAH",
-    "email": "3133575586@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3133575586",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-64",
-    "full_name": "EFAN FERDIAN",
-    "email": "0122672496@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0122672496",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-94",
-    "full_name": "ELGIA MELISSA KIRANI PUTRI",
-    "email": "0117138477@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0117138477",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-5",
-    "full_name": "FAIDATUL HUSNA ASFIA",
-    "email": "3121802138@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3121802138",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-65",
-    "full_name": "FARIQ ATHARIZZ MANAF",
-    "email": "0128640614@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0128640614",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-36",
-    "full_name": "FARRENIA ARISTA WIDYA",
-    "email": "0137628608@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0137628608",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-6",
-    "full_name": "FATHAN FAUZAN",
-    "email": "0135489351@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0135489351",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-37",
-    "full_name": "FAYZA ANINDYA EFENDI",
-    "email": "0124903582@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0124903582",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-66",
-    "full_name": "GIGIH TRIDA PANGESTU",
-    "email": "0123324835@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0123324835",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-95",
-    "full_name": "GILANG AFIT SUBEKTI",
-    "email": "0116245748@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0116245748",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-38",
-    "full_name": "HANSA SABIHA",
-    "email": "0133645526@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0133645526",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-39",
-    "full_name": "HELFAN EFENDY",
-    "email": "0132134024@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0132134024",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-40",
-    "full_name": "HUSNIYATUL KAUNI",
-    "email": "3127292377@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3127292377",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-67",
-    "full_name": "IHSAN NUR FAIZI",
-    "email": "0114924937@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0114924937",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-96",
-    "full_name": "INDANA HILMA IKLILA",
-    "email": "0126090369@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0126090369",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-41",
-    "full_name": "INTAN NUR PUTRI AULIA",
-    "email": "0121571848@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0121571848",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-42",
-    "full_name": "IQLIMATUL LAELI ADRESS",
-    "email": "0123419194@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0123419194",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-43",
-    "full_name": "IZZA GANDIT PRATAMA",
-    "email": "3122643827@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3122643827",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-68",
-    "full_name": "JUAN MIRZA ZAFRAN RAQILLA",
-    "email": "0125470823@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0125470823",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-7",
-    "full_name": "JUSUF MAULANA",
-    "email": "0125098562@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0125098562",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-69",
-    "full_name": "KENT FARRAS TIVADAR",
-    "email": "0112174448@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0112174448",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-8",
-    "full_name": "KEVIN EFENDI",
-    "email": "0135221964@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0135221964",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-70",
-    "full_name": "KHAIRUL NIZAM",
-    "email": "0122461640@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0122461640",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-9",
-    "full_name": "KHARISA PUTRI ARIFA",
-    "email": "3135810920@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3135810920",
     "class_name": "VIII-A",
     "subject_specialty": null,
     "role": "siswa"
@@ -860,122 +420,12 @@
     "role": "siswa"
   },
   {
-    "id": "usr-siswa-97",
-    "full_name": "LATHIFATUL AZIZAH",
-    "email": "3129148765@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3129148765",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-11",
-    "full_name": "MAITSAA ATIKAH AZZAHRA",
-    "email": "3136366787@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3136366787",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-44",
-    "full_name": "MARWAH AURA MAWARDHANI",
-    "email": "3121635074@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3121635074",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-12",
-    "full_name": "MAULANA FIKRI",
-    "email": "0129365012@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0129365012",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-98",
-    "full_name": "MIKAEL EZRA EL GHAZY",
-    "email": "3110508918@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3110508918",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-45",
-    "full_name": "MIKAYLA ROJABIYA",
-    "email": "0139466898@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0139466898",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-13",
-    "full_name": "MUHAMAD ACHSAN SANJAYA",
-    "email": "0138362320@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0138362320",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-99",
-    "full_name": "MUHAMAD NGAFIFUDIN",
-    "email": "3120769475@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3120769475",
-    "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-14",
-    "full_name": "MUHAMMAD FATWA ADHWA NIYAZ",
-    "email": "0122054715@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0122054715",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-71",
-    "full_name": "MUHAMMAD FAWWAS HABIBIE",
-    "email": "0123356426@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0123356426",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
     "id": "usr-siswa-100",
     "full_name": "MUHAMMAD HAIKAL ASRI",
     "email": "3120697873@siswa.mtsn2cilacap.sch.id",
     "identity_type": "NISN",
     "nis_nip": "3120697873",
     "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-72",
-    "full_name": "MUHAMMAD LIWA ULHAQ ALFARABI",
-    "email": "3125018106@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3125018106",
-    "class_name": "IX-A",
     "subject_specialty": null,
     "role": "siswa"
   },
@@ -990,52 +440,12 @@
     "role": "siswa"
   },
   {
-    "id": "usr-siswa-73",
-    "full_name": "MUHAMMAD RIZKY RAMADHAN",
-    "email": "3116336963@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3116336963",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
     "id": "usr-siswa-102",
     "full_name": "MUHAMMAD SYAFI MUTAMMAM",
     "email": "0128969219@siswa.mtsn2cilacap.sch.id",
     "identity_type": "NISN",
     "nis_nip": "0128969219",
     "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-46",
-    "full_name": "MUJAHIDAH FILLAH",
-    "email": "0134446670@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0134446670",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-74",
-    "full_name": "NABHAN RADINKA KEVAN PRASETYO",
-    "email": "0122758258@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0122758258",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-15",
-    "full_name": "NAFISAH AQILATUL HAFSOH",
-    "email": "0131645134@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0131645134",
-    "class_name": "VIII-A",
     "subject_specialty": null,
     "role": "siswa"
   },
@@ -1060,142 +470,12 @@
     "role": "siswa"
   },
   {
-    "id": "usr-siswa-16",
-    "full_name": "NAKHLAH ZAHIYA PUTRI",
-    "email": "0123372321@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0123372321",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-17",
-    "full_name": "NANDA CANTIKA PUTRI MAMENTIWALO",
-    "email": "0124702907@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0124702907",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-75",
-    "full_name": "NASYABEL JAUZA ASHILA",
-    "email": "0122848349@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0122848349",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-76",
-    "full_name": "NAURA NAZWA NUR AFIFAH",
-    "email": "0129937851@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0129937851",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-18",
-    "full_name": "NAYLA HURY MAHFUDZ",
-    "email": "0121552970@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0121552970",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-77",
-    "full_name": "NAZWA DELA AZZAHRA",
-    "email": "0119436494@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0119436494",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-47",
-    "full_name": "NOVAN APRILIANSYAH",
-    "email": "0138970545@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0138970545",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-19",
-    "full_name": "NUR LAELA SARI",
-    "email": "0107389917@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0107389917",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
     "id": "usr-siswa-105",
     "full_name": "NURUL HIKMAH RAMADHANI",
     "email": "0127454810@siswa.mtsn2cilacap.sch.id",
     "identity_type": "NISN",
     "nis_nip": "0127454810",
     "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-48",
-    "full_name": "PANDAWA RAFA RAMADHAN",
-    "email": "0134522326@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0134522326",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-78",
-    "full_name": "PRANANDA THERY HALANSYAH",
-    "email": "0126195880@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0126195880",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-49",
-    "full_name": "PUTRI FITIYA AZZAHRA",
-    "email": "0131586460@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0131586460",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-50",
-    "full_name": "RANGGA SATYA UTAMA",
-    "email": "0135397614@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0135397614",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-79",
-    "full_name": "RANIS ANUGRAH RAMADHAN",
-    "email": "0113111584@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0113111584",
-    "class_name": "IX-A",
     "subject_specialty": null,
     "role": "siswa"
   },
@@ -1240,82 +520,12 @@
     "role": "siswa"
   },
   {
-    "id": "usr-siswa-80",
-    "full_name": "RIZKY NUR RASYDAN",
-    "email": "0129722787@siswa.mtsn2cilacap.sch.id",
+    "id": "usr-siswa-11",
+    "full_name": "MAITSAA ATIKAH AZZAHRA",
+    "email": "3136366787@siswa.mtsn2cilacap.sch.id",
     "identity_type": "NISN",
-    "nis_nip": "0129722787",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-81",
-    "full_name": "RIZQI GALIH ARROFAH",
-    "email": "0129398154@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0129398154",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-51",
-    "full_name": "ROHMAN LUTFI NAHAR",
-    "email": "0127377941@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0127377941",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-20",
-    "full_name": "SAFIRA FIRDAYANTI SALAMAH",
-    "email": "3127411298@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3127411298",
+    "nis_nip": "3136366787",
     "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-21",
-    "full_name": "SATRIO DAMAR LUMAKSITO",
-    "email": "3136185458@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3136185458",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-82",
-    "full_name": "SATRIYO LINSO WICAKSONO",
-    "email": "0128897393@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0128897393",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-52",
-    "full_name": "SAYYID HAEYKAL KHABIBULLOH",
-    "email": "0126739408@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0126739408",
-    "class_name": "VIII-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-83",
-    "full_name": "SEPTIAR DWI MUHNANDAR",
-    "email": "0111194935@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0111194935",
-    "class_name": "IX-A",
     "subject_specialty": null,
     "role": "siswa"
   },
@@ -1326,16 +536,6 @@
     "identity_type": "NISN",
     "nis_nip": "0126845515",
     "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-22",
-    "full_name": "SONIA USWATUL BAROROH",
-    "email": "3128340444@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3128340444",
-    "class_name": "VIII-A",
     "subject_specialty": null,
     "role": "siswa"
   },
@@ -1360,16 +560,6 @@
     "role": "siswa"
   },
   {
-    "id": "usr-siswa-23",
-    "full_name": "SYALUM SAKHILA DAMAYANTI",
-    "email": "0132640527@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0132640527",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
     "id": "usr-siswa-113",
     "full_name": "TAHTA AGUNG RAHARTO",
     "email": "0114891264@siswa.mtsn2cilacap.sch.id",
@@ -1380,62 +570,12 @@
     "role": "siswa"
   },
   {
-    "id": "usr-siswa-24",
-    "full_name": "TALITA HANA NISA HUZAIFAH",
-    "email": "0123801767@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0123801767",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-25",
-    "full_name": "UWI JAYA SAKTI",
-    "email": "3136821272@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "3136821272",
-    "class_name": "VIII-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-84",
-    "full_name": "VIANDRA AISYAH SALSABILA KURNIAWAN",
-    "email": "0128392666@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0128392666",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-85",
-    "full_name": "VITA ANGGRAENI",
-    "email": "0117385087@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0117385087",
-    "class_name": "IX-A",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
     "id": "usr-siswa-114",
     "full_name": "WAHYU MAZYA FILKHIYA",
     "email": "0124664078@siswa.mtsn2cilacap.sch.id",
     "identity_type": "NISN",
     "nis_nip": "0124664078",
     "class_name": "IX-B",
-    "subject_specialty": null,
-    "role": "siswa"
-  },
-  {
-    "id": "usr-siswa-86",
-    "full_name": "WAKHIDATUS SOLIKHAH",
-    "email": "0129634395@siswa.mtsn2cilacap.sch.id",
-    "identity_type": "NISN",
-    "nis_nip": "0129634395",
-    "class_name": "IX-A",
     "subject_specialty": null,
     "role": "siswa"
   },
@@ -1460,6 +600,166 @@
     "role": "siswa"
   },
   {
+    "id": "usr-siswa-117",
+    "full_name": "ZAINUN AGIL RAFA SYIBAWAIHIN",
+    "email": "0126865403@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0126865403",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-12",
+    "full_name": "MAULANA FIKRI",
+    "email": "0129365012@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0129365012",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-13",
+    "full_name": "MUHAMAD ACHSAN SANJAYA",
+    "email": "0138362320@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0138362320",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-14",
+    "full_name": "MUHAMMAD FATWA ADHWA NIYAZ",
+    "email": "0122054715@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0122054715",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-15",
+    "full_name": "NAFISAH AQILATUL HAFSOH",
+    "email": "0131645134@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0131645134",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-16",
+    "full_name": "NAKHLAH ZAHIYA PUTRI",
+    "email": "0123372321@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0123372321",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-17",
+    "full_name": "NANDA CANTIKA PUTRI MAMENTIWALO",
+    "email": "0124702907@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0124702907",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-18",
+    "full_name": "NAYLA HURY MAHFUDZ",
+    "email": "0121552970@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0121552970",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-19",
+    "full_name": "NUR LAELA SARI",
+    "email": "0107389917@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0107389917",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-2",
+    "full_name": "AQILAA AAMIRATUL YUMNA",
+    "email": "0132249055@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0132249055",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-20",
+    "full_name": "SAFIRA FIRDAYANTI SALAMAH",
+    "email": "3127411298@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3127411298",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-21",
+    "full_name": "SATRIO DAMAR LUMAKSITO",
+    "email": "3136185458@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3136185458",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-22",
+    "full_name": "SONIA USWATUL BAROROH",
+    "email": "3128340444@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3128340444",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-23",
+    "full_name": "SYALUM SAKHILA DAMAYANTI",
+    "email": "0132640527@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0132640527",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-24",
+    "full_name": "TALITA HANA NISA HUZAIFAH",
+    "email": "0123801767@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0123801767",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-25",
+    "full_name": "UWI JAYA SAKTI",
+    "email": "3136821272@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3136821272",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
     "id": "usr-siswa-26",
     "full_name": "WIWIN EKA RINJANI",
     "email": "0131398025@siswa.mtsn2cilacap.sch.id",
@@ -1470,22 +770,292 @@
     "role": "siswa"
   },
   {
-    "id": "usr-siswa-87",
-    "full_name": "ZAHWA LUNA BAHTIAR",
-    "email": "0117917027@siswa.mtsn2cilacap.sch.id",
+    "id": "usr-siswa-27",
+    "full_name": "AFFANDI ANGGIT PRATAMA",
+    "email": "0133420828@siswa.mtsn2cilacap.sch.id",
     "identity_type": "NISN",
-    "nis_nip": "0117917027",
-    "class_name": "IX-A",
+    "nis_nip": "0133420828",
+    "class_name": "VIII-B",
     "subject_specialty": null,
     "role": "siswa"
   },
   {
-    "id": "usr-siswa-117",
-    "full_name": "ZAINUN AGIL RAFA SYIBAWAIHIN",
-    "email": "0126865403@siswa.mtsn2cilacap.sch.id",
+    "id": "usr-siswa-28",
+    "full_name": "AFINDA MULIA ROKHMAH",
+    "email": "3121224054@siswa.mtsn2cilacap.sch.id",
     "identity_type": "NISN",
-    "nis_nip": "0126865403",
-    "class_name": "IX-B",
+    "nis_nip": "3121224054",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-29",
+    "full_name": "AISYAH NUR WAHYUNI",
+    "email": "3138661737@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3138661737",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-3",
+    "full_name": "CITRA FEBI HASIFA",
+    "email": "3137647595@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3137647595",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-30",
+    "full_name": "ALIFAH KALTSUM ZAHRANI PURNOMO",
+    "email": "0139847558@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0139847558",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-31",
+    "full_name": "ALIZA OKTAVIANI PUTRI",
+    "email": "0127191673@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0127191673",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-32",
+    "full_name": "DAFFA ADYASTA DANISH SETYAWAN",
+    "email": "3133675161@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3133675161",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-33",
+    "full_name": "DHIYA MAITSA PUTRI NURISTA",
+    "email": "0126160636@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0126160636",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-34",
+    "full_name": "DIMAS SEPTA AZHARI",
+    "email": "0129348095@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0129348095",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-35",
+    "full_name": "DINDA IMANIAR HERLANA",
+    "email": "3129995907@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3129995907",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-36",
+    "full_name": "FARRENIA ARISTA WIDYA",
+    "email": "0137628608@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0137628608",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-37",
+    "full_name": "FAYZA ANINDYA EFENDI",
+    "email": "0124903582@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0124903582",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-38",
+    "full_name": "HANSA SABIHA",
+    "email": "0133645526@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0133645526",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-39",
+    "full_name": "HELFAN EFENDY",
+    "email": "0132134024@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0132134024",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-4",
+    "full_name": "DINA FAJRIA ASSA NASSAKI",
+    "email": "3130470613@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3130470613",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-40",
+    "full_name": "HUSNIYATUL KAUNI",
+    "email": "3127292377@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3127292377",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-41",
+    "full_name": "INTAN NUR PUTRI AULIA",
+    "email": "0121571848@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0121571848",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-42",
+    "full_name": "IQLIMATUL LAELI ADRESS",
+    "email": "0123419194@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0123419194",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-43",
+    "full_name": "IZZA GANDIT PRATAMA",
+    "email": "3122643827@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3122643827",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-44",
+    "full_name": "MARWAH AURA MAWARDHANI",
+    "email": "3121635074@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3121635074",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-45",
+    "full_name": "MIKAYLA ROJABIYA",
+    "email": "0139466898@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0139466898",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-46",
+    "full_name": "MUJAHIDAH FILLAH",
+    "email": "0134446670@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0134446670",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-47",
+    "full_name": "NOVAN APRILIANSYAH",
+    "email": "0138970545@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0138970545",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-48",
+    "full_name": "PANDAWA RAFA RAMADHAN",
+    "email": "0134522326@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0134522326",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-49",
+    "full_name": "PUTRI FITIYA AZZAHRA",
+    "email": "0131586460@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0131586460",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-5",
+    "full_name": "FAIDATUL HUSNA ASFIA",
+    "email": "3121802138@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3121802138",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-50",
+    "full_name": "RANGGA SATYA UTAMA",
+    "email": "0135397614@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0135397614",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-51",
+    "full_name": "ROHMAN LUTFI NAHAR",
+    "email": "0127377941@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0127377941",
+    "class_name": "VIII-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-52",
+    "full_name": "SAYYID HAEYKAL KHABIBULLOH",
+    "email": "0126739408@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0126739408",
+    "class_name": "VIII-B",
     "subject_specialty": null,
     "role": "siswa"
   },
@@ -1510,14 +1080,494 @@
     "role": "siswa"
   },
   {
-    "id": "usr-guru-21",
-    "full_name": "ALI MANSUR, S.Pd",
-    "email": "198302142023211010@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "198302142023211010",
-    "class_name": "VIII",
-    "subject_specialty": "Ilmu Pendidikan Sosial",
-    "role": "waka,guru"
+    "id": "usr-siswa-55",
+    "full_name": "ABIGAIL HASAN YUSUF PUTRA INDONESIA",
+    "email": "3123334074@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3123334074",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-56",
+    "full_name": "ABIMAIL HUSEN IBRAHIM PUTRA INDONESIA",
+    "email": "3121121358@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3121121358",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-57",
+    "full_name": "AHMAD NIZAM NUR FAIZIN",
+    "email": "3121331541@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3121331541",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-58",
+    "full_name": "AHMAD SABIHIS",
+    "email": "0127071279@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0127071279",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-59",
+    "full_name": "ALIKA SYAFA AZAHRA",
+    "email": "3122531880@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3122531880",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-6",
+    "full_name": "FATHAN FAUZAN",
+    "email": "0135489351@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0135489351",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-60",
+    "full_name": "ANNISA NUR RIFA",
+    "email": "0127115017@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0127115017",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-61",
+    "full_name": "AZKA APRILIA HARTONO",
+    "email": "0117944345@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0117944345",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-62",
+    "full_name": "CALLISTA RIZKIA PUTRI",
+    "email": "0121576974@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0121576974",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-63",
+    "full_name": "DURROTUN NAFISAH",
+    "email": "3133575586@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3133575586",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-64",
+    "full_name": "EFAN FERDIAN",
+    "email": "0122672496@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0122672496",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-65",
+    "full_name": "FARIQ ATHARIZZ MANAF",
+    "email": "0128640614@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0128640614",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-66",
+    "full_name": "GIGIH TRIDA PANGESTU",
+    "email": "0123324835@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0123324835",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-67",
+    "full_name": "IHSAN NUR FAIZI",
+    "email": "0114924937@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0114924937",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-68",
+    "full_name": "JUAN MIRZA ZAFRAN RAQILLA",
+    "email": "0125470823@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0125470823",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-69",
+    "full_name": "KENT FARRAS TIVADAR",
+    "email": "0112174448@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0112174448",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-7",
+    "full_name": "JUSUF MAULANA",
+    "email": "0125098562@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0125098562",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-70",
+    "full_name": "KHAIRUL NIZAM",
+    "email": "0122461640@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0122461640",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-71",
+    "full_name": "MUHAMMAD FAWWAS HABIBIE",
+    "email": "0123356426@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0123356426",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-72",
+    "full_name": "MUHAMMAD LIWA ULHAQ ALFARABI",
+    "email": "3125018106@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3125018106",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-73",
+    "full_name": "MUHAMMAD RIZKY RAMADHAN",
+    "email": "3116336963@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3116336963",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-74",
+    "full_name": "NABHAN RADINKA KEVAN PRASETYO",
+    "email": "0122758258@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0122758258",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-75",
+    "full_name": "NASYABEL JAUZA ASHILA",
+    "email": "0122848349@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0122848349",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-76",
+    "full_name": "NAURA NAZWA NUR AFIFAH",
+    "email": "0129937851@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0129937851",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-77",
+    "full_name": "NAZWA DELA AZZAHRA",
+    "email": "0119436494@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0119436494",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-78",
+    "full_name": "PRANANDA THERY HALANSYAH",
+    "email": "0126195880@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0126195880",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-79",
+    "full_name": "RANIS ANUGRAH RAMADHAN",
+    "email": "0113111584@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0113111584",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-8",
+    "full_name": "KEVIN EFENDI",
+    "email": "0135221964@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0135221964",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-80",
+    "full_name": "RIZKY NUR RASYDAN",
+    "email": "0129722787@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0129722787",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-81",
+    "full_name": "RIZQI GALIH ARROFAH",
+    "email": "0129398154@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0129398154",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-82",
+    "full_name": "SATRIYO LINSO WICAKSONO",
+    "email": "0128897393@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0128897393",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-83",
+    "full_name": "SEPTIAR DWI MUHNANDAR",
+    "email": "0111194935@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0111194935",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-84",
+    "full_name": "VIANDRA AISYAH SALSABILA KURNIAWAN",
+    "email": "0128392666@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0128392666",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-85",
+    "full_name": "VITA ANGGRAENI",
+    "email": "0117385087@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0117385087",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-86",
+    "full_name": "WAKHIDATUS SOLIKHAH",
+    "email": "0129634395@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0129634395",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-87",
+    "full_name": "ZAHWA LUNA BAHTIAR",
+    "email": "0117917027@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0117917027",
+    "class_name": "IX-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-88",
+    "full_name": "AHMAD DAFFA",
+    "email": "0121082428@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0121082428",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-89",
+    "full_name": "ARDHANI SATRIADJI AKHMAD",
+    "email": "0127641678@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0127641678",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-9",
+    "full_name": "KHARISA PUTRI ARIFA",
+    "email": "3135810920@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3135810920",
+    "class_name": "VIII-A",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-90",
+    "full_name": "AZKA SYAFIQ NUR SHIDQI",
+    "email": "0125314520@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0125314520",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-91",
+    "full_name": "AZKIA KUSUMA AYU",
+    "email": "3112049996@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3112049996",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-92",
+    "full_name": "DAVINA NITA BAHRI",
+    "email": "0107113166@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0107113166",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-93",
+    "full_name": "DHIA WAFI AZALIA SAPUTRI",
+    "email": "3122014751@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3122014751",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-94",
+    "full_name": "ELGIA MELISSA KIRANI PUTRI",
+    "email": "0117138477@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0117138477",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-95",
+    "full_name": "GILANG AFIT SUBEKTI",
+    "email": "0116245748@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0116245748",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-96",
+    "full_name": "INDANA HILMA IKLILA",
+    "email": "0126090369@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "0126090369",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-97",
+    "full_name": "LATHIFATUL AZIZAH",
+    "email": "3129148765@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3129148765",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-98",
+    "full_name": "MIKAEL EZRA EL GHAZY",
+    "email": "3110508918@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3110508918",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
+  },
+  {
+    "id": "usr-siswa-99",
+    "full_name": "MUHAMAD NGAFIFUDIN",
+    "email": "3120769475@siswa.mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "3120769475",
+    "class_name": "IX-B",
+    "subject_specialty": null,
+    "role": "siswa"
   },
   {
     "id": "usr-waka-1",
@@ -1530,63 +1580,13 @@
     "role": "waka"
   },
   {
-    "id": "usr-guru-3",
-    "full_name": "ACHMAD MAKMUN ROSID, S.Pd., M.Pd",
-    "email": "197002272005011001@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197002272005011001",
-    "class_name": "VIII",
-    "subject_specialty": "Bahasa Inggris",
-    "role": "admin,walikelas,guru"
-  },
-  {
-    "id": "usr-guru-35",
-    "full_name": "INDAH NURROHMAH, S.Pd",
-    "email": "199712302024212037@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199712302024212037",
-    "class_name": "IX",
-    "subject_specialty": "Bahasa Inggris",
-    "role": "walikelas,guru"
-  },
-  {
-    "id": "usr-guru-30",
-    "full_name": "MAULIDIA NURUL IZATI, S.Pd",
-    "email": "199508182023212044@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199508182023212044",
-    "class_name": "VII",
-    "subject_specialty": "Bimbingan dan Konseling",
-    "role": "walikelas,guru"
-  },
-  {
-    "id": "usr-guru-23",
-    "full_name": "NOVANTYA KARTIKAWATI, S.Pd",
-    "email": "199011022025212013@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "199011022025212013",
-    "class_name": "IX",
-    "subject_specialty": "Ilmu Pendidikan Alam",
-    "role": "walikelas,guru"
-  },
-  {
-    "id": "usr-guru-38",
-    "full_name": "RINDANG FARIHA IDANA, S.Pd",
-    "email": "12345678@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "12345678",
-    "class_name": "VII, VIII, IX",
-    "subject_specialty": "Bahasa Jawa",
-    "role": "walikelas,guru"
-  },
-  {
-    "id": "usr-guru-17",
-    "full_name": "SOBIYATI, S.Pd",
-    "email": "197906142007102002@guru.mtsn2cilacap.sch.id",
-    "identity_type": "NIP",
-    "nis_nip": "197906142007102002",
-    "class_name": "VIII",
-    "subject_specialty": "Bahasa Indonesia",
-    "role": "walikelas,guru"
+    "id": "usr-walikelas-1",
+    "full_name": "Bpk. Hendra Wijaya, M.Sc",
+    "email": "walikelas@mtsn2cilacap.sch.id",
+    "identity_type": "NISN",
+    "nis_nip": "198211102009041003",
+    "class_name": null,
+    "subject_specialty": null,
+    "role": "guru"
   }
 ]

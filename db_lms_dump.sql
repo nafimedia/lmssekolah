@@ -1,6 +1,6 @@
 -- ========================================================
 -- EXPORT DATABASE LMS (db_lms) - FIX REAL DATA FROM EXCEL
--- Generated: 27/8/2026, 02.02.40
+-- Generated: 27/8/2026, 02.06.22
 -- ========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -484,13 +484,11 @@ CREATE TABLE `materials` (
   `type` varchar(50) NOT NULL,
   `size` varchar(50) DEFAULT '2.5 MB',
   `filename` varchar(255) NOT NULL,
-  `file_url` text,
+  `file_url` longtext,
   `uploaded_by` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-INSERT INTO `materials` (`id`, `title`, `subject_name`, `class_name`, `type`, `size`, `filename`, `file_url`, `uploaded_by`, `created_at`) VALUES ('mod_sample_1', 'Modul Ajar Pendidikan Kewarganegaraan Kelas VII Bab 1', 'Pendidikan Kewarganegaraan', 'Kelas VII', 'Modul Ajar', '2.8 MB', 'Modul_PKn_Kelas_VII.pdf', '/uploads/mod_sample_1.pdf', 'ANGGUN NOVTALIA BERLIAN, S.Pd', '2026-08-26 19:02:33');
 
 -- --------------------------------------------------------
 -- Table structure & data for `audit_logs`

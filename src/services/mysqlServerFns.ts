@@ -1655,7 +1655,7 @@ export const getMaterialsFn = createServerFn({ method: "GET" }).handler(
           type VARCHAR(50) DEFAULT 'Modul Ajar',
           size VARCHAR(50) DEFAULT '2.5 MB',
           filename VARCHAR(255) NOT NULL,
-          file_url TEXT,
+          file_url LONGTEXT,
           uploaded_by VARCHAR(255),
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -1684,7 +1684,7 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           type VARCHAR(50) DEFAULT 'Modul Ajar',
           size VARCHAR(50) DEFAULT '2.5 MB',
           filename VARCHAR(255) NOT NULL,
-          file_url TEXT,
+          file_url LONGTEXT,
           uploaded_by VARCHAR(255),
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

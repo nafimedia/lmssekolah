@@ -97,6 +97,32 @@ export function KamadDashboardView({
     };
   }, []);
 
+  const [activeKbmCount, setActiveKbmCount] = useState<number>(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchLiveKbmSessions() {
+      try {
+        const sessions = await MysqlDataService.getActiveKbmSessions();
+        if (!isMounted) return;
+        const liveCount = (sessions || []).filter((s: any) => s.status === "SEDANG_BERLANGSUNG").length;
+        setActiveKbmCount(liveCount);
+      } catch (e) {}
+    }
+
+    fetchLiveKbmSessions();
+    const handleFocus = () => {
+      fetchLiveKbmSessions();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
   return (
     <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
       {/* Header Banner Kamad */}
@@ -153,14 +179,14 @@ export function KamadDashboardView({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/5 via-card to-card border-amber-500/20 shadow-xs">
+        <Card className="bg-gradient-to-br from-emerald-500/10 via-card to-card border-emerald-500/30 shadow-xs">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold animate-pulse">
               <MonitorCheck className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground font-semibold">Ujian CBT Aktif</div>
-              <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{stats.cbtExamsCount} Sesi</div>
+              <div className="text-xs text-muted-foreground font-semibold">Sesi KBM Live Aktif</div>
+              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{activeKbmCount} Sesi Live</div>
             </div>
           </CardContent>
         </Card>

@@ -7,6 +7,8 @@ import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
+import { isSameClass } from "@/utils/classNormalization";
+
 interface SiswaDashboardViewProps {
   userName: string;
   currentDayName: string;
@@ -16,7 +18,7 @@ interface SiswaDashboardViewProps {
 
 export function SiswaDashboardView({ userName, currentDayName, formattedTime, setActiveTab }: SiswaDashboardViewProps) {
   const me = MysqlAuthService.getActiveUser();
-  const siswaClass = me?.class_name || "Kelas VIII A";
+  const siswaClass = me?.class_name || "Rombel 8A";
   const siswaNisn = me?.nis_nip || "";
   const [presensiToday, setPresensiToday] = useState<any>(null);
   const [myTugasList, setMyTugasList] = useState<any[]>([]);
@@ -26,30 +28,50 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
     async function loadSiswaRealData() {
       try {
         const currentUser = MysqlAuthService.getActiveUser();
-        const currentClass = currentUser?.class_name || "Kelas VIII A";
+        const currentClass = currentUser?.class_name || "Rombel 8A";
         const todayStr = new Date().toISOString().split("T")[0];
         const [dbPresensi, dbTugas, dbJadwal] = await Promise.all([
-          MysqlDataService.getKbmPresensi(currentClass, "ALL", todayStr),
+          MysqlDataService.getKbmPresensi("ALL", "ALL", todayStr),
           MysqlDataService.getLkpdActivities(currentClass, "ALL"),
           MysqlDataService.getJadwalList(),
         ]);
 
-        const myPres = (dbPresensi || []).find((p: any) => p.student_name === userName || p.student_nis === currentUser?.nis_nip);
+        const myPres = (dbPresensi || []).find((p: any) => {
+          const cleanDbName = (p.student_name || "").toLowerCase().trim();
+          const cleanUserName = (userName || "").toLowerCase().trim();
+          const cleanUserFullName = (currentUser?.full_name || "").toLowerCase().trim();
+          const matchName =
+            cleanDbName === cleanUserName ||
+            cleanDbName === cleanUserFullName ||
+            (cleanUserName && cleanDbName.includes(cleanUserName));
+          const matchNis =
+            p.student_nis &&
+            currentUser?.nis_nip &&
+            (p.student_nis === currentUser.nis_nip || p.student_nis === currentUser.id);
+          return matchName || matchNis;
+        });
         setPresensiToday(myPres);
         setMyTugasList(dbTugas || []);
 
         const classSchedule = (dbJadwal || []).filter((j: any) => {
           const matchDay = (j.hari || "").toLowerCase().trim() === currentDayName.toLowerCase().trim();
-          const jCls = (j.rombel || "").toUpperCase().replace("-", " ").trim();
-          const myCls = currentClass.toUpperCase().replace("-", " ").trim();
-          return matchDay && (jCls.includes(myCls) || myCls.includes(jCls));
+          return matchDay && isSameClass(j.rombel || j.class_name, currentClass);
         });
         setJadwalToday(classSchedule);
       } catch (e) {
         console.warn("loadSiswaRealData error:", e);
       }
     }
+
     loadSiswaRealData();
+    const handleFocus = () => {
+      loadSiswaRealData();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
   }, [userName, siswaClass, currentDayName]);
 
   const presensiStatus = presensiToday?.status ? String(presensiToday.status).toUpperCase() : null;
@@ -133,21 +155,46 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         </CardHeader>
         <CardContent className="p-4 space-y-3">
           {jadwalToday.length === 0 ? (
-            <div className="text-xs text-slate-500 italic py-3 text-center">
+            <div className="text-xs text-slate-500 italic py-4 text-center border border-dashed rounded-xl border-slate-200 dark:border-slate-800">
               Tidak ada jadwal mata pelajaran terdaftar untuk {siswaClass} pada hari {currentDayName}.
             </div>
           ) : (
-            jadwalToday.map((j, idx) => (
-              <div key={j.id || idx} className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between">
-                <div>
-                  <div className="font-bold text-xs">
-                    {j.jam_ke || "Jam KBM"} · {j.subject_name || j.mapel || "Mata Pelajaran"} ({j.teacher_name || j.guru || "Guru Pengampu"})
+            jadwalToday.map((j, idx) => {
+              const displayJam = j.jam || j.jam_ke || `Jam ke-${idx + 1}`;
+              const displayMapel = j.mapel || j.subject_name || "Mata Pelajaran";
+              const displayGuru = j.guru || j.teacher_name || "Guru Pengampu";
+              const displayRuang = j.rombel || j.ruang || siswaClass;
+
+              return (
+                <div
+                  key={j.id || idx}
+                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 hover:border-emerald-500/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 px-3 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex items-center justify-center border border-emerald-500/30 whitespace-nowrap">
+                      ⏰ {displayJam}
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        {displayMapel}
+                      </div>
+                      <div className="text-xs text-slate-600 dark:text-slate-400 font-medium flex items-center gap-3 mt-0.5">
+                        <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
+                          👤 {displayGuru}
+                        </span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-slate-500">
+                          🏫 {displayRuang}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-500">Ruang {j.ruang || j.rombel || siswaClass}</div>
+                  <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-bold self-start sm:self-center">
+                    📖 Jadwal KBM
+                  </Badge>
                 </div>
-                <Badge className="bg-emerald-600 text-white text-[10px]">Tercatat</Badge>
-              </div>
-            ))
+              );
+            })
           )}
         </CardContent>
       </Card>

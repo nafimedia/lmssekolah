@@ -47,7 +47,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           teacher: m.uploaded_by || m.teacher_name || "Guru Pengampu",
           size: m.size || "3.5 MB",
           date: m.created_at ? new Date(m.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Terbaru",
-          status: "Terverifikasi Waka",
+          status: (m as any).status || "Menunggu Verifikasi Waka",
           file_url: m.file_url || "",
           file_name: m.filename || `${m.title}.pdf`,
         }));
@@ -71,7 +71,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     const fileName = m.file_name || `${m.title}.pdf`;
     const title = m.title;
 
-    if (fileUrl && (fileUrl.startsWith("data:") || fileUrl.startsWith("blob:") || fileUrl.startsWith("http"))) {
+    if (fileUrl && (fileUrl.startsWith("data:") || fileUrl.startsWith("blob:") || fileUrl.startsWith("http") || fileUrl.startsWith("/uploads"))) {
       const a = document.createElement("a");
       a.href = fileUrl;
       a.download = fileName;
@@ -95,11 +95,11 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     toast.success(`📄 Berkas PDF "${title}" berhasil diunduh!`);
   };
 
-  const handleToggleVerification = (id: string, currentStatus: string, title: string) => {
+  const handleToggleVerification = async (id: string, currentStatus: string, title: string) => {
+    const nextStatus = currentStatus === "Terverifikasi Waka" ? "Menunggu Verifikasi Waka" : "Terverifikasi Waka";
     setModulList((prev) => {
       return prev.map((m) => {
         if (m.id === id) {
-          const nextStatus = currentStatus === "Terverifikasi Waka" ? "Perlu Verifikasi Waka" : "Terverifikasi Waka";
           if (nextStatus === "Terverifikasi Waka") {
             toast.success(`✅ Berhasil! Modul Ajar "${title}" resmi diverifikasi dan disahkan oleh Waka Kurikulum.`);
           } else {
@@ -110,6 +110,26 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         return m;
       });
     });
+
+    const targetModul = modulList.find((m) => m.id === id);
+    if (targetModul) {
+      try {
+        await MysqlDataService.saveMaterial({
+          id: id,
+          title: targetModul.title,
+          subject_name: targetModul.mapel,
+          class_name: targetModul.jenjang,
+          type: "Modul Ajar",
+          status: nextStatus,
+          uploaded_by: targetModul.teacher,
+          filename: targetModul.file_name,
+          file_url: targetModul.file_url,
+          size: targetModul.size,
+        } as any);
+      } catch (err) {
+        console.warn("Update verification status DB warning:", err);
+      }
+    }
   };
 
   const handleDeleteModul = async (id: string, title: string) => {
@@ -135,12 +155,13 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         subject_name: data.mapel,
         class_name: data.jenjang,
         type: "Modul Ajar",
+        status: "Menunggu Verifikasi Waka",
         uploaded_by: currentTeacherName || "Guru Pengampu",
         teacher_name: currentTeacherName || "Guru Pengampu",
         file_url: fileUrlToSave || ("/uploads/" + newId + ".pdf"),
         filename: data.file?.name || `${data.title}.pdf`,
         size: calcSize,
-      });
+      } as any);
 
       if (res === false) {
         toast.error("Gagal mengunggah Modul Ajar ke database.");

@@ -47,14 +47,58 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
   const [isAddJurnalOpen, setIsAddJurnalOpen] = useState(false);
 
   useEffect(() => {
-    MysqlDataService.getJournals().then((items) => {
+    let isMounted = true;
+
+    Promise.all([
+      MysqlDataService.getJournals(),
+      MysqlDataService.getActiveKbmSessions(),
+      MysqlDataService.getJadwalPelajaran(),
+    ]).then(([items, activeSessions, scheduleList]) => {
+      if (!isMounted) return;
+
       if (items) {
         setJournalList(items);
       } else {
         setJournalList([]);
       }
+
+      // Priority 1: Check live active session started by current teacher
+      const myLiveSession = (activeSessions || []).find(
+        (s: any) =>
+          s.status === "SEDANG_BERLANGSUNG" &&
+          (s.guru_name?.toLowerCase().trim() === currentTeacherName.toLowerCase().trim() ||
+            s.guru_name?.toLowerCase().trim().includes(currentTeacherName.toLowerCase().trim()))
+      );
+
+      if (myLiveSession) {
+        if (myLiveSession.rombel) setActiveRombel(myLiveSession.rombel);
+        if (myLiveSession.mapel) setActiveMapel(myLiveSession.mapel);
+        return;
+      }
+
+      // Priority 2: Check today's schedule for current teacher
+      const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+      const activeDay = dayNames[new Date().getDay()] || "Kamis";
+      const myScheduleToday = (scheduleList || []).find(
+        (j: any) =>
+          (j.hari || "").toLowerCase().trim() === activeDay.toLowerCase().trim() &&
+          (j.guru || "").toLowerCase().trim().includes(currentTeacherName.toLowerCase().trim())
+      );
+
+      if (myScheduleToday) {
+        if (myScheduleToday.rombel || myScheduleToday.kelas) {
+          setActiveRombel(myScheduleToday.rombel || myScheduleToday.kelas);
+        }
+        if (myScheduleToday.mapel) {
+          setActiveMapel(myScheduleToday.mapel);
+        }
+      }
     });
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentTeacherName]);
 
   const handleAddJurnal = (newEntry: { title: string; rombel: string; mapel: string; meeting: string; notes: string }) => {
     if (isKamad) {

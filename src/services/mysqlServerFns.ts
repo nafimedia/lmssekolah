@@ -1653,6 +1653,7 @@ export const getMaterialsFn = createServerFn({ method: "GET" }).handler(
           subject_name VARCHAR(100) NOT NULL,
           class_name VARCHAR(50) NOT NULL,
           type VARCHAR(50) DEFAULT 'Modul Ajar',
+          status VARCHAR(50) DEFAULT 'Menunggu Verifikasi Waka',
           size VARCHAR(50) DEFAULT '2.5 MB',
           filename VARCHAR(255) NOT NULL,
           file_url LONGTEXT,
@@ -1661,7 +1662,7 @@ export const getMaterialsFn = createServerFn({ method: "GET" }).handler(
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
 
-      const rows = await query<MaterialRow[]>("SELECT id, title, subject_name, class_name, type, size, filename, file_url, uploaded_by, created_at FROM materials ORDER BY created_at DESC");
+      const rows = await query<MaterialRow[]>("SELECT id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by, created_at FROM materials ORDER BY created_at DESC");
       return rows || [];
     } catch (e) {
       console.error("[getMaterialsFn Error]:", e);
@@ -1682,6 +1683,7 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           subject_name VARCHAR(100) NOT NULL,
           class_name VARCHAR(50) NOT NULL,
           type VARCHAR(50) DEFAULT 'Modul Ajar',
+          status VARCHAR(50) DEFAULT 'Menunggu Verifikasi Waka',
           size VARCHAR(50) DEFAULT '2.5 MB',
           filename VARCHAR(255) NOT NULL,
           file_url LONGTEXT,
@@ -1690,12 +1692,38 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
 
+      let finalFileUrl = data.file_url || null;
+
+      if (finalFileUrl && finalFileUrl.startsWith("data:")) {
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          const uploadDir = path.join(process.cwd(), "public", "uploads", "modul_ajar");
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          const base64Data = finalFileUrl.split(";base64,").pop();
+          if (base64Data) {
+            const rawFileName = data.filename || `${data.title || data.id}.pdf`;
+            const cleanFileName = rawFileName.replace(/[^a-zA-Z0-9_.-]/g, "_");
+            const uniqueFileName = `${Date.now()}_${cleanFileName}`;
+            const physicalPath = path.join(uploadDir, uniqueFileName);
+            fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
+            finalFileUrl = `/uploads/modul_ajar/${uniqueFileName}`;
+            console.log(`[saveMaterialFn] Physical PDF saved to: ${physicalPath}`);
+          }
+        } catch (fsErr) {
+          console.warn("[saveMaterialFn Physical File Save Warning]:", fsErr);
+        }
+      }
+
       await execute(
-        `INSERT INTO materials (id, title, subject_name, class_name, type, size, filename, file_url, uploaded_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO materials (id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            title = VALUES(title),
            type = VALUES(type),
+           status = VALUES(status),
            size = VALUES(size),
            filename = VALUES(filename),
            file_url = VALUES(file_url)`,
@@ -1705,9 +1733,10 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           data.subject_name,
           data.class_name,
           data.type || "Modul Ajar",
+          (data as any).status || "Menunggu Verifikasi Waka",
           data.size || "2.5 MB",
           data.filename,
-          data.file_url || null,
+          finalFileUrl,
           data.uploaded_by || "Guru Pengampu",
         ]
       );
@@ -1727,6 +1756,135 @@ export const deleteMaterialFn = createServerFn({ method: "POST" })
       return { success: true };
     } catch (e) {
       console.error("[deleteMaterialFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// ============================================================================
+// 🏛️ PERPUSTAKAAN DIGITAL / E-LIBRARY SERVER FUNCTIONS
+// ============================================================================
+
+export const getElibraryBooksFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<any[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS elibrary_books (
+          id VARCHAR(64) PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          tag VARCHAR(50) NOT NULL,
+          size VARCHAR(50) DEFAULT '12.5 MB',
+          type VARCHAR(50) NOT NULL,
+          url LONGTEXT,
+          video_url LONGTEXT,
+          audio_url LONGTEXT,
+          description TEXT,
+          provider VARCHAR(50) DEFAULT 'direct',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<any[]>("SELECT * FROM elibrary_books ORDER BY created_at DESC");
+      return rows || [];
+    } catch (e) {
+      console.error("[getElibraryBooksFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveElibraryBookFn = createServerFn({ method: "POST" })
+  .validator((data: any) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS elibrary_books (
+          id VARCHAR(64) PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          tag VARCHAR(50) NOT NULL,
+          size VARCHAR(50) DEFAULT '12.5 MB',
+          type VARCHAR(50) NOT NULL,
+          url LONGTEXT,
+          video_url LONGTEXT,
+          audio_url LONGTEXT,
+          description TEXT,
+          provider VARCHAR(50) DEFAULT 'direct',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      let finalUrl = data.url || data.video_url || data.audio_url || null;
+
+      if (finalUrl && finalUrl.startsWith("data:")) {
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          const uploadDir = path.join(process.cwd(), "public", "uploads", "elibrary");
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          const base64Data = finalUrl.split(";base64,").pop();
+          if (base64Data) {
+            const ext = data.type === "video" ? ".mp4" : data.type === "audio" ? ".mp3" : ".pdf";
+            const rawFileName = `${data.title || data.id}${ext}`;
+            const cleanFileName = rawFileName.replace(/[^a-zA-Z0-9_.-]/g, "_");
+            const uniqueFileName = `${Date.now()}_${cleanFileName}`;
+            const physicalPath = path.join(uploadDir, uniqueFileName);
+            fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
+            finalUrl = `/uploads/elibrary/${uniqueFileName}`;
+            console.log(`[saveElibraryBookFn] Physical file saved to: ${physicalPath}`);
+          }
+        } catch (fsErr) {
+          console.warn("[saveElibraryBookFn Physical Save Warning]:", fsErr);
+        }
+      }
+
+      const cleanUrl = finalUrl;
+      const cleanVideoUrl = (data.video_url && !data.video_url.startsWith("data:")) ? data.video_url : cleanUrl;
+      const cleanAudioUrl = (data.audio_url && !data.audio_url.startsWith("data:")) ? data.audio_url : cleanUrl;
+
+      await execute(
+        `INSERT INTO elibrary_books (id, title, tag, size, type, url, video_url, audio_url, description, provider)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           title = VALUES(title),
+           tag = VALUES(tag),
+           size = VALUES(size),
+           type = VALUES(type),
+           url = VALUES(url),
+           video_url = VALUES(video_url),
+           audio_url = VALUES(audio_url),
+           description = VALUES(description),
+           provider = VALUES(provider)`,
+        [
+          data.id,
+          data.title,
+          data.tag,
+          data.size || "12.5 MB",
+          data.type,
+          cleanUrl,
+          cleanVideoUrl,
+          cleanAudioUrl,
+          data.description || null,
+          data.provider || "direct",
+        ]
+      );
+      return { success: true };
+    } catch (e: any) {
+      console.error("[saveElibraryBookFn Error]:", e);
+      return { success: false, message: `Gagal menyimpan berkas e-library: ${e?.message || e}` };
+    }
+  });
+
+export const deleteElibraryBookFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM elibrary_books WHERE id = ?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteElibraryBookFn Error]:", e);
       return { success: false };
     }
   });
@@ -1803,99 +1961,6 @@ export const saveHafalanFn = createServerFn({ method: "POST" })
       return { success: true };
     } catch (e) {
       console.error("[saveHafalanFn Error]:", e);
-      return { success: false };
-    }
-  });
-
-// 14. E-LIBRARY BOOKS
-export const getElibraryBooksFn = createServerFn({ method: "GET" }).handler(
-  async (): Promise<ElibraryBookRow[]> => {
-    try {
-      const { query, execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS elibrary_books (
-          id VARCHAR(64) PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          tag VARCHAR(50) NOT NULL,
-          size VARCHAR(50) NOT NULL,
-          type VARCHAR(50) NOT NULL,
-          url TEXT,
-          video_url TEXT,
-          audio_url TEXT,
-          description TEXT,
-          provider VARCHAR(50),
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-      return await query<ElibraryBookRow[]>("SELECT * FROM elibrary_books ORDER BY created_at DESC");
-    } catch (e) {
-      console.error("[getElibraryBooksFn Error]:", e);
-      return [];
-    }
-  }
-);
-
-export const saveElibraryBookFn = createServerFn({ method: "POST" })
-  .validator((data: ElibraryBookRow) => data)
-  .handler(async ({ data }): Promise<{ success: boolean }> => {
-    try {
-      const { execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS elibrary_books (
-          id VARCHAR(64) PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          tag VARCHAR(50) NOT NULL,
-          size VARCHAR(50) NOT NULL,
-          type VARCHAR(50) NOT NULL,
-          url TEXT,
-          video_url TEXT,
-          audio_url TEXT,
-          description TEXT,
-          provider VARCHAR(50),
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-      await execute(
-        `INSERT INTO elibrary_books (id, title, tag, size, type, url, video_url, audio_url, description, provider)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           title = VALUES(title),
-           tag = VALUES(tag),
-           size = VALUES(size),
-           type = VALUES(type),
-           url = VALUES(url),
-           video_url = VALUES(video_url),
-           audio_url = VALUES(audio_url),
-           description = VALUES(description)`,
-        [
-          data.id,
-          data.title,
-          data.tag,
-          data.size,
-          data.type,
-          data.url || null,
-          data.video_url || null,
-          data.audio_url || null,
-          data.description || null,
-          data.provider || "direct",
-        ]
-      );
-      return { success: true };
-    } catch (e) {
-      console.error("[saveElibraryBookFn Error]:", e);
-      return { success: false };
-    }
-  });
-
-export const deleteElibraryBookFn = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => data)
-  .handler(async ({ data }): Promise<{ success: boolean }> => {
-    try {
-      const { execute } = await import("@/lib/db");
-      await execute("DELETE FROM elibrary_books WHERE id = ?", [data.id]);
-      return { success: true };
-    } catch (e) {
-      console.error("[deleteElibraryBookFn Error]:", e);
       return { success: false };
     }
   });
@@ -2833,40 +2898,32 @@ export const deleteJournalFn = createServerFn({ method: "POST" })
 
 // 25B. PRESENSI KBM BATCH CRUD
 export const getKbmPresensiFn = createServerFn({ method: "POST" })
-  .validator((data: { rombel: string; mapel: string; date_str: string }) => data)
+  .validator((data: { rombel: string; mapel: string; date_str?: string }) => data)
   .handler(async ({ data }): Promise<KbmPresensiRow[]> => {
     try {
-      const { query, execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS kbm_presensi (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          rombel VARCHAR(100) NOT NULL,
-          mapel VARCHAR(255) NOT NULL,
-          guru_name VARCHAR(255) NOT NULL,
-          student_id VARCHAR(64),
-          student_nis VARCHAR(50) NOT NULL,
-          student_name VARCHAR(255) NOT NULL,
-          status VARCHAR(20) NOT NULL DEFAULT 'HADIR',
-          notes TEXT,
-          date_str VARCHAR(100) NOT NULL,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-      let sql = "SELECT * FROM kbm_presensi WHERE date_str = ?";
-      const params: any[] = [data.date_str];
-
+      const { query } = await import("@/lib/db");
+      let sql = `SELECT * FROM kbm_presensi WHERE 1=1`;
+      const params: any[] = [];
       if (data.rombel && data.rombel !== "ALL") {
-        sql += " AND (rombel = ? OR rombel LIKE ?)";
-        params.push(data.rombel, `%${data.rombel}%`);
+        const cleanRombel = data.rombel.replace("Rombel", "").replace("Kelas", "").replace("-", "").trim();
+        sql += ` AND (rombel = ? OR rombel LIKE ? OR rombel LIKE ?)`;
+        params.push(data.rombel, `%${cleanRombel}%`, `%${data.rombel}%`);
       }
-
       if (data.mapel && data.mapel !== "ALL") {
-        sql += " AND mapel = ?";
+        sql += ` AND mapel = ?`;
         params.push(data.mapel);
       }
-
-      const rows = await query<KbmPresensiRow[]>(sql, params);
-      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+      if (data.date_str) {
+        const parts = data.date_str.split("-");
+        let altDate = data.date_str;
+        if (parts.length === 3) {
+          altDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        sql += ` AND (date_str = ? OR date_str = ? OR date_str LIKE ?)`;
+        params.push(data.date_str, altDate, `%${data.date_str}%`);
+      }
+      sql += ` ORDER BY id DESC`;
+      return (await query<KbmPresensiRow[]>(sql, params)) || [];
     } catch (e) {
       console.error("[getKbmPresensiFn Error]:", e);
       return [];
@@ -2877,7 +2934,7 @@ export const saveKbmPresensiBatchFn = createServerFn({ method: "POST" })
   .validator((data: { rombel: string; mapel: string; date_str: string; records: KbmPresensiRow[] }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     try {
-      await authorizeSubjectAccessServer(data.mapel);
+      const sessionUser = await authorizeSubjectAccessServer(data.mapel);
       const { execute } = await import("@/lib/db");
       await execute(`
         CREATE TABLE IF NOT EXISTS kbm_presensi (
@@ -2891,25 +2948,38 @@ export const saveKbmPresensiBatchFn = createServerFn({ method: "POST" })
           status VARCHAR(20) NOT NULL DEFAULT 'HADIR',
           notes TEXT,
           date_str VARCHAR(100) NOT NULL,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY uk_student_date (student_nis, date_str)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
 
+      try {
+        await execute(`ALTER TABLE kbm_presensi ADD UNIQUE KEY uk_student_date (student_nis, date_str)`);
+      } catch {}
+
+      const parts = data.date_str.split("-");
+      let altDate = data.date_str;
+      if (parts.length === 3) {
+        altDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+
       for (const item of data.records) {
+        const nis = item.student_nis || item.student_name;
+        const teacherName = item.guru_name || sessionUser.full_name || "SOBIYATI, S.Pd";
+        const status = item.status || "HADIR";
+        const notes = item.notes || "";
+
+        // Delete any existing/duplicate records for this student on this date
+        await execute(
+          `DELETE FROM kbm_presensi WHERE (student_nis = ? OR student_name = ?) AND (date_str = ? OR date_str = ?)`,
+          [nis, item.student_name, data.date_str, altDate]
+        );
+
+        // Insert single clean record with updated status
         await execute(
           `INSERT INTO kbm_presensi (rombel, mapel, guru_name, student_nis, student_name, status, notes, date_str)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE status=VALUES(status), notes=VALUES(notes)`,
-          [
-            data.rombel,
-            data.mapel,
-            item.guru_name || "SOBIYATI, S.Pd",
-            item.student_nis,
-            item.student_name,
-            item.status,
-            item.notes || "",
-            data.date_str,
-          ]
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [data.rombel, data.mapel, teacherName, nis, item.student_name, status, notes, data.date_str]
         );
       }
       return { success: true };
@@ -3429,9 +3499,79 @@ export const getAuditLogsServerFn = createServerFn({ method: "GET" })
         };
       });
     } catch (e) {
-      console.warn("Failed fetching audit logs from MySQL:", e);
       return [];
     }
   });
+
+export const getActiveKbmSessionsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<any[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS active_kbm_sessions (
+          id VARCHAR(64) PRIMARY KEY,
+          rombel VARCHAR(50) NOT NULL,
+          mapel VARCHAR(100) NOT NULL,
+          guru_name VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'SEDANG_BERLANGSUNG',
+          date_str VARCHAR(50) NOT NULL,
+          started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      return await query<any[]>("SELECT * FROM active_kbm_sessions ORDER BY updated_at DESC");
+    } catch (e) {
+      console.error("[getActiveKbmSessionsFn Error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveActiveKbmSessionFn = createServerFn({ method: "POST" })
+  .validator((data: any) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS active_kbm_sessions (
+          id VARCHAR(64) PRIMARY KEY,
+          rombel VARCHAR(50) NOT NULL,
+          mapel VARCHAR(100) NOT NULL,
+          guru_name VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'SEDANG_BERLANGSUNG',
+          date_str VARCHAR(50) NOT NULL,
+          started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      await execute(
+        `INSERT INTO active_kbm_sessions (id, rombel, mapel, guru_name, status, date_str)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           guru_name = VALUES(guru_name),
+           status = VALUES(status),
+           date_str = VALUES(date_str)`,
+        [data.id, data.rombel, data.mapel, data.guru_name, data.status || "SEDANG_BERLANGSUNG", data.date_str]
+      );
+      return { success: true };
+    } catch (e) {
+      console.error("[saveActiveKbmSessionFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const getJadwalPelajaranFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<any[]> => {
+    try {
+      const { query } = await import("@/lib/db");
+      const rows = await query<any[]>("SELECT * FROM jadwal_pelajaran ORDER BY id ASC");
+      return rows || [];
+    } catch (e) {
+      console.error("[getJadwalPelajaranFn Error]:", e);
+      return [];
+    }
+  }
+);
 
 

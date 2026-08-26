@@ -26,6 +26,7 @@ interface DaftarSiswaKelasTabProps {
   onSendWa: (student: StudentItem) => void;
   onOpenCetakSurat: (student: StudentItem) => void;
   onUpdateStudent?: (studentId: string, parentName: string, parentWa: string) => void;
+  isReadOnly?: boolean;
 }
 
 export function DaftarSiswaKelasTab({
@@ -34,6 +35,7 @@ export function DaftarSiswaKelasTab({
   onSendWa,
   onOpenCetakSurat,
   onUpdateStudent,
+  isReadOnly = false,
 }: DaftarSiswaKelasTabProps) {
   const [search, setSearch] = useState("");
   const [sortColumn, setSortColumn] = useState<string>("name");
@@ -158,7 +160,7 @@ export function DaftarSiswaKelasTab({
                     )}
                   </div>
                 </th>
-                <th className="py-3 px-4 text-right">Aksi Wali Kelas</th>
+                {!isReadOnly && <th className="py-3 px-4 text-right">Aksi Wali Kelas</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -185,37 +187,39 @@ export function DaftarSiswaKelasTab({
                       </Badge>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-right space-x-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-[11px] font-bold text-blue-600 dark:text-blue-400 border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 gap-1"
-                      onClick={() => handleOpenEditParent(s)}
-                      title="Edit Nama Ortu & No. WA Active"
-                    >
-                      <Pencil className="h-3 w-3" /> Edit Ortu
-                    </Button>
+                  {!isReadOnly && (
+                    <td className="py-3 px-4 text-right space-x-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] font-bold text-blue-600 dark:text-blue-400 border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 gap-1"
+                        onClick={() => handleOpenEditParent(s)}
+                        title="Edit Nama Ortu & No. WA Active"
+                      >
+                        <Pencil className="h-3 w-3" /> Edit Ortu
+                      </Button>
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-[11px] font-bold text-purple-600 dark:text-purple-400 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 gap-1"
-                      onClick={() => onSendWa(s)}
-                      title="Kirim WA Alert Ke Orang Tua"
-                    >
-                      <Send className="h-3 w-3" /> WA Ortu
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] font-bold text-purple-600 dark:text-purple-400 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 gap-1"
+                        onClick={() => onSendWa(s)}
+                        title="Kirim WA Alert Ke Orang Tua"
+                      >
+                        <Send className="h-3 w-3" /> WA Ortu
+                      </Button>
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-[11px] font-bold gap-1"
-                      onClick={() => onOpenCetakSurat(s)}
-                      title="Cetak Surat Keterangan / Panggilan"
-                    >
-                      <Printer className="h-3 w-3" /> Surat
-                    </Button>
-                  </td>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] font-bold gap-1"
+                        onClick={() => onOpenCetakSurat(s)}
+                        title="Cetak Surat Keterangan / Panggilan"
+                      >
+                        <Printer className="h-3 w-3" /> Surat
+                      </Button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

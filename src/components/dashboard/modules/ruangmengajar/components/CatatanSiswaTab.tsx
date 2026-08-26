@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 
 export interface StudentBehaviorNote {
   id: string;
@@ -57,7 +58,8 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
         return true;
       });
 
-      setRealStudents(matched.map((s: any) => ({ id: s.id || String(Math.random()), name: s.name })));
+      const displayList = matched.length > 0 ? matched : siswaList;
+      setRealStudents(displayList.map((s: any) => ({ id: String(s.id || Math.random()), name: s.full_name || s.name || s.username })));
 
       if (dbNotes) {
         setNotes(
@@ -81,14 +83,17 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
 
   const handleAddNote = async () => {
     if (!studentInput.trim() || !noteText.trim()) {
-      return toast.error("Mohon isi nama siswa dan catatan KBM terlebih dahulu!");
+      return toast.error("Mohon pilih siswa dan tulis catatan observasi KBM!");
     }
+    const me = MysqlAuthService.getActiveUser();
+    const todayFormatted = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+
     const newEntry: StudentBehaviorNote = {
       id: "n_" + Date.now(),
       studentName: studentInput.trim().toUpperCase(),
       type: noteType,
       note: noteText.trim(),
-      date: "24 Agustus 2026",
+      date: todayFormatted,
     };
     setNotes((prev) => [newEntry, ...prev]);
     setStudentInput("");
@@ -97,7 +102,7 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
     await MysqlDataService.saveStudentKbmNote({
       rombel: activeRombel,
       mapel: activeMapel,
-      teacher_name: "SOBIYATI, S.Pd",
+      teacher_name: me?.full_name || "Guru Pengampu",
       student_name: newEntry.studentName,
       type: newEntry.type,
       note: newEntry.note,

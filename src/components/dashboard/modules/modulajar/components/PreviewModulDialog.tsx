@@ -36,28 +36,45 @@ export function PreviewModulDialog({ previewModul, isOpen, onOpenChange, onDownl
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="p-4 bg-muted/40 rounded-xl border border-border flex items-center justify-between text-xs">
-            <div className="space-y-1">
+          <div className="flex items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-border text-xs">
+            <div className="space-y-0.5">
               <div className="font-bold text-foreground">{previewModul.title}</div>
-              <div className="text-muted-foreground">Mapel: {previewModul.mapel} • Jenjang: {previewModul.jenjang}</div>
+              <div className="text-muted-foreground">Penyusun: {previewModul.teacher} • Ukuran: {previewModul.size}</div>
             </div>
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5" onClick={() => onDownload(previewModul)}>
-              <Download className="h-4 w-4" /> Unduh Berkas PDF
-            </Button>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className={
+                  previewModul.status === "Terverifikasi Waka"
+                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold border-emerald-500/40"
+                    : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold border-amber-500/40"
+                }
+              >
+                Status: {previewModul.status || "Menunggu Verifikasi Waka"}
+              </Badge>
+
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5" onClick={() => onDownload(previewModul)}>
+                <Download className="h-4 w-4" /> Unduh Berkas PDF
+              </Button>
+            </div>
           </div>
 
-          <div className="border border-border rounded-xl p-8 bg-card text-center space-y-3">
-            <div className="h-16 w-16 mx-auto rounded-2xl bg-emerald-500/15 text-emerald-600 grid place-items-center font-bold text-3xl">
-              📄
-            </div>
-            <h3 className="font-bold text-base text-foreground">{previewModul.title}</h3>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto">
-              Dokumen digital resmi Kurikulum Merdeka MTsN 2 Cilacap. Berkas siap diunduh atau digenerate dalam format PDF standar.
-            </p>
-            <div className="pt-2 flex justify-center gap-2">
-              <Badge variant="outline" className="text-xs font-mono">Size: {previewModul.size}</Badge>
-              <Badge variant="outline" className="text-xs font-mono text-emerald-600 border-emerald-500/40">Status: {previewModul.status}</Badge>
-            </div>
+          <div className="relative w-full rounded-xl border border-border bg-slate-900 overflow-hidden shadow-inner min-h-[500px]">
+            {previewModul.file_url ? (
+              <iframe
+                src={previewModul.file_url}
+                className="w-full h-[520px] rounded-xl border-0"
+                title={previewModul.title}
+              />
+            ) : (
+              <div className="p-12 text-center space-y-3">
+                <div className="text-4xl">📄</div>
+                <div className="text-sm font-bold text-slate-300">Berkas PDF siap diunduh</div>
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5" onClick={() => onDownload(previewModul)}>
+                  <Download className="h-4 w-4" /> Unduh Berkas PDF
+                </Button>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="pt-3 border-t border-border">

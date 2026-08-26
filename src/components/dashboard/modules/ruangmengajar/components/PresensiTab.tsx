@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { UserCheck, CheckCircle2, AlertCircle, Clock, Save, Sparkles, MessageSquare, Inbox } from "lucide-react";
+import { UserCheck, CheckCircle2, AlertCircle, Clock, Save, Sparkles, MessageSquare, Inbox, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { isSameClass } from "@/utils/classNormalization";
 
@@ -25,8 +26,9 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
   // Initialize strictly with empty array - NO hardcoded dummy students
   const [students, setStudents] = useState<StudentAttendance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const dateToday = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const dateToday = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     let isMounted = true;
@@ -97,22 +99,39 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
       toast.error("Tidak ada siswa terdaftar pada rombel ini untuk disimpan.");
       return;
     }
-    const records = students.map((s) => ({
-      rombel: activeRombel,
-      mapel: activeMapel,
-      guru_name: "GURU PENGAMPU",
-      student_nis: s.nis,
-      student_name: s.name,
-      status: s.status,
-      notes: s.notes || "",
-      date_str: dateToday,
-    }));
 
-    const success = await MysqlDataService.saveKbmPresensiBatch(activeRombel, activeMapel, dateToday, records as any);
-    if (success) {
-      toast.success(`✅ Rekap Presensi KBM ${activeRombel} (${activeMapel}) berhasil disimpan permanen ke Database MySQL!`);
-    } else {
-      toast.success(`✅ Rekap Presensi KBM ${activeRombel} (${activeMapel}) berhasil disimpan!`);
+    setIsSaving(true);
+    const toastId = toast.loading(`⏳ Menyimpan presensi ${students.length} siswa ${activeRombel} ke Database MySQL...`);
+
+    try {
+      const activeTeacherName = MysqlAuthService.getActiveUser()?.full_name || "GURU PENGAMPU";
+
+      const records = students.map((s) => ({
+        rombel: activeRombel,
+        mapel: activeMapel,
+        guru_name: activeTeacherName,
+        student_nis: s.nis,
+        student_name: s.name,
+        status: s.status,
+        notes: s.notes || "",
+        date_str: dateToday,
+      }));
+
+      const success = await MysqlDataService.saveKbmPresensiBatch(activeRombel, activeMapel, dateToday, records as any);
+      if (success) {
+        toast.success(`✅ Rekap Presensi KBM ${activeRombel} (${activeMapel}) berhasil disimpan permanen ke Database MySQL!`, {
+          id: toastId,
+          description: `${students.length} Siswa Terproses (Hadir: ${countHadir}, Sakit: ${countSakit}, Izin: ${countIzin}, Alpa: ${countAlpa})`,
+        });
+      } else {
+        toast.error(`❌ Gagal menyimpan presensi ke Database MySQL. Silakan periksa koneksi server.`, {
+          id: toastId,
+        });
+      }
+    } catch (err: any) {
+      toast.error(`❌ Gagal menyimpan presensi: ${err?.message || err}`, { id: toastId });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -134,18 +153,19 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
             variant="outline"
             className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
             onClick={handleAllHadir}
-            disabled={students.length === 0}
+            disabled={students.length === 0 || isSaving}
           >
             <Sparkles className="h-3.5 w-3.5" /> Set Semua Hadir
           </Button>
 
           <Button
             size="sm"
-            className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+            className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs disabled:opacity-70"
             onClick={handleSavePresensi}
-            disabled={students.length === 0}
+            disabled={students.length === 0 || isSaving}
           >
-            <Save className="h-3.5 w-3.5" /> Simpan Presensi
+            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {isSaving ? "Menyimpan..." : "Simpan Presensi"}
           </Button>
         </div>
       </CardHeader>

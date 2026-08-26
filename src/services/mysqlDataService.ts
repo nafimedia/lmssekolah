@@ -68,6 +68,9 @@ import {
   deleteMasterRombelFn,
   getUserAchievementsFn,
   saveUserAchievementFn,
+  getActiveKbmSessionsFn,
+  saveActiveKbmSessionFn,
+  getJadwalPelajaranFn,
   getKbmPresensiFn,
   saveKbmPresensiBatchFn,
   getStudentKbmNotesFn,
@@ -760,6 +763,35 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("deleteJournalFn failed:", e);
       return false;
+    }
+  }
+
+  // Active KBM Sessions
+  static async getActiveKbmSessions(): Promise<any[]> {
+    try {
+      return await getActiveKbmSessionsFn();
+    } catch (e) {
+      console.warn("getActiveKbmSessionsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveActiveKbmSession(data: { id: string; rombel: string; mapel: string; guru_name: string; status: string; date_str: string }): Promise<boolean> {
+    try {
+      const res = await saveActiveKbmSessionFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("saveActiveKbmSessionFn failed:", e);
+      return false;
+    }
+  }
+
+  static async getJadwalPelajaran(): Promise<any[]> {
+    try {
+      return await getJadwalPelajaranFn();
+    } catch (e) {
+      console.warn("getJadwalPelajaranFn failed:", e);
+      return [];
     }
   }
 

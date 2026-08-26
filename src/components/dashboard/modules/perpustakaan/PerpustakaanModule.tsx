@@ -66,17 +66,23 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
         const mapped = books.map((b: any) => ({
           id: String(b.id),
           t: b.title,
-          icon: b.cover_url?.includes("youtube") ? Video : FileText,
-          tag: b.category || "E-Book",
-          size: "PDF / Media Digital",
-          type: b.cover_url?.includes("youtube") ? "video" : "pdf",
-          url: b.file_url || b.cover_url || "",
-          desc: b.author ? `Karya ${b.author}` : "Modul Pembelajaran Digital MTsN 2 Cilacap",
+          icon: b.type === "video" ? Video : b.type === "audio" ? Headphones : FileText,
+          tag: b.tag || b.category || "PDF Modul",
+          size: b.size || "PDF / Media Digital",
+          type: b.type || "pdf",
+          url: b.url || b.file_url || b.cover_url || "",
+          videoUrl: b.video_url || b.url || "",
+          audioUrl: b.audio_url || b.url || "",
+          desc: b.description || (b.author ? `Karya ${b.author}` : "Modul Pembelajaran Digital MTsN 2 Cilacap"),
+          provider: b.provider || "direct",
         }));
         setBukuList(mapped);
+      } else {
+        setBukuList([]);
       }
     } catch (e) {
       console.warn("Gagal memuat data e-library:", e);
+      setBukuList([]);
     }
   };
 
@@ -144,7 +150,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
     }
   };
 
-  const handleAddBook = (e: React.FormEvent) => {
+  const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return toast.error("Judul modul / media tidak boleh kosong!");
     if (uploadMode === "file" && !selectedFile && !mediaUrl.trim()) {
@@ -160,8 +166,17 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
     let fileSizeStr = "12.5 MB";
 
     if (uploadMode === "file" && selectedFile) {
-      defaultUrl = selectedFileDataUrl || URL.createObjectURL(selectedFile);
       fileSizeStr = `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`;
+      if (selectedFileDataUrl) {
+        defaultUrl = selectedFileDataUrl;
+      } else {
+        defaultUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (evt) => resolve((evt.target?.result as string) || "");
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(selectedFile);
+        });
+      }
     } else {
       defaultUrl = mediaUrl.trim() || (isPdf ? "https://pdfobject.com/pdf/sample.pdf" : "https://www.youtube.com/watch?v=kYJzXv0h0bU");
     }
@@ -171,7 +186,6 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
     const newItem = {
       id: String(Date.now()),
       t: title.trim(),
-      icon: isVideo ? Video : isAudio ? Headphones : FileText,
       tag,
       size: uploadMode === "file" && selectedFile ? fileSizeStr : parsed.provider === "youtube" ? "YouTube HD" : parsed.provider === "gdrive" ? "Google Drive" : "15.0 MB",
       type: mediaType,
@@ -182,35 +196,46 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
       provider: uploadMode === "file" ? "direct" : parsed.provider,
     };
 
-    MysqlDataService.saveElibraryBook({
-      id: newItem.id,
-      title: newItem.t,
-      tag: newItem.tag,
-      size: newItem.size,
-      type: newItem.type,
-      url: newItem.url,
-      video_url: newItem.videoUrl,
-      audio_url: newItem.audioUrl,
-      description: newItem.desc,
-      provider: newItem.provider,
-    }).catch((err) => console.warn("saveElibraryBook DB failed:", err));
+    try {
+      const res = await MysqlDataService.saveElibraryBook({
+        id: newItem.id,
+        title: newItem.t,
+        tag: newItem.tag,
+        size: newItem.size,
+        type: newItem.type,
+        url: newItem.url,
+        video_url: newItem.videoUrl,
+        audio_url: newItem.audioUrl,
+        description: newItem.desc,
+        provider: newItem.provider,
+      });
 
-    const updated = [newItem, ...bukuList];
-    saveListToStorage(updated);
-
-    toast.success(`🎉 Berkas "${title}" (${tag}) berhasil diterbitkan ke Database E-Library!`);
-    setIsOpen(false);
-    setTitle("");
-    setMediaUrl("");
-    setDesc("");
-    setSelectedFile(null);
+      if (res) {
+        toast.success(`🎉 Berkas "${title}" (${tag}) berhasil diterbitkan dan tersimpan fisik di Server!`);
+        await loadData();
+        setIsOpen(false);
+        setTitle("");
+        setMediaUrl("");
+        setDesc("");
+        setSelectedFile(null);
+        setSelectedFileDataUrl("");
+      } else {
+        toast.error("Gagal menyimpan berkas e-library ke database.");
+      }
+    } catch (err) {
+      console.warn("saveElibraryBook DB error:", err);
+      toast.error("Terjadi kesalahan saat mengunggah berkas.");
+    }
   };
 
-  const handleDeleteBook = (id: string, title: string) => {
-    const updated = bukuList.filter((b: any) => b.id !== id);
-    saveListToStorage(updated);
-    MysqlDataService.deleteElibraryBook(id).catch((err) => console.warn("deleteElibraryBook DB failed:", err));
-    toast.success(`🗑️ Berkas "${title}" berhasil dihapus dari E-Library!`);
+  const handleDeleteBook = async (id: string, title: string) => {
+    try {
+      await MysqlDataService.deleteElibraryBook(id);
+      toast.success(`🗑️ Berkas "${title}" berhasil dihapus dari E-Library!`);
+      await loadData();
+    } catch (err) {
+      console.warn("deleteElibraryBook DB failed:", err);
+    }
   };
 
   const filtered = bukuList.filter((b: any) => filterTag === "Semua" || b.tag === filterTag);

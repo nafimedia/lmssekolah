@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { JadwalRow } from "@/services/mysqlDataService";
+import { JadwalRow, MysqlDataService } from "@/services/mysqlDataService";
 
 interface EditJadwalDialogProps {
   editingJadwal: JadwalRow | null;
@@ -22,6 +23,24 @@ interface EditJadwalDialogProps {
 
 export function EditJadwalDialog({ editingJadwal, isOpen, onOpenChange, onUpdateJadwal, setEditingJadwal }: EditJadwalDialogProps) {
   const hariList = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const [teachers, setTeachers] = useState<any[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getUsers().then((users: any[]) => {
+      if (!isMounted) return;
+      const guruUsers = (users || []).filter(
+        (u: any) => u.role !== "siswa" && (u.full_name || u.name)
+      );
+      guruUsers.sort((a: any, b: any) =>
+        (a.full_name || a.name || "").localeCompare(b.full_name || b.name || "")
+      );
+      setTeachers(guruUsers);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +51,12 @@ export function EditJadwalDialog({ editingJadwal, isOpen, onOpenChange, onUpdate
   };
 
   if (!editingJadwal) return null;
+
+  // Check if current editingJadwal.guru is in teachers list
+  const currentGuru = editingJadwal.guru || "";
+  const isCurrentGuruInList = teachers.some(
+    (t) => (t.full_name || t.name) === currentGuru
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -47,7 +72,7 @@ export function EditJadwalDialog({ editingJadwal, isOpen, onOpenChange, onUpdate
             <div>
               <Label className="text-xs font-semibold">Tingkat Kelas</Label>
               <select
-                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 value={editingJadwal.tingkat || "Kelas VIII"}
                 onChange={(e) => setEditingJadwal({ ...editingJadwal, tingkat: e.target.value })}
               >
@@ -60,7 +85,7 @@ export function EditJadwalDialog({ editingJadwal, isOpen, onOpenChange, onUpdate
             <div>
               <Label className="text-xs font-semibold">Nama Rombel</Label>
               <select
-                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 value={editingJadwal.rombel || "Rombel 8A"}
                 onChange={(e) => setEditingJadwal({ ...editingJadwal, rombel: e.target.value })}
               >
@@ -81,7 +106,7 @@ export function EditJadwalDialog({ editingJadwal, isOpen, onOpenChange, onUpdate
             <div>
               <Label className="text-xs font-semibold">Pilih Hari</Label>
               <select
-                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1"
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 value={editingJadwal.hari || "Senin"}
                 onChange={(e) => setEditingJadwal({ ...editingJadwal, hari: e.target.value })}
               >
@@ -113,14 +138,30 @@ export function EditJadwalDialog({ editingJadwal, isOpen, onOpenChange, onUpdate
           </div>
 
           <div>
-            <Label className="text-xs font-semibold">Guru Pengampu</Label>
-            <Input
-              placeholder="Nama Guru Pengampu"
-              value={editingJadwal.guru || ""}
+            <Label className="text-xs font-semibold">Guru Pengampu (Master Data MySQL)</Label>
+            <select
+              className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              value={currentGuru}
               onChange={(e) => setEditingJadwal({ ...editingJadwal, guru: e.target.value })}
               required
-              className="mt-1 text-xs"
-            />
+            >
+              <option value="" disabled>-- Pilih Guru Pengampu --</option>
+
+              {/* Render current teacher if not in database master list */}
+              {currentGuru && !isCurrentGuruInList && (
+                <option value={currentGuru}>{currentGuru}</option>
+              )}
+
+              {teachers.map((t, idx) => {
+                const teacherName = t.full_name || t.name;
+                const nipStr = t.nis_nip ? ` (NIP: ${t.nis_nip})` : "";
+                return (
+                  <option key={t.id || idx} value={teacherName}>
+                    {teacherName}{nipStr}
+                  </option>
+                );
+              })}
+            </select>
           </div>
 
           <DialogFooter className="pt-2">

@@ -3,19 +3,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check, Lock } from "lucide-react";
+import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check, Lock, ExternalLink, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
-import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlDataService, LkpdDiscussionRow } from "@/services/mysqlDataService";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 
 export interface ActivityDetail {
   id: string;
   title: string;
   type: "LKPD" | "TUGAS_KELOMPOK" | "QUIZ" | string;
+  instructions?: string;
   dueDate: string;
   status: string;
   submittedCount: number;
   totalStudents: number;
+  attachment_url?: string;
+  submission_type?: string;
+  quiz_data?: string;
 }
 
 interface StudentGradeRow {
@@ -43,7 +48,11 @@ export function ViewActivityDialog({
   activeMapel,
 }: ViewActivityDialogProps) {
   const [grades, setGrades] = useState<StudentGradeRow[]>([]);
+  const [discussions, setDiscussions] = useState<LkpdDiscussionRow[]>([]);
+  const [newMessage, setNewMessage] = useState("");
   const isAllowed = isSubjectAllowedForUser(activeMapel);
+
+  const activeUser = MysqlAuthService.getActiveUser();
 
   useEffect(() => {
     if (!isOpen || !activity) return;
@@ -52,8 +61,11 @@ export function ViewActivityDialog({
     Promise.all([
       MysqlDataService.getLkpdGrades(activity.id),
       MysqlDataService.getUsers(),
-    ]).then(([savedGrades, users]) => {
+      MysqlDataService.getLkpdDiscussions(activity.id),
+    ]).then(([savedGrades, users, discList]) => {
       if (!isMounted) return;
+      if (discList) setDiscussions(discList);
+
       const siswaList = (users || []).filter((u: any) => u.role === "siswa");
 
       const normActive = activeRombel.toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
@@ -119,6 +131,35 @@ export function ViewActivityDialog({
     setGrades((prev) => prev.map((g) => (g.id === id ? { ...g, feedback } : g)));
   };
 
+  const handleSendDiscussion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !activity) return;
+
+    const payload = {
+      activity_id: activity.id,
+      user_name: activeUser?.full_name || "Guru Pengampu",
+      user_role: activeUser?.role || "guru",
+      message: newMessage.trim(),
+    };
+
+    const res = await MysqlDataService.postLkpdDiscussion(payload);
+    if (res.success) {
+      setDiscussions((prev) => [
+        ...prev,
+        {
+          id: res.id || String(Date.now()),
+          activity_id: activity.id,
+          user_name: payload.user_name,
+          user_role: payload.user_role,
+          message: payload.message,
+          created_at: "Baru saja",
+        },
+      ]);
+      setNewMessage("");
+      toast.success("💬 Pesan diskusi berhasil terkirim!");
+    }
+  };
+
   const handleSaveGrades = async () => {
     if (!activity) return;
     if (!isAllowed) {
@@ -139,9 +180,19 @@ export function ViewActivityDialog({
     onOpenChange(false);
   };
 
+  // Parse Quiz Data if available
+  let parsedQuizQuestions: any[] = [];
+  if (activity.quiz_data) {
+    try {
+      parsedQuizQuestions = JSON.parse(activity.quiz_data);
+    } catch (e) {
+      parsedQuizQuestions = [];
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
         <DialogHeader className="border-b border-border pb-3">
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2">
@@ -171,12 +222,90 @@ export function ViewActivityDialog({
 
         <div className="py-4 space-y-4">
           <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2">
-            <h4 className="font-bold text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4" /> Lembar Kerja Peserta Didik Digital (LKPD Interactive)
-            </h4>
-            <p className="text-xs text-slate-700 dark:text-slate-300">
-              Instruksi Siswa: Bacalah studi kasus penerapan norma hukum pada modul Ajar Bab 1, kemudian diskusikan bersama kelompokmu 3 contoh perilaku tertib hukum di lingkungan madrasah.
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4" /> Petunjuk & Deskripsi Aktivitas
+              </h4>
+
+              {activity.attachment_url && (
+                <a
+                  href={activity.attachment_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1 bg-background px-2.5 py-1 rounded-md border border-emerald-500/30"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Buka Lampiran Berkas / PDF
+                </a>
+              )}
+            </div>
+            <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+              {activity.instructions || "Tuliskan petunjuk pengerjaan dan bahan rujukan..."}
             </p>
+          </div>
+
+          {/* Tampilan Soal Kuis Formatif (Jika jenis QUIZ) */}
+          {activity.type === "QUIZ" && parsedQuizQuestions.length > 0 && (
+            <div className="p-4 rounded-xl border border-purple-200 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-950/20 space-y-3">
+              <h4 className="font-bold text-xs text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
+                <Brain className="h-4 w-4" /> Daftar Soal Kuis Formatif ({parsedQuizQuestions.length} Soal Pilihan Ganda)
+              </h4>
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                {parsedQuizQuestions.map((q: any, idx: number) => (
+                  <div key={idx} className="p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-card text-xs space-y-1.5">
+                    <div className="font-bold text-foreground">
+                      #{idx + 1}. {q.question}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+                      <span className={q.keyAnswer === "A" ? "font-bold text-emerald-600" : ""}>A. {q.optionA} {q.keyAnswer === "A" && "✓ (Kunci)"}</span>
+                      <span className={q.keyAnswer === "B" ? "font-bold text-emerald-600" : ""}>B. {q.optionB} {q.keyAnswer === "B" && "✓ (Kunci)"}</span>
+                      <span className={q.keyAnswer === "C" ? "font-bold text-emerald-600" : ""}>C. {q.optionC} {q.keyAnswer === "C" && "✓ (Kunci)"}</span>
+                      <span className={q.keyAnswer === "D" ? "font-bold text-emerald-600" : ""}>D. {q.optionD} {q.keyAnswer === "D" && "✓ (Kunci)"}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ruang Diskusi Interaktif (Real-time Live Comments) */}
+          <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-950/10 space-y-3">
+            <h4 className="font-bold text-xs text-blue-800 dark:text-blue-300 flex items-center justify-between">
+              <span className="flex items-center gap-1.5"><MessageSquare className="h-4 w-4 text-blue-600" /> Ruang Diskusi & Tanya Jawab Interaktif</span>
+              <span className="text-[11px] font-mono text-muted-foreground">{discussions.length} Tanggapan</span>
+            </h4>
+
+            <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+              {discussions.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic text-center py-3">Belum ada diskusi / pertanyaan dari siswa. Kirim tanggapan pertama di bawah!</p>
+              ) : (
+                discussions.map((d, idx) => (
+                  <div key={idx} className="p-2.5 rounded-lg bg-card border border-border text-xs space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-extrabold text-foreground flex items-center gap-1">
+                        {d.user_name}
+                        <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0">
+                          {d.user_role}
+                        </Badge>
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{d.created_at || "Terkirim"}</span>
+                    </div>
+                    <p className="text-muted-foreground">{d.message}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <form onSubmit={handleSendDiscussion} className="flex gap-2">
+              <Input
+                placeholder="Tulis tanggapan diskusi atau instruksi kelompok..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="text-xs"
+              />
+              <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1 shrink-0">
+                <Send className="h-3.5 w-3.5" /> Kirim
+              </Button>
+            </form>
           </div>
 
           {/* Student Grading Table */}

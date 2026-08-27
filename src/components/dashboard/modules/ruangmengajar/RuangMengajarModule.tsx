@@ -29,6 +29,8 @@ import { CatatanSiswaTab } from "./components/CatatanSiswaTab";
 import { RiwayatKbmSection } from "./components/RiwayatKbmSection";
 import { TambahJurnalDialog } from "./components/TambahJurnalDialog";
 
+import { isSameClass } from "@/utils/classNormalization";
+
 export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isKamad = activeRole === "kamad";
   const [activeTab, setActiveTab] = useState<"jurnal" | "presensi" | "materi" | "aktivitas" | "catatan_siswa" | "riwayat">("jurnal");
@@ -212,7 +214,15 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       {/* Active Tab Contents */}
       {activeTab === "jurnal" && (
         <JurnalMengajarTab
-          journalList={journalList}
+          journalList={journalList.filter((j) => {
+            const rombelVal = j.rombel || j.kelas || "";
+            const matchRombel = !rombelVal || isSameClass(rombelVal, activeRombel);
+            const matchMapel =
+              !j.mapel ||
+              j.mapel === activeMapel ||
+              (j.mapel && j.mapel.toLowerCase().trim() === activeMapel.toLowerCase().trim());
+            return matchRombel && matchMapel;
+          })}
           onOpenAddModal={() => setIsAddJurnalOpen(true)}
           onDeleteJurnal={handleDeleteJurnal}
           activeRombel={activeRombel}

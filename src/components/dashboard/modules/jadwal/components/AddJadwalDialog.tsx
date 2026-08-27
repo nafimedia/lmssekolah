@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { MysqlDataService } from "@/services/mysqlDataService";
 
 interface AddJadwalDialogProps {
   isOpen: boolean;
@@ -25,7 +26,28 @@ export function AddJadwalDialog({ isOpen, onOpenChange, onAddJadwal }: AddJadwal
   const [mapel, setMapel] = useState("Matematika");
   const [inputTingkat, setInputTingkat] = useState("Kelas VIII");
   const [inputRombel, setInputRombel] = useState("Rombel 8A");
-  const [guru, setGuru] = useState("SAYONO, S.Pd., M.Pd.");
+  const [guru, setGuru] = useState("");
+  const [teachers, setTeachers] = useState<any[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getUsers().then((users: any[]) => {
+      if (!isMounted) return;
+      const guruUsers = (users || []).filter(
+        (u: any) => u.role !== "siswa" && (u.full_name || u.name)
+      );
+      guruUsers.sort((a: any, b: any) =>
+        (a.full_name || a.name || "").localeCompare(b.full_name || b.name || "")
+      );
+      setTeachers(guruUsers);
+      if (guruUsers.length > 0 && !guru) {
+        setGuru(guruUsers[0].full_name || guruUsers[0].name);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +68,7 @@ export function AddJadwalDialog({ isOpen, onOpenChange, onAddJadwal }: AddJadwal
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs font-semibold">Tingkat Kelas</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={inputTingkat} onChange={(e) => setInputTingkat(e.target.value)}>
+              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none" value={inputTingkat} onChange={(e) => setInputTingkat(e.target.value)}>
                 <option value="Kelas VII">Kelas VII (7)</option>
                 <option value="Kelas VIII">Kelas VIII (8)</option>
                 <option value="Kelas IX">Kelas IX (9)</option>
@@ -55,7 +77,7 @@ export function AddJadwalDialog({ isOpen, onOpenChange, onAddJadwal }: AddJadwal
 
             <div>
               <Label className="text-xs font-semibold">Nama Rombel</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={inputRombel} onChange={(e) => setInputRombel(e.target.value)}>
+              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none" value={inputRombel} onChange={(e) => setInputRombel(e.target.value)}>
                 <option value="Rombel 7A">Rombel 7A</option>
                 <option value="Rombel 7B">Rombel 7B</option>
                 <option value="Rombel 7C">Rombel 7C</option>
@@ -71,7 +93,7 @@ export function AddJadwalDialog({ isOpen, onOpenChange, onAddJadwal }: AddJadwal
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs font-semibold">Pilih Hari</Label>
-              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={selectedHari} onChange={(e) => setSelectedHari(e.target.value)}>
+              <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none" value={selectedHari} onChange={(e) => setSelectedHari(e.target.value)}>
                 {hariList.map((h) => <option key={h} value={h}>{h}</option>)}
               </select>
             </div>
@@ -88,8 +110,24 @@ export function AddJadwalDialog({ isOpen, onOpenChange, onAddJadwal }: AddJadwal
           </div>
 
           <div>
-            <Label className="text-xs font-semibold">Guru Pengampu</Label>
-            <Input placeholder="Nama Guru Pengampu" value={guru} onChange={(e) => setGuru(e.target.value)} required className="mt-1 text-xs" />
+            <Label className="text-xs font-semibold">Guru Pengampu (Master Data MySQL)</Label>
+            <select
+              className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              value={guru}
+              onChange={(e) => setGuru(e.target.value)}
+              required
+            >
+              <option value="" disabled>-- Pilih Guru Pengampu --</option>
+              {teachers.map((t, idx) => {
+                const teacherName = t.full_name || t.name;
+                const nipStr = t.nis_nip ? ` (NIP: ${t.nis_nip})` : "";
+                return (
+                  <option key={t.id || idx} value={teacherName}>
+                    {teacherName}{nipStr}
+                  </option>
+                );
+              })}
+            </select>
           </div>
 
           <DialogFooter className="pt-2">

@@ -82,6 +82,9 @@ import {
   saveLkpdActivityFn,
   getLkpdGradesFn,
   saveLkpdGradesBatchFn,
+  getLkpdDiscussionsFn,
+  postLkpdDiscussionFn,
+  LkpdDiscussionRow,
   getWaGatewayConfigFn,
   saveWaGatewayConfigFn,
   sendTestWaMessageFn,
@@ -1113,6 +1116,24 @@ export class MysqlDataService {
     }
   }
 
+  static async getLkpdDiscussions(activityId: string): Promise<LkpdDiscussionRow[]> {
+    try {
+      return await getLkpdDiscussionsFn({ data: { activity_id: activityId } });
+    } catch (e) {
+      console.warn("getLkpdDiscussionsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async postLkpdDiscussion(data: { activity_id: string; user_name: string; user_role: string; message: string }): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await postLkpdDiscussionFn({ data });
+    } catch (e) {
+      console.warn("postLkpdDiscussionFn failed:", e);
+      return { success: false };
+    }
+  }
+
   // WA Gateway System Config & Test Message
   static async getWaGatewayConfig(): Promise<WaGatewayConfigRow> {
     try {
@@ -1164,4 +1185,4 @@ export class MysqlDataService {
   }
 }
 
-export type { WaGatewayConfigRow, AuditLogItem };
+export type { WaGatewayConfigRow, AuditLogItem, LkpdDiscussionRow };

@@ -195,15 +195,11 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <FileText className="h-6 w-6 text-emerald-500" />
-            {isWaka ? "Verifikasi & Validasi Modul Ajar PDF" : "Perangkat Ajar & Modul Ajar PDF"}{" "}
+            Modul Ajar PDF{" "}
             {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs">📍 Kelas {rawClass}</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isWaka
-              ? "Portal verifikasi dan validasi modul ajar Kurikulum Merdeka."
-              : isSiswa
-              ? `Akses berkas PDF modul ajar khusus Kelas ${rawClass}.`
-              : "Pengelolaan modul ajar Kurikulum Merdeka per mata pelajaran dan jenjang."}
+            Pustaka Berkas PDF Modul Ajar, Buku Paket Mapel, & Bahan Rujukan KBM (Bisa Diakses Langsung — Tanpa Verifikasi Pengesahan Waka).
           </p>
         </div>
         {!isSiswa && !isKamad && (

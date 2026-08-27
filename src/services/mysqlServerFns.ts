@@ -3196,6 +3196,9 @@ export interface LkpdActivityRow {
   due_date: string;
   max_score?: number;
   status?: string;
+  attachment_url?: string;
+  submission_type?: string;
+  quiz_data?: string;
   created_at?: string;
 }
 
@@ -3210,31 +3213,71 @@ export interface LkpdGradeRow {
   feedback?: string;
 }
 
+export interface LkpdDiscussionRow {
+  id?: string;
+  activity_id: string;
+  user_name: string;
+  user_role: string;
+  message: string;
+  created_at?: string;
+}
+
+async function ensureLkpdSchema(execute: any) {
+  try {
+    await execute(`
+      CREATE TABLE IF NOT EXISTS lkpd_activities (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        rombel VARCHAR(100) NOT NULL,
+        mapel VARCHAR(255) NOT NULL,
+        teacher_name VARCHAR(255) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL DEFAULT 'LKPD',
+        instructions TEXT,
+        due_date VARCHAR(100) NOT NULL,
+        max_score INT DEFAULT 100,
+        status VARCHAR(50) DEFAULT 'AKTIF',
+        attachment_url TEXT,
+        submission_type VARCHAR(100) DEFAULT 'TEXT_AND_FILE',
+        quiz_data LONGTEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    await execute("ALTER TABLE lkpd_activities ADD COLUMN attachment_url TEXT").catch(() => {});
+    await execute("ALTER TABLE lkpd_activities ADD COLUMN submission_type VARCHAR(100) DEFAULT 'TEXT_AND_FILE'").catch(() => {});
+    await execute("ALTER TABLE lkpd_activities ADD COLUMN quiz_data LONGTEXT").catch(() => {});
+    await execute(`
+      CREATE TABLE IF NOT EXISTS lkpd_discussions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        activity_id VARCHAR(100) NOT NULL,
+        user_name VARCHAR(255) NOT NULL,
+        user_role VARCHAR(50) NOT NULL,
+        message TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+  } catch (e) {}
+}
+
 export const getLkpdActivitiesFn = createServerFn({ method: "POST" })
   .validator((data: { rombel: string; mapel: string }) => data)
   .handler(async ({ data }): Promise<LkpdActivityRow[]> => {
     try {
       const { query, execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS lkpd_activities (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          rombel VARCHAR(100) NOT NULL,
-          mapel VARCHAR(255) NOT NULL,
-          teacher_name VARCHAR(255) NOT NULL,
-          title VARCHAR(255) NOT NULL,
-          type VARCHAR(50) NOT NULL DEFAULT 'LKPD',
-          instructions TEXT,
-          due_date VARCHAR(100) NOT NULL,
-          max_score INT DEFAULT 100,
-          status VARCHAR(50) DEFAULT 'AKTIF',
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-      const rows = await query<LkpdActivityRow[]>(
-        "SELECT * FROM lkpd_activities WHERE rombel = ? AND mapel = ? ORDER BY id DESC",
-        [data.rombel, data.mapel]
-      );
-      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+      await ensureLkpdSchema(execute);
+
+      const allRows = await query<LkpdActivityRow[]>("SELECT * FROM lkpd_activities ORDER BY id DESC");
+      const cleanRombel = (data.rombel || "").trim();
+      const cleanMapel = (data.mapel || "").trim();
+
+      const { isSameClass } = await import("@/utils/classNormalization");
+
+      const filtered = (allRows || []).filter((item) => {
+        const matchRombel = cleanRombel === "ALL" || isSameClass(item.rombel, cleanRombel);
+        const matchMapel = cleanMapel === "ALL" || item.mapel === cleanMapel || item.mapel.toLowerCase() === cleanMapel.toLowerCase();
+        return matchRombel && matchMapel;
+      });
+
+      return filtered.map((r) => ({ ...r, id: String(r.id) }));
     } catch (e) {
       console.error("[getLkpdActivitiesFn Error]:", e);
       return [];
@@ -3247,24 +3290,10 @@ export const saveLkpdActivityFn = createServerFn({ method: "POST" })
     try {
       await authorizeSubjectAccessServer(data.mapel);
       const { execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS lkpd_activities (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          rombel VARCHAR(100) NOT NULL,
-          mapel VARCHAR(255) NOT NULL,
-          teacher_name VARCHAR(255) NOT NULL,
-          title VARCHAR(255) NOT NULL,
-          type VARCHAR(50) NOT NULL DEFAULT 'LKPD',
-          instructions TEXT,
-          due_date VARCHAR(100) NOT NULL,
-          max_score INT DEFAULT 100,
-          status VARCHAR(50) DEFAULT 'AKTIF',
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
+      await ensureLkpdSchema(execute);
       const res: any = await execute(
-        `INSERT INTO lkpd_activities (rombel, mapel, teacher_name, title, type, instructions, due_date, max_score, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO lkpd_activities (rombel, mapel, teacher_name, title, type, instructions, due_date, max_score, status, attachment_url, submission_type, quiz_data)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.rombel,
           data.mapel,
@@ -3275,6 +3304,9 @@ export const saveLkpdActivityFn = createServerFn({ method: "POST" })
           data.due_date,
           data.max_score || 100,
           data.status || "AKTIF",
+          data.attachment_url || "",
+          data.submission_type || "TEXT_AND_FILE",
+          data.quiz_data || "",
         ]
       );
       return { success: true, id: String(res?.insertId || Date.now()) };
@@ -3353,6 +3385,58 @@ export const saveLkpdGradesBatchFn = createServerFn({ method: "POST" })
       return { success: true };
     } catch (e) {
       console.error("[saveLkpdGradesBatchFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const getLkpdDiscussionsFn = createServerFn({ method: "POST" })
+  .validator((data: { activity_id: string }) => data)
+  .handler(async ({ data }): Promise<LkpdDiscussionRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS lkpd_discussions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          activity_id VARCHAR(100) NOT NULL,
+          user_name VARCHAR(255) NOT NULL,
+          user_role VARCHAR(50) NOT NULL,
+          message TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<LkpdDiscussionRow[]>(
+        "SELECT * FROM lkpd_discussions WHERE activity_id = ? ORDER BY id ASC",
+        [data.activity_id]
+      );
+      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.error("[getLkpdDiscussionsFn Error]:", e);
+      return [];
+    }
+  });
+
+export const postLkpdDiscussionFn = createServerFn({ method: "POST" })
+  .validator((data: { activity_id: string; user_name: string; user_role: string; message: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS lkpd_discussions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          activity_id VARCHAR(100) NOT NULL,
+          user_name VARCHAR(255) NOT NULL,
+          user_role VARCHAR(50) NOT NULL,
+          message TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res: any = await execute(
+        `INSERT INTO lkpd_discussions (activity_id, user_name, user_role, message) VALUES (?, ?, ?, ?)`,
+        [data.activity_id, data.user_name, data.user_role, data.message]
+      );
+      return { success: true, id: String(res?.insertId || Date.now()) };
+    } catch (e) {
+      console.error("[postLkpdDiscussionFn Error]:", e);
       return { success: false };
     }
   });

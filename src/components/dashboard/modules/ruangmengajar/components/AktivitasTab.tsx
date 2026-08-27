@@ -12,10 +12,14 @@ export interface LearningActivityItem {
   id: string;
   title: string;
   type: ActivityTypeOption | string;
+  instructions?: string;
   dueDate: string;
   status: string;
   submittedCount: number;
   totalStudents: number;
+  attachment_url?: string;
+  submission_type?: string;
+  quiz_data?: string;
 }
 
 interface AktivitasTabProps {
@@ -40,10 +44,14 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
             id: String(item.id || idx),
             title: item.title,
             type: item.type || "LKPD",
+            instructions: item.instructions,
             dueDate: item.due_date || "Hari ini",
             status: item.status || "AKTIF",
             submittedCount: 0,
             totalStudents: 30,
+            attachment_url: item.attachment_url,
+            submission_type: item.submission_type,
+            quiz_data: item.quiz_data,
           }))
         );
       } else {

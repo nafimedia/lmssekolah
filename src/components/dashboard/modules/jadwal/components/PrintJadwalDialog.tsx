@@ -92,7 +92,9 @@ export function PrintJadwalDialog({ isOpen, onOpenChange, filterKelas, filterRom
                           <td className="p-1.5 text-center font-mono font-bold text-slate-900 border-r border-slate-200">{s.jam}</td>
                           <td className="p-1.5 font-bold text-blue-950 border-r border-slate-200">{s.mapel}</td>
                           <td className="p-1.5 border-r border-slate-200">{s.rombel} ({s.tingkat})</td>
-                          <td className="p-1.5 text-slate-800">{s.guru || "-"}</td>
+                          <td className="p-1.5 text-slate-800">
+                            {s.guru && s.guru.trim() !== "-" ? s.guru : "Belum Ditentukan"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

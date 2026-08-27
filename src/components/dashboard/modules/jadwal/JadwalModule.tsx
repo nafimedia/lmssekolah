@@ -311,7 +311,9 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                             🏫 {s.rombel}
                           </Badge>
                         </div>
-                        <div className="text-[11px] text-muted-foreground truncate">👨‍🏫 {s.guru || "-"}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          👨‍🏫 {s.guru && s.guru.trim() !== "-" ? s.guru : "Belum Ditentukan"}
+                        </div>
                         <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.jam}</div>
                       </div>
 

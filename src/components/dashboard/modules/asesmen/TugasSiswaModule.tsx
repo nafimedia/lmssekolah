@@ -51,11 +51,31 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [allAssignments, allSubmissions] = await Promise.all([
+      const [allAssignments, allSubmissions, dbLkpd] = await Promise.all([
         MysqlDataService.getAssignments(),
         MysqlDataService.getSubmissions(),
+        MysqlDataService.getLkpdActivities(studentRombel, "ALL"),
       ]);
-      setAssignments(allAssignments || []);
+
+      const mappedLkpdAssignments: AssignmentRow[] = (dbLkpd || [])
+        .filter((l: any) => l.type !== "QUIZ")
+        .map((l: any) => ({
+          id: String(l.id),
+          title: l.title,
+          mapel: l.mapel || "Mata Pelajaran",
+          rombel: l.rombel || studentRombel,
+          subject_name: l.mapel || "Mata Pelajaran",
+          class_name: l.rombel || studentRombel,
+          due_date: l.due_date || "Hari ini",
+          max_score: l.max_score || 100,
+          instructions: l.instructions || "Kerjakan tugas / LKPD ini sesuai petunjuk guru.",
+          type: l.type || "LKPD Digital",
+          status: l.status || "AKTIF",
+          teacher_name: l.teacher_name || "Guru Pengampu",
+        }));
+
+      const combined = [...mappedLkpdAssignments, ...(allAssignments || [])];
+      setAssignments(combined);
       setSubmissions(allSubmissions || []);
     } catch (e) {
       console.warn("Gagal memuat data tugas & submisi dari MySQL:", e);

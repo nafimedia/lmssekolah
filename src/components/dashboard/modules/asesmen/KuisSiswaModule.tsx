@@ -50,11 +50,39 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [allExams, allResults] = await Promise.all([
+      const [allExams, allResults, dbLkpd] = await Promise.all([
         MysqlDataService.getCbtExams(),
         MysqlDataService.getCbtResults(),
+        MysqlDataService.getLkpdActivities(studentRombel, "ALL"),
       ]);
-      setExams(allExams || []);
+
+      const quizLkpdExams: CbtExamRow[] = (dbLkpd || [])
+        .filter((l: any) => l.type === "QUIZ" || l.quiz_data)
+        .map((l: any) => {
+          let parsedQuestions: any[] = [];
+          if (l.quiz_data) {
+            try {
+              parsedQuestions = JSON.parse(l.quiz_data);
+            } catch (e) {}
+          }
+          return {
+            id: Number(l.id) || Date.now(),
+            title: l.title,
+            subject_name: l.mapel || "Mata Pelajaran",
+            class_name: l.rombel || studentRombel,
+            type: "QUIZ_FORMATIF",
+            status: "LIVE",
+            duration_minutes: 30,
+            total_questions: parsedQuestions.length || 5,
+            questions_data: l.quiz_data || "",
+            created_by: l.teacher_name || "Guru Pengampu",
+            token: "QUIZ",
+            passing_score: 75,
+          };
+        });
+
+      const combined = [...quizLkpdExams, ...(allExams || [])];
+      setExams(combined);
       setResults(allResults || []);
     } catch (e) {
       console.warn("Gagal memuat data kuis dari MySQL:", e);

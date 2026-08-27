@@ -155,7 +155,12 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                       className="flex-1 text-xs font-bold gap-1 text-primary border-primary/30 hover:bg-primary/5"
                       onClick={() => handleOpenViewActivity(act)}
                     >
-                      <PencilLine className="h-3.5 w-3.5" /> Nilai LKPD
+                      <PencilLine className="h-3.5 w-3.5" />
+                      {act.type === "TUGAS_KELOMPOK"
+                        ? "💬 Ruang Diskusi & Kelola"
+                        : act.type === "QUIZ"
+                        ? "⚡ Lihat Kuis & Nilai"
+                        : "📄 Nilai LKPD"}
                     </Button>
 
                     <Button

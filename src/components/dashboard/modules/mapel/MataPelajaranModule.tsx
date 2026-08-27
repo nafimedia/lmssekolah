@@ -73,27 +73,32 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
           (m) => m.name.toLowerCase() === subjectName.toLowerCase()
         );
 
-        // Find assigned teacher dynamically from Schedule or User specialty in MySQL
-        const scheduleMatch = (schedules || []).find(
-          (s: any) =>
-            s.mapel?.toLowerCase().trim() === subjectName.toLowerCase().trim() &&
-            s.guru &&
-            s.guru.trim() !== "-"
-        );
+        // Find all assigned teachers dynamically from Schedule or User specialty in MySQL
+        const matchingFromSchedule = (schedules || [])
+          .filter(
+            (s: any) =>
+              s.mapel?.toLowerCase().trim() === subjectName.toLowerCase().trim() &&
+              s.guru &&
+              s.guru.trim() !== "-" &&
+              s.guru.trim() !== "Belum Ditentukan"
+          )
+          .map((s: any) => s.guru.trim());
 
-        const userMatch = (users || []).find(
-          (u: any) =>
-            u.role !== "siswa" &&
-            ((u.subject_specialty && u.subject_specialty.toLowerCase().includes(subjectName.toLowerCase())) ||
-              (u.assignedSubject && u.assignedSubject.toLowerCase().includes(subjectName.toLowerCase())))
-        );
+        const matchingFromUsers = (users || [])
+          .filter(
+            (u: any) =>
+              u.role !== "siswa" &&
+              ((u.subject_specialty && u.subject_specialty.toLowerCase().includes(subjectName.toLowerCase())) ||
+                (u.assignedSubject && u.assignedSubject.toLowerCase().includes(subjectName.toLowerCase())))
+          )
+          .map((u: any) => (u.full_name || u.name).trim());
+
+        const allTeachers = Array.from(new Set([...matchingFromSchedule, ...matchingFromUsers]));
 
         const assignedTeacher =
-          scheduleMatch?.guru ||
-          userMatch?.full_name ||
-          r.teacher ||
-          masterMatch?.teacher ||
-          "Belum Ada Guru Pengampu";
+          allTeachers.length > 0
+            ? allTeachers.join(", ")
+            : r.teacher || masterMatch?.teacher || "Tim Guru Pengampu";
 
         return {
           code: r.code || masterMatch?.code || `MP-${r.id || Math.random()}`,

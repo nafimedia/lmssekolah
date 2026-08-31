@@ -65,7 +65,7 @@ export function GlobalCommandPalette({
     { key: "kehadiran", label: activeRole === "siswa" ? "Kehadiran Saya" : "Presensi Pagi & Sesi Mengajar KBM", icon: UserCheck, group: "Modul Utama" },
     { key: "ruang_mengajar", label: "Ruang Mengajar, Jurnal & LKPD", icon: BookOpen, group: "Modul Utama" },
     { key: "sdm_gtk", label: "SDM & Direktori Guru Staf MTsN 2", icon: Users, group: "Modul Utama" },
-    { key: "modul_ajar", label: "Perangkat Modul Ajar & RPP Merdeka", icon: FileText, group: "Pembelajaran & Nilai" },
+    { key: "modul_ajar", label: "Perangkat Bahan Ajar & RPP Merdeka", icon: FileText, group: "Pembelajaran & Nilai" },
     { key: "nilai", label: activeRole === "siswa" ? "Rekap Nilai Saya" : "Penilaian & E-Rapor Kurikulum Merdeka", icon: Award, group: "Pembelajaran & Nilai" },
     { key: "asesmen", label: "Pusat Asesmen Formatif & Sumatif", icon: Sparkles, group: "Pembelajaran & Nilai" },
     { key: "tahfidz", label: activeRole === "siswa" ? "Setoran Tahfidz Saya" : "Setoran Hafalan & Rapor Tahfidz Qur'an", icon: BookMarked, group: "Pembelajaran & Nilai" },

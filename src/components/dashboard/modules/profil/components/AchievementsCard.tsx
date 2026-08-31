@@ -15,7 +15,7 @@ export function AchievementsCard({ dbAchievements }: AchievementsCardProps) {
           <Trophy className="h-5 w-5 text-amber-500" /> Portofolio Lencana & Prestasi Akademik
         </CardTitle>
         <CardDescription className="text-xs">
-          Daftar penghargaan resmi, kejuaraan, dan lencana prestasi yang tercatat pada database MTsN 2 Cilacap.
+          Daftar penghargaan resmi, kejuaraan, dan lencana prestasi siswa MTsN 2 Cilacap.
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6 space-y-4">
@@ -23,7 +23,7 @@ export function AchievementsCard({ dbAchievements }: AchievementsCardProps) {
           <div className="p-8 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-1.5">
             <Inbox className="h-6 w-6 text-muted-foreground/40 mx-auto" />
             <div className="font-semibold text-foreground">Belum Ada Lencana & Prestasi Terdaftar</div>
-            <p className="text-[11px]">Database belum mencatat portofolio prestasi atau lencana penghargaan resmi. Tampilan dikosongkan secara jujur.</p>
+            <p className="text-[11px]">Belum ada portofolio prestasi atau lencana penghargaan resmi yang tercatat.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -32,11 +32,11 @@ export function AchievementsCard({ dbAchievements }: AchievementsCardProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-2xl">🌟</span>
                   <Badge variant="outline" className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
-                    {ach.category || "Prestasi DB"}
+                    {ach.category || "Prestasi Akademik"}
                   </Badge>
                 </div>
                 <div className="font-bold text-xs text-foreground leading-snug">{ach.title}</div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">{ach.issuer || "Tercatat resmi di database MySQL"}</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{ach.issuer || "Penghargaan Resmi MTsN 2 Cilacap"}</p>
               </div>
             ))}
           </div>

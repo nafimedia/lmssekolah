@@ -168,11 +168,11 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         return;
       }
 
-      toast.success(`Modul Ajar PDF "${data.title}" berhasil diunggah dan tersimpan permanen ke database!`);
+      toast.success(`Bahan Ajar "${data.title}" berhasil diunggah dan tersimpan permanen ke database!`);
       await fetchMaterials();
     } catch (err) {
       console.warn("Save material DB warning:", err);
-      toast.error("Gagal mengunggah Modul Ajar ke database.");
+      toast.error("Gagal mengunggah Bahan Ajar ke database.");
     }
   };
 
@@ -195,16 +195,16 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <FileText className="h-6 w-6 text-emerald-500" />
-            Modul Ajar PDF{" "}
+            Bahan Ajar{" "}
             {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs">📍 Kelas {rawClass}</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Pustaka Berkas PDF Modul Ajar, Buku Paket Mapel, & Bahan Rujukan KBM (Bisa Diakses Langsung — Tanpa Verifikasi Pengesahan Waka).
+            Pustaka Berkas PDF Bahan Ajar, Buku Paket Mapel, & Bahan Rujukan KBM (Bisa Diakses Langsung — Tanpa Verifikasi Pengesahan Waka).
           </p>
         </div>
         {!isSiswa && !isKamad && (
           <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs" onClick={() => setIsUploadOpen(true)}>
-            <Upload className="h-3.5 w-3.5" /> Unggah Modul Ajar PDF
+            <Upload className="h-3.5 w-3.5" /> Unggah Bahan Ajar
           </Button>
         )}
       </div>
@@ -213,7 +213,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold mb-6">
           <span className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-amber-600 shrink-0" />
-            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Read-Only. Memantau modul ajar PDF guru tanpa melakukan pengunggahan/penghapusan.</span>
+            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Read-Only. Memantau bahan ajar guru tanpa melakukan pengunggahan/penghapusan.</span>
           </span>
           <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
         </div>
@@ -222,7 +222,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       {isWakaOrAdmin && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="p-4 rounded-xl border border-border bg-card space-y-1 shadow-xs">
-            <div className="text-xs text-muted-foreground font-medium">Total Modul Diunggah</div>
+            <div className="text-xs text-muted-foreground font-medium">Total Bahan Ajar Diunggah</div>
             <div className="text-2xl font-black text-foreground">{modulList.length} Berkas</div>
             <div className="text-[11px] text-muted-foreground">Persyaratan Kurikulum Merdeka</div>
           </div>
@@ -282,11 +282,11 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       {filteredModul.length === 0 ? (
         <Card className="border-border border-dashed p-12 text-center bg-card">
           <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
-          <h3 className="text-base font-bold text-foreground">Belum Ada Modul Ajar PDF Terdaftar</h3>
+          <h3 className="text-base font-bold text-foreground">Belum Ada Bahan Ajar Terdaftar</h3>
           <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
             {isLoading
-              ? "Sedang memuat berkas Modul Ajar dari database MySQL..."
-              : "Belum ada berkas Modul Ajar PDF yang diunggah di database. Silakan klik tombol '+ Unggah Modul Ajar PDF' di atas untuk mengunggah berkas baru."}
+              ? "Sedang memuat berkas Bahan Ajar dari database MySQL..."
+              : "Belum ada berkas Bahan Ajar yang diunggah di database. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk mengunggah berkas baru."}
           </p>
         </Card>
       ) : (

@@ -317,7 +317,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
               <Plus className="h-5 w-5" /> Tambah Rombongan Belajar (Rombel) Baru
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Masukkan data Rombel baru untuk didaftarkan secara permanen ke database MySQL.
+              Masukkan data Rombel baru untuk didaftarkan ke sistem master data madrasah.
             </DialogDescription>
           </DialogHeader>
 

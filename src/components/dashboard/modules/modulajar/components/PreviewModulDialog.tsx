@@ -26,7 +26,7 @@ export function PreviewModulDialog({ previewModul, isOpen, onOpenChange, onDownl
         <DialogHeader className="border-b border-border pb-3">
           <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-emerald-600" /> Pratinjau Berkas PDF Modul Ajar
+              <FileText className="h-5 w-5 text-emerald-600" /> Pratinjau Berkas PDF Bahan Ajar
             </div>
             <Badge className="bg-emerald-600 text-white font-mono text-xs">{previewModul?.jenjang}</Badge>
           </DialogTitle>

@@ -482,9 +482,9 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               : `Laporan Pembelajaran & Rekap Leger ${selectedClass}`}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isExecutive
-              ? "Dashboard Pengawasan Eksekutif Kamad & Waka Kurikulum untuk Monitoring Nilai Akademik & Ketuntasan KKTP Madrasah (Tanpa Data Dummy)"
-              : "Rekap nilai leger real dari database, cetak rapor resmi, dan monitoring ketuntasan KKTP siswa."}
+              {isExecutive
+                ? "Dashboard Pengawasan Eksekutif Kamad & Waka Kurikulum untuk Monitoring Nilai Akademik & Ketuntasan KKTP Madrasah"
+                : "Rekap nilai leger, cetak rapor resmi, dan monitoring ketuntasan KKTP siswa."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -700,11 +700,11 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Award className="h-5 w-5 text-emerald-600" />
                 <span>
-                  Leger Nilai Siswa Real (Database) - {selectedClass === "ALL" ? "Seluruh Kelas" : selectedClass}
+                  Leger Nilai Siswa - {selectedClass === "ALL" ? "Seluruh Kelas" : selectedClass}
                 </span>
               </CardTitle>
               <CardDescription className="text-xs mt-0.5">
-                Perolehan rata-rata nilai tugas, kuis, dan CBT real tanpa data dummy. Nilai 0 jika belum ada penilaian.
+                Perolehan rata-rata nilai tugas, kuis, dan CBT siswa. Nilai 0 jika belum ada penilaian.
               </CardDescription>
             </div>
             <Badge className="bg-emerald-600 text-white font-bold text-xs">{filteredStudents.length} Siswa</Badge>
@@ -716,7 +716,7 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 m-4">
                 <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
                 <div className="font-semibold text-foreground text-sm">Belum Ada Data Siswa pada {selectedClass === "ALL" ? "Filter Ini" : selectedClass}</div>
-                <p>Database saat ini tidak memiliki rekam siswa untuk kelas ini.</p>
+                <p>Belum ada data siswa terdaftar untuk kelas ini.</p>
               </div>
             ) : (
               <table className="w-full text-xs">

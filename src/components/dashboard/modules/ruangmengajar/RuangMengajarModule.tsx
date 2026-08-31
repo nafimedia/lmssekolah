@@ -51,6 +51,32 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
   useEffect(() => {
     let isMounted = true;
 
+    const cleanName = (name: string) =>
+      name
+        .toLowerCase()
+        .replace(/\b(s\.pd|m\.pd|s\.ag|m\.pd\.i|s\.p|h\.|hj\.|s\.pd\.i|m\.si|drs|dra|st|kom)\b/gi, "")
+        .replace(/[^a-z0-9\s]/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const myCleanName = cleanName(currentTeacherName);
+    const myNip = (me?.nis_nip || "").trim();
+
+    const isTeacherMatch = (targetGuruRaw: string) => {
+      const raw = (targetGuruRaw || "").trim();
+      if (!raw) return false;
+      if (myNip && raw.includes(myNip)) return true;
+
+      const cleanTarget = cleanName(raw);
+      if (!cleanTarget || !myCleanName) return false;
+
+      if (cleanTarget === myCleanName) return true;
+      if (myCleanName.length >= 5 && cleanTarget.includes(myCleanName)) return true;
+      if (cleanTarget.length >= 5 && myCleanName.includes(cleanTarget)) return true;
+
+      return false;
+    };
+
     Promise.all([
       MysqlDataService.getJournals(),
       MysqlDataService.getActiveKbmSessions(),
@@ -67,9 +93,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       // Priority 1: Check live active session started by current teacher
       const myLiveSession = (activeSessions || []).find(
         (s: any) =>
-          s.status === "SEDANG_BERLANGSUNG" &&
-          (s.guru_name?.toLowerCase().trim() === currentTeacherName.toLowerCase().trim() ||
-            s.guru_name?.toLowerCase().trim().includes(currentTeacherName.toLowerCase().trim()))
+          s.status === "SEDANG_BERLANGSUNG" && isTeacherMatch(s.guru_name || "")
       );
 
       if (myLiveSession) {
@@ -84,7 +108,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       const myScheduleToday = (scheduleList || []).find(
         (j: any) =>
           (j.hari || "").toLowerCase().trim() === activeDay.toLowerCase().trim() &&
-          (j.guru || "").toLowerCase().trim().includes(currentTeacherName.toLowerCase().trim())
+          isTeacherMatch(j.guru || j.teacher_name || "")
       );
 
       if (myScheduleToday) {
@@ -100,7 +124,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
     return () => {
       isMounted = false;
     };
-  }, [currentTeacherName]);
+  }, [currentTeacherName, me?.nis_nip]);
 
   const handleAddJurnal = (newEntry: { title: string; rombel: string; mapel: string; meeting: string; notes: string }) => {
     if (isKamad) {

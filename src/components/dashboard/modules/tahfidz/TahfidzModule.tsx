@@ -251,7 +251,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       const lastRecord = matchedRecords[matchedRecords.length - 1] || null;
       const surahTerakhir = lastRecord ? `QS. ${lastRecord.surah} (${lastRecord.ayat})` : "Belum ada setoran";
       const isMutqin = matchedRecords.some((h) => h.status === "Mutqin" || h.murojaah === "Mutqin" || h.status === "Lulus");
-      
+
       let studentAvg = 0;
       if (totalSetoran > 0) {
         const sum = matchedRecords.reduce((acc, curr) => acc + (parseInt(curr.nilai || "85", 10) || 85), 0);
@@ -367,7 +367,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               {isExecutive
-                ? "Pengawasan Capaian Hafalan Al-Qur'an Eksekutif Kamad & Waka Kurikulum per Rombel dan per Siswa (Real Data Database)"
+                ? "Pengawasan Capaian Hafalan Al-Qur'an Eksekutif Kamad & Waka Kurikulum per Rombel dan per Siswa"
                 : "Pengelolaan Target Hafalan, Setoran Baru (Ziyadah), Murojaah, & Penilaian 5 Komponen MTsN 2 Cilacap."}
             </p>
           </div>
@@ -472,7 +472,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               <div>
                 <p className="text-xs text-muted-foreground font-semibold">Total Siswa Peserta Tahfidz</p>
                 <h3 className="text-2xl font-bold text-foreground mt-1">{filteredStudents.length} Siswa</h3>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Siswa terdaftar di database</p>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Siswa terdaftar aktif</p>
               </div>
               <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                 <Users className="h-6 w-6" />
@@ -535,11 +535,10 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
             key={t.id}
             type="button"
             onClick={() => setActiveTab(t.id as any)}
-            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === t.id
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === t.id
                 ? "bg-emerald-600 text-white shadow-xs"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
+              }`}
           >
             <t.icon className="h-4 w-4" />
             <span>{t.label}</span>
@@ -614,7 +613,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                   <div className="p-8 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-1">
                     <Inbox className="h-6 w-6 text-muted-foreground/40 mx-auto" />
                     <div className="font-semibold text-foreground">Belum Ada Setoran Ziyadah</div>
-                    <p className="text-[11px]">Database belum menerima masukan setoran hafalan baru.</p>
+                    <p className="text-[11px]">Belum ada masukan setoran hafalan baru.</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
@@ -649,7 +648,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                   <div className="p-8 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-1">
                     <Inbox className="h-6 w-6 text-muted-foreground/40 mx-auto" />
                     <div className="font-semibold text-foreground">Belum Ada Record Murojaah</div>
-                    <p className="text-[11px]">Database belum menerima pencatatan murojaah hafalan.</p>
+                    <p className="text-[11px]">Belum ada pencatatan murojaah hafalan.</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
@@ -695,7 +694,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 m-4">
                 <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
                 <div className="font-semibold text-foreground text-sm">Tidak Ada Siswa Ditemukan</div>
-                <p>Database tidak menemukan data siswa terdaftar pada rombel ini.</p>
+                <p>Belum ada data siswa terdaftar pada rombel ini.</p>
               </div>
             ) : (
               <table className="w-full text-xs text-left border-collapse">
@@ -782,13 +781,12 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                 return (
                   <div
                     key={surah.number}
-                    className={`p-3 rounded-xl border transition flex flex-col justify-between space-y-2 ${
-                      isCompleted
+                    className={`p-3 rounded-xl border transition flex flex-col justify-between space-y-2 ${isCompleted
                         ? "border-emerald-500/40 bg-emerald-500/10"
                         : isInProgress
-                        ? "border-amber-500/40 bg-amber-500/10"
-                        : "border-border bg-muted/20"
-                    }`}
+                          ? "border-amber-500/40 bg-amber-500/10"
+                          : "border-border bg-muted/20"
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-mono font-bold text-muted-foreground">No. {surah.number}</span>
@@ -822,7 +820,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
           <CardHeader className="p-4 pb-3 border-b border-border flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base font-bold">Riwayat Transaksi Setoran Tahfidz</CardTitle>
-              <CardDescription className="text-xs">Daftar rekam setoran Ziyadah & Murojaah yang tersimpan di MySQL Database.</CardDescription>
+              <CardDescription className="text-xs">Daftar rekam setoran Ziyadah & Murojaah resmi madrasah.</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-x-auto">
@@ -938,9 +936,8 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               ].map((b, idx) => (
                 <div
                   key={idx}
-                  className={`p-4 rounded-xl border text-center space-y-2 ${
-                    b.active ? "border-amber-500/40 bg-amber-500/10" : "border-border opacity-50 bg-muted/20"
-                  }`}
+                  className={`p-4 rounded-xl border text-center space-y-2 ${b.active ? "border-amber-500/40 bg-amber-500/10" : "border-border opacity-50 bg-muted/20"
+                    }`}
                 >
                   <Medal className={`h-8 w-8 mx-auto ${b.active ? "text-amber-500" : "text-muted-foreground"}`} />
                   <div className="font-bold text-sm text-foreground">{b.title}</div>

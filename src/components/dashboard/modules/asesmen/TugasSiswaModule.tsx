@@ -14,6 +14,7 @@ import {
   BookOpen,
   Calendar,
   MessageSquare,
+  DoorOpen,
   FileCheck2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHe
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { AssignmentRow, SubmissionRow } from "@/services/mysqlServerFns";
 import { toast } from "sonner";
+import { isSameClass } from "@/utils/classNormalization";
 
 interface TugasSiswaModuleProps {
   userProfile?: any;
@@ -37,11 +39,57 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState<"semua" | "belum" | "dikumpulkan" | "dinilai">("semua");
 
+  // Live session and today schedule states
+  const [liveSession, setLiveSession] = useState<any | null>(null);
+  const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
+  const [selectedMapelFilter, setSelectedMapelFilter] = useState<string>("SEMUA");
+
   // Selected assignment for detail & submission modal
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentRow | null>(null);
   const [studentNotes, setStudentNotes] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [isDraft, setIsDraft] = useState(false);
+  const [discussions, setDiscussions] = useState<any[]>([]);
+  const [newDiscussionMsg, setNewDiscussionMsg] = useState("");
+
+  useEffect(() => {
+    if (!selectedAssignment) {
+      setDiscussions([]);
+      setNewDiscussionMsg("");
+      return;
+    }
+    MysqlDataService.getLkpdDiscussions(String(selectedAssignment.id)).then((list) => {
+      if (list) setDiscussions(list);
+      else setDiscussions([]);
+    });
+  }, [selectedAssignment]);
+
+  const handleSendDiscussion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDiscussionMsg.trim() || !selectedAssignment) return;
+    const payload = {
+      activity_id: String(selectedAssignment.id),
+      user_name: studentName,
+      user_role: "siswa",
+      message: newDiscussionMsg.trim(),
+    };
+    const res = await MysqlDataService.postLkpdDiscussion(payload);
+    if (res.success) {
+      setDiscussions((prev) => [
+        ...prev,
+        {
+          id: res.id || String(Date.now()),
+          activity_id: String(selectedAssignment.id),
+          user_name: payload.user_name,
+          user_role: payload.user_role,
+          message: payload.message,
+          created_at: "Baru saja",
+        },
+      ]);
+      setNewDiscussionMsg("");
+      toast.success("💬 Tanggapan diskusi kelompok terkirim!");
+    }
+  };
   const [submitting, setSubmitting] = useState(false);
 
   const studentName = userProfile?.name || "Siswa MTsN 2 Cilacap";
@@ -51,11 +99,28 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [allAssignments, allSubmissions, dbLkpd] = await Promise.all([
+      const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+      const currentDayName = dayNames[new Date().getDay()];
+
+      const [allAssignments, allSubmissions, dbLkpd, dbActiveSessions, dbJadwal] = await Promise.all([
         MysqlDataService.getAssignments(),
         MysqlDataService.getSubmissions(),
         MysqlDataService.getLkpdActivities(studentRombel, "ALL"),
+        MysqlDataService.getActiveKbmSessions(),
+        MysqlDataService.getJadwalList(),
       ]);
+
+      const liveSess = (dbActiveSessions || []).find(
+        (s: any) => s.status === "SEDANG_BERLANGSUNG" && isSameClass(s.rombel || "", studentRombel)
+      );
+      setLiveSession(liveSess || null);
+
+      const todaySched = (dbJadwal || []).filter(
+        (j: any) =>
+          (j.hari || "").toLowerCase().trim() === currentDayName.toLowerCase().trim() &&
+          isSameClass(j.rombel || j.class_name || "", studentRombel)
+      );
+      setTodaySchedules(todaySched || []);
 
       const mappedLkpdAssignments: AssignmentRow[] = (dbLkpd || [])
         .filter((l: any) => l.type !== "QUIZ")
@@ -111,8 +176,23 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     return { status: "dikumpulkan", label: "Sudah Dikumpulkan", color: "bg-blue-500/15 text-blue-600 border-blue-500/30", icon: Send };
   };
 
+  const uniqueSubjectsSet = new Set<string>();
+  (todaySchedules || []).forEach((j: any) => {
+    if (j.mapel) uniqueSubjectsSet.add(j.mapel.trim());
+  });
+  (assignments || []).forEach((a: any) => {
+    if (a.mapel) uniqueSubjectsSet.add(a.mapel.trim());
+    if ((a as any).subject_name) uniqueSubjectsSet.add((a as any).subject_name.trim());
+  });
+  const uniqueSubjects = Array.from(uniqueSubjectsSet);
+
   // Filter Tasks
   const filteredAssignments = assignments.filter((a) => {
+    if (selectedMapelFilter !== "SEMUA") {
+      const aMapel = (a.mapel || (a as any).subject_name || "").toLowerCase().trim();
+      const targetMapel = selectedMapelFilter.toLowerCase().trim();
+      if (!aMapel.includes(targetMapel) && !targetMapel.includes(aMapel)) return false;
+    }
     const { status } = getTaskStatus(a);
     if (filterTab === "belum") return status === "belum" || status === "draft";
     if (filterTab === "dikumpulkan") return status === "dikumpulkan";
@@ -121,10 +201,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   });
 
   // Metric Counters
-  const totalCount = assignments.length;
-  const pendingCount = assignments.filter((a) => getTaskStatus(a).status === "belum" || getTaskStatus(a).status === "draft").length;
-  const submittedCount = assignments.filter((a) => getTaskStatus(a).status === "dikumpulkan").length;
-  const gradedCount = assignments.filter((a) => getTaskStatus(a).status === "dinilai").length;
+  const totalCount = filteredAssignments.length;
+  const pendingCount = filteredAssignments.filter((a) => getTaskStatus(a).status === "belum" || getTaskStatus(a).status === "draft").length;
+  const submittedCount = filteredAssignments.filter((a) => getTaskStatus(a).status === "dikumpulkan").length;
+  const gradedCount = filteredAssignments.filter((a) => getTaskStatus(a).status === "dinilai").length;
 
   const handleOpenDetail = (assignment: AssignmentRow) => {
     setSelectedAssignment(assignment);
@@ -140,22 +220,18 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     }
   };
 
-  const handleSaveSubmission = async (asDraft: boolean) => {
+  const handleSaveSubmission = async (asDraft = false) => {
     if (!selectedAssignment) return;
-    if (!asDraft && !studentNotes.trim() && !fileUrl.trim()) {
-      return toast.error("Harap isi komentar/jawaban atau unggah file tugas Anda!");
-    }
-
     setSubmitting(true);
     try {
-      const notesContent = asDraft ? `[DRAFT] ${studentNotes.trim()}` : studentNotes.trim();
+      const notesToSave = asDraft ? `[DRAFT] ${studentNotes}` : studentNotes;
       const res = await MysqlDataService.saveSubmission({
         assignment_id: String(selectedAssignment.id),
         user_id: studentEmail,
         student_name: studentName,
         rombel: studentRombel,
         file_url: fileUrl.trim(),
-        notes: notesContent,
+        notes: notesToSave.trim(),
         score: 0,
         feedback: "",
       });
@@ -184,6 +260,78 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         statusText="Portofolio Tugas Aktif"
         statusVariant="success"
       />
+
+      {/* Papan Informasi Sesi KBM Aktif & Mapel Hari Ini */}
+      <Card className={`border-2 transition-all shadow-xs ${
+        liveSession
+          ? "border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/20"
+          : "border-border bg-card"
+      }`}>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className={`font-extrabold text-xs px-3 py-1 gap-1.5 ${
+                  liveSession ? "bg-emerald-600 text-white animate-pulse" : "bg-blue-600 text-white"
+                }`}>
+                  {liveSession ? (
+                    <><Sparkles className="h-3.5 w-3.5" /> KBM LIVE BERLANGSUNG ({liveSession.mapel})</>
+                  ) : (
+                    <><BookOpen className="h-3.5 w-3.5" /> MATA PELAJARAN KBM HARI INI</>
+                  )}
+                </Badge>
+                <span className="text-xs font-semibold text-muted-foreground font-mono">
+                  {studentRombel} · {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                </span>
+              </div>
+
+              {liveSession ? (
+                <div>
+                  <h3 className="text-base font-black text-foreground flex items-center gap-2 mt-1">
+                    <DoorOpen className="h-5 w-5 text-emerald-600" /> {liveSession.mapel}
+                  </h3>
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                    Guru Pengampu: <strong className="text-foreground">{liveSession.guru_name || "Guru Kelas"}</strong> · Sesi KBM Tatap Muka Resmi Sedang Dimulai di {studentRombel}
+                  </p>
+                </div>
+              ) : todaySchedules.length > 0 ? (
+                <div className="mt-1">
+                  <h3 className="text-xs font-bold text-foreground flex flex-wrap items-center gap-1.5">
+                    <span>Jadwal Mapel Aktif Hari Ini:</span>
+                    {todaySchedules.map((j: any, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="font-bold text-[11px]">
+                        {j.mapel} ({j.jam || j.jam_ke || `Jam ${idx+1}`})
+                      </Badge>
+                    ))}
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {todaySchedules.length} Mata Pelajaran terdaftar untuk kelas {studentRombel} pada sistem akademik madrasah.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tidak ada jadwal KBM resmi terdaftar untuk {studentRombel} pada hari ini.
+                </p>
+              )}
+            </div>
+
+            {/* Filter Mapel Dropdown */}
+            <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0">
+              <label className="text-xs font-bold text-muted-foreground whitespace-nowrap">Filter Mapel:</label>
+              <select
+                value={selectedMapelFilter}
+                onChange={(e) => setSelectedMapelFilter(e.target.value)}
+                className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold text-primary shadow-2xs"
+              >
+                <option value="SEMUA">Semua Mapel ({uniqueSubjects.length})</option>
+                {uniqueSubjects.map((sub: string) => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -244,7 +392,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               <BookOpen className="h-5 w-5 text-primary" /> Daftar Tugas & Lembar Kerja (LKPD) Siswa
             </CardTitle>
             <CardDescription className="text-xs">
-              Daftar penugasan resmi dari guru pengampu mata pelajaran yang terhubung ke database.
+              Daftar penugasan resmi dari guru pengampu mata pelajaran.
             </CardDescription>
           </div>
 
@@ -292,7 +440,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
           {loading ? (
             <div className="p-12 text-center text-xs text-muted-foreground">
               <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-              Memuat data tugas dari server database MySQL...
+              Memuat data tugas...
             </div>
           ) : filteredAssignments.length === 0 ? (
             <div className="p-12 text-center space-y-2">
@@ -300,7 +448,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               <div className="font-bold text-sm text-foreground">Belum Ada Tugas Terdaftar</div>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {assignments.length === 0
-                  ? "Database MySQL belum mencatat tugas atau LKPD terdaftar untuk kelas Anda. Tampilan dikosongkan secara jujur."
+                  ? "Belum ada penugasan atau LKPD digital yang diberikan oleh guru pengampu untuk kelas Anda."
                   : "Tidak ada tugas yang sesuai dengan filter kategori ini."}
               </p>
             </div>
@@ -475,6 +623,53 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                 }
                 return null;
               })()}
+
+              {/* Forum Diskusi Kelompok & Tanya Jawab Interaktif */}
+              <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-950/10 space-y-3">
+                <h4 className="font-bold text-xs text-blue-800 dark:text-blue-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <MessageSquare className="h-4 w-4 text-blue-600" /> Forum Diskusi Kelompok & Tanya Jawab Interaktif
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-mono border-blue-400 text-blue-600">
+                    {discussions.length} Tanggapan
+                  </Badge>
+                </h4>
+
+                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                  {discussions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic text-center py-2">
+                      Belum ada pesan dalam forum diskusi ini. Tulis pertanyaan atau hasil diskusi kelompok Anda di bawah!
+                    </p>
+                  ) : (
+                    discussions.map((d, idx) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-card border border-border text-xs space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-extrabold text-foreground flex items-center gap-1">
+                            {d.user_name}
+                            <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0">
+                              {d.user_role}
+                            </Badge>
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">{d.created_at || "Terkirim"}</span>
+                        </div>
+                        <p className="text-muted-foreground">{d.message}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <form onSubmit={handleSendDiscussion} className="flex gap-2">
+                  <Input
+                    placeholder="Tulis pesan diskusi kelompok / tanggapan Anda..."
+                    value={newDiscussionMsg}
+                    onChange={(e) => setNewDiscussionMsg(e.target.value)}
+                    className="text-xs"
+                  />
+                  <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1 shrink-0">
+                    <Send className="h-3.5 w-3.5" /> Kirim
+                  </Button>
+                </form>
+              </div>
 
               {/* Input Jawaban Siswa */}
               <div className="space-y-3 pt-1 border-t border-border">

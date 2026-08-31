@@ -1652,7 +1652,7 @@ export const getMaterialsFn = createServerFn({ method: "GET" }).handler(
           title VARCHAR(255) NOT NULL,
           subject_name VARCHAR(100) NOT NULL,
           class_name VARCHAR(50) NOT NULL,
-          type VARCHAR(50) DEFAULT 'Modul Ajar',
+          type VARCHAR(50) DEFAULT 'Bahan Ajar',
           status VARCHAR(50) DEFAULT 'Menunggu Verifikasi Waka',
           size VARCHAR(50) DEFAULT '2.5 MB',
           filename VARCHAR(255) NOT NULL,
@@ -1682,7 +1682,7 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           title VARCHAR(255) NOT NULL,
           subject_name VARCHAR(100) NOT NULL,
           class_name VARCHAR(50) NOT NULL,
-          type VARCHAR(50) DEFAULT 'Modul Ajar',
+          type VARCHAR(50) DEFAULT 'Bahan Ajar',
           status VARCHAR(50) DEFAULT 'Menunggu Verifikasi Waka',
           size VARCHAR(50) DEFAULT '2.5 MB',
           filename VARCHAR(255) NOT NULL,
@@ -1732,7 +1732,7 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           data.title,
           data.subject_name,
           data.class_name,
-          data.type || "Modul Ajar",
+          data.type || "Bahan Ajar",
           (data as any).status || "Menunggu Verifikasi Waka",
           data.size || "2.5 MB",
           data.filename,
@@ -3242,9 +3242,21 @@ async function ensureLkpdSchema(execute: any) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
-    await execute("ALTER TABLE lkpd_activities ADD COLUMN attachment_url TEXT").catch(() => {});
-    await execute("ALTER TABLE lkpd_activities ADD COLUMN submission_type VARCHAR(100) DEFAULT 'TEXT_AND_FILE'").catch(() => {});
-    await execute("ALTER TABLE lkpd_activities ADD COLUMN quiz_data LONGTEXT").catch(() => {});
+    const { query } = await import("@/lib/db");
+    const cols = await query<{ COLUMN_NAME: string }[]>(
+      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lkpd_activities'"
+    ).catch(() => []);
+    const colNames = new Set((cols || []).map((c) => (c.COLUMN_NAME || "").toLowerCase()));
+
+    if (!colNames.has("attachment_url")) {
+      await execute("ALTER TABLE lkpd_activities ADD COLUMN attachment_url TEXT").catch(() => {});
+    }
+    if (!colNames.has("submission_type")) {
+      await execute("ALTER TABLE lkpd_activities ADD COLUMN submission_type VARCHAR(100) DEFAULT 'TEXT_AND_FILE'").catch(() => {});
+    }
+    if (!colNames.has("quiz_data")) {
+      await execute("ALTER TABLE lkpd_activities ADD COLUMN quiz_data LONGTEXT").catch(() => {});
+    }
     await execute(`
       CREATE TABLE IF NOT EXISTS lkpd_discussions (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -3255,6 +3267,19 @@ async function ensureLkpdSchema(execute: any) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Clean duplicate user accounts
+    await execute("DELETE FROM users WHERE email = '123456789@guru.mtsn2cilacap.sch.id'").catch(() => {});
+
+    // Sync official account for MITA MUNAWAROH, S.Pd
+    await execute(`
+      INSERT INTO users (id, email, password_hash, full_name, identity_type, nis_nip, class_name, subject_specialty, role, created_at, updated_at)
+      VALUES ('usr-guru-mita', 'mitamunawaroh@guru.mtsn2cilacap.sch.id', '$2b$10$7jNtYraNGqMNIKJFKTzzKe42JkdoKXya5TmbqltbwDNGPxouUOa5S', 'MITA MUNAWAROH, S.Pd', 'NIP', '199503152023102001', 'VIII A', 'TIK', 'guru', NOW(), NOW())
+      ON DUPLICATE KEY UPDATE full_name = 'MITA MUNAWAROH, S.Pd', subject_specialty = 'TIK'
+    `).catch(() => {});
+
+    // Sync TIK schedule teacher name
+    await execute("UPDATE jadwal_pelajaran SET guru = 'MITA MUNAWAROH, S.Pd' WHERE TRIM(guru) = 'MITA'").catch(() => {});
   } catch (e) {}
 }
 

@@ -57,9 +57,33 @@ export function MonitoringKbmLiveModule() {
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshedTime, setLastRefreshedTime] = useState<string>("");
 
+  const handleCloseSession = async (session: LiveRombelSession) => {
+    try {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const res = await MysqlDataService.saveActiveKbmSession({
+        id: session.id,
+        rombel: session.rombel,
+        mapel: session.mapel,
+        guru_name: session.guruName,
+        status: "SELESAI",
+        date_str: todayStr,
+      });
+
+      if (res) {
+        toast.success(`✅ Sesi KBM ${session.rombel} (${session.mapel}) berhasil diakhiri!`);
+        loadLiveData();
+      } else {
+        toast.error("Gagal memperbarui status KBM.");
+      }
+    } catch (e) {
+      toast.error("Terjadi kesalahan saat menutup sesi KBM.");
+    }
+  };
+
   const loadLiveData = async () => {
     setIsLoading(true);
     try {
+      const todayStr = new Date().toISOString().split("T")[0];
       const [activeSessions, scheduleList, attendances, users] = await Promise.all([
         MysqlDataService.getActiveKbmSessions(),
         MysqlDataService.getJadwalPelajaran(),
@@ -84,6 +108,11 @@ export function MonitoringKbmLiveModule() {
         const normalizedRombel = normalizeRombelName(rawRombel);
         const normKey = normalizedRombel.toUpperCase().replace(/\s+/g, "");
 
+        // Verify if session date matches today's date
+        const sessDate = sess.date_str || "";
+        const isTodaySession = sessDate === todayStr || !sessDate;
+        const isLiveToday = sess.status === "SEDANG_BERLANGSUNG" && isTodaySession;
+
         // Find students in this rombel
         const rombelStudents = studentUsers.filter((u: any) => {
           const cls = (u.class_name || u.class || "").toUpperCase().replace(/\s+/g, "");
@@ -101,15 +130,15 @@ export function MonitoringKbmLiveModule() {
         const izin = rombelAttendances.filter((a: any) => a.status?.toLowerCase() === "izin").length;
         const alpa = rombelAttendances.filter((a: any) => a.status?.toLowerCase() === "alpa").length;
 
-        if (!rombelMap[normalizedRombel] || sess.status === "SEDANG_BERLANGSUNG") {
+        if (!rombelMap[normalizedRombel] || isLiveToday) {
           rombelMap[normalizedRombel] = {
             id: sess.id || `sess_${idx}`,
             rombel: normalizedRombel,
             tingkat: normalizedRombel.includes("7") ? "7" : normalizedRombel.includes("9") ? "9" : "8",
             mapel: sess.mapel || "Mata Pelajaran",
             guruName: sess.guru_name || "Guru Pengampu",
-            materi: sess.status === "SEDANG_BERLANGSUNG" ? "Sesi KBM Tatap Muka Sedang Berlangsung" : "Sesi KBM Selesai",
-            status: sess.status === "SEDANG_BERLANGSUNG" ? "SEDANG_BERLANGSUNG" : "SELESAI",
+            materi: isLiveToday ? "Sesi KBM Tatap Muka Sedang Berlangsung" : "Sesi KBM Selesai",
+            status: isLiveToday ? "SEDANG_BERLANGSUNG" : "SELESAI",
             jamKe: "Jam KBM Aktif Hari Ini",
             hadirCount: hadir || (rombelStudents.length > 0 ? Math.max(0, rombelStudents.length - sakit - izin - alpa) : 28),
             totalStudents: rombelStudents.length || 30,
@@ -264,8 +293,20 @@ export function MonitoringKbmLiveModule() {
                 </Badge>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
-                <div className="text-xs text-muted-foreground font-medium">
-                  Presensi Siswa: <strong className="text-foreground">{session.hadirCount} / {session.totalStudents} Siswa Hadir</strong>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground font-medium">
+                  <span>
+                    Presensi Siswa: <strong className="text-foreground">{session.hadirCount} / {session.totalStudents} Siswa Hadir</strong>
+                  </span>
+                  {session.status === "SEDANG_BERLANGSUNG" && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-7 text-[11px] font-bold px-3 gap-1 shadow-2xs self-start sm:self-center"
+                      onClick={() => handleCloseSession(session)}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Akhiri Sesi KBM
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

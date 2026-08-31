@@ -93,7 +93,16 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
           )
           .map((u: any) => (u.full_name || u.name).trim());
 
-        const allTeachers = Array.from(new Set([...matchingFromSchedule, ...matchingFromUsers]));
+        const rawTeachers = [...matchingFromSchedule, ...matchingFromUsers];
+        const uniqueTeacherMap = new Map<string, string>();
+        rawTeachers.forEach((t) => {
+          if (!t) return;
+          const cleanKey = t.toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (!uniqueTeacherMap.has(cleanKey)) {
+            uniqueTeacherMap.set(cleanKey, t);
+          }
+        });
+        const allTeachers = Array.from(uniqueTeacherMap.values());
 
         const assignedTeacher =
           allTeachers.length > 0
@@ -394,7 +403,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                             onClick={() =>
                               setPreviewModal({
                                 title: mat.title,
-                                type: mat.type || "Modul Ajar PDF",
+                                type: mat.type || "Bahan Ajar",
                                 size: mat.size || "3.5 MB",
                                 file_url: mat.file_url,
                                 status: mat.status,

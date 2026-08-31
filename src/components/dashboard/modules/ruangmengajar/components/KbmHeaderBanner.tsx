@@ -25,24 +25,75 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
   const [isMateriDone, setIsMateriDone] = useState(true);
   const [presensiCountStr, setPresensiCountStr] = useState("0 Siswa");
 
+  const [isScheduledToday, setIsScheduledToday] = useState(true);
+
   const todayStr = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     let isMounted = true;
-    MysqlDataService.getActiveKbmSessions().then((sessions) => {
-      if (!isMounted || !sessions) return;
-      const cleanRombel = activeRombel.trim();
-      const matched = sessions.find(
-        (s: any) => isSameClass(s.rombel || "", cleanRombel) && s.mapel?.toLowerCase() === activeMapel.trim().toLowerCase()
-      );
-      if (matched) {
-        if (matched.status === "SEDANG_BERLANGSUNG") {
-          setIsSessionLive(true);
-          setSessionCompleted(false);
-        } else if (matched.status === "SELESAI") {
+    const me = MysqlAuthService.getActiveUser();
+    const myNip = (me?.nis_nip || "").trim();
+
+    const cleanName = (name: string) =>
+      name
+        .toLowerCase()
+        .replace(/\b(s\.pd|m\.pd|s\.ag|m\.pd\.i|s\.p|h\.|hj\.|s\.pd\.i|m\.si|drs|dra|st|kom)\b/gi, "")
+        .replace(/[^a-z0-9\s]/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const myCleanName = cleanName(me?.full_name || "");
+
+    const isTeacherMatch = (targetGuruRaw: string) => {
+      const raw = (targetGuruRaw || "").trim();
+      if (!raw) return false;
+      if (myNip && raw.includes(myNip)) return true;
+      const cleanTarget = cleanName(raw);
+      if (!cleanTarget || !myCleanName) return false;
+      if (cleanTarget === myCleanName) return true;
+      if (myCleanName.length >= 5 && cleanTarget.includes(myCleanName)) return true;
+      if (cleanTarget.length >= 5 && myCleanName.includes(cleanTarget)) return true;
+      return false;
+    };
+
+    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const activeDay = dayNames[new Date().getDay()];
+
+    Promise.all([
+      MysqlDataService.getActiveKbmSessions(),
+      MysqlDataService.getJadwalPelajaran(),
+    ]).then(([sessions, schedules]) => {
+      if (!isMounted) return;
+      if (sessions) {
+        const cleanRombel = activeRombel.trim();
+        const matched = sessions.find(
+          (s: any) => isSameClass(s.rombel || "", cleanRombel) && s.mapel?.toLowerCase() === activeMapel.trim().toLowerCase()
+        );
+        if (matched) {
+          if (matched.status === "SEDANG_BERLANGSUNG") {
+            setIsSessionLive(true);
+            setSessionCompleted(false);
+          } else if (matched.status === "SELESAI") {
+            setIsSessionLive(false);
+            setSessionCompleted(true);
+          }
+        } else {
           setIsSessionLive(false);
-          setSessionCompleted(true);
+          setSessionCompleted(false);
         }
+      }
+
+      if (schedules && schedules.length > 0) {
+        const hasSched = schedules.some((j: any) => {
+          const isDayMatch = (j.hari || "").toLowerCase().trim() === activeDay.toLowerCase().trim();
+          const isRombelMatch = isSameClass(j.rombel || j.kelas || "", activeRombel.trim());
+          const isMapelMatch = (j.mapel || "").toLowerCase().trim() === activeMapel.trim().toLowerCase();
+          const isGuruMatch = isTeacherMatch(j.guru || j.teacher_name || "");
+          return isDayMatch && isRombelMatch && isMapelMatch && isGuruMatch;
+        });
+        setIsScheduledToday(hasSched);
+      } else {
+        setIsScheduledToday(true);
       }
     });
 
@@ -135,7 +186,9 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
         ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
         : sessionCompleted
         ? "border-blue-500/50 bg-blue-50/30 dark:bg-blue-950/20"
-        : "border-primary/40 bg-card"
+        : isScheduledToday
+        ? "border-primary/40 bg-card"
+        : "border-slate-300 dark:border-slate-800 bg-slate-500/5"
     }`}>
       <CardContent className="p-5 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/80 pb-4">
@@ -146,11 +199,14 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
                   ? "bg-emerald-600 text-white animate-pulse"
                   : sessionCompleted
                   ? "bg-blue-600 text-white"
-                  : "bg-amber-600 text-white"
+                  : isScheduledToday
+                  ? "bg-amber-600 text-white"
+                  : "bg-slate-500 text-white"
               }`}>
                 {isSessionLive && <><Sparkles className="h-3.5 w-3.5" /> SESI KBM BERLANGSUNG (LIVE)</>}
                 {sessionCompleted && <><CheckCircle2 className="h-3.5 w-3.5" /> SESI KBM SELESAI</>}
-                {!isSessionLive && !sessionCompleted && <><Clock className="h-3.5 w-3.5" /> KBM SIAP DIMULAI</>}
+                {!isSessionLive && !sessionCompleted && isScheduledToday && <><Clock className="h-3.5 w-3.5" /> KBM SIAP DIMULAI</>}
+                {!isSessionLive && !sessionCompleted && !isScheduledToday && <><XCircle className="h-3.5 w-3.5" /> TIDAK ADA JADWAL HARI INI ({currentDayName})</>}
               </Badge>
 
               <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1 font-mono">
@@ -162,7 +218,9 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
               <DoorOpen className="h-5 w-5 text-primary" /> {activeRombel} — {activeMapel}
             </h2>
             <p className="text-xs text-muted-foreground font-medium">
-              30 Siswa Terdaftar · Sesi KBM Tatap Muka Resmi · Kurikulum Merdeka MTsN 2 Cilacap
+              {isScheduledToday
+                ? "30 Siswa Terdaftar · Sesi KBM Tatap Muka Resmi · Kurikulum Merdeka MTsN 2 Cilacap"
+                : `Mata pelajaran ${activeMapel} (${activeRombel}) tidak memiliki jadwal KBM terdaftar pada hari ${currentDayName} ini.`}
             </p>
           </div>
 

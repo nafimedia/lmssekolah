@@ -186,11 +186,11 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         return prev.map((g) =>
           g.name === studentName
             ? {
-                ...g,
-                pgScore: result.scorePg,
-                totalScore: result.totalScore,
-                status: isPassed ? "Lulus KKM" : "Remedial",
-              }
+              ...g,
+              pgScore: result.scorePg,
+              totalScore: result.totalScore,
+              status: isPassed ? "Lulus KKM" : "Remedial",
+            }
             : g
         );
       }
@@ -290,8 +290,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
                 {isWaliKelas
                   ? `Monitoring CBT Engine - ${binaanRombel}`
                   : selectedRombel === "ALL"
-                  ? "Monitoring CBT Engine & Assessment Center (Seluruh Kelas)"
-                  : `Monitoring CBT Engine - ${selectedRombel}`}
+                    ? "Monitoring CBT Engine & Assessment Center (Seluruh Kelas)"
+                    : `Monitoring CBT Engine - ${selectedRombel}`}
               </h1>
               <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
                 <ShieldCheck className="h-3 w-3 mr-1" /> RBAC: {getRoleLabel()}
@@ -299,7 +299,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               {isExecutive
-                ? "Dashboard Pengawasan Ujian Eksekutif Kamad & Waka Kurikulum untuk Audit Sesi CBT & Analisis Ketuntasan KKM (Real Data Database)"
+                ? "Dashboard Pengawasan Ujian Eksekutif Kamad & Waka Kurikulum untuk Audit Sesi CBT & Analisis Ketuntasan KKM"
                 : "Mesin Ujian Berbasis Komputer, Bank Soal Multi-Type, Anti-Cheat 3x, & Analisis Ketuntasan KKM (75)"}
             </p>
           </div>
@@ -435,9 +435,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         <Button
           size="sm"
           variant={activeTab === "sesi" ? "default" : "outline"}
-          className={`gap-2 text-xs font-bold ${
-            activeTab === "sesi" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
-          }`}
+          className={`gap-2 text-xs font-bold ${activeTab === "sesi" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+            }`}
           onClick={() => setActiveTab("sesi")}
         >
           <MonitorCheck className="h-3.5 w-3.5" /> 1. Sesi Ujian Live CBT
@@ -445,9 +444,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         <Button
           size="sm"
           variant={activeTab === "bank_soal" ? "default" : "outline"}
-          className={`gap-2 text-xs font-bold ${
-            activeTab === "bank_soal" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
-          }`}
+          className={`gap-2 text-xs font-bold ${activeTab === "bank_soal" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+            }`}
           onClick={() => setActiveTab("bank_soal")}
         >
           <Brain className="h-3.5 w-3.5" /> 2. Bank Soal & Tipe Soal
@@ -455,9 +453,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         <Button
           size="sm"
           variant={activeTab === "analisis" ? "default" : "outline"}
-          className={`gap-2 text-xs font-bold ${
-            activeTab === "analisis" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
-          }`}
+          className={`gap-2 text-xs font-bold ${activeTab === "analisis" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+            }`}
           onClick={() => setActiveTab("analisis")}
         >
           <BarChart3 className="h-3.5 w-3.5" /> 3. Analisis KKM (75) & Remedial

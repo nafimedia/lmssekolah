@@ -213,7 +213,7 @@ const MENU: { key: MenuKey; label: string; icon: typeof Home; group?: string }[]
   { key: "agenda", label: "Agenda & Kalender Akademik", icon: CalendarDays, group: "Utama" },
   { key: "kehadiran", label: "Kehadiran & Rekap Presensi", icon: UserCheck, group: "Utama" },
   { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", icon: BookOpen, group: "Akademik" },
-  { key: "modul_ajar", label: "Modul Ajar PDF", icon: FileText, group: "Akademik" },
+  { key: "modul_ajar", label: "Bahan Ajar", icon: FileText, group: "Akademik" },
   { key: "asesmen", label: "Pusat Asesmen", icon: ClipboardCheck, group: "Akademik" },
   { key: "tugas", label: "Tugas", icon: PencilLine, group: "Akademik" },
   { key: "quiz", label: "Quiz Interaktif", icon: Brain, group: "Akademik" },
@@ -247,7 +247,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "users", label: "Data User & Role", group: "Utama & Kontrol" },
       { key: "siakad", label: "Akademik Madrasah", group: "Akademik" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Akademik" },
-      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Akademik" },
+      { key: "modul_ajar", label: "Bahan Ajar", group: "Akademik" },
       { key: "jadwal", label: "Master Jadwal", group: "Akademik" },
       { key: "pengumuman", label: "Pengumuman", group: "Akademik" },
       { key: "agenda", label: "Agenda Madrasah", group: "Akademik" },
@@ -270,7 +270,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Master Data" },
       { key: "siakad", label: "Akademik Madrasah", group: "Master Data" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Master Data" },
-      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Master Data" },
+      { key: "modul_ajar", label: "Bahan Ajar", group: "Master Data" },
       { key: "users", label: "Data Guru & Siswa", group: "Master Data" },
       { key: "jadwal", label: "Master Jadwal", group: "Master Data" },
       { key: "agenda", label: "Agenda & Kalender", group: "Master Data" },
@@ -290,7 +290,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "manajemen_kelas", label: "Monitoring Rombel", group: "Eksekutif" },
       { key: "siakad", label: "Akademik Madrasah", group: "Eksekutif" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Eksekutif" },
-      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Eksekutif" },
+      { key: "modul_ajar", label: "Bahan Ajar", group: "Eksekutif" },
       { key: "agenda", label: "Agenda & Kalender", group: "Informasi & Agenda" },
       { key: "pengumuman", label: "Pengumuman", group: "Informasi & Agenda" },
       { key: "jadwal", label: "Jadwal Pelajaran", group: "Informasi & Agenda" },
@@ -313,7 +313,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Kurikulum & Validasi" },
       { key: "siakad", label: "Akademik Madrasah", group: "Kurikulum & Validasi" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran (Pengesahan)", group: "Kurikulum & Validasi" },
-      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Kurikulum & Validasi" },
+      { key: "modul_ajar", label: "Bahan Ajar", group: "Kurikulum & Validasi" },
       { key: "agenda", label: "Agenda & Kalender", group: "Kurikulum & Validasi" },
       { key: "pengumuman", label: "Pengumuman", group: "Kurikulum & Validasi" },
       { key: "progress", label: "Progress Rombel", group: "Monitoring & Evaluasi" },
@@ -365,7 +365,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "beranda", label: "Dashboard Guru", group: "Utama" },
       { key: "ruang_mengajar", label: "Ruang Mengajar Hub", group: "Ruang Mengajar" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Ruang Mengajar" },
-      { key: "modul_ajar", label: "Modul Ajar PDF", group: "Ruang Mengajar" },
+      { key: "modul_ajar", label: "Bahan Ajar", group: "Ruang Mengajar" },
       { key: "nilai", label: "Penilaian Kelas", group: "Penilaian" },
       { key: "jadwal", label: "Jadwal Pelajaran (Info)", group: "Informasi" },
       { key: "agenda", label: "Kalender Akademik", group: "Informasi" },
@@ -7092,20 +7092,20 @@ startxref
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <FileText className="h-6 w-6 text-emerald-500" />
-            {isWaka ? "Verifikasi & Validasi Modul Ajar PDF" : "Perangkat Ajar & Modul Ajar PDF"}{" "}
+            {isWaka ? "Verifikasi & Validasi Bahan Ajar" : "Bahan Ajar"}{" "}
             {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs">📍 Kelas {rawClass}</Badge>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isWaka
-              ? "Portal verifikasi, evaluasi kesesuaian CP/ATP, dan pengesahan Modul Ajar PDF Kurikulum Merdeka yang diunggah Guru Pengampu."
+              ? "Portal verifikasi, evaluasi kesesuaian CP/ATP, dan pengesahan Bahan Ajar Kurikulum Merdeka yang diunggah Guru Pengampu."
               : isSiswa
-                ? `Akses berkas PDF Modul Ajar Kurikulum Merdeka khusus Kelas ${rawClass} MTsN 2 Cilacap`
-                : "Unggah dan kelola file PDF Modul Ajar Kurikulum Merdeka per mata pelajaran & jenjang (Kelas VII, VIII, IX)."}
+                ? `Akses berkas PDF Bahan Ajar Kurikulum Merdeka khusus Kelas ${rawClass} MTsN 2 Cilacap`
+                : "Unggah dan kelola file PDF Bahan Ajar Kurikulum Merdeka per mata pelajaran & jenjang (Kelas VII, VIII, IX)."}
           </p>
         </div>
         {!isSiswa && (
           <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs" onClick={() => setIsUploadOpen(true)}>
-            <Upload className="h-3.5 w-3.5 mr-1" /> + Unggah Modul Ajar PDF
+            <Upload className="h-3.5 w-3.5 mr-1" /> + Unggah Bahan Ajar
           </Button>
         )}
       </div>

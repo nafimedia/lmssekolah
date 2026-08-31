@@ -109,7 +109,7 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
       date_str: newEntry.date,
     });
 
-    toast.success(`Catatan untuk ${newEntry.studentName} berhasil disimpan ke Database MySQL!`);
+    toast.success(`Catatan untuk ${newEntry.studentName} berhasil disimpan!`);
   };
 
   const remedialCount = notes.filter((n) => n.type === "REMEDIAL").length;
@@ -172,7 +172,7 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
                   value={studentInput}
                   onChange={(e) => setStudentInput(e.target.value)}
                 >
-                  <option value="">-- Pilih Siswa Database --</option>
+                  <option value="">-- Pilih Siswa --</option>
                   {realStudents.map((st) => (
                     <option key={st.id} value={st.name}>
                       {st.name}
@@ -181,7 +181,7 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
                 </select>
               ) : (
                 <Input
-                  placeholder="Nama Siswa Database"
+                  placeholder="Nama Siswa"
                   value={studentInput}
                   onChange={(e) => setStudentInput(e.target.value)}
                   className="h-8 text-xs font-bold"

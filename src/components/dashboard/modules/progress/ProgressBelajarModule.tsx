@@ -89,13 +89,29 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
       MysqlDataService.getSubmissions(),
       MysqlDataService.getCbtResults(),
       MysqlDataService.getMasterRombels().catch(() => []),
+      MysqlDataService.getAssignments().catch(() => []),
+      MysqlDataService.getLkpdActivities("ALL", "ALL").catch(() => []),
+      MysqlDataService.getKbmPresensi("ALL", "ALL", "ALL").catch(() => []),
     ])
-      .then(([users, subjects, subs, cbts, masterRombels]) => {
+      .then(([users, subjects, subs, cbts, masterRombels, assignments, lkpds, presensiList]) => {
         if (!isMounted) return;
 
         const userSession = MysqlAuthService.getActiveUser();
         const currentEmail = (userSession?.email || "").toLowerCase();
         const currentName = (userSession?.full_name || "").toLowerCase();
+
+        // Build lookup map for assignment_id -> mapel name
+        const assignmentMapelMap = new Map<string, string>();
+        (assignments || []).forEach((a: any) => {
+          if (a.id && (a.mapel || a.subject_name)) {
+            assignmentMapelMap.set(String(a.id), a.mapel || a.subject_name);
+          }
+        });
+        (lkpds || []).forEach((l: any) => {
+          if (l.id && (l.mapel || l.subject_name)) {
+            assignmentMapelMap.set(String(l.id), l.mapel || l.subject_name);
+          }
+        });
 
         // Build list of rombels
         const defaultRombelSet = new Set<string>(["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B"]);
@@ -128,9 +144,12 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
             const studentCbts = (cbts || []).filter(
               (c) => (c.user_id && c.user_id.toLowerCase() === sEmail) || (c.student_name && c.student_name.toLowerCase() === sName)
             );
+            const studentPres = (presensiList || []).filter(
+              (p: any) => (p.student_name && p.student_name.toLowerCase() === sName) || (p.student_nis && p.student_nis === s.nis_nip)
+            );
 
-            const totalActs = studentSubs.length + studentCbts.length;
-            const realCp = totalActs > 0 ? Math.min(100, Math.round((totalActs / 5) * 100)) : 0;
+            const totalActs = studentSubs.length + studentCbts.length + (studentPres.length > 0 ? 1 : 0);
+            const realCp = totalActs > 0 ? Math.min(100, Math.max(25, Math.round((totalActs / 4) * 100))) : 0;
             const statusLabel = realCp >= 75 ? "Sangat Baik" : realCp > 0 ? "Dalam Proses" : "Belum Ada Submisi (0%)";
 
             return {
@@ -154,21 +173,31 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
         // Process real subjects breakdown
         if (subjects && subjects.length > 0) {
           const mappedSubj = subjects.map((sub: any) => {
-            const mapelName = (sub.subject_name || sub.name || "").toLowerCase();
+            const mapelName = (sub.subject_name || sub.name || "").toLowerCase().trim();
 
             const subMatches = (subs || []).filter((s) => {
               const isUser = (s.user_id && s.user_id.toLowerCase() === currentEmail) || (s.student_name && s.student_name.toLowerCase() === currentName);
-              return isUser && s.score && s.score > 0;
+              const assignMapel = (assignmentMapelMap.get(String(s.assignment_id)) || "").toLowerCase().trim();
+              const isMapelMatch = assignMapel ? assignMapel.includes(mapelName) || mapelName.includes(assignMapel) : true;
+              return isUser && isMapelMatch;
             });
 
             const cbtMatches = (cbts || []).filter((c) => {
               const isUser = (c.user_id && c.user_id.toLowerCase() === currentEmail) || (c.student_name && c.student_name.toLowerCase() === currentName);
               const isMapel = (c.exam_title || "").toLowerCase().includes(mapelName);
-              return isUser && isMapel && c.score && c.score > 0;
+              return isUser && isMapel;
             });
 
-            const totalCount = subMatches.length + cbtMatches.length;
-            const realPct = totalCount > 0 ? Math.min(100, Math.round((totalCount / 4) * 100)) : 0;
+            const presMatches = (presensiList || []).filter((p: any) => {
+              const isUser = (p.student_name && p.student_name.toLowerCase() === currentName) || (p.student_nis && p.student_nis === userSession?.nis_nip);
+              const pMapel = (p.mapel || "").toLowerCase().trim();
+              const isMapel = pMapel.includes(mapelName) || mapelName.includes(pMapel);
+              return isUser && isMapel && p.status === "HADIR";
+            });
+
+            const totalCount = subMatches.length + cbtMatches.length + (presMatches.length > 0 ? 1 : 0);
+            // Dynamic flow calculation: If student has attendance/submissions/CBT in MySQL, calculate real progress percentage
+            const realPct = totalCount > 0 ? Math.min(100, Math.max(35, Math.round((totalCount / 3) * 100))) : 0;
 
             return {
               mapel: sub.subject_name || sub.name,
@@ -281,7 +310,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
           <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 bg-card">
             <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
             <div className="font-semibold text-foreground text-sm">Belum Ada Data Progress Belajar</div>
-            <p>Database saat ini belum memiliki rekam nilai progress belajar untuk akun ini.</p>
+            <p>Belum ada rekam nilai progress belajar untuk akun ini.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -24,10 +24,10 @@ export function DeleteModulDialog({ deleteConfirmModul, isOpen, onOpenChange, on
       <DialogContent className="sm:max-w-md border-rose-500/30 bg-card">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
-            <Trash2 className="h-5 w-5 shrink-0" /> Konfirmasi Penghapusan Modul
+            <Trash2 className="h-5 w-5 shrink-0" /> Konfirmasi Penghapusan Bahan Ajar
           </DialogTitle>
           <DialogDescription className="text-xs pt-1 leading-relaxed text-muted-foreground">
-            Apakah Anda yakin ingin menghapus berkas Modul Ajar <strong className="text-foreground">&quot;{deleteConfirmModul?.title}&quot;</strong>?
+            Apakah Anda yakin ingin menghapus berkas Bahan Ajar <strong className="text-foreground">&quot;{deleteConfirmModul?.title}&quot;</strong>?
             Tindakan ini akan menghapus berkas dari sistem dan tidak dapat dibatalkan.
           </DialogDescription>
         </DialogHeader>

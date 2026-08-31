@@ -132,9 +132,9 @@ const ROLE_PREVIEWS = [
     badge: "Validasi Kurikulum",
     icon: Layers,
     color: "from-teal-600 to-emerald-700",
-    description: "Validasi Perangkat Ajar (CP, TP, ATP, Modul Ajar), matriks pengampu mapel, dan jadwal pelajaran.",
+    description: "Validasi Perangkat Ajar (CP, TP, ATP, Bahan Ajar), matriks pengampu mapel, dan jadwal pelajaran.",
     features: [
-      "Validasi Perangkat Ajar Guru (CP, TP, ATP, Modul Ajar)",
+      "Validasi Perangkat Ajar Guru (CP, TP, ATP, Bahan Ajar)",
       "Monitoring Kelengkapan Pertemuan 1–18",
       "Matriks Penugasan Pengampu Mapel",
       "Pengaturan Bobot Penilaian Rapor (10-30-30-30)",

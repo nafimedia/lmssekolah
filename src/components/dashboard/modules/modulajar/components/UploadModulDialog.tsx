@@ -63,19 +63,19 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
       <DialogContent className="sm:max-w-md border-border bg-card">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
-            <Upload className="h-5 w-5 text-emerald-600" /> Unggah Modul Ajar PDF Baru
+            <Upload className="h-5 w-5 text-emerald-600" /> Unggah Bahan Ajar Baru
           </DialogTitle>
           <DialogDescription>
-            Unggah file PDF Modul Ajar Kurikulum Merdeka untuk diverifikasi oleh Waka Kurikulum.
+            Unggah file PDF Bahan Ajar Kurikulum Merdeka untuk diverifikasi oleh Waka Kurikulum.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div>
-            <Label htmlFor="modul-title" className="text-xs font-semibold">Judul Modul Ajar</Label>
+            <Label htmlFor="modul-title" className="text-xs font-semibold">Judul Bahan Ajar</Label>
             <Input
               id="modul-title"
-              placeholder="Contoh: Modul Ajar Al Qur'an Hadis Pertemuan 1-18"
+              placeholder="Contoh: Bahan Ajar Al Qur'an Hadis Pertemuan 1-18"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               required

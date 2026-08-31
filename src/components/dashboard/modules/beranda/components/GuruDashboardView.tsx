@@ -49,18 +49,37 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           MysqlDataService.getJournals(),
         ]);
 
-        // 1. Filter schedule strictly for active teacher
-        const myNameLower = (currentUser?.full_name || userName || "").toLowerCase().trim();
-        const myFirstName = myNameLower.split(" ")[0] || "";
+        // Clean name normalization helper function
+        const cleanName = (name: string) =>
+          name
+            .toLowerCase()
+            .replace(/\b(s\.pd|m\.pd|s\.ag|m\.pd\.i|s\.p|h\.|hj\.|s\.pd\.i|m\.si|drs|dra|st|kom)\b/gi, "")
+            .replace(/[^a-z0-9\s]/gi, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        const myRawName = (currentUser?.full_name || userName || "").trim();
+        const myCleanName = cleanName(myRawName);
         const myNip = (currentUser?.nis_nip || "").trim();
 
-        const allTeacherSchedule = (dbJadwal || []).filter((j: any) => {
-          const jGuruLower = (j.guru || j.teacher_name || "").toLowerCase().trim();
-          if (!jGuruLower) return false;
-          const isMyName = jGuruLower.includes(myNameLower) || myNameLower.includes(jGuruLower) || (myFirstName.length >= 3 && jGuruLower.includes(myFirstName));
-          const isMyNip = myNip && jGuruLower.includes(myNip);
-          return isMyName || isMyNip;
-        });
+        const isTeacherMatch = (targetGuruRaw: string) => {
+          const raw = (targetGuruRaw || "").trim();
+          if (!raw) return false;
+          if (myNip && raw.includes(myNip)) return true;
+
+          const cleanTarget = cleanName(raw);
+          if (!cleanTarget || !myCleanName) return false;
+
+          if (cleanTarget === myCleanName) return true;
+          if (myCleanName.length >= 5 && cleanTarget.includes(myCleanName)) return true;
+          if (cleanTarget.length >= 5 && myCleanName.includes(cleanTarget)) return true;
+
+          return false;
+        };
+
+        const allTeacherSchedule = (dbJadwal || []).filter((j: any) =>
+          isTeacherMatch(j.guru || j.teacher_name || "")
+        );
 
         const todayTeacherSchedule = allTeacherSchedule.filter((j: any) => {
           return (j.hari || "").toLowerCase().trim() === currentDayName.toLowerCase().trim();
@@ -73,10 +92,9 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
         setTugasPerluDiperiksa(myLkpd);
 
         // 3. Count journals completed by this teacher
-        const myJournals = (dbJournals || []).filter((j: any) => {
-          const jGuruLower = (j.guru_name || j.guru || "").toLowerCase().trim();
-          return jGuruLower.includes(myNameLower) || myNameLower.includes(jGuruLower) || (myFirstName.length >= 3 && jGuruLower.includes(myFirstName));
-        });
+        const myJournals = (dbJournals || []).filter((j: any) =>
+          isTeacherMatch(j.guru_name || j.guru || "")
+        );
         setJournalCount(myJournals.length);
 
       } catch (e) {
@@ -90,6 +108,8 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
 
   const uniqueRombelsHariIni = Array.from(new Set(jadwalHariIni.map((j: any) => j.rombel).filter(Boolean)));
   const rombelsTextDisplay = uniqueRombelsHariIni.join(", ");
+  const uniqueMapelsHariIni = Array.from(new Set(jadwalHariIni.map((j: any) => j.mapel).filter(Boolean)));
+  const mapelsTextDisplay = uniqueMapelsHariIni.length > 0 ? uniqueMapelsHariIni.join(", ") : activeSubjectName;
 
   return (
     <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
@@ -141,10 +161,14 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
               </CardTitle>
             </CardHeader>
             <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-              <div className="font-bold text-slate-800 dark:text-slate-200 truncate" title={rombelsTextDisplay}>
-                {uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${activeSubjectName})` : `Tidak ada jadwal mengajar (${activeSubjectName})`}
+              <div className="font-bold text-slate-800 dark:text-slate-200 truncate" title={uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${mapelsTextDisplay})` : "Tidak ada jadwal mengajar hari ini"}>
+                {uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${mapelsTextDisplay})` : "Tidak ada jadwal mengajar hari ini"}
               </div>
-              <div>{jadwalHariIni.length > 0 ? `Sesi aktif: ${jadwalHariIni[0]?.jam || "Sesuai Roster"}` : `Jadwal KBM ${currentDayName}: 0 Jam`}</div>
+              <div>
+                {jadwalHariIni.length > 0
+                  ? `Sesi: ${jadwalHariIni.map((j: any) => j.jam).filter(Boolean).join(" · ") || "Sesuai Roster"}`
+                  : `Jadwal KBM ${currentDayName}: 0 Jam`}
+              </div>
             </CardContent>
           </Card>
 
@@ -238,7 +262,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
             </CardHeader>
             <CardContent className="p-4 space-y-3">
               <p className="text-xs text-slate-300 leading-relaxed">
-                Butuh bantuan menyusun Modul Ajar PDF atau Bank Soal CBT? Asisten AI siap membantu secara instan!
+                Butuh bantuan menyusun Bahan Ajar atau Bank Soal CBT? Asisten AI siap membantu secara instan!
               </p>
               <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5" onClick={() => setActiveTab?.("asisten_ai")}>
                 ✨ Buka Asisten AI Pembelajaran

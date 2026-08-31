@@ -12,6 +12,8 @@ export interface MaterialDetail {
   source: string;
   content?: string;
   url?: string;
+  file_url?: string;
+  uploaded_by?: string;
 }
 
 interface ViewMaterialDialogProps {
@@ -105,33 +107,37 @@ export function ViewMaterialDialog({
                 </Button>
               </div>
             </div>
+          ) : material.file_url || material.url ? (
+            <div className="relative w-full rounded-xl border border-border bg-slate-900 overflow-hidden shadow-inner min-h-[450px]">
+              <iframe
+                src={material.file_url || material.url}
+                className="w-full h-[480px] rounded-xl border-0"
+                title={material.title}
+              />
+            </div>
           ) : (
             <div className="p-6 rounded-xl border border-border bg-card space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="font-bold text-xs text-primary flex items-center gap-2">
-                  <FileText className="h-4 w-4" /> Teks Rujukan & Modul Ajar Digital
+                  <FileText className="h-4 w-4" /> Berkas Bahan Ajar Digital ({activeMapel})
                 </div>
                 <Badge className="bg-emerald-600 text-white text-[10px] font-bold gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> E-Book Verifikasi
+                  <CheckCircle2 className="h-3 w-3" /> Berkas Resmi
                 </Badge>
               </div>
 
-              <div className="prose dark:prose-invert max-w-none text-xs leading-relaxed space-y-3">
-                <p className="font-bold text-foreground">A. Tujuan Pembelajaran & Alur Konsep:</p>
-                <ul className="list-disc pl-5 space-y-1 text-slate-600 dark:text-slate-300">
-                  <li>Peserta didik mampu memahami dan mendeskripsikan pengertian norma secara holistik.</li>
-                  <li>Peserta didik mampu menganalisis pentingnya norma agama, kesusilaan, kesopanan, dan hukum dalam kehidupan bermasyarakat.</li>
-                  <li>Peserta didik menunjukkan kebiasaan bersikap sopan dan patuh aturan di lingkungan madrasah dan tempat tinggal.</li>
-                </ul>
-
-                <p className="font-bold text-foreground mt-4">B. Ringkasan Uraian Materi:</p>
+              <div className="space-y-3 text-xs text-slate-700 dark:text-slate-300">
                 <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
-                  <p>
-                    Norma merupakan kaidah atau aturan yang berlaku dalam masyarakat yang berisi perintah dan larangan untuk mengatur tingkah laku manusia. Tanpa norma, kehidupan bermasyarakat akan kehilangan keteraturan (anarki).
+                  <p className="font-bold text-foreground text-sm">{material.title}</p>
+                  <p className="text-muted-foreground font-mono">
+                    Mata Pelajaran: {material.source || activeMapel} · Kelas: {material.chapter || activeRombel}
                   </p>
-                  <p>
-                    Dalam konteks madrasah, penerapan norma menciptakan lingkungan belajar yang aman, kondusif, berakhlaqul karimah, serta saling menghargai antarsesama warga sekolah.
-                  </p>
+                  {material.uploaded_by && (
+                    <p className="text-muted-foreground">Penyusun/Pengunggah: {material.uploaded_by}</p>
+                  )}
+                  {material.content && (
+                    <p className="mt-2 text-foreground leading-relaxed">{material.content}</p>
+                  )}
                 </div>
               </div>
             </div>

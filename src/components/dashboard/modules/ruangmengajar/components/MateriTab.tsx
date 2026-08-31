@@ -29,9 +29,18 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
 
   useEffect(() => {
     MysqlDataService.getMaterials().then((dbItems) => {
-      if (dbItems) {
+      if (dbItems && dbItems.length > 0) {
+        const cleanActiveMapel = activeMapel.toLowerCase().trim();
+        const filtered = dbItems.filter((item) => {
+          const itemSubject = (item.subject_name || "").toLowerCase().trim();
+          if (!itemSubject) return true;
+          return itemSubject.includes(cleanActiveMapel) || cleanActiveMapel.includes(itemSubject);
+        });
+
+        const sourceItems = filtered.length > 0 ? filtered : dbItems;
+
         setMaterials(
-          dbItems.map((item, idx) => ({
+          sourceItems.map((item, idx) => ({
             id: String(item.id || idx),
             title: item.title,
             type: ((item.type || "").toUpperCase().includes("VIDEO")
@@ -42,7 +51,9 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
               ? "EBOOK"
               : "MODUL_AJAR") as any,
             chapter: item.class_name || "Materi KBM",
-            source: item.subject_name || "Media Pembelajaran LMS",
+            source: item.subject_name || activeMapel || "Media Pembelajaran LMS",
+            file_url: item.file_url,
+            uploaded_by: item.uploaded_by,
             selectedForToday: true,
           }))
         );

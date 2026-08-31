@@ -482,9 +482,9 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
               : `Laporan Pembelajaran & Rekap Leger ${selectedClass}`}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-              {isExecutive
-                ? "Dashboard Pengawasan Eksekutif Kamad & Waka Kurikulum untuk Monitoring Nilai Akademik & Ketuntasan KKTP Madrasah"
-                : "Rekap nilai leger, cetak rapor resmi, dan monitoring ketuntasan KKTP siswa."}
+            {isExecutive
+              ? "Dashboard Pengawasan Eksekutif Kamad & Waka Kurikulum untuk Monitoring Nilai Akademik & Ketuntasan KKTP Madrasah"
+              : "Rekap nilai leger, cetak rapor resmi, dan monitoring ketuntasan KKTP siswa."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -584,7 +584,7 @@ export function RaporModule({ activeRole }: { activeRole?: string }) {
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold">Rata-Rata Nilai Madrasah</p>
                   <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{overallStats.avgMadrasah} Poin</h3>
-                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Real tanpa data dummy</p>
+                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5"></p>
                 </div>
                 <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   <BarChart3 className="h-6 w-6" />

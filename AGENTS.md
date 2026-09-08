@@ -13,5 +13,7 @@ JANGAN GUNAKAN DATA DUMMY
 
 Berkas fisik (PDF, Video, MP3) HARUS disimpan di File Server (Folder Disk), BUKAN disimpan di database sebagai BLOB.
 
+Lakukan commit lokal git untuk setiap perubahan selesai.
+
 push ke github hanya jika disuruh 
 <!--  -->

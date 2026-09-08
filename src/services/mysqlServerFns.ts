@@ -4394,6 +4394,20 @@ export const exportDatabaseBackupFn = createServerFn({ method: "GET" }).handler(
       sqlDump += `SET FOREIGN_KEY_CHECKS = 1;\n`;
       sqlDump += `-- [Akhir Berkas Backup LMS MTsN 2 Cilacap]\n`;
 
+      try {
+        const { createAuditLog } = await import("@/lib/logger");
+        await createAuditLog({
+          userId: "admin",
+          action: "BACKUP_DATABASE",
+          module: "Pengaturan",
+          target: filename,
+          result: "SUCCESS",
+          details: `Ekspor cadangan basis data (${tableNames.length} tabel)`,
+        });
+      } catch (logErr) {
+        console.warn("[audit log backup failed]:", logErr);
+      }
+
       return { success: true, sql: sqlDump, filename };
     } catch (err: any) {
       console.error("[exportDatabaseBackupFn Error]:", err);

@@ -71,6 +71,50 @@ export function logEvent(entry: LogEntry): void {
   }
 }
 
+let auditTableInitialized = false;
+
+async function ensureAuditTable(execute: any) {
+  if (auditTableInitialized) return;
+  try {
+    await execute(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id VARCHAR(64) NOT NULL,
+        action VARCHAR(100) NOT NULL,
+        module VARCHAR(100) NOT NULL DEFAULT 'System',
+        target VARCHAR(255) DEFAULT NULL,
+        result VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',
+        details TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id),
+        INDEX idx_module (module),
+        INDEX idx_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Check missing columns cleanly using INFORMATION_SCHEMA to prevent duplicate warnings
+    const { query } = await import("./db");
+    const existingColumns = await query<any[]>(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'audit_logs'`
+    );
+    const colNames = (existingColumns || []).map((c) => c.COLUMN_NAME?.toLowerCase());
+
+    if (!colNames.includes("module")) {
+      await execute(`ALTER TABLE audit_logs ADD COLUMN module VARCHAR(100) DEFAULT 'System' AFTER action`);
+    }
+    if (!colNames.includes("target")) {
+      await execute(`ALTER TABLE audit_logs ADD COLUMN target VARCHAR(255) DEFAULT NULL AFTER module`);
+    }
+    if (!colNames.includes("result")) {
+      await execute(`ALTER TABLE audit_logs ADD COLUMN result VARCHAR(20) DEFAULT 'SUCCESS' AFTER target`);
+    }
+
+    auditTableInitialized = true;
+  } catch (e) {
+    // Ignore schema check errors
+  }
+}
+
 // Audit logger for recording critical user activities into MySQL audit_logs table
 export async function createAuditLog(params: {
   userId: string;
@@ -81,28 +125,13 @@ export async function createAuditLog(params: {
   details?: string;
 }): Promise<void> {
   try {
-    const { execute } = await import("@/lib/db");
-    await execute(`
-      CREATE TABLE IF NOT EXISTS audit_logs (
-        id VARCHAR(64) PRIMARY KEY,
-        user_id VARCHAR(64) NOT NULL,
-        action VARCHAR(100) NOT NULL,
-        module VARCHAR(100) NOT NULL,
-        target VARCHAR(255),
-        result VARCHAR(20) NOT NULL,
-        details TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_user_id (user_id),
-        INDEX idx_module (module),
-        INDEX idx_created (created_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `);
+    const { execute } = await import("./db");
+    await ensureAuditTable(execute);
 
-    const logId = `aud-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     await execute(
-      `INSERT INTO audit_logs (id, user_id, action, module, target, result, details)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [logId, params.userId, params.action, params.module, params.target || null, params.result, params.details || null]
+      `INSERT INTO audit_logs (user_id, action, module, target, result, details)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [params.userId, params.action, params.module, params.target || null, params.result, params.details || null]
     );
 
     logEvent({

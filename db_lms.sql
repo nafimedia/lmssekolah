@@ -229,9 +229,15 @@ CREATE TABLE `audit_logs` (
   `user_id` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `user_name` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `action` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `module` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'System',
+  `target` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `result` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'SUCCESS',
   `details` text COLLATE utf8mb4_unicode_ci,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_module` (`module`),
+  KEY `idx_created` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `cbt_exam_results` (

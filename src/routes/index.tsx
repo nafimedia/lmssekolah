@@ -111,8 +111,8 @@ const DICTIONARY = {
       },
       card3: {
         title: "Modul Tahfidz Al-Qur'an",
-        desc: "Pencatatan setoran hafalan siswa (Juz 30, 29, & 1), verifikasi predikat Mutqin & Murojaah, serta fasilitas cetak Kartu Murojaah PDF.",
-        tags: ["Juz 30, 29, 1", "Predikat Mutqin", "Kartu Murojaah PDF"],
+        desc: "Pencatatan setoran hafalan siswa, verifikasi predikat Mutqin & Murojaah, serta fasilitas cetak Kartu Murojaah PDF.",
+        tags: ["Predikat Mutqin", "Kartu Murojaah PDF"],
       },
       card4: {
         title: "SIAKAD & E-Rapor Kemenag",
@@ -150,7 +150,7 @@ const DICTIONARY = {
           features: [
             "Materi pertemuan 1–18 (PDF, Video Edukasi, & LKPD)",
             "CBT Ujian Online dengan Token Keamanan & Timer",
-            "Pencatatan Setoran Tahfidz (Juz 30, 29, & 1)",
+            "Pencatatan Setoran Tahfidz",
             "Presensi Mandiri Sesi KBM & Forum Diskusi Kelas",
             "Pratinjau Hasil Nilai & Unduh E-Rapor Digital",
           ],
@@ -317,7 +317,7 @@ const DICTIONARY = {
       card3: {
         title: "Quran Tahfidz Tracker",
         desc: "Memorization progress tracking for Juz 30, 29, and 1, Mutqin & Murojaah verification, with downloadable PDF recitation cards.",
-        tags: ["Juz 30, 29, 1", "Mutqin Status", "PDF Murojaah Card"],
+        tags: ["Mutqin Status", "PDF Murojaah Card"],
       },
       card4: {
         title: "SIAKAD & Ministry Report Card",
@@ -355,7 +355,7 @@ const DICTIONARY = {
           features: [
             "Sessions 1–18 materials (PDFs, educational videos, & tasks)",
             "Online CBT assessments with token validation & timer",
-            "Tahfidz memorization checkpoints (Juz 30, 29, & 1)",
+            "Tahfidz memorization checkpoints",
             "Self-attendance check-in & interactive class forums",
             "Instant academic grade preview & official report download",
           ],
@@ -1008,11 +1008,10 @@ function LandingPage() {
                 <button
                   key={r.id}
                   onClick={() => setActiveRole(r.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
-                    isActive
-                      ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
-                      : "bg-card text-foreground border-border hover:border-emerald-500/40"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${isActive
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                    : "bg-card text-foreground border-border hover:border-emerald-500/40"
+                    }`}
                 >
                   <IconComp className="w-3.5 h-3.5" />
                   <span>{r.title}</span>

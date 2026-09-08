@@ -68,11 +68,11 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
   {
     id: "nat-2026-02-16",
     title: "Cuti Bersama Tahun Baru Imlek 2577",
-    category: "libur",
+    category: "cuti",
     date: "16 Februari 2026",
     rawDate: "2026-02-16",
     desc: "Cuti Bersama Tahun Baru Imlek 2577 Kongzili.",
-    badge: "🔴 Cuti Bersama",
+    badge: "🟡 Cuti Bersama",
   },
   {
     id: "nat-2026-02-17",
@@ -88,11 +88,11 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
   {
     id: "nat-2026-03-18",
     title: "Cuti Bersama Hari Suci Nyepi",
-    category: "libur",
+    category: "cuti",
     date: "18 Maret 2026",
     rawDate: "2026-03-18",
     desc: "Cuti Bersama Hari Suci Nyepi Tahun Baru Saka 1948.",
-    badge: "🔴 Cuti Bersama",
+    badge: "🟡 Cuti Bersama",
   },
   {
     id: "nat-2026-03-19",
@@ -106,11 +106,11 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
   {
     id: "nat-2026-03-20",
     title: "Cuti Bersama Hari Raya Idul Fitri 1447 H",
-    category: "libur",
+    category: "cuti",
     date: "20 Maret 2026",
     rawDate: "2026-03-20",
     desc: "Cuti Bersama Hari Raya Idul Fitri 1447 H.",
-    badge: "🔴 Cuti Bersama",
+    badge: "🟡 Cuti Bersama",
   },
   {
     id: "nat-2026-03-21",
@@ -133,20 +133,20 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
   {
     id: "nat-2026-03-23",
     title: "Cuti Bersama Hari Raya Idul Fitri 1447 H",
-    category: "libur",
+    category: "cuti",
     date: "23 Maret 2026",
     rawDate: "2026-03-23",
     desc: "Cuti Bersama Hari Raya Idul Fitri 1447 H.",
-    badge: "🔴 Cuti Bersama",
+    badge: "🟡 Cuti Bersama",
   },
   {
     id: "nat-2026-03-24",
     title: "Cuti Bersama Hari Raya Idul Fitri 1447 H",
-    category: "libur",
+    category: "cuti",
     date: "24 Maret 2026",
     rawDate: "2026-03-24",
     desc: "Cuti Bersama Hari Raya Idul Fitri 1447 H.",
-    badge: "🔴 Cuti Bersama",
+    badge: "🟡 Cuti Bersama",
   },
 
   // APRIL 2026
@@ -191,11 +191,11 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
   {
     id: "nat-2026-05-15",
     title: "Cuti Bersama Kenaikan Yesus Kristus",
-    category: "libur",
+    category: "cuti",
     date: "15 Mei 2026",
     rawDate: "2026-05-15",
     desc: "Cuti Bersama Kenaikan Yesus Kristus.",
-    badge: "🔴 Cuti Bersama",
+    badge: "🟡 Cuti Bersama",
   },
   {
     id: "nat-2026-05-27",
@@ -209,11 +209,11 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
   {
     id: "nat-2026-05-28",
     title: "Cuti Bersama Hari Raya Idul Adha 1447 H",
-    category: "libur",
+    category: "cuti",
     date: "28 Mei 2026",
     rawDate: "2026-05-28",
     desc: "Cuti Bersama Hari Raya Idul Adha 1447 H.",
-    badge: "🔴 Cuti Bersama",
+    badge: "🟡 Cuti Bersama",
   },
   {
     id: "nat-2026-05-31",
@@ -311,11 +311,11 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
   {
     id: "nat-2026-12-24",
     title: "Cuti Bersama Hari Raya Natal",
-    category: "libur",
+    category: "cuti",
     date: "24 Desember 2026",
     rawDate: "2026-12-24",
-    desc: "Cuti Bersama Hari Raya Natal.",
-    badge: "🔴 Cuti Bersama",
+    desc: "Cuti Bersama Hari Raya Natal (Bukan Tanggal Merah).",
+    badge: "🟡 Cuti Bersama",
   },
   {
     id: "nat-2026-12-25",
@@ -545,17 +545,24 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
 
     const dots: { color: string; title: string }[] = [];
     const hasHoliday = matches.some(
-      (m) => m.category === "libur" || m.badge?.includes("Libur") || m.badge?.includes("Cuti Bersama")
+      (m) =>
+        (m.category === "libur" || m.badge?.includes("Libur Nasional") || m.badge?.includes("Hari Besar")) &&
+        !m.badge?.includes("Cuti Bersama") &&
+        m.category !== "cuti"
     );
     const hasCbt = matches.some((m) => m.category === "cbt");
     const hasKokurikuler = matches.some(
-      (m) => m.category === "kokurikuler" || m.category === "rapat"
+      (m) =>
+        m.category === "kokurikuler" ||
+        m.category === "rapat" ||
+        m.category === "cuti" ||
+        m.badge?.includes("Cuti Bersama")
     );
     const hasKbm = matches.some((m) => m.category === "kbm");
 
-    if (hasHoliday) dots.push({ color: "bg-red-500", title: "Libur" });
+    if (hasHoliday) dots.push({ color: "bg-red-500", title: "Libur Nasional" });
     if (hasCbt) dots.push({ color: "bg-blue-500", title: "Ujian CBT" });
-    if (hasKokurikuler) dots.push({ color: "bg-amber-400", title: "Kegiatan / Rapat" });
+    if (hasKokurikuler) dots.push({ color: "bg-amber-400", title: "Agenda / Cuti" });
     if (hasKbm && dots.length < 3) dots.push({ color: "bg-emerald-500", title: "KBM" });
 
     return dots;
@@ -662,12 +669,15 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                 const dots = getDayDots(day);
                 const isSelected = selectedDateString === day.dateString;
 
-                // Periksa apakah hari ini adalah Hari Libur Nasional / Cuti Bersama
+                // Periksa apakah hari ini adalah Hari Libur Nasional Resmi (Tanggal Merah, BUKAN Cuti Bersama)
                 const dayEvents = allAgendas.filter(
                   (item) => item.rawDate === day.dateString || item.rawDate?.startsWith(day.dateString)
                 );
                 const isHoliday = dayEvents.some(
-                  (ev) => ev.category === "libur" || ev.badge?.includes("Libur") || ev.badge?.includes("Cuti Bersama")
+                  (ev) =>
+                    (ev.category === "libur" || ev.badge?.includes("Libur Nasional") || ev.badge?.includes("Hari Besar")) &&
+                    !ev.badge?.includes("Cuti Bersama") &&
+                    ev.category !== "cuti"
                 );
                 const isRedDate = day.isSunday || isHoliday;
 
@@ -785,7 +795,8 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                   onChange={(e) => setFilterCategory(e.target.value)}
                 >
                   <option value="semua">Semua</option>
-                  <option value="libur">🔴 Libur</option>
+                  <option value="libur">🔴 Libur Nasional</option>
+                  <option value="cuti">🟡 Cuti Bersama</option>
                   <option value="cbt">🔵 CBT</option>
                   <option value="kokurikuler">🟡 Peringatan</option>
                   <option value="rapat">🟣 Rapat</option>

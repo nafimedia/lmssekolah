@@ -58,14 +58,14 @@ interface KemenagHijriMonth {
 }
 
 const KEMENAG_HIJRI_MONTHS: KemenagHijriMonth[] = [
-  // 1447 H
+  // 1447 H (2025 - 2026)
   { year: 1447, month: "Rajab", start: "2025-12-21" },
   { year: 1447, month: "Sya'ban", start: "2026-01-20" },
   { year: 1447, month: "Ramadhan", start: "2026-02-19" },
   { year: 1447, month: "Syawal", start: "2026-03-21" },
   { year: 1447, month: "Dzulqa'dah", start: "2026-04-19" },
   { year: 1447, month: "Dzulhijjah", start: "2026-05-18" },
-  // 1448 H (Tahun Ajaran 2026/2027)
+  // 1448 H (2026 - 2027)
   { year: 1448, month: "Muharram", start: "2026-06-16" },
   { year: 1448, month: "Safar", start: "2026-07-16" },
   { year: 1448, month: "Rabiul Awal", start: "2026-08-14" },
@@ -78,9 +78,37 @@ const KEMENAG_HIJRI_MONTHS: KemenagHijriMonth[] = [
   { year: 1448, month: "Syawal", start: "2027-03-10" },
   { year: 1448, month: "Dzulqa'dah", start: "2027-04-08" },
   { year: 1448, month: "Dzulhijjah", start: "2027-05-08" },
-  // 1449 H
+  // 1449 H (2027 - 2028)
   { year: 1449, month: "Muharram", start: "2027-06-06" },
   { year: 1449, month: "Safar", start: "2027-07-06" },
+  { year: 1449, month: "Rabiul Awal", start: "2027-08-04" },
+  { year: 1449, month: "Rabiul Akhir", start: "2027-09-03" },
+  { year: 1449, month: "Jumadil Awal", start: "2027-10-02" },
+  { year: 1449, month: "Jumadil Akhir", start: "2027-11-01" },
+  { year: 1449, month: "Rajab", start: "2027-11-30" },
+  { year: 1449, month: "Sya'ban", start: "2027-12-30" },
+  { year: 1449, month: "Ramadhan", start: "2028-01-28" },
+  { year: 1449, month: "Syawal", start: "2028-02-27" },
+  { year: 1449, month: "Dzulqa'dah", start: "2028-03-27" },
+  { year: 1449, month: "Dzulhijjah", start: "2028-04-26" },
+  // 1450 H (2028)
+  { year: 1450, month: "Muharram", start: "2028-05-25" },
+  { year: 1450, month: "Safar", start: "2028-06-24" },
+];
+
+const HIJRI_MONTH_ORDER = [
+  "Muharram",
+  "Safar",
+  "Rabiul Awal",
+  "Rabiul Akhir",
+  "Jumadil Awal",
+  "Jumadil Akhir",
+  "Rajab",
+  "Sya'ban",
+  "Ramadhan",
+  "Syawal",
+  "Dzulqa'dah",
+  "Dzulhijjah",
 ];
 
 /**
@@ -92,7 +120,7 @@ export function getHijriDate(date: Date): HijriDateInfo {
   const d = String(date.getDate()).padStart(2, "0");
   const dateStr = `${y}-${m}-${d}`;
 
-  // 1. Cek terlebih dahulu pada tabel resmi Kemenag RI
+  // 1. Cek pada tabel resmi kalibrasi Kemenag RI
   for (let i = KEMENAG_HIJRI_MONTHS.length - 1; i >= 0; i--) {
     if (dateStr >= KEMENAG_HIJRI_MONTHS[i].start) {
       const cur = KEMENAG_HIJRI_MONTHS[i];
@@ -112,6 +140,31 @@ export function getHijriDate(date: Date): HijriDateInfo {
       };
     }
   }
+
+  // 2. Perhitungan matematis siklus bulan sinodis berkelanjutan (untuk tanggal jauh di masa depan)
+  const anchor = KEMENAG_HIJRI_MONTHS[KEMENAG_HIJRI_MONTHS.length - 1];
+  const anchorTime = new Date(anchor.start + "T00:00:00Z").getTime();
+  const targetTime = new Date(dateStr + "T00:00:00Z").getTime();
+  const daysSinceAnchor = Math.round((targetTime - anchorTime) / 86400000);
+
+  const meanSynodic = 29.530588;
+  const monthsPassed = Math.floor(daysSinceAnchor / meanSynodic);
+  const dayInMonth = Math.floor(daysSinceAnchor - monthsPassed * meanSynodic) + 1;
+
+  const anchorMonthIndex = HIJRI_MONTH_ORDER.indexOf(anchor.month);
+  const totalMonths = anchor.year * 12 + anchorMonthIndex + monthsPassed;
+  const year = Math.floor(totalMonths / 12);
+  const monthName = HIJRI_MONTH_ORDER[totalMonths % 12];
+  const arabicDay = toEasternArabicNumerals(dayInMonth);
+  const formattedHijri = `${dayInMonth} ${monthName} ${year} H`;
+
+  return {
+    day: dayInMonth,
+    arabicDay,
+    monthName,
+    year,
+    formattedHijri,
+  };
 
   // 2. Fallback jika tanggal di luar rentang tabel kalibrasi
   try {

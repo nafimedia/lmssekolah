@@ -1,4 +1,11 @@
 import { useState, useEffect } from "react";
+import {
+  getPasaranJawa,
+  getHijriDate,
+  getHijriMonthRangeTitle,
+  type PasaranName,
+  type HijriDateInfo,
+} from "@/utils/hijriJawaHelper";
 
 export interface CalendarDayCell {
   date: Date;
@@ -8,7 +15,14 @@ export interface CalendarDayCell {
   isToday: boolean;
   isWeekend: boolean;
   isSunday: boolean;
+  isFriday: boolean;
   dayOfWeekName: string;
+  pasaran: PasaranName;
+  hijriDay: number;
+  hijriArabicDay: string;
+  hijriMonthName: string;
+  hijriYear: number;
+  formattedHijri: string;
 }
 
 export const INDONESIAN_MONTH_NAMES = [
@@ -112,6 +126,9 @@ export function useRealtimeCalendar() {
       const date = new Date(currentYear, currentMonth - 1, dayNum);
       const dateString = formatDateString(date);
       const jsDay = date.getDay();
+      const pasaran = getPasaranJawa(date);
+      const hijri = getHijriDate(date);
+
       cells.push({
         date,
         dayNumber: dayNum,
@@ -120,7 +137,14 @@ export function useRealtimeCalendar() {
         isToday: isTodayCheck(date, todayYear, todayMonth, todayDate),
         isWeekend: jsDay === 0 || jsDay === 6,
         isSunday: jsDay === 0,
+        isFriday: jsDay === 5,
         dayOfWeekName: INDONESIAN_DAY_NAMES[jsDay],
+        pasaran,
+        hijriDay: hijri.day,
+        hijriArabicDay: hijri.arabicDay,
+        hijriMonthName: hijri.monthName,
+        hijriYear: hijri.year,
+        formattedHijri: hijri.formattedHijri,
       });
     }
 
@@ -129,6 +153,9 @@ export function useRealtimeCalendar() {
       const date = new Date(currentYear, currentMonth, d);
       const dateString = formatDateString(date);
       const jsDay = date.getDay();
+      const pasaran = getPasaranJawa(date);
+      const hijri = getHijriDate(date);
+
       cells.push({
         date,
         dayNumber: d,
@@ -137,7 +164,14 @@ export function useRealtimeCalendar() {
         isToday: isTodayCheck(date, todayYear, todayMonth, todayDate),
         isWeekend: jsDay === 0 || jsDay === 6,
         isSunday: jsDay === 0,
+        isFriday: jsDay === 5,
         dayOfWeekName: INDONESIAN_DAY_NAMES[jsDay],
+        pasaran,
+        hijriDay: hijri.day,
+        hijriArabicDay: hijri.arabicDay,
+        hijriMonthName: hijri.monthName,
+        hijriYear: hijri.year,
+        formattedHijri: hijri.formattedHijri,
       });
     }
 
@@ -147,6 +181,9 @@ export function useRealtimeCalendar() {
       const date = new Date(currentYear, currentMonth + 1, d);
       const dateString = formatDateString(date);
       const jsDay = date.getDay();
+      const pasaran = getPasaranJawa(date);
+      const hijri = getHijriDate(date);
+
       cells.push({
         date,
         dayNumber: d,
@@ -155,12 +192,23 @@ export function useRealtimeCalendar() {
         isToday: isTodayCheck(date, todayYear, todayMonth, todayDate),
         isWeekend: jsDay === 0 || jsDay === 6,
         isSunday: jsDay === 0,
+        isFriday: jsDay === 5,
         dayOfWeekName: INDONESIAN_DAY_NAMES[jsDay],
+        pasaran,
+        hijriDay: hijri.day,
+        hijriArabicDay: hijri.arabicDay,
+        hijriMonthName: hijri.monthName,
+        hijriYear: hijri.year,
+        formattedHijri: hijri.formattedHijri,
       });
     }
 
     return cells;
   };
+
+  const hijriMonthRangeTitle = getHijriMonthRangeTitle(currentYear, currentMonth);
+  const currentHijriDate: HijriDateInfo = getHijriDate(now);
+  const currentPasaran: PasaranName = getPasaranJawa(now);
 
   return {
     now,
@@ -178,6 +226,9 @@ export function useRealtimeCalendar() {
     todayYear,
     todayMonth,
     todayDate,
+    hijriMonthRangeTitle,
+    currentHijriDate,
+    currentPasaran,
   };
 }
 

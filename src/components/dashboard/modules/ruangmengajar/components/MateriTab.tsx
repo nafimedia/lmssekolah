@@ -186,14 +186,14 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
             <Button
               size="sm"
               variant="outline"
-              className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/50 font-bold text-xs gap-1.5 shadow-xs"
+              className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/50 font-semibold text-xs gap-1.5 shadow-xs"
               onClick={() => setIsElibraryOpen(true)}
             >
               <Library className="h-4 w-4 text-purple-600 dark:text-purple-400" /> Ambil dari E-Library
             </Button>
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 shadow-xs"
               onClick={() => setIsUploadOpen(true)}
             >
               <Upload className="h-4 w-4" /> + Unggah Bahan Ajar
@@ -212,14 +212,14 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/50 font-bold text-xs gap-1.5"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/50 font-semibold text-xs gap-1.5"
                   onClick={() => setIsElibraryOpen(true)}
                 >
                   <Library className="h-3.5 w-3.5 text-purple-600" /> Ambil dari E-Library
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5"
                   onClick={() => setIsUploadOpen(true)}
                 >
                   <Upload className="h-3.5 w-3.5" /> Unggah Bahan Ajar Sekarang
@@ -250,7 +250,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                     </div>
                   </div>
 
-                  <Badge variant={m.selectedForToday ? "default" : "outline"} className="text-[10px] font-bold shrink-0 gap-1">
+                  <Badge variant={m.selectedForToday ? "default" : "outline"} className="text-[10px] font-semibold shrink-0 gap-1">
                     {m.selectedForToday ? <><CheckCircle2 className="h-3 w-3" /> DIGUNAKAN HARI INI</> : "TIDAK AKTIF"}
                   </Badge>
                 </div>
@@ -259,7 +259,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 px-2 text-[11px] font-bold text-primary gap-1"
+                    className="h-7 px-2 text-[11px] font-semibold text-primary gap-1"
                     onClick={() => handleOpenViewMaterial(m)}
                   >
                     <ExternalLink className="h-3 w-3" /> Buka Materi & Preview
@@ -268,7 +268,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                   <Button
                     size="sm"
                     variant={m.selectedForToday ? "secondary" : "outline"}
-                    className="h-7 px-2.5 text-[11px] font-bold gap-1"
+                    className="h-7 px-2.5 text-[11px] font-semibold gap-1"
                     onClick={() => handleToggleSelect(m.id)}
                   >
                     {m.selectedForToday ? "Lepas dari Sesi KBM" : <><CheckCircle2 className="h-3 w-3" /> Gunakan Hari Ini</>}

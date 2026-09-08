@@ -38,7 +38,7 @@ export function ViewMaterialDialog({
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader className="border-b border-border pb-3">
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className="text-[10px] font-bold gap-1">
+            <Badge variant="outline" className="text-[10px] font-semibold gap-1">
               {material.type === "MODUL_AJAR" && <FileText className="h-3 w-3 text-emerald-600" />}
               {material.type === "VIDEO" && <Video className="h-3 w-3 text-blue-600" />}
               {material.type === "SLIDE_PPT" && <BookOpen className="h-3 w-3 text-amber-600" />}
@@ -51,7 +51,7 @@ export function ViewMaterialDialog({
             </span>
           </div>
 
-          <DialogTitle className="text-lg font-extrabold flex items-center justify-between gap-4">
+          <DialogTitle className="text-lg font-bold flex items-center justify-between gap-4">
             <span>{material.title}</span>
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -70,7 +70,7 @@ export function ViewMaterialDialog({
                 <div className="mt-4 flex items-center gap-2">
                   <Button
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs gap-1.5"
                     onClick={() => {
                       toast.success("Memutar Video Pembelajaran KBM...");
                       if (material.url) window.open(material.url, "_blank");
@@ -83,7 +83,7 @@ export function ViewMaterialDialog({
             </div>
           ) : material.type === "SLIDE_PPT" ? (
             <div className="p-6 rounded-xl border border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold text-sm">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold text-sm">
                 <BookOpen className="h-5 w-5" /> Slide Presentasi Kurikulum Merdeka (PPTX)
               </div>
               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -92,7 +92,7 @@ export function ViewMaterialDialog({
               <div className="flex items-center gap-2 pt-2">
                 <Button
                   size="sm"
-                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs gap-1.5"
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs gap-1.5"
                   onClick={() => toast.success("Menampilkan Slide Presentasi Proyektor...")}
                 >
                   <Sparkles className="h-4 w-4" /> Tampilkan Slide Proyektor
@@ -100,7 +100,7 @@ export function ViewMaterialDialog({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs font-bold gap-1.5"
+                  className="text-xs font-semibold gap-1.5"
                   onClick={() => toast.success("Mengunduh file PPTX...")}
                 >
                   <Download className="h-4 w-4" /> Unduh Slide (PPTX)
@@ -118,10 +118,10 @@ export function ViewMaterialDialog({
           ) : (
             <div className="p-6 rounded-xl border border-border bg-card space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
-                <div className="font-bold text-xs text-primary flex items-center gap-2">
+                <div className="font-semibold text-xs text-primary flex items-center gap-2">
                   <FileText className="h-4 w-4" /> Berkas Bahan Ajar Digital ({activeMapel})
                 </div>
-                <Badge className="bg-emerald-600 text-white text-[10px] font-bold gap-1">
+                <Badge className="bg-emerald-600 text-white text-[10px] font-semibold gap-1">
                   <CheckCircle2 className="h-3 w-3" /> Berkas Resmi
                 </Badge>
               </div>
@@ -145,13 +145,13 @@ export function ViewMaterialDialog({
         </div>
 
         <div className="flex items-center justify-between border-t border-border pt-3">
-          <Button variant="outline" size="sm" className="text-xs font-bold" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" size="sm" className="text-xs font-semibold" onClick={() => onOpenChange(false)}>
             Tutup
           </Button>
 
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5"
             onClick={() => {
               toast.success(`Materi "${material.title}" diset aktif untuk sesi KBM ${activeRombel}!`);
               onOpenChange(false);

@@ -121,28 +121,28 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card className="border-emerald-200 dark:border-emerald-900 bg-emerald-50/40 dark:bg-emerald-950/20 p-4 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Refleksi KBM Hari Ini</span>
+            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Refleksi KBM Hari Ini</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
           </div>
-          <p className="text-lg font-black text-slate-900 dark:text-slate-100">KBM Berlangsung Sangat Baik</p>
+          <p className="text-lg font-bold text-foreground">KBM Berlangsung Sangat Baik</p>
           <p className="text-[11px] text-slate-500">Seluruh indikator TP berhasil dicapai siswa {activeRombel}.</p>
         </Card>
 
         <Card className="border-amber-200 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 p-4 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">Siswa Perlu Remedial</span>
+            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Siswa Perlu Remedial</span>
             <AlertTriangle className="h-4 w-4 text-amber-600" />
           </div>
-          <p className="text-lg font-black text-slate-900 dark:text-slate-100">{remedialCount} Siswa Terdokumentasi</p>
+          <p className="text-lg font-bold text-foreground">{remedialCount} Siswa Terdokumentasi</p>
           <p className="text-[11px] text-slate-500">Tersambung otomatis ke modul Penilaian & Remedial.</p>
         </Card>
 
         <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/40 dark:bg-blue-950/20 p-4 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">Siswa Siap Pengayaan</span>
+            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">Siswa Siap Pengayaan</span>
             <Rocket className="h-4 w-4 text-blue-600" />
           </div>
-          <p className="text-lg font-black text-slate-900 dark:text-slate-100">{pengayaanCount} Siswa Berprestasi</p>
+          <p className="text-lg font-bold text-foreground">{pengayaanCount} Siswa Berprestasi</p>
           <p className="text-[11px] text-slate-500">Dapat diberikan modul suplemen pengayaan lanjutan.</p>
         </Card>
       </div>
@@ -161,14 +161,14 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
         <CardContent className="p-4 space-y-4">
           {/* Quick Note Input Form */}
           <div className="p-3.5 rounded-xl bg-muted/40 border border-border space-y-3">
-            <h4 className="text-xs font-bold flex items-center gap-1.5 text-primary">
+            <h4 className="text-xs font-semibold flex items-center gap-1.5 text-primary">
               <Plus className="h-4 w-4" /> Catat Observasi Siswa Sesi KBM Ini
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {realStudents.length > 0 ? (
                 <select
-                  className="h-8 rounded-md border border-border bg-background px-3 text-xs font-bold"
+                  className="h-8 rounded-md border border-border bg-background px-3 text-xs font-normal"
                   value={studentInput}
                   onChange={(e) => setStudentInput(e.target.value)}
                 >
@@ -184,12 +184,12 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
                   placeholder="Nama Siswa"
                   value={studentInput}
                   onChange={(e) => setStudentInput(e.target.value)}
-                  className="h-8 text-xs font-bold"
+                  className="h-8 text-xs font-normal"
                 />
               )}
 
               <select
-                className="h-8 rounded-md border border-border bg-background px-3 text-xs font-bold"
+                className="h-8 rounded-md border border-border bg-background px-3 text-xs font-normal"
                 value={noteType}
                 onChange={(e) => setNoteType(e.target.value as any)}
               >
@@ -200,7 +200,7 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
                 <option value="PENGAYAAN">Pengayaan Lanjutan</option>
               </select>
 
-              <Button size="sm" className="h-8 text-xs font-bold bg-primary text-primary-foreground" onClick={handleAddNote}>
+              <Button size="sm" className="h-8 text-xs font-semibold bg-primary text-primary-foreground" onClick={handleAddNote}>
                 + Simpan Catatan Siswa
               </Button>
             </div>
@@ -219,29 +219,29 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
               <div key={n.id} className="p-3 rounded-xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs text-foreground">{n.studentName}</span>
+                    <span className="font-semibold text-xs text-foreground">{n.studentName}</span>
                     {n.type === "PRESTASI" && (
-                      <Badge className="bg-amber-500 text-white font-bold text-[9px] gap-1">
+                      <Badge className="bg-amber-500 text-white font-semibold text-[10px] gap-1">
                         <Star className="h-3 w-3" /> PRESTASI
                       </Badge>
                     )}
                     {n.type === "PEMBELAJARAN" && (
-                      <Badge variant="outline" className="font-bold text-[9px] gap-1">
+                      <Badge variant="outline" className="font-semibold text-[10px] gap-1">
                         <ClipboardList className="h-3 w-3 text-primary" /> CATATAN
                       </Badge>
                     )}
                     {n.type === "PERLU_PERHATIAN" && (
-                      <Badge className="bg-red-500 text-white font-bold text-[9px] gap-0.5">
+                      <Badge className="bg-red-500 text-white font-semibold text-[10px] gap-0.5">
                         <AlertTriangle className="h-3 w-3" /> PERLU PERHATIAN
                       </Badge>
                     )}
                     {n.type === "REMEDIAL" && (
-                      <Badge className="bg-amber-600 text-white font-bold text-[9px] gap-0.5">
+                      <Badge className="bg-amber-600 text-white font-semibold text-[10px] gap-0.5">
                         <BookOpen className="h-3 w-3" /> REMEDIAL
                       </Badge>
                     )}
                     {n.type === "PENGAYAAN" && (
-                      <Badge className="bg-blue-600 text-white font-bold text-[9px] gap-0.5">
+                      <Badge className="bg-blue-600 text-white font-semibold text-[10px] gap-0.5">
                         <Rocket className="h-3 w-3" /> PENGAYAAN
                       </Badge>
                     )}

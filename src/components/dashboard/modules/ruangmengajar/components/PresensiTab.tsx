@@ -151,7 +151,7 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
           <Button
             size="sm"
             variant="outline"
-            className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
+            className="gap-1.5 text-xs font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
             onClick={handleAllHadir}
             disabled={students.length === 0 || isSaving}
           >
@@ -160,7 +160,7 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
 
           <Button
             size="sm"
-            className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs disabled:opacity-70"
+            className="gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs disabled:opacity-70"
             onClick={handleSavePresensi}
             disabled={students.length === 0 || isSaving}
           >
@@ -174,20 +174,20 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
         {/* Stat Badges Overview */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-center">
-            <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">HADIR</div>
-            <div className="text-2xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">{countHadir}</div>
+            <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">HADIR</div>
+            <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{countHadir}</div>
           </div>
           <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-center">
-            <div className="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">SAKIT</div>
-            <div className="text-2xl font-extrabold font-mono text-amber-600 dark:text-amber-400">{countSakit}</div>
+            <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">SAKIT</div>
+            <div className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">{countSakit}</div>
           </div>
           <div className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/10 text-center">
-            <div className="text-[11px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">IZIN</div>
-            <div className="text-2xl font-extrabold font-mono text-blue-600 dark:text-blue-400">{countIzin}</div>
+            <div className="text-[11px] font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">IZIN</div>
+            <div className="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">{countIzin}</div>
           </div>
           <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-center">
-            <div className="text-[11px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">ALPA</div>
-            <div className="text-2xl font-extrabold font-mono text-rose-600 dark:text-rose-400">{countAlpa}</div>
+            <div className="text-[11px] font-semibold text-rose-700 dark:text-rose-300 uppercase tracking-wider">ALPA</div>
+            <div className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">{countAlpa}</div>
           </div>
         </div>
 

@@ -207,7 +207,7 @@ export function ViewActivityDialog({
         <DialogHeader className="border-b border-border pb-3">
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px] font-bold gap-1">
+              <Badge variant="outline" className="text-[10px] font-semibold gap-1">
                 {activity.type === "LKPD" && <FileText className="h-3 w-3 text-emerald-600" />}
                 {activity.type === "TUGAS_KELOMPOK" && <Users className="h-3 w-3 text-blue-600" />}
                 {activity.type === "QUIZ" && <Brain className="h-3 w-3 text-purple-600" />}
@@ -219,13 +219,13 @@ export function ViewActivityDialog({
             </div>
 
             {!isAllowed && (
-              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-[10px] gap-1">
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-semibold text-[10px] gap-1">
                 <Lock className="h-3 w-3" /> 🔒 Hanya Dibaca (Bukan Pengampu Mapel)
               </Badge>
             )}
           </div>
 
-          <DialogTitle className="text-lg font-extrabold">{activity.title}</DialogTitle>
+          <DialogTitle className="text-lg font-bold">{activity.title}</DialogTitle>
           <DialogDescription className="text-xs">
             Batas Waktu: {activity.dueDate} · Progres Pengumpulan: {grades.filter((g) => g.status === "TERKUMPUL").length}/{grades.length || activity.totalStudents} Siswa
           </DialogDescription>
@@ -323,9 +323,9 @@ export function ViewActivityDialog({
                 discussions.map((d, idx) => (
                   <div key={idx} className="p-2.5 rounded-lg bg-card border border-border text-xs space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-extrabold text-foreground flex items-center gap-1">
+                      <span className="font-semibold text-foreground flex items-center gap-1">
                         {d.user_name}
-                        <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0">
+                        <Badge variant="outline" className="text-[9px] font-semibold px-1.5 py-0">
                           {d.user_role}
                         </Badge>
                       </span>
@@ -342,9 +342,9 @@ export function ViewActivityDialog({
                 placeholder="Tulis tanggapan diskusi atau instruksi kelompok..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="text-xs"
+                className="text-xs font-normal"
               />
-              <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1 shrink-0">
+              <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs gap-1 shrink-0">
                 <Send className="h-3.5 w-3.5" /> Kirim
               </Button>
             </form>
@@ -352,7 +352,7 @@ export function ViewActivityDialog({
 
           {/* Student Grading Table */}
           <div className="space-y-2">
-            <h4 className="font-bold text-xs text-foreground flex items-center justify-between">
+            <h4 className="font-semibold text-xs text-foreground flex items-center justify-between">
               <span>Lembar Pemeriksaan & Input Nilai Siswa ({activeRombel}):</span>
               <span className="text-[11px] text-emerald-600 font-mono">
                 {grades.filter((g) => g.score !== "").length}/{grades.length} Terpasang Nilai
@@ -361,7 +361,7 @@ export function ViewActivityDialog({
 
             <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full text-xs">
-                <thead className="bg-muted/60 text-left font-bold text-muted-foreground border-b border-border">
+                <thead className="bg-muted/60 text-left font-semibold text-muted-foreground border-b border-border">
                   <tr>
                     <th className="py-2.5 px-3">NISN & Nama Siswa</th>
                     <th className="py-2.5 px-3 text-center">Status</th>
@@ -379,14 +379,14 @@ export function ViewActivityDialog({
                   ) : (
                     grades.map((g) => (
                       <tr key={g.id} className="hover:bg-muted/30 transition">
-                        <td className="py-2.5 px-3 font-semibold">
-                          <div className="font-bold text-foreground">{g.name}</div>
+                        <td className="py-2.5 px-3">
+                          <div className="font-semibold text-foreground">{g.name}</div>
                           <div className="text-[10px] text-muted-foreground font-mono">{g.nisn}</div>
                         </td>
                         <td className="py-2.5 px-3 text-center">
                           <select
                             disabled={!isAllowed}
-                            className={`h-7 rounded-md border text-[11px] font-bold px-2 ${
+                            className={`h-7 rounded-md border text-[11px] font-normal px-2 ${
                               g.status === "TERKUMPUL"
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300"
                                 : g.status === "DIPERIKSA"
@@ -408,7 +408,7 @@ export function ViewActivityDialog({
                             disabled={!isAllowed}
                             value={g.score}
                             onChange={(e) => handleScoreChange(g.id, e.target.value)}
-                            className={`h-7 text-xs font-mono font-bold text-center border-emerald-300 dark:border-emerald-800 ${
+                            className={`h-7 text-xs font-mono font-normal text-center border-emerald-300 dark:border-emerald-800 ${
                               !isAllowed ? "opacity-60 cursor-not-allowed bg-muted" : ""
                             }`}
                           />
@@ -419,7 +419,7 @@ export function ViewActivityDialog({
                             disabled={!isAllowed}
                             value={g.feedback}
                             onChange={(e) => handleFeedbackChange(g.id, e.target.value)}
-                            className={`h-7 text-xs bg-background/80 border-border ${
+                            className={`h-7 text-xs font-normal bg-background/80 border-border ${
                               !isAllowed ? "opacity-60 cursor-not-allowed bg-muted" : ""
                             }`}
                           />
@@ -434,20 +434,20 @@ export function ViewActivityDialog({
         </div>
 
         <div className="flex items-center justify-between border-t border-border pt-3">
-          <Button variant="outline" size="sm" className="text-xs font-bold" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" size="sm" className="text-xs font-semibold" onClick={() => onOpenChange(false)}>
             Tutup
           </Button>
 
           {isAllowed ? (
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5"
               onClick={handleSaveGrades}
             >
               <Save className="h-4 w-4" /> Simpan Nilai & Sync Ke Penilaian Kelas
             </Button>
           ) : (
-            <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-xs gap-1.5 py-1.5 px-3">
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-semibold text-xs gap-1.5 py-1.5 px-3">
               <Lock className="h-3.5 w-3.5" /> Akses Edit Terkunci (Bukan Mapel Pengampu)
             </Badge>
           )}

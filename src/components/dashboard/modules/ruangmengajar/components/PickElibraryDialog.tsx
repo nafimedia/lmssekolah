@@ -104,15 +104,15 @@ export function PickElibraryDialog({
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col border-border bg-card">
         <DialogHeader className="border-b border-border pb-3 shrink-0">
           <div className="flex items-center gap-2 mb-1">
-            <Badge className="bg-purple-600 text-white font-bold text-[10px] gap-1">
-              <Sparkles className="h-3 w-3" /> KOLEKSI PERPUSTAKAAN DIGITAL (E-LIBRARY)
+            <Badge className="bg-purple-600 text-white font-semibold text-[10px] gap-1">
+              <Library className="h-3 w-3" /> E-LIBRARY MADRASAH
             </Badge>
             <span className="text-xs text-muted-foreground font-mono">
               Target KBM: {activeMapel} · {activeRombel}
             </span>
           </div>
 
-          <DialogTitle className="text-base font-extrabold flex items-center gap-2">
+          <DialogTitle className="text-base font-bold flex items-center gap-2">
             <Library className="h-5 w-5 text-purple-600" /> Ambil Referensi Buku / Media Digital
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -177,20 +177,20 @@ export function PickElibraryDialog({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <Badge variant="outline" className="text-[10px] font-bold border-purple-400/40 text-purple-700 dark:text-purple-300">
+                        <Badge variant="outline" className="text-[10px] font-semibold border-purple-400/40 text-purple-700 dark:text-purple-300">
                           {book.tag || "Buku Referensi"}
                         </Badge>
                         <Badge variant="secondary" className="text-[10px] font-mono">
                           {book.size || "Berkas Digital"}
                         </Badge>
                         {book.type && (
-                          <Badge variant="secondary" className="text-[10px] uppercase font-bold text-muted-foreground">
+                          <Badge variant="secondary" className="text-[10px] uppercase font-semibold text-muted-foreground">
                             {book.type}
                           </Badge>
                         )}
                       </div>
 
-                      <h4 className="text-xs font-bold text-foreground leading-snug truncate">
+                      <h4 className="text-xs font-semibold text-foreground leading-snug truncate">
                         {book.title}
                       </h4>
                       {book.description && (
@@ -218,7 +218,7 @@ export function PickElibraryDialog({
                       size="sm"
                       disabled={isSubmitting}
                       onClick={() => handlePick(book)}
-                      className="h-8 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white gap-1 shadow-xs"
+                      className="h-8 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white gap-1 shadow-xs"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {isSubmitting ? "Menautkan..." : "Tautkan ke KBM"}
@@ -231,7 +231,7 @@ export function PickElibraryDialog({
         </div>
 
         <DialogFooter className="border-t border-border pt-3 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-xs font-bold">
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-xs font-semibold">
             Batal
           </Button>
         </DialogFooter>

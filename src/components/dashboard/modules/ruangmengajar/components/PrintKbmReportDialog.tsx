@@ -29,10 +29,10 @@ export function PrintKbmReportDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b border-border pb-3 flex flex-row items-center justify-between">
-          <DialogTitle className="text-base font-extrabold flex items-center gap-2">
+          <DialogTitle className="text-base font-bold flex items-center gap-2">
             <Printer className="h-5 w-5 text-primary" /> Pratinjau Cetak Laporan Rekap Jurnal KBM Digital
           </DialogTitle>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5" onClick={handlePrint}>
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5" onClick={handlePrint}>
             <Printer className="h-4 w-4" /> Cetak / Simpan PDF
           </Button>
         </DialogHeader>
@@ -41,15 +41,15 @@ export function PrintKbmReportDialog({
         <div className="p-6 bg-white text-slate-900 rounded-xl border border-border shadow-xs space-y-6 font-sans">
           {/* Official Kop Surat */}
           <div className="text-center border-b-2 border-slate-900 pb-4 space-y-1">
-            <h3 className="font-extrabold text-sm uppercase tracking-wider text-slate-800">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>
-            <h2 className="font-black text-lg text-emerald-800 uppercase tracking-wide">KANTOR KEMENTERIAN AGAMA KABUPATEN CILACAP</h2>
-            <h1 className="font-black text-xl text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</h1>
+            <h3 className="font-bold text-sm uppercase tracking-wider text-slate-800">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>
+            <h2 className="font-bold text-lg text-emerald-800 uppercase tracking-wide">KANTOR KEMENTERIAN AGAMA KABUPATEN CILACAP</h2>
+            <h1 className="font-bold text-xl text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</h1>
             <p className="text-[11px] text-slate-600">Jl. KH. Ahmad Dahlan No. 12, Cilacap · Telp/Fax: (0282) 534123 · Website: mtsn2cilacap.sch.id</p>
           </div>
 
           {/* Report Title */}
           <div className="text-center space-y-1 py-2">
-            <h3 className="font-black text-base uppercase underline text-slate-900">LAPORAN REKAPITULASI JURNAL & PRESENSI KBM DIGITAL</h3>
+            <h3 className="font-bold text-base uppercase underline text-slate-900">LAPORAN REKAPITULASI JURNAL & PRESENSI KBM DIGITAL</h3>
             <p className="text-xs font-semibold text-slate-600">Semester Ganjil · Tahun Ajaran 2026/2027</p>
           </div>
 

@@ -356,15 +356,15 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
                 <Filter className="h-5 w-5" />
               </div>
               <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Rombel / Mode Monitoring</label>
+                <label className="text-xs font-medium text-muted-foreground block mb-0.5">Pilih Rombel / Mode Monitoring</label>
                 {isWaliKelas ? (
-                  <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
+                  <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-semibold text-xs text-emerald-700 dark:text-emerald-300">
                     <Building2 className="h-3.5 w-3.5 text-emerald-600" />
                     <span>Rombel Binaan: {binaanRombel}</span>
                   </div>
                 ) : (
                   <select
-                    className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     value={selectedRombel}
                     onChange={(e) => setSelectedRombel(e.target.value)}
                   >

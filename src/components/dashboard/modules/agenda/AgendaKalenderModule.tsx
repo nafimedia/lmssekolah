@@ -142,9 +142,9 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
           </CardHeader>
 
           <CardContent className="p-4">
-            <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs mb-2">
+            <div className="grid grid-cols-7 gap-1 text-center font-semibold text-xs mb-2">
               {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((d, idx) => (
-                <div key={d} className={`py-1.5 ${idx === 0 ? "text-red-600 dark:text-red-400 font-black" : "text-muted-foreground"}`}>{d}</div>
+                <div key={d} className={`py-1.5 ${idx === 0 ? "text-red-600 dark:text-red-400 font-bold" : "text-muted-foreground"}`}>{d}</div>
               ))}
             </div>
 
@@ -172,7 +172,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                   >
                     <span className={`text-xs ${
                       day.isToday
-                        ? "text-emerald-700 dark:text-emerald-300 font-black"
+                        ? "text-emerald-700 dark:text-emerald-300 font-bold"
                         : isRedHoliday
                         ? "text-red-600 dark:text-red-400 font-bold"
                         : "text-foreground font-medium"

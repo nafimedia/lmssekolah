@@ -185,17 +185,17 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
           </div>
 
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-            <span>📍 Menampilkan: <strong className="underline decoration-emerald-500 font-extrabold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})</span>
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs font-mono font-bold shrink-0">
+            <span>📍 Menampilkan: <strong className="underline decoration-emerald-500 font-bold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})</span>
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs font-mono font-semibold shrink-0">
               {jadwalList.length} Sesi Pelajaran
             </Badge>
           </div>
         </div>
       ) : (
         <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-2xs">
-          <div className="flex items-center gap-2.5 text-xs font-extrabold text-emerald-900 dark:text-emerald-200">
+          <div className="flex items-center gap-2.5 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
             <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>Jadwal Pelajaran <strong className="text-emerald-700 dark:text-emerald-400 font-black">{resolvedInitialRombel} ({resolvedInitialGrade})</strong></span>
+            <span>Jadwal Pelajaran <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{resolvedInitialRombel} ({resolvedInitialGrade})</strong></span>
           </div>
         </div>
       )}

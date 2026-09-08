@@ -43,7 +43,7 @@ export function DetailKbmSessionDialog({
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader className="border-b border-border pb-3">
           <div className="flex items-center gap-2 mb-1">
-            <Badge className="bg-emerald-600 text-white font-bold text-[10px] gap-1">
+            <Badge className="bg-emerald-600 text-white font-semibold text-[10px] gap-1">
               <CheckCircle2 className="h-3 w-3" /> JURNAL VERIFIKASI
             </Badge>
             <span className="text-xs text-muted-foreground font-mono">
@@ -51,7 +51,7 @@ export function DetailKbmSessionDialog({
             </span>
           </div>
 
-          <DialogTitle className="text-lg font-extrabold flex items-center justify-between gap-4">
+          <DialogTitle className="text-lg font-bold flex items-center justify-between gap-4">
             <span>{isEditMode ? "Edit Jurnal Sesi KBM" : "Detail Rincian Jurnal Sesi KBM"}</span>
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -61,27 +61,27 @@ export function DetailKbmSessionDialog({
 
         <div className="py-3 space-y-4 text-xs">
           <div className="space-y-1">
-            <label className="font-bold text-foreground block">Materi / Pokok Bahasan:</label>
+            <label className="font-semibold text-foreground block">Materi / Pokok Bahasan:</label>
             {isEditMode ? (
               <Input
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className="text-xs font-bold"
+                className="text-xs font-normal"
               />
             ) : (
-              <div className="p-3 rounded-lg bg-muted/50 border border-border font-bold text-foreground">
+              <div className="p-3 rounded-lg bg-muted/50 border border-border font-semibold text-foreground">
                 {topic}
               </div>
             )}
           </div>
 
           <div className="space-y-1">
-            <label className="font-bold text-foreground block">Tujuan Pembelajaran (TP):</label>
+            <label className="font-semibold text-foreground block">Tujuan Pembelajaran (TP):</label>
             {isEditMode ? (
               <Textarea
                 value={tujuan}
                 onChange={(e) => setTujuan(e.target.value)}
-                className="text-xs min-h-[70px]"
+                className="text-xs min-h-[70px] font-normal"
               />
             ) : (
               <div className="p-3 rounded-lg bg-muted/40 border border-border/80 text-muted-foreground">
@@ -91,12 +91,12 @@ export function DetailKbmSessionDialog({
           </div>
 
           <div className="space-y-1">
-            <label className="font-bold text-foreground block">Alur Kegiatan KBM & Pembuka Sesi:</label>
+            <label className="font-semibold text-foreground block">Alur Kegiatan KBM & Pembuka Sesi:</label>
             {isEditMode ? (
               <Textarea
                 value={kegiatan}
                 onChange={(e) => setKegiatan(e.target.value)}
-                className="text-xs min-h-[80px] font-mono"
+                className="text-xs min-h-[80px] font-mono font-normal"
               />
             ) : (
               <pre className="p-3 rounded-lg bg-muted/40 border border-border/80 text-slate-700 dark:text-slate-300 font-sans whitespace-pre-wrap">
@@ -106,12 +106,12 @@ export function DetailKbmSessionDialog({
           </div>
 
           <div className="space-y-1">
-            <label className="font-bold text-foreground block">Catatan Kendala & Solusi Guru:</label>
+            <label className="font-semibold text-foreground block">Catatan Kendala & Solusi Guru:</label>
             {isEditMode ? (
               <Input
                 value={kendala}
                 onChange={(e) => setKendala(e.target.value)}
-                className="text-xs"
+                className="text-xs font-normal"
               />
             ) : (
               <div className="p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300">
@@ -122,12 +122,12 @@ export function DetailKbmSessionDialog({
         </div>
 
         <div className="flex items-center justify-between border-t border-border pt-3">
-          <Button variant="outline" size="sm" className="text-xs font-bold" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" size="sm" className="text-xs font-semibold" onClick={() => onOpenChange(false)}>
             Tutup
           </Button>
 
           {isEditMode && (
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5" onClick={handleSave}>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5" onClick={handleSave}>
               <Save className="h-4 w-4" /> Simpan Perubahan Jurnal
             </Button>
           )}

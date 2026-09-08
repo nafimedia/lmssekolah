@@ -211,25 +211,25 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="p-4 rounded-xl border border-border bg-card space-y-1 shadow-xs">
             <div className="text-xs text-muted-foreground font-medium">Total Bahan Ajar Diunggah</div>
-            <div className="text-2xl font-black text-foreground">{modulList.length} Berkas</div>
+            <div className="text-2xl font-bold text-foreground">{modulList.length} Berkas</div>
             <div className="text-[11px] text-muted-foreground">Persyaratan Kurikulum Merdeka</div>
           </div>
 
           <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-1 shadow-xs cursor-pointer hover:bg-amber-500/10 transition" onClick={() => setSelectedStatusFilter("pending")}>
-            <div className="text-xs text-amber-700 dark:text-amber-400 font-bold flex items-center justify-between">
+            <div className="text-xs text-amber-700 dark:text-amber-400 font-semibold flex items-center justify-between">
               <span>Menunggu Verifikasi Waka</span>
               <span>⏳</span>
             </div>
-            <div className="text-2xl font-black text-amber-700 dark:text-amber-400">{pendingCount} Modul</div>
+            <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{pendingCount} Modul</div>
             <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Perlu peninjauan & pengesahan</div>
           </div>
 
           <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-1 shadow-xs cursor-pointer hover:bg-emerald-500/10 transition" onClick={() => setSelectedStatusFilter("verified")}>
-            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-between">
+            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold flex items-center justify-between">
               <span>Resmi Terverifikasi Waka</span>
               <span>✅</span>
             </div>
-            <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{verifiedCount} Modul</div>
+            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{verifiedCount} Modul</div>
             <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Siap digunakan KBM & e-Rapor</div>
           </div>
         </div>
@@ -317,10 +317,10 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                     <Button
                       size="sm"
                       variant="outline"
-                      className={`h-7 text-xs font-bold px-2.5 ${
+                      className={`h-7 text-xs font-semibold px-2.5 ${
                         m.status === "Terverifikasi Waka"
                           ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
-                          : "bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold shadow-xs"
+                          : "bg-emerald-600 text-white hover:bg-emerald-700 font-semibold shadow-xs"
                       }`}
                       onClick={() => handleToggleVerification(m.id, m.status, m.title)}
                     >

@@ -48,13 +48,13 @@ export function JurnalMengajarTab({
             <div key={j.id} className="p-4 rounded-xl border border-border bg-card hover:bg-muted/20 transition space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="text-[10px] font-mono font-bold text-primary">
+                  <Badge variant="outline" className="text-[10px] font-mono font-semibold text-primary">
                     {j.date || j.tanggal || "24 Agustus 2026"}
                   </Badge>
-                  <Badge className="bg-emerald-600 text-white font-bold text-[10px]">
+                  <Badge className="bg-emerald-600 text-white font-semibold text-[10px]">
                     {j.meeting || j.jam_ke || "Pertemuan KBM"}
                   </Badge>
-                  <span className="text-xs font-bold text-foreground">{j.rombel || activeRombel} · {j.mapel || activeMapel}</span>
+                  <span className="text-xs font-semibold text-foreground">{j.rombel || activeRombel} · {j.mapel || activeMapel}</span>
                 </div>
 
                 <Button
@@ -69,7 +69,7 @@ export function JurnalMengajarTab({
               </div>
 
               <div className="space-y-1.5">
-                <h4 className="font-extrabold text-sm text-foreground">{j.materi || j.topic || j.title}</h4>
+                <h4 className="font-bold text-sm text-foreground">{j.materi || j.topic || j.title}</h4>
                 {j.tujuan_pembelajaran && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                     <Target className="h-3.5 w-3.5 text-emerald-600" />
@@ -81,7 +81,7 @@ export function JurnalMengajarTab({
               {/* Notes */}
               {(j.notes || j.catatan) && (
                 <div className="p-3 rounded-lg bg-muted/40 border border-border/70 text-xs text-slate-700 dark:text-slate-300 font-medium">
-                  <span className="font-bold text-foreground">Catatan Observasi:</span> {j.notes || j.catatan}
+                  <span className="font-semibold text-foreground">Catatan Observasi:</span> {j.notes || j.catatan}
                 </div>
               )}
             </div>

@@ -57,6 +57,7 @@ const CATEGORY_ICONS: Record<string, any> = {
   BookMarked,
   Building2,
   HelpCircle,
+  Layers,
 };
 
 function DocsPage() {
@@ -65,6 +66,11 @@ function DocsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [previewScreenshot, setPreviewScreenshot] = useState<{
+    src: string;
+    alt: string;
+    caption: string;
+  } | null>(null);
 
   // Dark Mode state synced with root
   const [isDark, setIsDark] = useState(() => {
@@ -279,14 +285,16 @@ function DocsPage() {
                     { id: "semua", label: "Semua" },
                     { id: "siswa", label: "Siswa" },
                     { id: "guru", label: "Guru" },
+                    { id: "walikelas", label: "Wali Kelas" },
                     { id: "kamad", label: "Kamad" },
+                    { id: "admin", label: "Admin" },
                   ].map((r) => (
                     <button
                       key={r.id}
                       onClick={() => setSelectedRole(r.id)}
                       className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                         selectedRole === r.id
-                          ? "bg-teal-600 text-white dark:bg-teal-500 font-semibold"
+                          ? "bg-teal-600 text-white dark:bg-teal-500 font-semibold shadow-sm"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                       }`}
                     >
@@ -435,7 +443,11 @@ function DocsPage() {
                 {/* Screenshot in Browser Mockup Frame */}
                 {currentSection.screenshot && (
                   <div className="my-8 space-y-2.5">
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-xl dark:border-slate-800">
+                    <div
+                      onClick={() => setPreviewScreenshot(currentSection.screenshot!)}
+                      className="group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-xl dark:border-slate-800 transition-all hover:shadow-2xl hover:border-teal-500/50"
+                      title="Klik untuk memperbesar tampilan tangkapan layar"
+                    >
                       {/* Window Dots Header */}
                       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/90 px-4 py-2.5">
                         <div className="flex items-center gap-1.5">
@@ -446,19 +458,21 @@ function DocsPage() {
                         <div className="rounded bg-slate-800/80 px-3 py-0.5 text-[11px] font-mono text-slate-400 border border-slate-700/50">
                           lms.mtsn2cilacap.sch.id
                         </div>
-                        <div className="w-12" />
+                        <span className="text-[11px] text-teal-400 opacity-80 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                          Perbesar 🔍
+                        </span>
                       </div>
                       {/* Image Preview */}
                       <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
                         <img
                           src={currentSection.screenshot.src}
                           alt={currentSection.screenshot.alt}
-                          className="h-full w-full object-cover object-top hover:scale-[1.01] transition-transform duration-300"
+                          className="h-full w-full object-cover object-top group-hover:scale-[1.02] transition-transform duration-300"
                         />
                       </div>
                     </div>
                     <p className="text-center text-xs text-slate-500 dark:text-slate-400 italic">
-                      📸 {currentSection.screenshot.caption}
+                      📸 {currentSection.screenshot.caption} (Klik gambar untuk melihat resolusi penuh)
                     </p>
                   </div>
                 )}
@@ -675,6 +689,35 @@ function DocsPage() {
               </button>
             </div>
 
+            {/* Mobile Role Filter */}
+            <div className="mb-6">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">
+                Saring Berdasarkan Peran
+              </label>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { id: "semua", label: "Semua" },
+                  { id: "siswa", label: "Siswa" },
+                  { id: "guru", label: "Guru" },
+                  { id: "walikelas", label: "Wali Kelas" },
+                  { id: "kamad", label: "Kamad" },
+                  { id: "admin", label: "Admin" },
+                ].map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setSelectedRole(r.id)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                      selectedRole === r.id
+                        ? "bg-teal-600 text-white dark:bg-teal-500 font-semibold shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Mobile Categories */}
             <nav className="space-y-6">
               {filteredCategories.map((cat) => (
@@ -701,6 +744,45 @@ function DocsPage() {
                 </div>
               ))}
             </nav>
+          </div>
+        </div>
+      )}
+
+      {/* 5. LIGHTBOX FULL-RESOLUTION SCREENSHOT PREVIEW MODAL */}
+      {previewScreenshot && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-3 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setPreviewScreenshot(null)}
+        >
+          <div
+            className="relative max-w-5xl max-h-[92vh] w-full rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-950/90">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-teal-500 inline-block" />
+                <span className="text-xs text-slate-200 font-semibold truncate max-w-sm sm:max-w-xl">
+                  {previewScreenshot.caption}
+                </span>
+              </div>
+              <button
+                onClick={() => setPreviewScreenshot(null)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                title="Tutup (ESC)"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Image Body */}
+            <div className="overflow-auto max-h-[calc(92vh-4rem)] p-2 sm:p-4 flex items-center justify-center bg-slate-950">
+              <img
+                src={previewScreenshot.src}
+                alt={previewScreenshot.alt}
+                className="max-w-full h-auto rounded-xl shadow-2xl object-contain ring-1 ring-slate-800"
+              />
+            </div>
           </div>
         </div>
       )}

@@ -242,33 +242,33 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
         {[
           {
             id: "presensi",
-            label: "Presensi Siswa",
+            label: "Presensi",
             icon: UserCheck,
             badge: kbmProgress.isPresensiDone ? "✓ Terisi" : null,
           },
           {
             id: "jurnal",
-            label: "Jurnal KBM",
+            label: "Jurnal",
             icon: BookOpen,
             badge: kbmProgress.isJurnalDone ? "✓ Terisi" : null,
           },
-          { id: "materi", label: "Materi Pembelajaran", icon: Video },
-          { id: "aktivitas", label: "Aktivitas & LKPD", icon: FileText },
-          { id: "catatan_siswa", label: "Catatan Siswa", icon: ClipboardList },
-          { id: "riwayat", label: "Riwayat & Laporan KBM", icon: History },
+          { id: "materi", label: "Materi", icon: Video },
+          { id: "aktivitas", label: "Tugas & LKPD", icon: FileText },
+          { id: "catatan_siswa", label: "Catatan", icon: ClipboardList },
+          { id: "riwayat", label: "Riwayat", icon: History },
         ].map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setActiveTab(t.id as any)}
-            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
               activeTab === t.id ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             <t.icon className="h-4 w-4" />
             <span>{t.label}</span>
             {t.badge && (
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold transition-all ${
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-all ${
                 activeTab === t.id
                   ? "bg-white/20 text-white"
                   : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"

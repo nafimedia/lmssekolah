@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import {
   Download,
   FileSpreadsheet,
   Library,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
@@ -41,7 +42,24 @@ export interface LkpdQuestionItem {
   points: number;
 }
 
-interface CreateActivityDialogProps {
+export interface CreateActivityFormProps {
+  activeRombel: string;
+  activeMapel: string;
+  onCancel: () => void;
+  onActivityCreated: (newAct: {
+    id: string;
+    title: string;
+    type: ActivityTypeOption;
+    dueDate: string;
+    status: string;
+    submittedCount: number;
+    totalStudents: number;
+    attachment_url?: string;
+    questions_data?: string;
+  }) => void;
+}
+
+export interface CreateActivityDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   activeRombel: string;
@@ -59,13 +77,12 @@ interface CreateActivityDialogProps {
   }) => void;
 }
 
-export function CreateActivityDialog({
-  isOpen,
-  onOpenChange,
+export function CreateActivityForm({
   activeRombel,
   activeMapel,
+  onCancel,
   onActivityCreated,
-}: CreateActivityDialogProps) {
+}: CreateActivityFormProps) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<ActivityTypeOption>("LKPD");
   const [instructions, setInstructions] = useState("");
@@ -350,34 +367,63 @@ export function CreateActivityDialog({
     setFileBase64("");
     setAttachmentUrl("");
     setSelectedElibraryBook(null);
-    onOpenChange(false);
+    onCancel();
   };
 
   const isQuestionType = type === "LKPD" || type === "PRAKTIKUM" || type === "TUGAS_MANDIRI";
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b border-border pb-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge className="bg-emerald-600 text-white font-bold text-[10px] gap-1">
-              <Sparkles className="h-3 w-3" /> FORM AKTIVITAS KURIKULUM MERDEKA
-            </Badge>
-            <span className="text-xs text-muted-foreground font-mono">
-              {activeMapel} · {activeRombel}
-            </span>
+      <Card className="border-border shadow-xs bg-card">
+        <CardHeader className="border-b border-border pb-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onCancel}
+              className="gap-2 text-xs font-semibold hover:bg-muted -ml-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" /> Kembali ke Daftar Tugas & LKPD
+            </Button>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-emerald-600 text-white font-semibold text-[11px] gap-1 px-2.5 py-0.5">
+                <Sparkles className="h-3 w-3" /> FORM AKTIVITAS KURIKULUM MERDEKA
+              </Badge>
+              <span className="text-xs text-muted-foreground font-mono">
+                {activeMapel} · {activeRombel}
+              </span>
+            </div>
           </div>
 
-          <DialogTitle className="text-base font-extrabold flex items-center gap-2">
-            <Plus className="h-5 w-5 text-emerald-600" /> Buat Aktivitas Pembelajaran, Kuis, & LKPD Digital
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            Pilih jenis aktivitas di bawah ini. Anda dapat mengunggah berkas PDF LKPD fisik, membuat butir soal esai, atau kuis pilihan ganda yang langsung aktif di layar siswa.
-          </DialogDescription>
-        </DialogHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-lg sm:text-xl font-bold flex items-center gap-2 text-foreground">
+                <Plus className="h-5 w-5 text-emerald-600" /> Buat Aktivitas Pembelajaran, Kuis, & LKPD Digital
+              </CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Pilih jenis aktivitas di bawah ini. Anda dapat mengunggah berkas PDF LKPD fisik, membuat butir soal esai, atau kuis pilihan ganda yang langsung aktif di layar siswa.
+              </CardDescription>
+            </div>
 
-        <form onSubmit={handleSubmit} className="py-3 space-y-4">
+            <div className="flex items-center gap-2 shrink-0">
+              <Button type="button" variant="outline" size="sm" className="text-xs font-semibold" onClick={onCancel}>
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                form="create-activity-form"
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5"
+              >
+                <CheckCircle2 className="h-4 w-4" /> Terbitkan Aktivitas
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-4 sm:p-6">
+          <form id="create-activity-form" onSubmit={handleSubmit} className="space-y-5">
           {/* Pilihan Jenis Aktivitas */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground block">Pilih Jenis Aktivitas Pembelajaran:</label>
@@ -809,17 +855,17 @@ export function CreateActivityDialog({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
-            <Button type="button" variant="outline" size="sm" className="text-xs font-bold" onClick={() => onOpenChange(false)}>
+          <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+            <Button type="button" variant="outline" size="sm" className="text-xs font-semibold px-4" onClick={onCancel}>
               Batal
             </Button>
-            <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5">
+            <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 px-5">
               <CheckCircle2 className="h-4 w-4" /> Terbitkan Aktivitas Ke Siswa
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+        </CardContent>
+      </Card>
 
     <PickElibraryDialog
       isOpen={isPickElibOpen}
@@ -829,5 +875,26 @@ export function CreateActivityDialog({
       onSelectBook={handleSelectElibraryForActivity}
     />
     </>
+  );
+}
+
+export function CreateActivityDialog({
+  isOpen,
+  onOpenChange,
+  activeRombel,
+  activeMapel,
+  onActivityCreated,
+}: CreateActivityDialogProps) {
+  if (!isOpen) return null;
+  return (
+    <CreateActivityForm
+      activeRombel={activeRombel}
+      activeMapel={activeMapel}
+      onCancel={() => onOpenChange(false)}
+      onActivityCreated={(act) => {
+        onActivityCreated(act);
+        onOpenChange(false);
+      }}
+    />
   );
 }

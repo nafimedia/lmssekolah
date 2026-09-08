@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { ViewActivityDialog, ActivityDetail } from "./ViewActivityDialog";
-import { CreateActivityDialog, ActivityTypeOption } from "./CreateActivityDialog";
+import { CreateActivityForm, ActivityTypeOption } from "./CreateActivityDialog";
 
 import { isSameClass } from "@/utils/classNormalization";
 
@@ -107,12 +107,26 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
     }
   };
 
+  if (isCreateOpen) {
+    return (
+      <CreateActivityForm
+        activeRombel={activeRombel}
+        activeMapel={activeMapel}
+        onCancel={() => setIsCreateOpen(false)}
+        onActivityCreated={(newAct) => {
+          handleActivityCreated(newAct);
+          setIsCreateOpen(false);
+        }}
+      />
+    );
+  }
+
   return (
     <>
-      <Card className="border-border shadow-sm bg-card">
+      <Card className="border-border shadow-xs bg-card">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
-            <CardTitle className="text-base font-bold flex items-center gap-2">
+            <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
               <FileText className="h-5 w-5 text-emerald-600" /> Aktivitas Pembelajaran & LKPD Digital ({activeMapel})
             </CardTitle>
             <CardDescription className="text-xs">
@@ -122,7 +136,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
 
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 shadow-xs"
             onClick={() => setIsCreateOpen(true)}
           >
             <Plus className="h-4 w-4" /> Buat LKPD / Aktivitas Baru
@@ -134,7 +148,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
             <div className="py-12 text-center border border-dashed border-border rounded-xl bg-muted/20">
               <FileText className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
               <h4 className="font-bold text-xs text-foreground">Belum Ada Aktivitas / LKPD Digital</h4>
-              <p className="text-[11px] text-muted-foreground mt-1 max-w-sm mx-auto">
+              <p className="text-[11px] text-muted-foreground mt-1 max-w-sm mx-auto font-medium">
                 Belum ada aktivitas pembelajaran yang dibuat untuk <strong>{activeRombel}</strong> ({activeMapel}). Klik tombol di atas untuk membuat LKPD baru.
               </p>
             </div>
@@ -143,7 +157,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
               {activities.map((act) => (
                 <div key={act.id} className="p-4 rounded-xl border border-border bg-card space-y-3 hover:shadow-xs transition">
                   <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="font-mono text-[10px] font-bold gap-1">
+                    <Badge variant="outline" className="font-mono text-[10px] font-semibold gap-1">
                       {act.type === "LKPD" && <><FileText className="h-3 w-3 text-emerald-600" /> LKPD DIGITAL</>}
                       {act.type === "TUGAS_KELOMPOK" && <><Users className="h-3 w-3 text-blue-600" /> TUGAS KELOMPOK</>}
                       {act.type === "QUIZ" && <><Brain className="h-3 w-3 text-purple-600" /> KUIS FORMATIF</>}
@@ -155,14 +169,14 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                         <><FileText className="h-3 w-3 text-primary" /> {act.type}</>
                       )}
                     </Badge>
-                    <Badge className="bg-emerald-600 text-white font-bold text-[10px]">
+                    <Badge className="bg-emerald-600 text-white font-semibold text-[10px]">
                       {act.status}
                     </Badge>
                   </div>
 
                   <div>
                     <h4 className="font-bold text-xs text-foreground leading-snug">{act.title}</h4>
-                    <p className="text-[10px] text-muted-foreground mt-1">Batas Pengumpulan: {act.dueDate}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1 font-medium">Batas Pengumpulan: {act.dueDate}</p>
                   </div>
 
                   <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-between text-xs">
@@ -174,7 +188,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1 text-xs font-bold gap-1 text-primary border-primary/30 hover:bg-primary/5"
+                      className="flex-1 text-xs font-semibold gap-1 text-primary border-primary/30 hover:bg-primary/5"
                       onClick={() => handleOpenViewActivity(act)}
                     >
                       <PencilLine className="h-3.5 w-3.5" />
@@ -208,14 +222,6 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
         activity={selectedActivityForView}
         activeRombel={activeRombel}
         activeMapel={activeMapel}
-      />
-
-      <CreateActivityDialog
-        isOpen={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        activeRombel={activeRombel}
-        activeMapel={activeMapel}
-        onActivityCreated={handleActivityCreated}
       />
     </>
   );

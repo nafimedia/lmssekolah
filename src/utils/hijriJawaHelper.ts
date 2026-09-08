@@ -49,10 +49,71 @@ export interface HijriDateInfo {
   formattedHijri: string;
 }
 
+// Tabel Kalibrasi Awal Bulan Kalender Hijriah Indonesia Resmi Kementerian Agama RI (Ditjen Bimas Islam)
+// Berdasarkan kriteria MABIMS yang berlaku di wilayah hukum Republik Indonesia
+interface KemenagHijriMonth {
+  year: number;
+  month: string;
+  start: string; // Tanggal awal 1 Hijriah (YYYY-MM-DD)
+}
+
+const KEMENAG_HIJRI_MONTHS: KemenagHijriMonth[] = [
+  // 1447 H
+  { year: 1447, month: "Rajab", start: "2025-12-21" },
+  { year: 1447, month: "Sya'ban", start: "2026-01-20" },
+  { year: 1447, month: "Ramadhan", start: "2026-02-19" },
+  { year: 1447, month: "Syawal", start: "2026-03-21" },
+  { year: 1447, month: "Dzulqa'dah", start: "2026-04-19" },
+  { year: 1447, month: "Dzulhijjah", start: "2026-05-18" },
+  // 1448 H (Tahun Ajaran 2026/2027)
+  { year: 1448, month: "Muharram", start: "2026-06-16" },
+  { year: 1448, month: "Safar", start: "2026-07-16" },
+  { year: 1448, month: "Rabiul Awal", start: "2026-08-14" },
+  { year: 1448, month: "Rabiul Akhir", start: "2026-09-13" },
+  { year: 1448, month: "Jumadil Awal", start: "2026-10-13" },
+  { year: 1448, month: "Jumadil Akhir", start: "2026-11-12" },
+  { year: 1448, month: "Rajab", start: "2026-12-11" },
+  { year: 1448, month: "Sya'ban", start: "2027-01-10" },
+  { year: 1448, month: "Ramadhan", start: "2027-02-08" },
+  { year: 1448, month: "Syawal", start: "2027-03-10" },
+  { year: 1448, month: "Dzulqa'dah", start: "2027-04-08" },
+  { year: 1448, month: "Dzulhijjah", start: "2027-05-08" },
+  // 1449 H
+  { year: 1449, month: "Muharram", start: "2027-06-06" },
+  { year: 1449, month: "Safar", start: "2027-07-06" },
+];
+
 /**
- * Mengambil tanggal Hijriah lengkap dari sebuah tanggal Masehi.
+ * Mengambil tanggal Hijriah lengkap dari sebuah tanggal Masehi sesuai Kalender Kemenag RI.
  */
 export function getHijriDate(date: Date): HijriDateInfo {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  const dateStr = `${y}-${m}-${d}`;
+
+  // 1. Cek terlebih dahulu pada tabel resmi Kemenag RI
+  for (let i = KEMENAG_HIJRI_MONTHS.length - 1; i >= 0; i--) {
+    if (dateStr >= KEMENAG_HIJRI_MONTHS[i].start) {
+      const cur = KEMENAG_HIJRI_MONTHS[i];
+      const curStart = new Date(cur.start + "T00:00:00Z");
+      const curTarget = new Date(dateStr + "T00:00:00Z");
+      const diffDays = Math.round((curTarget.getTime() - curStart.getTime()) / 86400000);
+      const day = diffDays + 1;
+      const arabicDay = toEasternArabicNumerals(day);
+      const formattedHijri = `${day} ${cur.month} ${cur.year} H`;
+
+      return {
+        day,
+        arabicDay,
+        monthName: cur.month,
+        year: cur.year,
+        formattedHijri,
+      };
+    }
+  }
+
+  // 2. Fallback jika tanggal di luar rentang tabel kalibrasi
   try {
     const formatter = new Intl.DateTimeFormat("id-u-ca-islamic-umalqura", {
       day: "numeric",
@@ -88,7 +149,6 @@ export function getHijriDate(date: Date): HijriDateInfo {
       formattedHijri,
     };
   } catch {
-    // Fallback safe defaults
     return {
       day: 1,
       arabicDay: "۱",

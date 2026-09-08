@@ -33,12 +33,12 @@ export interface AgendaItem {
   isSchoolAgenda?: boolean;
 }
 
-// Daftar Hari Besar Nasional, Peringatan Islam, & Kalender Khusus Kemenag/Madrasah 2026-2027
+// Daftar Resmi Hari Libur Nasional & Cuti Bersama SKB 3 Menteri RI Tahun 2026 serta Peringatan Kemenag/Madrasah
 const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
-  // 2026
+  // JANUARI 2026
   {
-    id: "nat-1",
-    title: "Tahun Baru Masehi 2026",
+    id: "nat-2026-01-01",
+    title: "Tahun Baru 2026 Masehi",
     category: "libur",
     date: "01 Januari 2026",
     rawDate: "2026-01-01",
@@ -46,34 +46,132 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
     badge: "🔴 Libur Nasional",
   },
   {
-    id: "nat-2",
+    id: "nat-2026-01-03",
     title: "Hari Amal Bhakti (HAB) Kemenag RI ke-80",
     category: "libur",
     date: "03 Januari 2026",
     rawDate: "2026-01-03",
-    desc: "Upacara Peringatan Hari Amal Bhakti Kementerian Agama Republik Indonesia.",
+    desc: "Peringatan Hari Amal Bhakti Kementerian Agama Republik Indonesia.",
     badge: "🔴 Hari Besar Kemenag",
   },
   {
-    id: "nat-3",
-    title: "Isra Mi'raj Nabi Muhammad SAW 1447 H",
+    id: "nat-2026-01-16",
+    title: "Isra Mikraj Nabi Muhammad SAW 1447 H",
     category: "libur",
     date: "16 Januari 2026",
     rawDate: "2026-01-16",
-    desc: "Peringatan Isra Mi'raj Nabi Muhammad SAW & Libur Resmi Keagamaan.",
-    badge: "🔴 Hari Besar Islam",
+    desc: "Peringatan Isra Mikraj Nabi Muhammad SAW 27 Rajab 1447 H & Libur Nasional.",
+    badge: "🔴 Libur Nasional",
+  },
+
+  // FEBRUARI 2026
+  {
+    id: "nat-2026-02-16",
+    title: "Cuti Bersama Tahun Baru Imlek 2577",
+    category: "libur",
+    date: "16 Februari 2026",
+    rawDate: "2026-02-16",
+    desc: "Cuti Bersama Tahun Baru Imlek 2577 Kongzili.",
+    badge: "🔴 Cuti Bersama",
   },
   {
-    id: "nat-4",
-    title: "Hari Raya Idul Fitri 1447 H",
+    id: "nat-2026-02-17",
+    title: "Tahun Baru Imlek 2577 Kongzili",
+    category: "libur",
+    date: "17 Februari 2026",
+    rawDate: "2026-02-17",
+    desc: "Libur Nasional Tahun Baru Imlek 2577 Kongzili.",
+    badge: "🔴 Libur Nasional",
+  },
+
+  // MARET 2026
+  {
+    id: "nat-2026-03-18",
+    title: "Cuti Bersama Hari Suci Nyepi",
+    category: "libur",
+    date: "18 Maret 2026",
+    rawDate: "2026-03-18",
+    desc: "Cuti Bersama Hari Suci Nyepi Tahun Baru Saka 1948.",
+    badge: "🔴 Cuti Bersama",
+  },
+  {
+    id: "nat-2026-03-19",
+    title: "Hari Suci Nyepi Tahun Baru Saka 1948",
+    category: "libur",
+    date: "19 Maret 2026",
+    rawDate: "2026-03-19",
+    desc: "Libur Nasional Hari Suci Nyepi Tahun Baru Saka 1948.",
+    badge: "🔴 Libur Nasional",
+  },
+  {
+    id: "nat-2026-03-20",
+    title: "Cuti Bersama Hari Raya Idul Fitri 1447 H",
     category: "libur",
     date: "20 Maret 2026",
     rawDate: "2026-03-20",
-    desc: "Hari Raya Idul Fitri 1 Syawal 1447 H dan Libur Bersama Kemenag.",
-    badge: "🔴 Hari Besar Islam",
+    desc: "Cuti Bersama Hari Raya Idul Fitri 1447 H.",
+    badge: "🔴 Cuti Bersama",
   },
   {
-    id: "nat-5",
+    id: "nat-2026-03-21",
+    title: "Hari Raya Idul Fitri 1447 H (Hari Pertama)",
+    category: "libur",
+    date: "21 Maret 2026",
+    rawDate: "2026-03-21",
+    desc: "Libur Nasional Hari Raya Idul Fitri 1 Syawal 1447 H.",
+    badge: "🔴 Libur Nasional",
+  },
+  {
+    id: "nat-2026-03-22",
+    title: "Hari Raya Idul Fitri 1447 H (Hari Kedua)",
+    category: "libur",
+    date: "22 Maret 2026",
+    rawDate: "2026-03-22",
+    desc: "Libur Nasional Hari Raya Idul Fitri 2 Syawal 1447 H.",
+    badge: "🔴 Libur Nasional",
+  },
+  {
+    id: "nat-2026-03-23",
+    title: "Cuti Bersama Hari Raya Idul Fitri 1447 H",
+    category: "libur",
+    date: "23 Maret 2026",
+    rawDate: "2026-03-23",
+    desc: "Cuti Bersama Hari Raya Idul Fitri 1447 H.",
+    badge: "🔴 Cuti Bersama",
+  },
+  {
+    id: "nat-2026-03-24",
+    title: "Cuti Bersama Hari Raya Idul Fitri 1447 H",
+    category: "libur",
+    date: "24 Maret 2026",
+    rawDate: "2026-03-24",
+    desc: "Cuti Bersama Hari Raya Idul Fitri 1447 H.",
+    badge: "🔴 Cuti Bersama",
+  },
+
+  // APRIL 2026
+  {
+    id: "nat-2026-04-03",
+    title: "Wafat Yesus Kristus (Jumat Agung)",
+    category: "libur",
+    date: "03 April 2026",
+    rawDate: "2026-04-03",
+    desc: "Libur Nasional Wafat Yesus Kristus.",
+    badge: "🔴 Libur Nasional",
+  },
+  {
+    id: "nat-2026-04-05",
+    title: "Kebangkitan Yesus Kristus (Paskah)",
+    category: "libur",
+    date: "05 April 2026",
+    rawDate: "2026-04-05",
+    desc: "Hari Peringatan Kebangkitan Yesus Kristus.",
+    badge: "🔴 Libur Nasional",
+  },
+
+  // MEI 2026
+  {
+    id: "nat-2026-05-01",
     title: "Hari Buruh Internasional",
     category: "libur",
     date: "01 Mei 2026",
@@ -82,34 +180,74 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
     badge: "🔴 Libur Nasional",
   },
   {
-    id: "nat-6",
+    id: "nat-2026-05-14",
+    title: "Kenaikan Yesus Kristus",
+    category: "libur",
+    date: "14 Mei 2026",
+    rawDate: "2026-05-14",
+    desc: "Libur Nasional Kenaikan Yesus Kristus.",
+    badge: "🔴 Libur Nasional",
+  },
+  {
+    id: "nat-2026-05-15",
+    title: "Cuti Bersama Kenaikan Yesus Kristus",
+    category: "libur",
+    date: "15 Mei 2026",
+    rawDate: "2026-05-15",
+    desc: "Cuti Bersama Kenaikan Yesus Kristus.",
+    badge: "🔴 Cuti Bersama",
+  },
+  {
+    id: "nat-2026-05-27",
     title: "Hari Raya Idul Adha 1447 H",
     category: "libur",
     date: "27 Mei 2026",
     rawDate: "2026-05-27",
-    desc: "Penyembelihan Hewan Kurban & Sholat Idul Adha 10 Dzulhijjah.",
-    badge: "🔴 Hari Besar Islam",
+    desc: "Penyembelihan Hewan Kurban & Sholat Idul Adha 10 Dzulhijjah 1447 H.",
+    badge: "🔴 Libur Nasional",
   },
   {
-    id: "nat-7",
+    id: "nat-2026-05-28",
+    title: "Cuti Bersama Hari Raya Idul Adha 1447 H",
+    category: "libur",
+    date: "28 Mei 2026",
+    rawDate: "2026-05-28",
+    desc: "Cuti Bersama Hari Raya Idul Adha 1447 H.",
+    badge: "🔴 Cuti Bersama",
+  },
+  {
+    id: "nat-2026-05-31",
+    title: "Hari Raya Waisak 2570 BE",
+    category: "libur",
+    date: "31 Mei 2026",
+    rawDate: "2026-05-31",
+    desc: "Libur Nasional Hari Raya Waisak 2570 BE.",
+    badge: "🔴 Libur Nasional",
+  },
+
+  // JUNI 2026
+  {
+    id: "nat-2026-06-01",
     title: "Hari Lahir Pancasila",
     category: "libur",
     date: "01 Juni 2026",
     rawDate: "2026-06-01",
-    desc: "Upacara Peringatan Hari Lahir Pancasila.",
+    desc: "Upacara Peringatan Hari Lahir Pancasila & Libur Nasional.",
     badge: "🔴 Libur Nasional",
   },
   {
-    id: "nat-8",
+    id: "nat-2026-06-16",
     title: "Tahun Baru Islam (1 Muharram 1448 H)",
     category: "libur",
     date: "16 Juni 2026",
     rawDate: "2026-06-16",
-    desc: "Pawai Ta'aruf & Doa Bersama Tahun Baru Hijriah di Madrasah.",
-    badge: "🔴 Hari Besar Islam",
+    desc: "Tahun Baru Islam 1448 Hijriah & Libur Nasional.",
+    badge: "🔴 Libur Nasional",
   },
+
+  // AGUSTUS 2026
   {
-    id: "nat-9",
+    id: "nat-2026-08-17",
     title: "Hari Kemerdekaan Republik Indonesia (HUT RI ke-81)",
     category: "libur",
     date: "17 Agustus 2026",
@@ -118,16 +256,18 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
     badge: "🔴 Libur Nasional",
   },
   {
-    id: "nat-10",
-    title: "Maulid Nabi Muhammad SAW (12 Rabiul Awal 1448 H)",
+    id: "nat-2026-08-25",
+    title: "Maulid Nabi Muhammad SAW 1448 H",
     category: "libur",
     date: "25 Agustus 2026",
     rawDate: "2026-08-25",
-    desc: "Peringatan Maulid Nabi Muhammad SAW di Masjid/Aula Madrasah.",
-    badge: "🔴 Hari Besar Islam",
+    desc: "Peringatan Maulid Nabi Muhammad SAW 12 Rabiul Awal 1448 H & Libur Nasional.",
+    badge: "🔴 Libur Nasional",
   },
+
+  // SEPTEMBER 2026
   {
-    id: "nat-11",
+    id: "nat-2026-09-19",
     title: "Hari Lahir Lembaga Pendidikan Ma'arif NU",
     category: "kokurikuler",
     date: "19 September 2026",
@@ -136,7 +276,7 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
     badge: "🟡 Hari Peringatan Keagamaan",
   },
   {
-    id: "nat-12",
+    id: "nat-2026-09-27",
     title: "Hari Lahir Sarikat Buruh Muslimin Indonesia (Sarbumusi) NU",
     category: "kokurikuler",
     date: "27 September 2026",
@@ -144,8 +284,10 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
     desc: "Peringatan Harlah Sarbumusi NU.",
     badge: "🟡 Hari Peringatan",
   },
+
+  // OKTOBER 2026
   {
-    id: "nat-13",
+    id: "nat-2026-10-22",
     title: "Hari Santri Nasional (HSN 2026)",
     category: "kokurikuler",
     date: "22 Oktober 2026",
@@ -153,8 +295,10 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
     desc: "Apel Akbar Hari Santri Nasional memakai sarung & baju koko, serta istighotsah bersama.",
     badge: "🟡 Hari Besar Santri",
   },
+
+  // NOVEMBER 2026
   {
-    id: "nat-14",
+    id: "nat-2026-11-25",
     title: "Hari Guru Nasional (HGN) & HUT PGRI",
     category: "kokurikuler",
     date: "25 November 2026",
@@ -162,14 +306,63 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
     desc: "Upacara Penghormatan Guru & Tenaga Kependidikan MTsN 2 Cilacap.",
     badge: "🟡 Hari Peringatan",
   },
+
+  // DESEMBER 2026
   {
-    id: "nat-15",
+    id: "nat-2026-12-24",
+    title: "Cuti Bersama Hari Raya Natal",
+    category: "libur",
+    date: "24 Desember 2026",
+    rawDate: "2026-12-24",
+    desc: "Cuti Bersama Hari Raya Natal.",
+    badge: "🔴 Cuti Bersama",
+  },
+  {
+    id: "nat-2026-12-25",
+    title: "Hari Raya Natal",
+    category: "libur",
+    date: "25 Desember 2026",
+    rawDate: "2026-12-25",
+    desc: "Libur Nasional Hari Raya Natal.",
+    badge: "🔴 Libur Nasional",
+  },
+
+  // 2027
+  {
+    id: "nat-2027-01-01",
+    title: "Tahun Baru 2027 Masehi",
+    category: "libur",
+    date: "01 Januari 2027",
+    rawDate: "2027-01-01",
+    desc: "Libur Nasional Tahun Baru 2027 Masehi.",
+    badge: "🔴 Libur Nasional",
+  },
+  {
+    id: "nat-2027-01-03",
     title: "Hari Amal Bhakti (HAB) Kemenag RI ke-81",
     category: "libur",
     date: "03 Januari 2027",
     rawDate: "2027-01-03",
     desc: "Peringatan Hari Amal Bhakti Kementerian Agama Republik Indonesia.",
     badge: "🔴 Hari Besar Kemenag",
+  },
+  {
+    id: "nat-2027-02-05",
+    title: "Isra Mi'raj Nabi Muhammad SAW 1448 H",
+    category: "libur",
+    date: "05 Februari 2027",
+    rawDate: "2027-02-05",
+    desc: "Peringatan Isra Mi'raj Nabi Muhammad SAW & Libur Nasional.",
+    badge: "🔴 Hari Besar Islam",
+  },
+  {
+    id: "nat-2027-03-20",
+    title: "Hari Raya Idul Fitri 1448 H",
+    category: "libur",
+    date: "20 Maret 2027",
+    rawDate: "2027-03-20",
+    desc: "Hari Raya Idul Fitri 1448 H & Libur Resmi Kemenag.",
+    badge: "🔴 Hari Besar Islam",
   },
 ];
 
@@ -352,7 +545,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
 
     const dots: { color: string; title: string }[] = [];
     const hasHoliday = matches.some(
-      (m) => m.category === "libur" || m.badge?.includes("Libur")
+      (m) => m.category === "libur" || m.badge?.includes("Libur") || m.badge?.includes("Cuti Bersama")
     );
     const hasCbt = matches.some((m) => m.category === "cbt");
     const hasKokurikuler = matches.some(
@@ -469,9 +662,18 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                 const dots = getDayDots(day);
                 const isSelected = selectedDateString === day.dateString;
 
+                // Periksa apakah hari ini adalah Hari Libur Nasional / Cuti Bersama
+                const dayEvents = allAgendas.filter(
+                  (item) => item.rawDate === day.dateString || item.rawDate?.startsWith(day.dateString)
+                );
+                const isHoliday = dayEvents.some(
+                  (ev) => ev.category === "libur" || ev.badge?.includes("Libur") || ev.badge?.includes("Cuti Bersama")
+                );
+                const isRedDate = day.isSunday || isHoliday;
+
                 // Tentukan warna angka tanggal Masehi
                 let gregorianColor = "text-foreground";
-                if (day.isSunday) {
+                if (isRedDate) {
                   gregorianColor = "text-red-600 dark:text-red-400";
                 } else if (day.isFriday) {
                   gregorianColor = "text-emerald-600 dark:text-emerald-400";
@@ -488,6 +690,9 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                 } else if (isSelected) {
                   cellStyle =
                     "border-2 border-emerald-600/80 bg-emerald-500/10 dark:bg-emerald-500/20";
+                } else if (isHoliday) {
+                  cellStyle =
+                    "border-red-200/80 dark:border-red-900/50 bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70";
                 }
 
                 return (

@@ -113,11 +113,15 @@ const HIJRI_MONTH_ORDER = [
 
 /**
  * Mengambil tanggal Hijriah lengkap dari sebuah tanggal Masehi sesuai Kalender Kemenag RI.
+ * Mendukung penyesuaian koreksi hari (offsetDays: -1, 0, +1) hasil sidang isbat.
  */
-export function getHijriDate(date: Date): HijriDateInfo {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
+export function getHijriDate(date: Date, offsetDays: number = 0): HijriDateInfo {
+  // Terapkan penyesuaian offset jika ada (misal -1 hari atau +1 hari dari sidang isbat)
+  const effectiveDate = offsetDays !== 0 ? new Date(date.getTime() + offsetDays * 86400000) : date;
+
+  const y = effectiveDate.getFullYear();
+  const m = String(effectiveDate.getMonth() + 1).padStart(2, "0");
+  const d = String(effectiveDate.getDate()).padStart(2, "0");
   const dateStr = `${y}-${m}-${d}`;
 
   // 1. Cek pada tabel resmi kalibrasi Kemenag RI
@@ -165,63 +169,18 @@ export function getHijriDate(date: Date): HijriDateInfo {
     year,
     formattedHijri,
   };
-
-  // 2. Fallback jika tanggal di luar rentang tabel kalibrasi
-  try {
-    const formatter = new Intl.DateTimeFormat("id-u-ca-islamic-umalqura", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-
-    const parts = formatter.formatToParts(date);
-    let day = 1;
-    let rawMonth = "";
-    let year = 1448;
-
-    for (const part of parts) {
-      if (part.type === "day") {
-        day = parseInt(part.value, 10) || 1;
-      } else if (part.type === "month") {
-        rawMonth = part.value.toLowerCase().replace(/[^a-z']/g, "");
-      } else if (part.type === "year") {
-        year = parseInt(part.value, 10) || 1448;
-      }
-    }
-
-    const cleanKey = Object.keys(HIJRI_MONTH_MAP).find((k) => rawMonth.includes(k) || k.includes(rawMonth)) || "rabiulawal";
-    const monthName = HIJRI_MONTH_MAP[cleanKey] || "Hijriah";
-    const arabicDay = toEasternArabicNumerals(day);
-    const formattedHijri = `${day} ${monthName} ${year} H`;
-
-    return {
-      day,
-      arabicDay,
-      monthName,
-      year,
-      formattedHijri,
-    };
-  } catch {
-    return {
-      day: 1,
-      arabicDay: "۱",
-      monthName: "Hijriah",
-      year: 1448,
-      formattedHijri: "1 Hijriah 1448 H",
-    };
-  }
 }
 
 /**
  * Menghasilkan judul rentang bulan Hijriah untuk bulan Masehi yang sedang aktif dilihat.
  * Contoh: "Rabiul Awal - Rabiul Akhir 1448"
  */
-export function getHijriMonthRangeTitle(year: number, monthIndex: number): string {
+export function getHijriMonthRangeTitle(year: number, monthIndex: number, offsetDays: number = 0): string {
   const firstDay = new Date(year, monthIndex, 1);
   const lastDay = new Date(year, monthIndex + 1, 0);
 
-  const startH = getHijriDate(firstDay);
-  const endH = getHijriDate(lastDay);
+  const startH = getHijriDate(firstDay, offsetDays);
+  const endH = getHijriDate(lastDay, offsetDays);
 
   if (startH.monthName === endH.monthName) {
     return `${startH.monthName} ${startH.year}`;

@@ -50,7 +50,7 @@ export const INDONESIAN_DAY_NAMES = [
   "Sabtu",
 ];
 
-export function useRealtimeCalendar() {
+export function useRealtimeCalendar(hijriOffsetDays: number = 0) {
   const [now, setNow] = useState<Date>(new Date());
   const [viewDate, setViewDate] = useState<Date>(new Date());
 
@@ -127,7 +127,7 @@ export function useRealtimeCalendar() {
       const dateString = formatDateString(date);
       const jsDay = date.getDay();
       const pasaran = getPasaranJawa(date);
-      const hijri = getHijriDate(date);
+      const hijri = getHijriDate(date, hijriOffsetDays);
 
       cells.push({
         date,
@@ -154,7 +154,7 @@ export function useRealtimeCalendar() {
       const dateString = formatDateString(date);
       const jsDay = date.getDay();
       const pasaran = getPasaranJawa(date);
-      const hijri = getHijriDate(date);
+      const hijri = getHijriDate(date, hijriOffsetDays);
 
       cells.push({
         date,
@@ -182,7 +182,7 @@ export function useRealtimeCalendar() {
       const dateString = formatDateString(date);
       const jsDay = date.getDay();
       const pasaran = getPasaranJawa(date);
-      const hijri = getHijriDate(date);
+      const hijri = getHijriDate(date, hijriOffsetDays);
 
       cells.push({
         date,
@@ -206,8 +206,8 @@ export function useRealtimeCalendar() {
     return cells;
   };
 
-  const hijriMonthRangeTitle = getHijriMonthRangeTitle(currentYear, currentMonth);
-  const currentHijriDate: HijriDateInfo = getHijriDate(now);
+  const hijriMonthRangeTitle = getHijriMonthRangeTitle(currentYear, currentMonth, hijriOffsetDays);
+  const currentHijriDate: HijriDateInfo = getHijriDate(now, hijriOffsetDays);
   const currentPasaran: PasaranName = getPasaranJawa(now);
 
   return {

@@ -14,12 +14,14 @@ import {
   ChevronUp,
   Filter,
   CheckCircle2,
+  Settings2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRealtimeCalendar, type CalendarDayCell } from "@/hooks/useRealtimeCalendar";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { AddAgendaDialog } from "./components/AddAgendaDialog";
 import { DetailAgendaDialog } from "./components/DetailAgendaDialog";
+import { CalendarSettingsDialog } from "./components/CalendarSettingsDialog";
 import { getHijriDate } from "@/utils/hijriJawaHelper";
 
 export interface AgendaItem {
@@ -32,6 +34,7 @@ export interface AgendaItem {
   desc: string;
   badge: string;
   isSchoolAgenda?: boolean;
+  isRedDate?: boolean;
 }
 
 // Daftar Resmi Hari Libur Nasional & Cuti Bersama SKB 3 Menteri RI Tahun 2026 serta Peringatan Kemenag/Madrasah
@@ -492,6 +495,9 @@ const NATIONAL_ISLAMIC_HOLIDAYS: AgendaItem[] = [
 ];
 
 export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
+  const [hijriOffsetDays, setHijriOffsetDays] = useState<number>(0);
+  const [isCalendarSettingsOpen, setIsCalendarSettingsOpen] = useState<boolean>(false);
+
   const {
     currentMonthName,
     currentYear,
@@ -503,7 +509,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
     goToToday,
     getCalendarDays,
     hijriMonthRangeTitle,
-  } = useRealtimeCalendar();
+  } = useRealtimeCalendar(hijriOffsetDays);
 
   const [filterCategory, setFilterCategory] = useState<string>("semua");
   const [selectedDateString, setSelectedDateString] = useState<string>("");
@@ -512,6 +518,21 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
   const [isAccordionOpen, setIsAccordionOpen] = useState<boolean>(true);
   const [activeInfoAgenda, setActiveInfoAgenda] = useState<AgendaItem | null>(null);
 
+  // Ambil konfigurasi kalender (offset Hijriah) dari database MySQL
+  const fetchCalendarSettings = async () => {
+    try {
+      const settings = await MysqlDataService.getCalendarSettings();
+      if (settings && settings.hijri_offset_days !== undefined) {
+        const parsed = parseInt(settings.hijri_offset_days, 10);
+        if (!isNaN(parsed)) {
+          setHijriOffsetDays(parsed);
+        }
+      }
+    } catch (err) {
+      console.warn("fetchCalendarSettings failed:", err);
+    }
+  };
+
   // Muat data riil dari basis data MySQL tabel agendas
   const fetchAgendas = async () => {
     try {
@@ -519,23 +540,27 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
       if (dbAgendas) {
         const mapped: AgendaItem[] = dbAgendas.map((item) => {
           const cat = item.category || "kbm";
+          const isRed = Boolean(item.is_red_date);
           const badge =
-            cat === "cbt"
-              ? "🔴 Ujian CBT"
+            item.badge ||
+            (isRed
+              ? "🔴 Libur Resmi"
+              : cat === "cbt"
+              ? "🔵 Ujian CBT"
               : cat === "rapat"
               ? "🟣 Rapat Dinas"
               : cat === "kokurikuler"
               ? "🟡 Kokurikuler P5"
               : cat === "libur"
               ? "🔴 Libur Resmi"
-              : "🔵 KBM Efektif";
+              : "🟢 KBM Efektif");
 
           // Coba cari tanggal ISO dari date_str jika tersimpan format tertentu
           let rawDate = item.date_str || "";
           let hijriStr = "";
           const parsedDate = new Date(rawDate);
           if (!isNaN(parsedDate.getTime())) {
-            const h = getHijriDate(parsedDate);
+            const h = getHijriDate(parsedDate, hijriOffsetDays);
             hijriStr = `${h.day} ${h.monthName} ${h.year} H`;
           }
 
@@ -549,6 +574,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
             desc: item.description || "",
             badge,
             isSchoolAgenda: true,
+            isRedDate: isRed || cat === "libur",
           };
         });
         setSchoolAgendas(mapped);
@@ -560,16 +586,24 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
 
   useEffect(() => {
     fetchAgendas();
-  }, []);
+    fetchCalendarSettings();
+  }, [hijriOffsetDays]);
+
+  // Simpan penyesuaian koreksi hari Hijriah hasil Sidang Isbat
+  const handleSaveHijriOffset = async (offset: number) => {
+    await MysqlDataService.saveCalendarSetting("hijri_offset_days", String(offset));
+    setHijriOffsetDays(offset);
+    await fetchAgendas();
+  };
 
   // Gabungkan agenda database MySQL dengan referensi kalender resmi Kemenag
   const allAgendas: AgendaItem[] = useMemo(() => {
     // Tambahkan kalkulasi tanggal Hijriah otomatis jika belum ada
     const hydratedNational = NATIONAL_ISLAMIC_HOLIDAYS.map((item) => {
-      if (!item.hijriDateStr && item.rawDate) {
+      if (item.rawDate) {
         const d = new Date(item.rawDate);
         if (!isNaN(d.getTime())) {
-          const h = getHijriDate(d);
+          const h = getHijriDate(d, hijriOffsetDays);
           return {
             ...item,
             hijriDateStr: `${h.day} ${h.monthName} ${h.year} H`,
@@ -580,7 +614,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
     });
 
     return [...schoolAgendas, ...hydratedNational];
-  }, [schoolAgendas]);
+  }, [schoolAgendas, hijriOffsetDays]);
 
   const calendarDays = getCalendarDays();
 
@@ -589,20 +623,17 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
     category: string;
     selectedDate: string;
     desc: string;
+    isRedDate?: boolean;
+    badge?: string;
   }) => {
-    const dateObj = new Date(data.selectedDate);
-    const dateFormatted = dateObj.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-
     try {
       await MysqlDataService.saveAgenda({
         title: data.title,
         description: data.desc,
         category: data.category,
         date_str: data.selectedDate, // Simpan format ISO YYYY-MM-DD
+        is_red_date: data.isRedDate ? 1 : 0,
+        badge: data.badge,
       });
       await fetchAgendas();
       toast.success("Agenda kegiatan madrasah berhasil disimpan ke basis data!");
@@ -671,9 +702,10 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
     const dots: { color: string; title: string }[] = [];
     const hasHoliday = matches.some(
       (m) =>
-        (m.category === "libur" || m.badge?.includes("Libur Nasional") || m.badge?.includes("Hari Besar")) &&
+        m.isRedDate ||
+        ((m.category === "libur" || m.badge?.includes("Libur Nasional") || m.badge?.includes("Hari Besar") || m.badge?.includes("Libur Resmi")) &&
         !m.badge?.includes("Cuti Bersama") &&
-        m.category !== "cuti"
+        m.category !== "cuti")
     );
     const hasCbt = matches.some((m) => m.category === "cbt");
     const hasKokurikuler = matches.some(
@@ -685,7 +717,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
     );
     const hasKbm = matches.some((m) => m.category === "kbm");
 
-    if (hasHoliday) dots.push({ color: "bg-red-500", title: "Libur Nasional" });
+    if (hasHoliday) dots.push({ color: "bg-red-500", title: "Libur / Tanggal Merah" });
     if (hasCbt) dots.push({ color: "bg-blue-500", title: "Ujian CBT" });
     if (hasKokurikuler) dots.push({ color: "bg-amber-400", title: "Agenda / Cuti" });
     if (hasKbm && dots.length < 3) dots.push({ color: "bg-emerald-500", title: "KBM" });
@@ -706,6 +738,25 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Tombol Khusus Superadmin: Penyesuaian Kalender Hijriah Hasil Sidang Isbat */}
+          {(!activeRole || activeRole.toUpperCase().includes("ADMIN")) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-bold border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shadow-xs"
+              onClick={() => setIsCalendarSettingsOpen(true)}
+              title="Penyesuaian Koreksi Kalender Hijriah Hasil Sidang Isbat Kemenag RI"
+            >
+              <Settings2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Penyesuaian Kalender</span>
+              {hijriOffsetDays !== 0 && (
+                <span className="ml-0.5 px-1.5 py-0.2 text-[9px] rounded-full bg-amber-500 text-white font-black">
+                  {hijriOffsetDays > 0 ? `+${hijriOffsetDays}` : hijriOffsetDays}H
+                </span>
+              )}
+            </Button>
+          )}
+
           <Button
             size="sm"
             className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
@@ -794,15 +845,16 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                 const dots = getDayDots(day);
                 const isSelected = selectedDateString === day.dateString;
 
-                // Periksa apakah hari ini adalah Hari Libur Nasional Resmi (Tanggal Merah, BUKAN Cuti Bersama)
+                // Periksa apakah hari ini adalah Hari Libur Resmi / Tanggal Merah (BUKAN Cuti Bersama)
                 const dayEvents = allAgendas.filter(
                   (item) => item.rawDate === day.dateString || item.rawDate?.startsWith(day.dateString)
                 );
                 const isHoliday = dayEvents.some(
                   (ev) =>
-                    (ev.category === "libur" || ev.badge?.includes("Libur Nasional") || ev.badge?.includes("Hari Besar")) &&
+                    ev.isRedDate ||
+                    ((ev.category === "libur" || ev.badge?.includes("Libur Nasional") || ev.badge?.includes("Hari Besar") || ev.badge?.includes("Libur Resmi")) &&
                     !ev.badge?.includes("Cuti Bersama") &&
-                    ev.category !== "cuti"
+                    ev.category !== "cuti")
                 );
                 const isRedDate = day.isSunday || isHoliday;
 
@@ -1075,11 +1127,19 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
         }}
       />
 
-      {/* Dialog Tambah Agenda Baru ke Database MySQL */}
+      {/* Dialog Tambah Agenda & Tanggal Merah Baru ke Database MySQL */}
       <AddAgendaDialog
         isOpen={isAddAgendaOpen}
         onOpenChange={setIsAddAgendaOpen}
         onAddAgenda={handleAddAgenda}
+      />
+
+      {/* Dialog Khusus Superadmin: Penyesuaian Koreksi Kalender Hijriah Hasil Sidang Isbat */}
+      <CalendarSettingsDialog
+        isOpen={isCalendarSettingsOpen}
+        onOpenChange={setIsCalendarSettingsOpen}
+        currentHijriOffset={hijriOffsetDays}
+        onSaveHijriOffset={handleSaveHijriOffset}
       />
     </>
   );

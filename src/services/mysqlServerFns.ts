@@ -429,6 +429,8 @@ export interface AgendaRow {
   description?: string;
   category: string;
   date_str: string;
+  is_red_date?: number | boolean;
+  badge?: string;
 }
 
 export interface AttendanceRow {
@@ -1158,7 +1160,13 @@ export const deleteAnnouncementFn = createServerFn({ method: "POST" })
     }
   });
 
-// 4. AGENDAS
+// 4. AGENDAS & CALENDAR SETTINGS
+export interface CalendarSettingRow {
+  setting_key: string;
+  setting_value: string;
+  updated_at?: string;
+}
+
 export const getAgendasFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<AgendaRow[]> => {
     try {
@@ -1170,9 +1178,17 @@ export const getAgendasFn = createServerFn({ method: "GET" }).handler(
           description TEXT,
           category VARCHAR(50) DEFAULT 'Akademik',
           date_str VARCHAR(50) NOT NULL,
+          is_red_date TINYINT(1) DEFAULT 0,
+          badge VARCHAR(100) DEFAULT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
+      try {
+        await execute("ALTER TABLE agendas ADD COLUMN is_red_date TINYINT(1) DEFAULT 0");
+      } catch {}
+      try {
+        await execute("ALTER TABLE agendas ADD COLUMN badge VARCHAR(100) DEFAULT NULL");
+      } catch {}
       return await query<AgendaRow[]>("SELECT * FROM agendas ORDER BY id DESC");
     } catch {
       return [];
@@ -1192,12 +1208,22 @@ export const saveAgendaFn = createServerFn({ method: "POST" })
           description TEXT,
           category VARCHAR(50) DEFAULT 'Akademik',
           date_str VARCHAR(50) NOT NULL,
+          is_red_date TINYINT(1) DEFAULT 0,
+          badge VARCHAR(100) DEFAULT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
+      try {
+        await execute("ALTER TABLE agendas ADD COLUMN is_red_date TINYINT(1) DEFAULT 0");
+      } catch {}
+      try {
+        await execute("ALTER TABLE agendas ADD COLUMN badge VARCHAR(100) DEFAULT NULL");
+      } catch {}
+
+      const isRed = data.is_red_date ? 1 : 0;
       await execute(
-        "INSERT INTO agendas (title, description, category, date_str) VALUES (?, ?, ?, ?)",
-        [data.title, data.description || "", data.category, data.date_str]
+        "INSERT INTO agendas (title, description, category, date_str, is_red_date, badge) VALUES (?, ?, ?, ?, ?, ?)",
+        [data.title, data.description || "", data.category, data.date_str, isRed, data.badge || null]
       );
       return true;
     } catch {
@@ -1211,6 +1237,55 @@ export const deleteAgendaFn = createServerFn({ method: "POST" })
     try {
       const { execute } = await import("@/lib/db");
       await execute("DELETE FROM agendas WHERE id = ?", [data.id]);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+export const getCalendarSettingsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Record<string, string>> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS calendar_settings (
+          setting_key VARCHAR(100) PRIMARY KEY,
+          setting_value TEXT,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<CalendarSettingRow[]>("SELECT * FROM calendar_settings");
+      const map: Record<string, string> = {};
+      if (Array.isArray(rows)) {
+        rows.forEach((r) => {
+          map[r.setting_key] = r.setting_value;
+        });
+      }
+      return map;
+    } catch {
+      return {};
+    }
+  }
+);
+
+export const saveCalendarSettingFn = createServerFn({ method: "POST" })
+  .validator((data: { key: string; value: string }) => data)
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS calendar_settings (
+          setting_key VARCHAR(100) PRIMARY KEY,
+          setting_value TEXT,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      await execute(
+        `INSERT INTO calendar_settings (setting_key, setting_value) 
+         VALUES (?, ?) 
+         ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+        [data.key, data.value]
+      );
       return true;
     } catch {
       return false;

@@ -24,6 +24,8 @@ import {
   getAgendasFn,
   saveAgendaFn,
   deleteAgendaFn,
+  getCalendarSettingsFn,
+  saveCalendarSettingFn,
   getAttendancesFn,
   getAttendancesPaginatedFn,
   recordAttendanceFn,
@@ -541,6 +543,25 @@ export class MysqlDataService {
       return await deleteAgendaFn({ data: { id } });
     } catch (e) {
       console.warn("deleteAgendaFn failed:", e);
+      return false;
+    }
+  }
+
+  // Calendar Settings
+  static async getCalendarSettings(): Promise<Record<string, string>> {
+    try {
+      return await getCalendarSettingsFn();
+    } catch (e) {
+      console.warn("getCalendarSettingsFn failed:", e);
+      return {};
+    }
+  }
+
+  static async saveCalendarSetting(key: string, value: string): Promise<boolean> {
+    try {
+      return await saveCalendarSettingFn({ data: { key, value } });
+    } catch (e) {
+      console.warn("saveCalendarSettingFn failed:", e);
       return false;
     }
   }

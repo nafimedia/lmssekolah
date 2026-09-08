@@ -198,29 +198,30 @@ function LandingPage() {
 
       {/* Header Navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 dark:bg-slate-950/85 border-b border-border/80 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & School Name */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1 md:flex-initial">
             <img
               src={logoAsset.url}
               alt="Logo MTsN 2 Cilacap"
-              className="h-10 w-10 rounded-full object-cover border border-emerald-500/30 bg-white p-0.5 shadow-xs"
+              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover border border-emerald-500/30 bg-white p-0.5 shadow-xs shrink-0"
             />
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-base sm:text-lg tracking-tight text-foreground">
-                  MTs Negeri 2 Cilacap
+                <span className="font-bold text-sm sm:text-base lg:text-lg tracking-tight text-foreground truncate">
+                  <span className="hidden sm:inline">MTs Negeri 2 Cilacap</span>
+                  <span className="sm:hidden">MTsN 2 Cilacap</span>
                 </span>
-                <Badge className="hidden sm:inline-flex bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/50 text-[10px] px-2 py-0.5 font-medium">
+                <Badge className="hidden md:inline-flex bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/50 text-[10px] px-2 py-0.5 font-medium shrink-0">
                   LMS & SIAKAD
                 </Badge>
               </div>
-              <p className="text-[11px] text-muted-foreground hidden sm:block">Portal Pembelajaran Kurikulum Merdeka Kemenag</p>
+              <p className="text-[11px] text-muted-foreground hidden lg:block">Portal Pembelajaran Kurikulum Merdeka Kemenag</p>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-6 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">
+          <nav className="hidden md:flex items-center gap-5 lg:gap-6 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">
             <a href="#pilar" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Keunggulan
             </a>
@@ -242,12 +243,12 @@ function LandingPage() {
           </nav>
 
           {/* Action Buttons & Theme Switcher */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsDark(!isDark)}
-              className="h-9 w-9 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground transition-all cursor-pointer"
               title={isDark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
               aria-label="Toggle Theme"
             >
@@ -260,63 +261,71 @@ function LandingPage() {
 
             <Button
               asChild
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-xs"
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm px-2.5 sm:px-4 h-8 sm:h-9 rounded-lg sm:rounded-xl shadow-xs"
             >
-              <Link to="/auth" className="flex items-center gap-1.5">
-                <LogIn className="w-4 h-4" />
-                <span>Masuk Portal</span>
+              <Link to="/auth" className="flex items-center gap-1 sm:gap-1.5">
+                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Masuk<span className="hidden sm:inline"> Portal</span></span>
               </Link>
             </Button>
 
             {/* Mobile Hamburger */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-muted-foreground hover:text-foreground rounded-lg focus:outline-none"
-              aria-label="Menu"
+              className="md:hidden h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors focus:outline-none shrink-0"
+              aria-label="Buka Menu"
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMobileMenuOpen ? <X className="w-5 h-5 text-foreground" /> : <Menu className="w-5 h-5 text-foreground" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-background/95 border-b border-border px-4 py-3 space-y-2 text-xs font-semibold shadow-md">
+          <div className="md:hidden bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 space-y-2 text-xs font-semibold shadow-lg">
             <a
               href="#pilar"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-1.5 text-foreground hover:text-emerald-600"
+              className="flex items-center justify-between py-2 text-foreground hover:text-emerald-600 border-b border-border/50"
             >
-              Keunggulan
+              <span>Keunggulan Sistem</span>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
             </a>
             <a
               href="#alur"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-1.5 text-foreground hover:text-emerald-600"
+              className="flex items-center justify-between py-2 text-foreground hover:text-emerald-600 border-b border-border/50"
             >
-              Alur Belajar
+              <span>Alur Belajar 18 Pertemuan</span>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
             </a>
             <a
               href="#roles"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-1.5 text-foreground hover:text-emerald-600"
+              className="flex items-center justify-between py-2 text-foreground hover:text-emerald-600 border-b border-border/50"
             >
-              Portal Peran
+              <span>Portal Akses Peran</span>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
             </a>
             <Link
               to="/docs"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center justify-between py-1.5 text-foreground hover:text-emerald-600"
+              className="flex items-center justify-between py-2 text-foreground hover:text-emerald-600 border-b border-border/50"
             >
-              <span>Buku Panduan Penggunaan</span>
-              <Badge variant="outline" className="text-[10px]">/docs</Badge>
+              <span className="flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Buku Panduan Penggunaan</span>
+              </span>
+              <Badge variant="outline" className="text-[10px] font-mono">/docs</Badge>
             </Link>
             <a
               href="#faq"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-1.5 text-foreground hover:text-emerald-600"
+              className="flex items-center justify-between py-2 text-foreground hover:text-emerald-600"
             >
-              Pusat Bantuan (FAQ)
+              <span>Pusat Bantuan (FAQ)</span>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
             </a>
           </div>
         )}

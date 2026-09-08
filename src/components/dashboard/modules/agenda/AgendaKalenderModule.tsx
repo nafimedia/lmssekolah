@@ -391,35 +391,35 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* KARTU UTAMA KALENDER (Desain 3-in-1 Masehi + Hijriah + Pasaran Jawa) */}
-        <Card className="border-border shadow-xs bg-card overflow-hidden">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        {/* KOLOM KIRI: KALENDER 3-IN-1 (Lebih Ringkas & Proporsional) */}
+        <Card className="xl:col-span-7 border-border shadow-xs bg-card overflow-hidden">
           {/* Header Kalender */}
-          <div className="p-4 sm:p-5 flex items-center justify-between border-b border-border bg-muted/20">
+          <div className="p-3 sm:p-4 flex items-center justify-between border-b border-border bg-muted/20">
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-full"
+              className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-full"
               onClick={goToPrevMonth}
               title="Bulan Sebelumnya"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
 
             <div className="text-center">
               <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
                 {currentMonthName} {currentYear}
               </h2>
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground mt-0.5">
+              <p className="text-xs font-medium text-muted-foreground">
                 {hijriMonthRangeTitle}
               </p>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <Button
                 variant="outline"
                 size="sm"
-                className="hidden sm:inline-flex h-8 text-xs font-semibold px-2.5 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                className="h-7 text-xs font-semibold px-2 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                 onClick={goToToday}
               >
                 Hari Ini
@@ -427,18 +427,18 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-full"
+                className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-full"
                 onClick={goToNextMonth}
                 title="Bulan Berikutnya"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          <CardContent className="p-3 sm:p-5">
-            {/* Header Nama Hari: Ahad, Senin, Selasa, Rabu, Kamis, Jumat, Sabtu */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-xs font-semibold mb-2">
+          <CardContent className="p-2.5 sm:p-4">
+            {/* Header Nama Hari */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 text-center text-xs font-semibold mb-1.5">
               {[
                 { name: "Ahad", isSunday: true, isFriday: false },
                 { name: "Senin", isSunday: false, isFriday: false },
@@ -450,7 +450,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
               ].map((dayItem) => (
                 <div
                   key={dayItem.name}
-                  className={`py-2 text-xs font-semibold ${
+                  className={`py-1 text-xs font-semibold ${
                     dayItem.isSunday
                       ? "text-red-500 dark:text-red-400 font-bold"
                       : dayItem.isFriday
@@ -463,8 +463,8 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
               ))}
             </div>
 
-            {/* Grid Sel Kalender */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            {/* Grid Sel Kalender (Compact & Angka Masehi Lebih Besar) */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
               {calendarDays.map((day, idx) => {
                 const dots = getDayDots(day);
                 const isSelected = selectedDateString === day.dateString;
@@ -502,27 +502,27 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                         setSelectedDateString(day.dateString);
                       }
                     }}
-                    className={`relative min-h-[72px] sm:min-h-[82px] p-1.5 sm:p-2 rounded-xl border flex flex-col justify-between text-left transition-all ${cellStyle}`}
+                    className={`relative min-h-[50px] sm:min-h-[56px] p-1 sm:p-1.5 rounded-lg border flex flex-col justify-between text-left transition-all ${cellStyle}`}
                   >
-                    {/* Baris Atas: Angka Hijriah (Arab) & Angka Masehi */}
+                    {/* Baris Atas: Angka Arab Hijriah di Kiri & Angka Masehi BESAR di Kanan */}
                     <div className="flex items-start justify-between w-full">
-                      <span className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground/80 font-mono">
+                      <span className="text-[10px] font-semibold text-muted-foreground/80 font-mono leading-none">
                         {day.hijriArabicDay}
                       </span>
-                      <span className={`text-sm sm:text-base font-bold ${gregorianColor}`}>
+                      <span className={`text-base sm:text-lg lg:text-xl font-black leading-none ${gregorianColor}`}>
                         {day.dayNumber}
                       </span>
                     </div>
 
-                    {/* Baris Tengah: Pasaran Jawa (Pancawara) */}
+                    {/* Baris Tengah: Pasaran Jawa */}
                     <div className="text-center w-full my-auto">
-                      <span className="text-[9px] sm:text-[11px] font-medium text-muted-foreground tracking-tight block">
+                      <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground tracking-tight block leading-none">
                         {day.pasaran}
                       </span>
                     </div>
 
-                    {/* Baris Bawah: Dot Indikator Kegiatan / Agenda */}
-                    <div className="flex items-center justify-center gap-1 min-h-[7px] w-full mt-0.5">
+                    {/* Baris Bawah: Titik Indikator Agenda */}
+                    <div className="flex items-center justify-center gap-1 min-h-[5px] w-full mt-0.5">
                       {dots.map((dot, dIdx) => (
                         <span
                           key={dIdx}
@@ -536,211 +536,194 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
               })}
             </div>
 
-            {/* Info Legenda Titik Indikator */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 mt-3 border-t border-border text-[11px] text-muted-foreground">
-              <div className="flex items-center gap-4">
-                <span className="font-semibold text-foreground">Indikator Kegiatan:</span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Libur Resmi
+            {/* Legenda Titik Indikator */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 mt-3 border-t border-border text-[11px] text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-semibold text-foreground">Indikator:</span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Libur
                 </span>
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> Ujian CBT
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Peringatan / Agenda
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Peringatan
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> KBM Efektif
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> KBM
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <span>Waktu Server: <span className="font-mono font-bold text-foreground">{formattedTime}</span></span>
+              <div className="text-[10px] sm:text-xs">
+                Server: <span className="font-mono font-bold text-foreground">{formattedTime}</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* SECTION BAWAH: HARI BESAR & AGENDA KEGIATAN MADRASAH */}
-        <Card className="border-border shadow-xs bg-card">
-          <CardHeader className="p-4 sm:p-5 border-b border-border">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div
-                className="flex items-center gap-2.5 cursor-pointer select-none"
-                onClick={() => setIsAccordionOpen(!isAccordionOpen)}
-              >
-                <span className="w-1.5 h-5 rounded-full bg-emerald-600 dark:bg-emerald-500" />
-                <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
-                  Hari Besar & Libur Nasional / Agenda Madrasah
+        {/* KOLOM KANAN: HARI BESAR & AGENDA KEGIATAN MADRASAH */}
+        <Card className="xl:col-span-5 border-border shadow-xs bg-card flex flex-col">
+          <CardHeader className="p-3.5 sm:p-4 border-b border-border space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-4 rounded-full bg-emerald-600 dark:bg-emerald-500" />
+                <CardTitle className="text-sm sm:text-base font-bold text-foreground">
+                  Hari Besar & Agenda Madrasah
                 </CardTitle>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
-                  {isAccordionOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
               </div>
 
-              {/* Filter & Reset Pilihan Tanggal */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                {selectedDateString && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs font-semibold gap-1 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
-                    onClick={() => setSelectedDateString("")}
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Tampilkan Semua Bulan Ini
-                  </Button>
-                )}
-
-                <div className="flex items-center gap-1.5 ml-auto">
-                  <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-                  <select
-                    className="h-8 rounded-md border border-input bg-background px-2.5 text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                  >
-                    <option value="semua">Semua Kategori</option>
-                    <option value="libur">🔴 Libur Resmi</option>
-                    <option value="cbt">🔵 Ujian CBT</option>
-                    <option value="kokurikuler">🟡 Peringatan & Kokurikuler</option>
-                    <option value="rapat">🟣 Rapat Dinas</option>
-                    <option value="kbm">🟢 KBM Efektif</option>
-                  </select>
-                </div>
+              {/* Filter Kategori */}
+              <div className="flex items-center gap-1.5">
+                <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <select
+                  className="h-7 rounded-md border border-input bg-background px-2 text-[11px] font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                >
+                  <option value="semua">Semua</option>
+                  <option value="libur">🔴 Libur</option>
+                  <option value="cbt">🔵 CBT</option>
+                  <option value="kokurikuler">🟡 Peringatan</option>
+                  <option value="rapat">🟣 Rapat</option>
+                  <option value="kbm">🟢 KBM</option>
+                </select>
               </div>
             </div>
 
             {selectedDateString && (
-              <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium mt-1">
-                Menampilkan agenda khusus pada tanggal: <span className="font-bold underline">{selectedDateString}</span>
-              </p>
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-border/60">
+                <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                  Filter: <strong className="underline">{selectedDateString}</strong>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-1.5 text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold"
+                  onClick={() => setSelectedDateString("")}
+                >
+                  Tampilkan Semua
+                </Button>
+              </div>
             )}
           </CardHeader>
 
-          {isAccordionOpen && (
-            <CardContent className="p-4 sm:p-5">
-              {displayAgendas.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground space-y-2">
-                  <CalendarClock className="h-8 w-8 mx-auto text-muted-foreground/60" />
-                  <p className="text-xs sm:text-sm">Tidak ada agenda atau hari besar pada periode ini.</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs font-bold mt-2"
-                    onClick={() => setIsAddAgendaOpen(true)}
-                  >
-                    + Tambah Agenda untuk Tanggal Ini
-                  </Button>
-                </div>
-              ) : (
-                <div className="divide-y divide-border/60">
-                  {displayAgendas.map((item) => {
-                    // Ekstrak bulan dan tanggal untuk badge kotak (seperti pada screenshot: Sep 19)
-                    let monthShort = "TGL";
-                    let dayNum = "•";
+          <CardContent className="p-3 sm:p-4 max-h-[500px] overflow-y-auto space-y-3">
+            {displayAgendas.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground space-y-2">
+                <CalendarClock className="h-7 w-7 mx-auto text-muted-foreground/60" />
+                <p className="text-xs">Tidak ada agenda atau hari besar pada periode ini.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs font-bold mt-1"
+                  onClick={() => setIsAddAgendaOpen(true)}
+                >
+                  + Tambah Agenda
+                </Button>
+              </div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {displayAgendas.map((item) => {
+                  let monthShort = "TGL";
+                  let dayNum = "•";
 
-                    if (item.rawDate) {
-                      const d = new Date(item.rawDate);
-                      if (!isNaN(d.getTime())) {
-                        monthShort = d.toLocaleDateString("id-ID", { month: "short" });
-                        dayNum = String(d.getDate());
-                      }
+                  if (item.rawDate) {
+                    const d = new Date(item.rawDate);
+                    if (!isNaN(d.getTime())) {
+                      monthShort = d.toLocaleDateString("id-ID", { month: "short" });
+                      dayNum = String(d.getDate());
                     }
+                  }
 
-                    const isLibur = item.category === "libur" || item.badge?.includes("Libur");
+                  const isLibur = item.category === "libur" || item.badge?.includes("Libur");
 
-                    return (
-                      <div
-                        key={item.id}
-                        className="py-4 first:pt-0 last:pb-0 flex items-start justify-between gap-3 group"
-                      >
-                        <div className="flex items-start gap-3.5">
-                          {/* Badge Tanggal Kotak (Sep 19) */}
-                          <div className="w-12 h-13 sm:w-14 sm:h-14 rounded-xl border border-border/80 bg-muted/30 flex flex-col items-center justify-center shrink-0 shadow-2xs">
-                            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
-                              {monthShort}
-                            </span>
-                            <span
-                              className={`text-base sm:text-lg font-black leading-tight ${
-                                isLibur ? "text-red-600 dark:text-red-400" : "text-blue-600 dark:text-blue-400"
+                  return (
+                    <div
+                      key={item.id}
+                      className="py-3 first:pt-0 last:pb-0 flex items-start justify-between gap-2.5"
+                    >
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        {/* Badge Tanggal Kotak (Sep 19) */}
+                        <div className="w-11 h-11 rounded-lg border border-border/80 bg-muted/30 flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                          <span className="text-[9px] font-bold uppercase text-muted-foreground leading-none">
+                            {monthShort}
+                          </span>
+                          <span
+                            className={`text-sm sm:text-base font-black leading-tight ${
+                              isLibur ? "text-red-600 dark:text-red-400" : "text-blue-600 dark:text-blue-400"
+                            }`}
+                          >
+                            {dayNum}
+                          </span>
+                        </div>
+
+                        {/* Informasi Agenda */}
+                        <div className="space-y-0.5 min-w-0">
+                          <h4 className="text-xs sm:text-sm font-bold text-foreground leading-snug truncate">
+                            {item.title}
+                          </h4>
+
+                          {/* Format Tanggal Ganda: Masehi / Hijriah */}
+                          <p className="text-[11px] text-muted-foreground font-medium flex flex-wrap items-center gap-1">
+                            <span>{item.date || item.rawDate}</span>
+                            {item.hijriDateStr && (
+                              <>
+                                <span>•</span>
+                                <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                                  {item.hijriDateStr}
+                                </span>
+                              </>
+                            )}
+                          </p>
+
+                          <div className="flex items-center gap-1.5 pt-0.5">
+                            <Badge
+                              variant="secondary"
+                              className={`text-[9px] px-1 py-0 font-semibold border-none ${
+                                isLibur
+                                  ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                                  : item.category === "cbt"
+                                  ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                                  : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
                               }`}
                             >
-                              {dayNum}
-                            </span>
+                              {item.badge}
+                            </Badge>
                           </div>
-
-                          {/* Informasi Agenda */}
-                          <div className="space-y-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-sm sm:text-base font-bold text-foreground leading-snug">
-                                {item.title}
-                              </h3>
-                              <Badge
-                                variant="secondary"
-                                className={`text-[10px] px-1.5 py-0 font-bold border-none ${
-                                  isLibur
-                                    ? "bg-red-500/15 text-red-600 dark:text-red-400"
-                                    : item.category === "cbt"
-                                    ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
-                                    : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                                }`}
-                              >
-                                {item.badge}
-                              </Badge>
-                            </div>
-
-                            {/* Format Tanggal Ganda: Masehi / Hijriah */}
-                            <p className="text-xs text-muted-foreground font-medium flex flex-wrap items-center gap-1.5">
-                              <span>{item.date || item.rawDate}</span>
-                              {item.hijriDateStr && (
-                                <>
-                                  <span className="text-border">•</span>
-                                  <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-                                    {item.hijriDateStr}
-                                  </span>
-                                </>
-                              )}
-                            </p>
-
-                            {item.desc && (
-                              <p className="text-xs text-muted-foreground/90 mt-1 leading-relaxed max-w-2xl">
-                                {item.desc}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Tombol Aksi Kanan */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          {item.desc && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                              onClick={() => setActiveInfoAgenda(item)}
-                              title="Lihat Detail Informasi"
-                            >
-                              <Info className="h-4 w-4" />
-                            </Button>
-                          )}
-
-                          {item.isSchoolAgenda && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                              onClick={() => handleDeleteAgenda(item.id)}
-                              title="Hapus Agenda"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          )}
+
+                      {/* Tombol Aksi Kanan */}
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {item.desc && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => setActiveInfoAgenda(item)}
+                            title="Detail Informasi"
+                          >
+                            <Info className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+
+                        {item.isSchoolAgenda && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteAgenda(item.id)}
+                            title="Hapus Agenda"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
 

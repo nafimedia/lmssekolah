@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useRealtimeCalendar, type CalendarDayCell } from "@/hooks/useRealtimeCalendar";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { AddAgendaDialog } from "./components/AddAgendaDialog";
+import { DetailAgendaDialog } from "./components/DetailAgendaDialog";
 import { getHijriDate } from "@/utils/hijriJawaHelper";
 
 export interface AgendaItem {
@@ -1034,23 +1035,21 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
 
                       {/* Tombol Aksi Kanan */}
                       <div className="flex items-center gap-0.5 shrink-0">
-                        {item.desc && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                            onClick={() => setActiveInfoAgenda(item)}
-                            title="Detail Informasi"
-                          >
-                            <Info className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-full"
+                          onClick={() => setActiveInfoAgenda(item)}
+                          title="Detail Informasi"
+                        >
+                          <Info className="h-3.5 w-3.5" />
+                        </Button>
 
                         {item.isSchoolAgenda && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                            className="h-7 w-7 text-destructive hover:bg-destructive/10 rounded-full"
                             onClick={() => handleDeleteAgenda(item.id)}
                             title="Hapus Agenda"
                           >
@@ -1066,6 +1065,15 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog Detail Informasi Agenda & Hari Libur Nasional */}
+      <DetailAgendaDialog
+        agenda={activeInfoAgenda}
+        isOpen={Boolean(activeInfoAgenda)}
+        onOpenChange={(open) => {
+          if (!open) setActiveInfoAgenda(null);
+        }}
+      />
 
       {/* Dialog Tambah Agenda Baru ke Database MySQL */}
       <AddAgendaDialog

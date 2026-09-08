@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MysqlDataService, JournalRow } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import {
@@ -108,7 +108,10 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       );
 
       if (myLiveSession) {
-        if (myLiveSession.rombel) setActiveRombel(myLiveSession.rombel);
+        if (myLiveSession.rombel) {
+          const matchedCls = allowedClasses.find((cls) => isSameClass(cls, myLiveSession.rombel)) || myLiveSession.rombel;
+          setActiveRombel(matchedCls);
+        }
         if (myLiveSession.mapel) setActiveMapel(myLiveSession.mapel);
         return;
       }
@@ -123,8 +126,10 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       );
 
       if (myScheduleToday) {
-        if (myScheduleToday.rombel || myScheduleToday.kelas) {
-          setActiveRombel(myScheduleToday.rombel || myScheduleToday.kelas);
+        const rawRombel = myScheduleToday.rombel || myScheduleToday.kelas;
+        if (rawRombel) {
+          const matchedCls = allowedClasses.find((cls) => isSameClass(cls, rawRombel)) || rawRombel;
+          setActiveRombel(matchedCls);
         }
         if (myScheduleToday.mapel) {
           setActiveMapel(myScheduleToday.mapel);
@@ -171,23 +176,30 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
     }
   };
 
+  const matchedAllowedClass = allowedClasses.find((cls: string) => isSameClass(cls, activeRombel));
+  const resolvedSelectRombel = matchedAllowedClass || activeRombel;
+  const displayClasses = useMemo(() => {
+    if (matchedAllowedClass || !activeRombel) return allowedClasses;
+    return [activeRombel, ...allowedClasses];
+  }, [allowedClasses, activeRombel, matchedAllowedClass]);
+
   return (
     <div className="space-y-6">
       {/* Module Title & Rombel/Mapel Filter Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <DoorOpen className="h-6 w-6 text-primary" /> Ruang Kerja Mengajar Guru (KBM Live)
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
           <select
-            className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold text-primary"
-            value={activeRombel}
+            className="h-9 rounded-md border border-border bg-background px-3 text-xs font-semibold text-primary"
+            value={resolvedSelectRombel}
             onChange={(e) => setActiveRombel(e.target.value)}
           >
-            {allowedClasses.map((cls) => (
+            {displayClasses.map((cls: string) => (
               <option key={cls} value={cls}>
                 {cls}
               </option>
@@ -195,7 +207,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
           </select>
 
           <select
-            className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+            className="h-9 rounded-md border border-border bg-background px-3 text-xs font-semibold"
             value={activeMapel}
             onChange={(e) => setActiveMapel(e.target.value)}
           >

@@ -196,7 +196,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className={`font-extrabold text-[11px] px-2.5 py-0.5 gap-1.5 ${
+              <Badge className={`font-semibold text-xs px-2.5 py-0.5 gap-1.5 ${
                 isSessionLive
                   ? "bg-emerald-600 text-white animate-pulse"
                   : sessionCompleted
@@ -216,7 +216,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
               </span>
             </div>
 
-            <h2 className="text-lg sm:text-xl font-black text-foreground tracking-tight flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
               <DoorOpen className="h-5 w-5 text-primary" /> {activeRombel} — {activeMapel}
             </h2>
             <p className="text-xs text-muted-foreground font-medium">
@@ -228,7 +228,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
 
           <Button
             size="lg"
-            className={`font-black text-xs gap-2 px-5 py-2.5 shadow-sm transition-all shrink-0 ${
+            className={`font-semibold text-xs gap-2 px-5 py-2.5 shadow-sm transition-all shrink-0 ${
               isSessionLive
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
                 : sessionCompleted

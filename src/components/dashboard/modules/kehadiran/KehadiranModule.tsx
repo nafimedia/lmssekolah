@@ -15,7 +15,10 @@ import {
   BookOpen,
   Users,
   Inbox,
+  UserCheck,
+  ShieldCheck,
 } from "lucide-react";
+import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +32,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { MysqlDataService } from "@/services/mysqlDataService";
-import { normalizeRombelName, isSameClass } from "@/utils/classNormalization";
+import { normalizeRombelName, isSameClass, resolveWaliKelasRombel } from "@/utils/classNormalization";
 import { exportToExcelXml } from "@/utils/excelExporter";
 import { toast } from "sonner";
 
@@ -55,19 +58,7 @@ import { MysqlAuthService } from "@/services/mysqlAuthService";
 export function KehadiranModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any } = {}) {
   const me = MysqlAuthService.getActiveUser();
   const initialClass = useMemo(() => {
-    const rawClass = userProfile?.assignedClass || me?.class_name;
-    if (rawClass && rawClass !== "Semua" && rawClass !== "Semua Rombel") {
-      return normalizeRombelName(rawClass);
-    }
-    const name = (me?.full_name || userProfile?.name || "").toLowerCase();
-    const cleanNip = (me?.nis_nip || "").trim();
-    if (name.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
-    if (name.includes("sobiyati")) return "Rombel 8A";
-    if (name.includes("novantya")) return "Rombel 9A";
-    if (name.includes("indah nurrohmah")) return "Rombel 9B";
-    if (name.includes("maulidia")) return "Rombel 7A";
-    if (name.includes("rindang")) return "Rombel 7B";
-    return "Semua Rombel";
+    return resolveWaliKelasRombel(me || userProfile, null, "rombel");
   }, [userProfile, me]);
 
   const [selectedRombelFilter, setSelectedRombelFilter] = useState(initialClass);
@@ -99,8 +90,9 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
       MysqlDataService.getUsers(),
       MysqlDataService.getDailyPresensiRombel(selectedRombelFilter, todayStr),
       MysqlDataService.getKbmPresensi(selectedRombelFilter, "ALL", todayStr),
+      MysqlDataService.getAttendances().catch(() => []),
     ])
-      .then(([users, dailyRows, kbmRows]) => {
+      .then(([users, dailyRows, kbmRows, allAttendances]) => {
         if (!isMounted) return;
         const siswaList = (users || []).filter((u: any) => u.role === "siswa");
         const matched = siswaList.filter((u: any) =>
@@ -133,7 +125,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
               status: status,
               isRecordedToday: isRecordedToday,
               notes: notes,
-              parentWa: s.phone || "081234567890",
+              parentWa: s.phone || "-",
             };
           });
 
@@ -141,16 +133,39 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
 
           const formatted: AttendanceStudentRow[] = list.map((s) => {
             const isRecorded = s.isRecordedToday;
+
+            // Cumulative semester attendance from database table attendances
+            const studentHistory = (allAttendances || []).filter((a: any) =>
+              (a.student_name && a.student_name.toLowerCase() === s.name.toLowerCase()) ||
+              (a.user_id && a.user_id === s.nisn) ||
+              (a.student_id && a.student_id === s.id)
+            );
+
+            let totalHadir = studentHistory.filter((a: any) => (a.status || "").toUpperCase() === "HADIR").length;
+            let totalIzin = studentHistory.filter((a: any) => (a.status || "").toUpperCase() === "IZIN").length;
+            let totalSakit = studentHistory.filter((a: any) => (a.status || "").toUpperCase() === "SAKIT").length;
+            let totalAlpa = studentHistory.filter((a: any) => (a.status || "").toUpperCase() === "ALPA").length;
+
+            if (isRecorded) {
+              if (s.status === "HADIR") totalHadir++;
+              else if (s.status === "IZIN") totalIzin++;
+              else if (s.status === "SAKIT") totalSakit++;
+              else if (s.status === "ALPA") totalAlpa++;
+            }
+
+            const totalSessions = totalHadir + totalIzin + totalSakit + totalAlpa;
+            const pct = totalSessions > 0 ? Math.round((totalHadir / totalSessions) * 100) : (isRecorded && s.status === "HADIR" ? 100 : 0);
+
             return {
               id: s.id,
               nisn: s.nisn,
               name: s.name,
               class: s.class,
-              hadir: isRecorded && s.status === "HADIR" ? 1 : 0,
-              izin: isRecorded && s.status === "IZIN" ? 1 : 0,
-              sakit: isRecorded && s.status === "SAKIT" ? 1 : 0,
-              alpa: isRecorded && s.status === "ALPA" ? 1 : 0,
-              pct: isRecorded && s.status === "HADIR" ? 100 : 0,
+              hadir: totalHadir,
+              izin: totalIzin,
+              sakit: totalSakit,
+              alpa: totalAlpa,
+              pct: pct,
               parentWa: s.parentWa,
               status: isRecorded ? `Hari ini: ${s.status}` : "Belum Presensi",
               today: isRecorded ? s.status : "belum",
@@ -203,7 +218,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
     }
 
     setIsSavingDaily(true);
-    const toastId = toast.loading(`⏳ Menyimpan Presensi Harian Rombel ${selectedRombelFilter} ke Database MySQL...`);
+    const toastId = toast.loading(`⏳ Menyimpan Presensi Harian Rombel ${selectedRombelFilter}...`);
 
     try {
       const waliName = me?.full_name || userProfile?.name || "Wali Kelas";
@@ -247,12 +262,12 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
         const sCount = dailyStudents.filter((s) => s.status === "SAKIT").length;
         const aCount = dailyStudents.filter((s) => s.status === "ALPA").length;
 
-        toast.success(`✅ Presensi Harian ${selectedRombelFilter} berhasil disimpan ke Database MySQL!`, {
+        toast.success(`✅ Presensi Harian ${selectedRombelFilter} berhasil disimpan!`, {
           id: toastId,
           description: `Total: ${dailyStudents.length} Siswa (Hadir: ${hCount}, Sakit: ${sCount}, Izin: ${iCount}, Alpa: ${aCount})`,
         });
       } else {
-        toast.error(`❌ Gagal menyimpan presensi harian ke Database MySQL.`, { id: toastId });
+        toast.error(`❌ Gagal menyimpan presensi harian.`, { id: toastId });
       }
     } catch (e: any) {
       toast.error(`❌ Gagal menyimpan presensi harian: ${e?.message || e}`, { id: toastId });
@@ -263,13 +278,37 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
 
   const handleSendWaAlert = async (student: any) => {
     try {
-      const msg = `[NOTIFIKASI PRESENSI HARIAN MTsN 2 CILACAP]\n\nYth. Orang Tua / Wali dari Siswa:\nNama: *${student.name}*\nNISN/NIS: ${student.nisn}\nKelas: ${student.class}\nStatus Kehadiran Hari Ini (${todayStr}): *${student.status}*\nCatatan: ${student.notes || "-"}\n\nMohon perhatian dan konfirmasinya. Terima kasih.\n\nHormat kami,\nWali Kelas ${selectedRombelFilter}\nMTs Negeri 2 Cilacap`;
-      toast.loading(`📲 Mengirim Laporan WA Kehadiran ${student.status} ke ${student.name}...`, { id: "wa_alert" });
+      const targetPhone = (student.parentWa || "").trim();
+      if (!targetPhone) {
+        toast.error("Nomor WhatsApp orang tua belum terdaftar pada akun siswa ini.", {
+          description: "Silakan lengkapi data nomor telepon di Manajemen User.",
+        });
+        return;
+      }
 
-      await (MysqlDataService as any).sendTestWaMessage?.(student.parentWa || "081234567890", msg);
-      toast.success(`✅ Notifikasi WA Laporan Presensi ${student.status} Berhasil Terkirim ke Orang Tua ${student.name}!`, { id: "wa_alert" });
-    } catch (e) {
-      toast.error(`❌ Gagal mengirim WA: Silakan periksa koneksi WA Gateway`, { id: "wa_alert" });
+      const cleanPhone = targetPhone.replace(/[^0-9]/g, "").replace(/^0/, "62");
+      const msg = `[NOTIFIKASI PRESENSI HARIAN MTsN 2 CILACAP]\n\nYth. Orang Tua / Wali dari Siswa:\nNama: *${student.name}*\nNISN/NIS: ${student.nisn}\nKelas: ${student.class}\nStatus Kehadiran (${todayStr}): *${student.status}*\nKeterangan: ${student.notes || "-"}\n\nMohon perhatian dan konfirmasinya. Terima kasih.\n\nHormat kami,\nWali Kelas ${selectedRombelFilter}\nMTs Negeri 2 Cilacap`;
+
+      toast.loading(`Menyiapkan pengiriman WA ke orang tua ${student.name}...`, { id: "wa_alert" });
+
+      let sentViaApi = false;
+      try {
+        const res = await (MysqlDataService as any).sendTestWaMessage?.(cleanPhone, msg);
+        if (res && res.success) {
+          sentViaApi = true;
+          toast.success(`Notifikasi WA Berhasil Dikirim ke Orang Tua ${student.name}!`, { id: "wa_alert" });
+        }
+      } catch {
+        // Fallback to direct WA Web link below
+      }
+
+      if (!sentViaApi) {
+        const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+        window.open(waUrl, "_blank");
+        toast.success(`Membuka WhatsApp untuk mengirim pesan ke Orang Tua ${student.name}`, { id: "wa_alert" });
+      }
+    } catch {
+      toast.error("Gagal memproses pengiriman WA", { id: "wa_alert" });
     }
   };
 
@@ -347,6 +386,119 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
     toast.success("File Excel Rekap Presensi Siswa Berhasil Diunduh!");
   };
 
+  const isSiswa = activeRole === "siswa";
+
+  if (isSiswa) {
+    const studentUser = me;
+    const studentName = studentUser?.full_name || userProfile?.name || "Peserta Didik";
+    const studentNis = studentUser?.nis_nip || userProfile?.nipNis || "-";
+    const studentClass = studentUser?.class_name || userProfile?.className || "-";
+
+    const myDaily = dailyStudents.find(
+      (s) => s.nisn === studentNis || s.name?.toLowerCase() === studentName.toLowerCase()
+    );
+    const myAttendance = attendanceData.find(
+      (a) => a.nisn === studentNis || a.name?.toLowerCase() === studentName.toLowerCase()
+    );
+
+    const totalHadir = myAttendance?.hadir || (myDaily?.status === "HADIR" ? 1 : 0);
+    const totalIzin = myAttendance?.izin || (myDaily?.status === "IZIN" ? 1 : 0);
+    const totalSakit = myAttendance?.sakit || (myDaily?.status === "SAKIT" ? 1 : 0);
+    const totalAlpa = myAttendance?.alpa || (myDaily?.status === "ALPA" ? 1 : 0);
+    const totalSessions = totalHadir + totalIzin + totalSakit + totalAlpa;
+    const pct = totalSessions > 0 ? ((totalHadir / totalSessions) * 100).toFixed(1) : "100.0";
+    const todayStatus = myDaily?.status || "HADIR";
+
+    return (
+      <div className="space-y-6">
+        <StudentHeaderBanner
+          title="Kehadiran & Rekapitulasi Presensi Saya"
+          subtitle="Status kehadiran resmi yang dicatat oleh Wali Kelas & Guru Pengampu saat KBM di madrasah"
+          icon={UserCheck}
+          statusText="Presensi Terverifikasi"
+          statusVariant="success"
+        />
+
+        {/* Read-Only Status Banner */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-border pb-3 bg-card p-4 rounded-xl shadow-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="font-mono text-xs font-bold">
+              🎓 {studentClass} • NISN: {studentNis}
+            </Badge>
+            <Badge className="bg-emerald-600 text-white font-bold flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-white" /> PRESENSI HARI INI: {todayStatus}
+            </Badge>
+          </div>
+
+          <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 bg-muted/40 px-3 py-1.5 rounded-lg border border-border">
+            <ShieldCheck className="h-4 w-4 text-emerald-500" /> Presensi Terintegrasi E-Rapor
+          </div>
+        </div>
+
+        {/* Info Banner */}
+        <div className="p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-xs text-blue-700 dark:text-blue-300 font-semibold flex items-center gap-2">
+          <span className="text-base">💡</span>
+          <span>Catatan: Siswa tidak melakukan presensi mandiri. Seluruh pencatatan presensi harian dilakukan secara resmi oleh Wali Kelas & Guru Pengampu saat KBM di kelas.</span>
+        </div>
+
+        {/* Summary Stats Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Card className="border-border bg-card shadow-xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
+                ✓
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium">Total Hadir</div>
+                <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
+                  {totalHadir} Hari ({pct}%)
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card shadow-xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
+                ℹ️
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium">Total Izin</div>
+                <div className="text-lg font-extrabold text-foreground">{totalIzin} Hari</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card shadow-xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+                🟡
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium">Total Sakit</div>
+                <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{totalSakit} Hari</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card shadow-xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400 grid place-items-center shrink-0 font-bold">
+                ✨
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium">Tanpa Keterangan</div>
+                <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
+                  {totalAlpa === 0 ? "0 Hari (Disiplin)" : `${totalAlpa} Hari`}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -354,9 +506,6 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <CalendarCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Presensi Harian & Kehadiran Siswa
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Pengelolaan Presensi Harian Rombel Binaan Wali Kelas & Rekapitulasi Terhubung WA Gateway MTsN 2 Cilacap.
-          </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -486,7 +635,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
             </div>
 
             {isLoading ? (
-              <div className="p-8 text-center text-xs text-muted-foreground">Memuat daftar siswa rombel binaan dari database MySQL...</div>
+              <div className="p-8 text-center text-xs text-muted-foreground">Memuat daftar siswa rombel binaan...</div>
             ) : filteredDailyStudents.length === 0 ? (
               <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2">
                 <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
@@ -623,6 +772,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                       <th className="py-3 px-4 text-center">Alpa</th>
                       <th className="py-3 px-4 text-center">% Kehadiran</th>
                       <th className="py-3 px-4 text-center">Status Presensi</th>
+                      <th className="py-3 px-4 text-center">Aksi WA</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -646,6 +796,29 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                             <Badge variant="outline" className="bg-muted/30 text-muted-foreground border-border font-medium text-[10px]">
                               {row.status}
                             </Badge>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {row.alpa > 0 || row.sakit > 0 || row.izin > 0 ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-[10px] font-bold gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                              onClick={() =>
+                                handleSendWaAlert({
+                                  name: row.name,
+                                  nisn: row.nisn,
+                                  class: row.class,
+                                  status: row.alpa > 0 ? `Alpa ${row.alpa}x` : row.sakit > 0 ? `Sakit ${row.sakit}x` : `Izin ${row.izin}x`,
+                                  parentWa: row.parentWa,
+                                  notes: `Rekap semester: Hadir ${row.hadir}x, Izin ${row.izin}x, Sakit ${row.sakit}x, Alpa ${row.alpa}x (${row.pct}%)`,
+                                })
+                              }
+                            >
+                              <Send className="h-3 w-3" /> WA Ortu
+                            </Button>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">-</span>
                           )}
                         </td>
                       </tr>

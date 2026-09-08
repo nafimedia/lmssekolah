@@ -68,9 +68,13 @@ export function RiwayatKbmSection() {
 
   const handleDeleteHistoryItem = async (id: string, topic: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus riwayat KBM "${topic}"?`)) {
-      setHistoryList((prev) => prev.filter((item) => item.id !== id));
-      await MysqlDataService.deleteJournal(id);
-      toast.success(`🗑️ Riwayat KBM "${topic}" berhasil dihapus dari Database!`);
+      try {
+        await MysqlDataService.deleteJournal(id);
+        setHistoryList((prev) => prev.filter((item) => item.id !== id));
+        toast.success(`🗑️ Riwayat KBM "${topic}" berhasil dihapus!`);
+      } catch (error) {
+        toast.error(`Gagal menghapus riwayat KBM "${topic}".`);
+      }
     }
   };
 
@@ -135,7 +139,7 @@ export function RiwayatKbmSection() {
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-muted-foreground text-xs">
                     <History className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                    Belum ada riwayat jurnal KBM yang tersimpan di Database.
+                    Belum ada riwayat jurnal KBM yang tercatat.
                   </td>
                 </tr>
               ) : (

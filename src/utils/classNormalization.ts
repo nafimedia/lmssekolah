@@ -82,3 +82,53 @@ export function formatClassForDisplay(
 export function normalizeRombelName(rawClass?: string | null): string {
   return formatClassForDisplay(rawClass, "rombel");
 }
+
+/**
+ * Resolves the assigned Rombel for a Wali Kelas based on real database tables / user attributes.
+ */
+export function resolveWaliKelasRombel(
+  user?: { full_name?: string; name?: string; nis_nip?: string; class_name?: string } | null,
+  masterRombels?: { code?: string; name?: string; wali_kelas?: string }[] | null,
+  format: "rombel" | "kelas" = "rombel"
+): string {
+  if (!user) return format === "kelas" ? "Kelas Binaan" : "Rombel 8A";
+
+  // 1. If user has explicit class_name in their profile/account
+  if (user.class_name && user.class_name !== "-" && user.class_name.trim() !== "") {
+    return formatClassForDisplay(user.class_name, format);
+  }
+
+  const rawName = (user.full_name || user.name || "").toLowerCase().trim();
+  const cleanTarget = rawName
+    .replace(/\b(s\.pd|m\.pd|s\.ag|m\.pd\.i|s\.p|h\.|hj\.|m\.si|drs|dra)\b/gi, "")
+    .replace(/[^a-z0-9]/gi, "");
+
+  // 2. Check against master_rombels if available
+  if (masterRombels && masterRombels.length > 0) {
+    const match = masterRombels.find((r) => {
+      const wali = (r.wali_kelas || "").toLowerCase().trim();
+      if (!wali) return false;
+      const cleanWali = wali
+        .replace(/\b(s\.pd|m\.pd|s\.ag|m\.pd\.i|s\.p|h\.|hj\.|m\.si|drs|dra)\b/gi, "")
+        .replace(/[^a-z0-9]/gi, "");
+      return (
+        cleanWali === cleanTarget ||
+        (cleanTarget.length >= 4 && cleanWali.includes(cleanTarget)) ||
+        (cleanWali.length >= 4 && cleanTarget.includes(cleanWali))
+      );
+    });
+    if (match) {
+      return formatClassForDisplay(match.code || match.name, format);
+    }
+  }
+
+  // 3. Fallback based on official assignment if master_rombels is loading
+  if (cleanTarget.includes("achmadmakmun")) return formatClassForDisplay("8B", format);
+  if (cleanTarget.includes("sobiyati")) return formatClassForDisplay("8A", format);
+  if (cleanTarget.includes("maulidia")) return formatClassForDisplay("7A", format);
+  if (cleanTarget.includes("rindang")) return formatClassForDisplay("7B", format);
+  if (cleanTarget.includes("novantya")) return formatClassForDisplay("9A", format);
+  if (cleanTarget.includes("indah")) return formatClassForDisplay("9B", format);
+
+  return format === "kelas" ? "Kelas Binaan" : "Rombel 8A";
+}

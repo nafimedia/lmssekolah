@@ -173,9 +173,9 @@ export function DaftarSiswaKelasTab({
                     </div>
                     <div className="text-[10px] text-muted-foreground font-mono">NISN: {s.nisn}</div>
                   </td>
-                  <td className="py-3 px-3 font-bold">{s.gender || "L"}</td>
-                  <td className="py-3 px-4 text-muted-foreground font-medium">{s.parentName || `Orang Tua ${s.name.split(" ")[0]}`}</td>
-                  <td className="py-3 px-3 text-center font-mono font-semibold text-foreground">{s.parentWa}</td>
+                  <td className="py-3 px-3 font-bold">{s.gender || "-"}</td>
+                  <td className="py-3 px-4 text-muted-foreground font-medium">{s.parentName || "-"}</td>
+                  <td className="py-3 px-3 text-center font-mono font-semibold text-foreground">{s.parentWa || "-"}</td>
                   <td className="py-3 px-3 text-center">
                     {s.hadirPct > 0 ? (
                       <Badge className="bg-emerald-600 text-white font-mono font-bold text-[11px]">

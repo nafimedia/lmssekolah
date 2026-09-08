@@ -35,18 +35,29 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
   const isKamad = activeRole === "kamad";
   const [activeTab, setActiveTab] = useState<"jurnal" | "presensi" | "materi" | "aktivitas" | "catatan_siswa" | "riwayat">("jurnal");
   const me = MysqlAuthService.getActiveUser();
-  const currentTeacherName = me?.full_name || userProfile?.name || "SOBIYATI, S.Pd";
+  const currentTeacherName = me?.full_name || userProfile?.name || "Guru Pengampu";
 
-  const allowedMapelNames = filterSubjectsForUser(INITIAL_MASTER_MAPEL.map((m) => m.name));
+  const [dbSubjects, setDbSubjects] = useState<string[]>([]);
+  useEffect(() => {
+    MysqlDataService.getSubjects().then((subs) => {
+      if (subs && subs.length > 0) {
+        setDbSubjects(subs.map((s: any) => s.name));
+      }
+    }).catch(console.error);
+  }, []);
+
+  const allMapelPool = dbSubjects.length > 0 ? dbSubjects : INITIAL_MASTER_MAPEL.map((m) => m.name);
+  const allowedMapelNames = filterSubjectsForUser(allMapelPool);
   const assignedSubjects = getTeacherAssignedSubjects();
   const allowedClasses = getTeacherAssignedClasses();
 
   const [activeRombel, setActiveRombel] = useState(allowedClasses[0] || "Kelas VII A");
-  const [activeMapel, setActiveMapel] = useState(assignedSubjects?.[0] || allowedMapelNames[0] || "Pendidikan Kewarganegaraan");
+  const [activeMapel, setActiveMapel] = useState(assignedSubjects?.[0] || allowedMapelNames[0] || "Bahasa Indonesia");
 
   const [journalList, setJournalList] = useState<any[]>([]);
 
   const [isAddJurnalOpen, setIsAddJurnalOpen] = useState(false);
+  const [kbmProgress, setKbmProgress] = useState({ isPresensiDone: false, isJurnalDone: false, presensiCountStr: "" });
 
   useEffect(() => {
     let isMounted = true;
@@ -128,7 +139,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
 
   const handleAddJurnal = (newEntry: { title: string; rombel: string; mapel: string; meeting: string; notes: string }) => {
     if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau KBM (Read-Only).");
+      toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       return;
     }
     const item = {
@@ -168,9 +179,6 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <DoorOpen className="h-6 w-6 text-primary" /> Ruang Kerja Mengajar Guru (KBM Live)
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Pusat kendali sesi mengajar real-time — presensi, jurnal, materi, aktivitas, dan catatan observasi siswa.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -204,18 +212,34 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
             <BookOpen className="h-4 w-4 text-amber-600 shrink-0" />
             <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Supervisi KBM. Memantau pelaksanaan KBM, jurnal mengajar, dan aktivitas siswa tanpa melakukan pengisian data.</span>
           </span>
-          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
+          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">SUPERVISI</Badge>
         </div>
       )}
 
-      {/* KBM Hari Ini Live Session Banner Card & Guided 3-Step Flow */}
-      <KbmHeaderBanner activeRombel={activeRombel} activeMapel={activeMapel} activeTab={activeTab} onSelectTab={setActiveTab} />
+      {/* KBM Hari Ini Live Session Banner Card */}
+      <KbmHeaderBanner
+        activeRombel={activeRombel}
+        activeMapel={activeMapel}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        onProgressChange={setKbmProgress}
+      />
 
-      {/* Navigation Work Tabs */}
+      {/* Navigation Work Tabs with Integrated Progress Badges */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80">
         {[
-          { id: "presensi", label: "Presensi Siswa", icon: UserCheck },
-          { id: "jurnal", label: "Jurnal KBM", icon: BookOpen },
+          {
+            id: "presensi",
+            label: "Presensi Siswa",
+            icon: UserCheck,
+            badge: kbmProgress.isPresensiDone ? "✓ Terisi" : null,
+          },
+          {
+            id: "jurnal",
+            label: "Jurnal KBM",
+            icon: BookOpen,
+            badge: kbmProgress.isJurnalDone ? "✓ Terisi" : null,
+          },
           { id: "materi", label: "Materi Pembelajaran", icon: Video },
           { id: "aktivitas", label: "Aktivitas & LKPD", icon: FileText },
           { id: "catatan_siswa", label: "Catatan Siswa", icon: ClipboardList },
@@ -231,6 +255,15 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
           >
             <t.icon className="h-4 w-4" />
             <span>{t.label}</span>
+            {t.badge && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold transition-all ${
+                activeTab === t.id
+                  ? "bg-white/20 text-white"
+                  : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+              }`}>
+                {t.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>

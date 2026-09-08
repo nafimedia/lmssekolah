@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, Award, Edit, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { MysqlDataService } from "@/services/mysqlDataService";
 
 interface KktpSkemaTabProps {
   isKamad?: boolean;
@@ -14,6 +15,22 @@ export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
   const [defaultKktp, setDefaultKktp] = useState<number>(75);
   const [isEditingKktp, setIsEditingKktp] = useState<boolean>(false);
   const [tempKktp, setTempKktp] = useState<string>("75");
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getKktpConfig()
+      .then((cfg) => {
+        if (!isMounted) return;
+        if (cfg && cfg.kktp_minimal) {
+          setDefaultKktp(cfg.kktp_minimal);
+          setTempKktp(String(cfg.kktp_minimal));
+        }
+      })
+      .catch((err) => console.warn("Failed to load KKTP config from MySQL:", err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [gradingScales] = useState([
     {
@@ -46,9 +63,9 @@ export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
     },
   ]);
 
-  const handleSaveKktp = () => {
+  const handleSaveKktp = async () => {
     if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data KKTP (Read-Only).");
+      toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       setIsEditingKktp(false);
       return;
     }
@@ -58,7 +75,21 @@ export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
     }
     setDefaultKktp(val);
     setIsEditingKktp(false);
-    toast.success(`⚡ KKTP Standar Akademik Madrasah berhasil diperbarui menjadi ${val}!`);
+
+    try {
+      await MysqlDataService.saveKktpConfig({
+        kktp_minimal: val,
+        bobot_formatif: 40,
+        bobot_sumatif: 60,
+        rentang_a: 90,
+        rentang_b: 80,
+        rentang_c: val,
+        updated_by: "Admin Akademik",
+      });
+      toast.success(`⚡ KKTP Standar Akademik Madrasah berhasil diperbarui menjadi ${val}!`);
+    } catch {
+      toast.error("Gagal menyimpan konfigurasi KKTP ke database.");
+    }
   };
 
   return (

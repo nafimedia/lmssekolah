@@ -69,9 +69,6 @@ export function PusatAsesmenModule({
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <ClipboardCheck className="h-6 w-6 text-primary" /> Pusat Asesmen & Penilaian Pembelajaran
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Reorganisasi modul asesmen Kurikulum Merdeka Kemenag: Formatif, Sumatif, Kuis Interaktif, Tugas Individu, Kelompok, & Tidak Terstruktur.
-            </p>
           </div>
         </div>
       )}
@@ -121,7 +118,7 @@ export function PusatAsesmenModule({
                       {isSubjectAllowedForUser("Al-Quran Hadits") ? (
                         <Badge className="bg-emerald-600 text-white cursor-pointer" onClick={() => toast.success("Edit Nilai Formatif 1 Tajwid")}>✏️ Edit Skor</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 font-bold">🔒 Read-Only (Guru Lain)</Badge>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border font-medium">🔒 Pengampu Lain</Badge>
                       )}
                     </td>
                   </tr>
@@ -134,7 +131,7 @@ export function PusatAsesmenModule({
                       {isSubjectAllowedForUser("Fikih") ? (
                         <Badge className="bg-blue-600 text-white cursor-pointer" onClick={() => toast.success("Edit Nilai Formatif 2 Fiqih")}>✏️ Edit Skor</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 font-bold">🔒 Read-Only (Guru Lain)</Badge>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border font-medium">🔒 Pengampu Lain</Badge>
                       )}
                     </td>
                   </tr>
@@ -178,7 +175,7 @@ export function PusatAsesmenModule({
                       {isSubjectAllowedForUser("Al-Quran Hadits") ? (
                         <Button size="sm" variant="ghost" className="text-xs text-primary font-bold">✏️ Input Skor →</Button>
                       ) : (
-                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 font-bold">🔒 Read-Only (Guru Lain)</Badge>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border font-medium">🔒 Pengampu Lain</Badge>
                       )}
                     </td>
                   </tr>

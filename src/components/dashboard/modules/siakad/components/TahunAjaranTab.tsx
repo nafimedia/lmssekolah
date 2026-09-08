@@ -27,7 +27,7 @@ export function TahunAjaranTab({ isKamad }: TahunAjaranTabProps) {
 
   const handleSetActive = (id: string, name: string) => {
     if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+      toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       return;
     }
     const updated = AcademicYearService.setActiveAcademicYear(id);
@@ -37,7 +37,7 @@ export function TahunAjaranTab({ isKamad }: TahunAjaranTabProps) {
 
   const handleSaveItem = (itemData: Omit<AcademicYearItem, "id"> & { id?: string }) => {
     if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+      toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       return;
     }
     const updated = AcademicYearService.saveAcademicYear(itemData);
@@ -47,7 +47,7 @@ export function TahunAjaranTab({ isKamad }: TahunAjaranTabProps) {
 
   const handleDeleteItem = (id: string, name: string) => {
     if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+      toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       return;
     }
     if (confirm(`Apakah Anda yakin ingin menghapus/mengarsipkan periode "${name}"?`)) {
@@ -59,7 +59,7 @@ export function TahunAjaranTab({ isKamad }: TahunAjaranTabProps) {
 
   const handleOpenAdd = () => {
     if (isKamad) {
-      toast.info("🏛️ Kepala Madrasah berada dalam Mode Monitoring (Read-Only).");
+      toast.info("🏛️ Kepala Madrasah berada dalam Mode Supervisi.");
       return;
     }
     setEditingItem(null);
@@ -68,7 +68,7 @@ export function TahunAjaranTab({ isKamad }: TahunAjaranTabProps) {
 
   const handleOpenEdit = (item: AcademicYearItem) => {
     if (isKamad) {
-      toast.info("🏛️ Kepala Madrasah berada dalam Mode Monitoring (Read-Only).");
+      toast.info("🏛️ Kepala Madrasah berada dalam Mode Supervisi.");
       return;
     }
     setEditingItem(item);

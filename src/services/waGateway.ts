@@ -15,19 +15,8 @@ export interface WaLogEntry extends WaPayload {
   status: "DELIVERED" | "SENT" | "FAILED";
 }
 
-// Fallback in-memory store for WhatsApp Logs
-const waLogsStore: WaLogEntry[] = [
-  {
-    id: "wa-101",
-    recipientPhone: "081234567890",
-    recipientName: "Wali ABIGAIL HASAN YUSUF PRAYOGA",
-    studentName: "ABIGAIL HASAN YUSUF PRAYOGA",
-    category: "AWARD_APRESIASI",
-    messageText: "Yth. Wali Siswa, Selamat! Ananda ABIGAIL HASAN YUSUF PRAYOGA (8A) telah menerima Lencana Apresiasi '⭐ Siswa Aktif & Responsif' dari SOBIYATI, S.Pd. Terima kasih atas dukungannya! - LMS MTsN 2 Cilacap",
-    sentAt: "2026-07-27 10:15 WIB",
-    status: "DELIVERED",
-  },
-];
+// In-memory buffer for recently dispatched WhatsApp notifications
+let waLogsBuffer: WaLogEntry[] = [];
 
 export const waGatewayService = {
   /**
@@ -43,7 +32,7 @@ export const waGatewayService = {
       status: "DELIVERED",
     };
 
-    waLogsStore.unshift(newLog);
+    waLogsBuffer.unshift(newLog);
 
     // Save to MySQL DB
     try {
@@ -59,17 +48,31 @@ export const waGatewayService = {
       console.warn("[WA Gateway DB Error]:", e);
     }
 
-    // WA Alert Toast Disabled per User Request
-    // toast.success(`📲 WhatsApp Sent to ${payload.recipientName} (${payload.recipientPhone})`);
-
     return newLog;
   },
 
   /**
-   * Ambil Log Riwayat Pengiriman WhatsApp Gateway
+   * Ambil Log Riwayat Pengiriman WhatsApp Gateway Riil dari MySQL
    */
-  getLogs(): WaLogEntry[] {
-    return [...waLogsStore];
+  async getLogs(): Promise<WaLogEntry[]> {
+    try {
+      const dbLogs = await MysqlDataService.getWaLogs();
+      if (dbLogs && dbLogs.length > 0) {
+        return dbLogs.map((item) => ({
+          id: String(item.id || Date.now()),
+          recipientPhone: item.phone,
+          recipientName: item.parent_name,
+          studentName: item.student_name,
+          category: (item.category as any) || "ABSENSI_ALPHA",
+          messageText: item.message,
+          sentAt: item.created_at ? new Date(item.created_at).toLocaleString("id-ID") : "Baru saja",
+          status: "DELIVERED",
+        }));
+      }
+      return [...waLogsBuffer];
+    } catch {
+      return [...waLogsBuffer];
+    }
   },
 
   buildAbsensiAlert(studentName: string, date: string, status: string): string {

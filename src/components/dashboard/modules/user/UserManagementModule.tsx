@@ -14,11 +14,10 @@ import { ResetPasswordDialog } from "./components/ResetPasswordDialog";
 import { DeleteUserDialog } from "./components/DeleteUserDialog";
 import { EditUserDialog, UserItem } from "./components/EditUserDialog";
 
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+function SectionHeader({ title }: { title: string; sub?: string }) {
   return (
     <div className="mb-6">
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      {sub && <p className="text-sm text-muted-foreground mt-1">{sub}</p>}
     </div>
   );
 }
@@ -79,9 +78,7 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
             let finalRoles: string[] =
               overrides[cleanEmail] || overrides[cleanId] || overrides[cleanNip] || [];
 
-            if (cleanEmail.includes("272005011001") || cleanEmail.includes("197002272005011001") || cleanEmail.includes("makmun") || (u.full_name || "").toLowerCase().includes("makmun") || (u.full_name || "").toLowerCase().includes("rosid")) {
-              finalRoles = ["admin_akademik", "walikelas", "guru"];
-            } else if (finalRoles.length === 0) {
+            if (finalRoles.length === 0) {
               const roleStr = u.role || "";
               if (roleStr && roleStr.includes(",")) {
                 finalRoles = roleStr.split(",").map((r) => r.trim());
@@ -139,9 +136,9 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
     // 2. Persist to MySQL database via backend server function
     const ok = await MysqlDataService.updateUserRole(userId, newRoles, userEmail, cleanNip);
     if (!ok) {
-      toast.warning("Role tersimpan di browser, tetapi gagal tersambung ke database MySQL.");
+      toast.warning("Peran tersimpan di browser, namun sinkronisasi server terganggu.");
     } else {
-      toast.success("Role pengguna berhasil diperbarui dan disimpan secara permanen!");
+      toast.success("Peran akun pengguna berhasil diperbarui!");
     }
 
     // 3. Update React UI state
@@ -158,12 +155,12 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
     if (userObj) {
       const exists = userObj.roles.includes(role);
       if (exists && userObj.roles.length <= 1) {
-        return toast.error("Pengguna harus memiliki minimal 1 role aktif!");
+        return toast.error("Pengguna harus memiliki minimal 1 peran aktif!");
       }
 
       const newRoles = exists ? userObj.roles.filter((r) => r !== role) : [...userObj.roles, role];
       handleSaveRoles(userId, userObj.email, newRoles);
-      toast.success(`Hak akses role ${role} berhasil diperbarui!`);
+      toast.success(`Hak akses peran ${role.replace("_", " ")} berhasil diperbarui!`);
     }
   };
 
@@ -173,14 +170,20 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
     const targetEmail = userToDelete.email;
     const targetName = userToDelete.full_name;
 
-    setUsersList((prev) => prev.filter((u) => u.id !== targetId));
     try {
-      await MysqlDataService.deleteUser(targetId, targetEmail);
-    } catch (err) {}
-
-    toast.success(`Akun pengguna ${targetName} (${targetEmail}) berhasil dihapus!`);
-    setIsDeleteModalOpen(false);
-    setUserToDelete(null);
+      const res = await MysqlDataService.deleteUser(targetId, targetEmail);
+      if (res) {
+        setUsersList((prev) => prev.filter((u) => u.id !== targetId));
+        toast.success(`Akun pengguna ${targetName} (${targetEmail}) berhasil dihapus!`);
+      } else {
+        toast.error(`Gagal menghapus akun ${targetName}: Anda tidak memiliki wewenang atau akun dilindungi.`);
+      }
+    } catch (err: any) {
+      toast.error(`Gagal menghapus akun: ${err?.message || "Kesalahan server"}`);
+    } finally {
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+    }
   };
 
   const siswaCount = usersList.filter((u) => u.roles.includes("siswa")).length;
@@ -242,9 +245,9 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold">
           <span className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-amber-600 shrink-0" />
-            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Read-Only. Kepala Madrasah memantau direktori user & wewenang role tanpa mengubah data.</span>
+            <span>🏛️ <strong>Mode Supervisi Kepala Madrasah</strong> — Memantau direktori pengguna & penugasan akun madrasah.</span>
           </span>
-          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
+          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-bold text-[10px]">SUPERVISI</Badge>
         </div>
       )}
 
@@ -327,7 +330,7 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
             <div>
               Menampilkan <strong className="text-foreground">{sortedFiltered.length}</strong> akun dari kelompok{" "}
               <strong className="text-foreground uppercase">
-                {activeGroup === "semua" ? "Semua User" : activeGroup === "siswa" ? "Siswa" : activeGroup === "guru" ? "Guru & Wali Kelas" : "Pejabat & Petugas Staf"}
+                {activeGroup === "semua" ? "Semua Akun" : activeGroup === "siswa" ? "Siswa" : activeGroup === "guru" ? "Guru & Wali Kelas" : "Pejabat & Petugas Staf"}
               </strong>
             </div>
             {search && (
@@ -373,7 +376,7 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
                   </th>
                   <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none" onClick={() => handleSort("role")}>
                     <div className="flex items-center gap-1.5">
-                      <span>Hak Akses (Role Aktif)</span>
+                      <span>Tugas & Peran Aktif</span>
                       {sortColumn === "role" ? (
                         sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
                       ) : (
@@ -381,7 +384,7 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
                       )}
                     </div>
                   </th>
-                  <th className="py-3 px-4 text-right">Aksi & Kontrol Akses</th>
+                  <th className="py-3 px-4 text-right">Pengaturan Akun</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -395,6 +398,10 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
                     activeSession?.role === "admin_akademik" ||
                     activeSession?.email?.toLowerCase() === "admin@mail.com" ||
                     activeSession?.email?.includes("admin");
+                  const canDeleteUser =
+                    activeSession?.role === "admin" ||
+                    activeSession?.role === "superadmin" ||
+                    activeSession?.email?.toLowerCase() === "admin@mail.com";
 
                   return (
                     <tr key={u.id} className="hover:bg-muted/30 transition">
@@ -448,9 +455,7 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
 
                       <td className="py-3 px-4 text-right">
                         {isKamad ? (
-                          <Badge variant="outline" className="text-[10px] font-mono text-amber-700 dark:text-amber-400 border-amber-500/40 bg-amber-500/10">
-                            👁️ READ-ONLY MONITORING
-                          </Badge>
+                          <span className="text-xs text-muted-foreground/50 font-mono pr-2 select-none">-</span>
                         ) : (
                           <div className="flex items-center justify-end gap-1.5 flex-wrap">
                             <Button
@@ -494,29 +499,31 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
                               </Button>
                             )}
 
-                            {isSuperAdmin || isSelf ? (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                disabled
-                                className="h-7 px-2.5 text-xs text-muted-foreground opacity-40 cursor-not-allowed"
-                                title={isSuperAdmin ? "Super Admin Utama dilindungi dari penghapusan" : "Tidak dapat menghapus akun sendiri"}
-                              >
-                                <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-500/30 gap-1"
-                                onClick={() => {
-                                  setUserToDelete(u);
-                                  setIsDeleteModalOpen(true);
-                                }}
-                                title="Hapus Akun Pengguna"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" /> Hapus
-                              </Button>
+                            {canDeleteUser && (
+                              isSuperAdmin || isSelf ? (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled
+                                  className="h-7 px-2.5 text-xs text-muted-foreground opacity-40 cursor-not-allowed"
+                                  title={isSuperAdmin ? "Super Admin Utama dilindungi dari penghapusan" : "Tidak dapat menghapus akun sendiri"}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-500/30 gap-1"
+                                  onClick={() => {
+                                    setUserToDelete(u);
+                                    setIsDeleteModalOpen(true);
+                                  }}
+                                  title="Hapus Akun Pengguna"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Hapus
+                                </Button>
+                              )
                             )}
                           </div>
                         )}

@@ -24,6 +24,9 @@ import {
   Send,
   Printer,
   Sparkles,
+  Settings,
+  Calendar,
+  MonitorCheck,
 } from "lucide-react";
 
 interface GlobalCommandPaletteProps {
@@ -33,6 +36,7 @@ interface GlobalCommandPaletteProps {
   handleSwitchRole: (role: string) => void;
   activeRole: string;
   assignedRoles: string[];
+  allowedMenuKeys?: string[];
   onOpenWaModal?: () => void;
 }
 
@@ -43,6 +47,7 @@ export function GlobalCommandPalette({
   handleSwitchRole,
   activeRole,
   assignedRoles,
+  allowedMenuKeys,
   onOpenWaModal,
 }: GlobalCommandPaletteProps) {
   useEffect(() => {
@@ -64,21 +69,35 @@ export function GlobalCommandPalette({
     { key: "beranda", label: "Beranda Ringkasan & Dashboard Utama", icon: Home, group: "Modul Utama" },
     { key: "kehadiran", label: activeRole === "siswa" ? "Kehadiran Saya" : "Presensi Pagi & Sesi Mengajar KBM", icon: UserCheck, group: "Modul Utama" },
     { key: "ruang_mengajar", label: "Ruang Mengajar, Jurnal & LKPD", icon: BookOpen, group: "Modul Utama" },
-    { key: "sdm_gtk", label: "SDM & Direktori Guru Staf MTsN 2", icon: Users, group: "Modul Utama" },
-    { key: "modul_ajar", label: "Perangkat Bahan Ajar & RPP Merdeka", icon: FileText, group: "Pembelajaran & Nilai" },
+    { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran & Modul Ajar", icon: BookOpen, group: "Pembelajaran & Nilai" },
+    { key: "modul_ajar", label: "Pustaka Bahan Ajar & Modul", icon: FileText, group: "Pembelajaran & Nilai" },
+    { key: "cbt", label: activeRole === "siswa" ? "CBT Ujian Online Saya" : "CBT Computer Based Test", icon: MonitorCheck, group: "Pembelajaran & Nilai" },
     { key: "nilai", label: activeRole === "siswa" ? "Rekap Nilai Saya" : "Penilaian & E-Rapor Kurikulum Merdeka", icon: Award, group: "Pembelajaran & Nilai" },
     { key: "asesmen", label: "Pusat Asesmen Formatif & Sumatif", icon: Sparkles, group: "Pembelajaran & Nilai" },
     { key: "tahfidz", label: activeRole === "siswa" ? "Setoran Tahfidz Saya" : "Setoran Hafalan & Rapor Tahfidz Qur'an", icon: BookMarked, group: "Pembelajaran & Nilai" },
     { key: "kokurikuler", label: "Kegiatan Kokurikuler & Projek P5-PPRA", icon: FolderKanban, group: "Pembelajaran & Nilai" },
     { key: "perpustakaan", label: "Perpustakaan Digital & E-Book Buku", icon: Library, group: "Layanan Sekolah" },
     { key: "pengumuman", label: "Pengumuman Resmi & Buletin Madrasah", icon: Bell, group: "Layanan Sekolah" },
+    { key: "agenda", label: "Agenda & Kalender Madrasah", icon: Calendar, group: "Layanan Sekolah" },
     { key: "asisten_ai", label: "Asisten AI & Tools Digital Pembelajaran", icon: Bot, group: "Layanan Sekolah" },
+    { key: "profil", label: "Profil Saya & Biodata Akun", icon: UserCheck, group: "Pengaturan" },
+    { key: "pengaturan", label: "Pengaturan Sistem & Database", icon: Settings, group: "Pengaturan" },
   ];
 
-  // Disallowed menu keys for student role
-  const studentDisallowedKeys = new Set(["ruang_mengajar", "sdm_gtk", "modul_ajar", "siakad", "manajemen_kelas", "users"]);
-  
+  // Restrict to allowedMenuKeys if provided; otherwise fallback to student filter
+  const allowedSet = React.useMemo(() => {
+    if (allowedMenuKeys && allowedMenuKeys.length > 0) {
+      return new Set(allowedMenuKeys);
+    }
+    return null;
+  }, [allowedMenuKeys]);
+
+  const studentDisallowedKeys = new Set(["ruang_mengajar", "sdm_gtk", "modul_ajar", "siakad", "manajemen_kelas", "users", "pengaturan"]);
+
   const navMenuItems = rawNavMenuItems.filter((item) => {
+    if (allowedSet) {
+      return allowedSet.has(item.key);
+    }
     if (activeRole === "siswa" && studentDisallowedKeys.has(item.key)) {
       return false;
     }

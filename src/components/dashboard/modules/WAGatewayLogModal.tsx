@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,25 +10,36 @@ import { waGatewayService, WaLogEntry } from "@/services/waGateway";
 import { WAGatewayConfigModule } from "./wagateway/WAGatewayConfigModule";
 
 export function WAGatewayLogModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [logs, setLogs] = useState<WaLogEntry[]>(waGatewayService.getLogs());
-  const [phone, setPhone] = useState("081234567890");
+  const [logs, setLogs] = useState<WaLogEntry[]>([]);
+  const [phone, setPhone] = useState("");
   const [name, setName] = useState("Wali Siswa");
-  const [student, setStudent] = useState("ABIGAIL HASAN YUSUF PRAYOGA");
+  const [student, setStudent] = useState("Siswa Madrasah");
   const [category, setCategory] = useState<"ABSENSI_ALPHA" | "WARNING_PEMBINAAN" | "AWARD_APRESIASI" | "ERAPOR_PUBLISHED">("ABSENSI_ALPHA");
   const [message, setMessage] = useState(
-    waGatewayService.buildAbsensiAlert("ABIGAIL HASAN YUSUF PRAYOGA", "Selasa, 28 Juli 2026", "Alpha (Belum Check-In)")
+    waGatewayService.buildAbsensiAlert("Siswa Madrasah", "Hari Ini", "Alpha (Belum Check-In)")
   );
+
+  const fetchLogs = async () => {
+    const list = await waGatewayService.getLogs();
+    setLogs(list);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchLogs();
+    }
+  }, [isOpen]);
 
   const handleCategoryChange = (cat: any) => {
     setCategory(cat);
     if (cat === "ABSENSI_ALPHA") {
-      setMessage(waGatewayService.buildAbsensiAlert(student, "Selasa, 28 Juli 2026", "Alpha"));
+      setMessage(waGatewayService.buildAbsensiAlert(student, "Hari Ini", "Alpha"));
     } else if (cat === "WARNING_PEMBINAAN") {
-      setMessage(waGatewayService.buildWarningAlert(student, "Belum Mengumpulkan LKPD 15", "Harap tuntas hari ini."));
+      setMessage(waGatewayService.buildWarningAlert(student, "Tugas Belum Selesai", "Harap tuntas hari ini."));
     } else if (cat === "AWARD_APRESIASI") {
-      setMessage(waGatewayService.buildAwardAlert(student, "⭐ Siswa Aktif", "Sangat aktif dalam KBM!"));
+      setMessage(waGatewayService.buildAwardAlert(student, "⭐ Siswa Berprestasi", "Sangat aktif dalam KBM!"));
     } else if (cat === "ERAPOR_PUBLISHED") {
-      setMessage(waGatewayService.buildERaporAlert(student, "Ganjil 2026/2027", 92.5));
+      setMessage(waGatewayService.buildERaporAlert(student, "Ganjil 2026/2027", 90));
     }
   };
 
@@ -41,7 +52,7 @@ export function WAGatewayLogModal({ isOpen, onClose }: { isOpen: boolean; onClos
       category,
       messageText: message,
     });
-    setLogs(waGatewayService.getLogs());
+    fetchLogs();
   };
 
   return (
@@ -115,7 +126,7 @@ export function WAGatewayLogModal({ isOpen, onClose }: { isOpen: boolean; onClos
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-xs text-foreground">📋 Log Riwayat Pengiriman Pesan (Real-time)</h3>
-                <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setLogs(waGatewayService.getLogs())}>
+                <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => fetchLogs()}>
                   <RefreshCw className="h-3.5 w-3.5 mr-1" /> Refresh Log
                 </Button>
               </div>

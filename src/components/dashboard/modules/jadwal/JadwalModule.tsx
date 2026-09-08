@@ -12,7 +12,7 @@ import { EditJadwalDialog } from "./components/EditJadwalDialog";
 import { PrintJadwalDialog } from "./components/PrintJadwalDialog";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
-import { isSameClass } from "@/utils/classNormalization";
+import { isSameClass, formatClassForDisplay, resolveWaliKelasRombel } from "@/utils/classNormalization";
 
 export function JadwalModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
@@ -25,34 +25,9 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
   const resolvedInitialRombel = useMemo(() => {
     if (isSiswa) {
       const raw = userProfile?.class_name || (me as any)?.class_name || "VIII-A";
-      const clean = raw.toUpperCase().replace("-", "").replace(/\s+/g, "");
-      if (clean.includes("7B") || clean.includes("VIIB")) return "Rombel 7B";
-      if (clean.includes("7A") || clean.includes("VIIA")) return "Rombel 7A";
-      if (clean.includes("8B") || clean.includes("VIIIB")) return "Rombel 8B";
-      if (clean.includes("8A") || clean.includes("VIIIA")) return "Rombel 8A";
-      if (clean.includes("9B") || clean.includes("IXB")) return "Rombel 9B";
-      if (clean.includes("9A") || clean.includes("IXA")) return "Rombel 9A";
+      return formatClassForDisplay(raw, "rombel");
     }
-
-    const cleanName = (me?.full_name || "").toLowerCase();
-    const cleanNip = (me?.nis_nip || "").trim();
-    const cleanAssigned = (userProfile?.assignedClass || (me as any)?.assigned_class || "").toUpperCase();
-
-    if (cleanAssigned.includes("7B")) return "Rombel 7B";
-    if (cleanAssigned.includes("7A")) return "Rombel 7A";
-    if (cleanAssigned.includes("8B")) return "Rombel 8B";
-    if (cleanAssigned.includes("8A")) return "Rombel 8A";
-    if (cleanAssigned.includes("9B")) return "Rombel 9B";
-    if (cleanAssigned.includes("9A")) return "Rombel 9A";
-
-    if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
-    if (cleanName.includes("misbah")) return "Rombel 7A";
-    if (cleanName.includes("endah")) return "Rombel 7B";
-    if (cleanName.includes("sobiyati")) return "Rombel 8A";
-    if (cleanName.includes("novantya")) return "Rombel 9A";
-    if (cleanName.includes("sayono")) return "Rombel 9B";
-
-    return "Rombel 8A";
+    return resolveWaliKelasRombel(me || userProfile, null, "rombel");
   }, [isSiswa, userProfile, me]);
 
   const resolvedInitialGrade = useMemo(() => {
@@ -167,13 +142,8 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              Jadwal Pelajaran {isGuru && <Badge className="bg-emerald-600 text-white font-bold text-xs">📖 Media Informasi Guru (Read-Only)</Badge>}
+              <CalendarClock className="h-6 w-6 text-primary" /> Jadwal Pelajaran
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {isGuru
-                ? "Informasi matriks jadwal pelajaran tatap muka dan alokasi ruang kelas MTsN 2 Cilacap."
-                : "Kelola jadwal pelajaran tatap muka dan alokasi ruang kelas."}
-            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
@@ -216,8 +186,8 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
 
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
             <span>📍 Menampilkan: <strong className="underline decoration-emerald-500 font-extrabold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})</span>
-            <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 text-[9px] font-bold shrink-0">
-              ✔ {jadwalList.length} Sesi MySQL
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs font-mono font-bold shrink-0">
+              {jadwalList.length} Sesi Pelajaran
             </Badge>
           </div>
         </div>
@@ -233,7 +203,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoadingJadwal ? (
           <div className="col-span-full py-12 text-center text-xs font-semibold text-muted-foreground">
-            ⏳ Memuat Jadwal Pelajaran KBM dari Database MySQL...
+            ⏳ Memuat jadwal pelajaran...
           </div>
         ) : (
           hariList.map((h) => {
@@ -244,46 +214,6 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
               return matchKelas && matchRombel;
             });
 
-            if (listForDay.length === 0 && isSiswa) {
-              const defaultMapels: Record<string, Array<{ jam: string; mapel: string; guru: string }>> = {
-                Senin: [
-                  { jam: "07:30 - 09:00", mapel: "Al Qur'an Hadis", guru: "AH. SYARIF HIDAYAH, S.Pd.I" },
-                  { jam: "09:15 - 10:45", mapel: "Bahasa Indonesia", guru: "SOBIYATI, S.Pd" },
-                  { jam: "11:00 - 12:30", mapel: "Matematika", guru: "SAYONO, S.Pd., M.Pd." },
-                ],
-                Selasa: [
-                  { jam: "07:30 - 09:00", mapel: "Bahasa Inggris", guru: "MISBAHUL MUNIR, S.Pd" },
-                  { jam: "09:15 - 10:45", mapel: "Fikih", guru: "CARYATI, S.Pd.I" },
-                  { jam: "11:00 - 12:30", mapel: "Ilmu Pengetahuan Alam", guru: "NOVANTYA KARTIKAWATI, S.Pd" },
-                ],
-                Rabu: [
-                  { jam: "07:30 - 09:00", mapel: "Akidah Akhlak", guru: "WAKHIBUN, S.Pd.I" },
-                  { jam: "09:15 - 10:45", mapel: "Sejarah Kebudayaan Islam", guru: "H. DASIRUN, S.Ag., M.Pd.I" },
-                  { jam: "11:00 - 12:30", mapel: "Bahasa Arab", guru: "ENDAH SUPRIHATIN, S.Pd" },
-                ],
-                Kamis: [
-                  { jam: "07:30 - 09:00", mapel: "Pendidikan Kewarganegaraan", guru: "MISBAH AHMAD DANI, S.Pd" },
-                  { jam: "09:15 - 10:45", mapel: "Informatika", guru: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd" },
-                ],
-                Jumat: [
-                  { jam: "07:30 - 09:00", mapel: "PJOK", guru: "TRIYONO, S.Pd" },
-                ],
-                Sabtu: [
-                  { jam: "07:30 - 09:00", mapel: "Seni Budaya & Bahasa Jawa", guru: "DRA. ENDAH SRI W" },
-                ],
-              };
-
-              const template = defaultMapels[h] || [];
-              listForDay = template.map((item, idx) => ({
-                id: `def-${h}-${idx}`,
-                hari: h,
-                jam: item.jam,
-                mapel: item.mapel,
-                tingkat: filterKelas,
-                rombel: filterRombel,
-                guru: item.guru,
-              }));
-            }
 
             return (
               <Card key={h} className="border-border shadow-xs">

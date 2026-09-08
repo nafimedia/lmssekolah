@@ -23,6 +23,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { CbtExamRow, CbtResultRow } from "@/services/mysqlServerFns";
 import { toast } from "sonner";
 
@@ -43,9 +44,10 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
   const [submitting, setSubmitting] = useState(false);
   const [quizFinishedResult, setQuizFinishedResult] = useState<{ score: number; correct: number; total: number } | null>(null);
 
-  const studentName = userProfile?.name || "Siswa MTsN 2 Cilacap";
-  const studentRombel = userProfile?.rombelName || userProfile?.className || "VIII A";
-  const studentEmail = userProfile?.email || "siswa@mtsn2cilacap.sch.id";
+  const me = MysqlAuthService.getActiveUser();
+  const studentName = me?.full_name || userProfile?.name || "Siswa MTsN 2 Cilacap";
+  const studentRombel = me?.class_name || userProfile?.class_name || userProfile?.rombelName || userProfile?.className || "VIII B";
+  const studentEmail = me?.email || userProfile?.email || "siswa@mtsn2cilacap.sch.id";
 
   const loadData = async () => {
     setLoading(true);
@@ -207,7 +209,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
       toast.success(`🎉 Kuis Selesai! Skor Anda: ${calculatedScore}/100`);
       loadData();
     } catch (e) {
-      toast.error("Gagal menyimpan hasil kuis ke MySQL DB.");
+      toast.error("Gagal menyimpan hasil kuis.");
     } finally {
       setSubmitting(false);
     }
@@ -322,7 +324,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
           {loading ? (
             <div className="p-12 text-center text-xs text-muted-foreground">
               <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-              Memuat data kuis dari server database MySQL...
+              Memuat data kuis...
             </div>
           ) : filteredExams.length === 0 ? (
             <div className="p-12 text-center space-y-2">
@@ -330,7 +332,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
               <div className="font-bold text-sm text-foreground">Belum Ada Kuis Interaktif Live Terdaftar</div>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {exams.length === 0
-                  ? "Database MySQL belum mencatat sesi kuis interaktif terdaftar. Kuis yang dipublikasikan oleh guru pengampu akan muncul di sini secara otomatis."
+                  ? "Belum ada sesi kuis interaktif yang dijadwalkan untuk rombel Anda. Kuis yang dipublikasikan oleh guru pengampu akan muncul di sini secara otomatis."
                   : "Tidak ada kuis yang sesuai dengan filter kategori ini."}
               </p>
             </div>
@@ -420,7 +422,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
 
                 <div>
                   <h3 className="text-xl font-extrabold text-foreground">Sesi Kuis Berhasil Diselesaikan!</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Hasil & skor kuis Anda telah dicatat secara permanen ke database MySQL.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Hasil & skor kuis Anda telah berhasil dicatat ke sistem penilaian.</p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 max-w-sm mx-auto space-y-1">

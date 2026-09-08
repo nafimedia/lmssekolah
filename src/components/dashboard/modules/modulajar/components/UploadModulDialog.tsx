@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 
 import { filterSubjectsForUser, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
+import { validateUploadedFile } from "@/lib/fileValidation";
+import { toast } from "sonner";
 
 interface UploadModulDialogProps {
   isOpen: boolean;
@@ -32,6 +34,19 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
   const handleModulFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const validation = validateUploadedFile(file.name, file.size, file.type, {
+        maxSizeMb: 25,
+        allowedExtensions: ["pdf", "doc", "docx"],
+      });
+
+      if (!validation.valid) {
+        toast.error(`⚠️ Berkas Ditolak: ${validation.error}`);
+        e.target.value = "";
+        setSelectedUploadFile(null);
+        setUploadedFileDataUrl("");
+        return;
+      }
+
       setSelectedUploadFile(file);
       const reader = new FileReader();
       reader.onload = (evt) => {
@@ -122,7 +137,7 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
               className="mt-1 text-xs cursor-pointer"
             />
             <p className="text-[10px] text-muted-foreground mt-1">
-              Format .PDF (Maksimal 15 MB). Jika tidak diunggah, sistem akan menggunakan templat PDF standar.
+              Format .PDF, .DOC, .DOCX (Maksimal 25 MB).
             </p>
           </div>
 

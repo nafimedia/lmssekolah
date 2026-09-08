@@ -7,15 +7,14 @@ import { Button } from "@/components/ui/button";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
-import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
+import { isSameClass, normalizeRombelName, resolveWaliKelasRombel } from "@/utils/classNormalization";
 
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+function SectionHeader({ title }: { title: string; sub?: string }) {
   return (
     <div className="mb-6 space-y-1">
       <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
         <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> {title}
       </h1>
-      {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
     </div>
   );
 }
@@ -48,19 +47,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
   const userSession = MysqlAuthService.getActiveUser();
   const rawClass = userProfile?.assignedClass || userProfile?.class_name || userProfile?.class || userSession?.class_name;
   
-  let binaanRombel = "Rombel 8A";
-  if (rawClass && rawClass !== "Semua" && rawClass !== "Semua Rombel") {
-    binaanRombel = normalizeRombelName(rawClass);
-  } else {
-    const name = (userSession?.full_name || userProfile?.name || "").toLowerCase();
-    const cleanNip = (userSession?.nis_nip || "").trim();
-    if (name.includes("achmad makmun") || cleanNip.includes("272005011001")) binaanRombel = "Rombel 8B";
-    else if (name.includes("sobiyati")) binaanRombel = "Rombel 8A";
-    else if (name.includes("novantya")) binaanRombel = "Rombel 9A";
-    else if (name.includes("indah nurrohmah")) binaanRombel = "Rombel 9B";
-    else if (name.includes("maulidia")) binaanRombel = "Rombel 7A";
-    else if (name.includes("rindang")) binaanRombel = "Rombel 7B";
-  }
+  const binaanRombel = resolveWaliKelasRombel(userSession || userProfile, null, "rombel");
 
   const defaultRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Rombel 8B");
 
@@ -299,7 +286,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
       <div className="space-y-6">
         <StudentHeaderBanner
           title="Progress Belajar Saya"
-          subtitle="Persentase penyelesaian modul KBM & ketuntasan Capaian Pembelajaran (CP) per mata pelajaran"
+          subtitle="Pemantauan persentase penyelesaian materi dan ketuntasan belajar per mata pelajaran"
           icon={TrendingUp}
           statusText="Perkembangan Pembelajaran Aktif"
           statusVariant="success"
@@ -331,7 +318,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
                       />
                     </div>
                     <div className="text-[11px] text-muted-foreground font-medium text-right">
-                      Target CP {x.cp}% dari 18 Pertemuan
+                      {x.cp}% materi semester telah diselesaikan
                     </div>
                   </div>
                 </CardContent>
@@ -355,8 +342,8 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
         }
         sub={
           isExecutive
-            ? "Dashboard Pengawasan Eksekutif Kepala Madrasah untuk Monitoring Capaian Pembelajaran & Submisi Tugas Seluruh Kelas"
-            : "Tracking Capaian Pembelajaran (CP) dan Kelengkapan Submisi Tugas Siswa"
+            ? "Monitoring capaian pembelajaran dan kelengkapan tugas siswa seluruh kelas"
+            : "Tracking capaian pembelajaran dan kelengkapan tugas siswa"
         }
       />
 
@@ -406,12 +393,6 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-
-              {isExecutive && (
-                <Badge variant="secondary" className="hidden sm:inline-flex bg-emerald-600/10 text-emerald-600 border border-emerald-500/30 px-3 py-1.5 font-bold text-xs">
-                  <Building2 className="h-3.5 w-3.5 mr-1" /> Monitoring Kamad
-                </Badge>
-              )}
             </div>
           </div>
         </Card>
@@ -585,7 +566,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
                 <div className="font-semibold text-foreground text-sm">
                   Belum Ada Siswa Terdaftar pada {selectedRombel === "ALL" ? "Filter Ini" : selectedRombel}
                 </div>
-                <p>Database saat ini tidak memiliki akun siswa terdaftar untuk filter ini.</p>
+                <p>Belum ada akun siswa terdaftar untuk kelas atau filter ini.</p>
               </div>
             ) : (
               <table className="w-full text-xs">
@@ -636,7 +617,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
               {isLoading ? (
                 <div className="p-8 text-center text-xs text-muted-foreground">Memuat data mata pelajaran...</div>
               ) : mapelBreakdown.length === 0 ? (
-                <div className="p-8 text-center text-xs text-muted-foreground">Belum ada mata pelajaran terdaftar pada database.</div>
+                <div className="p-8 text-center text-xs text-muted-foreground">Belum ada mata pelajaran yang terdaftar.</div>
               ) : (
                 <table className="w-full text-xs">
                   <thead className="bg-muted/50 text-muted-foreground font-bold text-left border-b border-border">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
@@ -28,6 +28,8 @@ import {
   Sparkles,
   Maximize2,
   Minimize2,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { CBTExam, CBTQuestion } from "@/types/cbt";
 
@@ -56,6 +58,32 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  const draftStorageKey = useMemo(() => {
+    if (!exam) return "";
+    return `cbt_draft_${exam.id || "cbt"}_${studentName.replace(/\s+/g, "_")}`;
+  }, [exam, studentName]);
+
+  // Network Status Event Listeners
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("📶 Koneksi internet kembali terhubung.");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning("⚠️ Koneksi internet terputus!", {
+        description: "Jawaban Anda tetap tersimpan aman di memori lokal browser.",
+      });
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -77,9 +105,37 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
 
-  // Initialize Timer and Reset State when exam opens
+  // Initialize Timer and Recover Draft / Reset State when exam opens
   useEffect(() => {
     if (isOpen && exam) {
+      // Check if a saved local draft exists for this exam
+      if (draftStorageKey) {
+        try {
+          const savedDraft = sessionStorage.getItem(draftStorageKey);
+          if (savedDraft) {
+            const parsed = JSON.parse(savedDraft);
+            if (parsed.userAnswers && Object.keys(parsed.userAnswers).length > 0) {
+              setUserAnswers(parsed.userAnswers);
+              if (parsed.raguState) setRaguState(parsed.raguState);
+              if (typeof parsed.timeLeftSeconds === "number" && parsed.timeLeftSeconds > 15) {
+                setTimeLeftSeconds(parsed.timeLeftSeconds);
+              }
+              if (typeof parsed.currentIndex === "number") {
+                setCurrentIndex(parsed.currentIndex);
+              }
+              setViolationCount(0);
+              toast.info("💾 Draft jawaban sebelumnya berhasil dipulihkan secara otomatis.");
+              if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+              }
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("Gagal memulihkan draft CBT:", e);
+        }
+      }
+
       setCurrentIndex(0);
       setUserAnswers({});
       setRaguState({});
@@ -90,7 +146,26 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
         document.documentElement.requestFullscreen().catch(() => {});
       }
     }
-  }, [isOpen, exam]);
+  }, [isOpen, exam, draftStorageKey]);
+
+  // Real-Time Auto-Save Draft to SessionStorage
+  useEffect(() => {
+    if (!isOpen || !draftStorageKey || Object.keys(userAnswers).length === 0) return;
+    try {
+      sessionStorage.setItem(
+        draftStorageKey,
+        JSON.stringify({
+          userAnswers,
+          raguState,
+          currentIndex,
+          timeLeftSeconds,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch (e) {
+      console.warn("Gagal menyimpan auto-save draft CBT:", e);
+    }
+  }, [isOpen, draftStorageKey, userAnswers, raguState, currentIndex, timeLeftSeconds]);
 
   // Real-Time Countdown Timer Ticker
   useEffect(() => {
@@ -244,9 +319,18 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     }
   };
 
+  const clearDraft = () => {
+    if (draftStorageKey) {
+      try {
+        sessionStorage.removeItem(draftStorageKey);
+      } catch {}
+    }
+  };
+
   const handleAutoSubmit = async () => {
     const results = calculateResults();
     await saveCbtResultToDb(results);
+    clearDraft();
     onExamComplete(results);
     onClose();
   };
@@ -255,7 +339,8 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     setIsConfirmSubmitOpen(false);
     const results = calculateResults();
     await saveCbtResultToDb(results);
-    toast.success("✅ CBT Ujian Berhasil Disubmit & Tersimpan ke MySQL!", {
+    clearDraft();
+    toast.success("✅ Ujian CBT Berhasil Dikumpulkan!", {
       description: `Nilai Anda: ${results.totalScore}/100 (${results.totalScore >= (exam.passingScore || 75) ? "LULUS KKM" : "REMEDIAL"})`,
     });
     onExamComplete(results);
@@ -281,8 +366,22 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
                 </div>
               </div>
 
-              {/* Timer, Fullscreen, & Violation Badges */}
+              {/* Timer, Fullscreen, Offline, & Violation Badges */}
               <div className="flex items-center gap-2">
+                {!isOnline && (
+                  <Badge
+                    variant="destructive"
+                    className="px-2.5 py-1 text-xs font-bold flex items-center gap-1 animate-pulse"
+                  >
+                    <WifiOff className="h-3.5 w-3.5" />
+                    Offline (Draft Tersimpan)
+                  </Badge>
+                )}
+
+                <div className="hidden sm:flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold px-2">
+                  <CheckCircle2 className="h-3 w-3" /> Auto-Save Aktif
+                </div>
+
                 <Button
                   size="sm"
                   variant="outline"

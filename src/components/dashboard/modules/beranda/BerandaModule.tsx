@@ -9,6 +9,7 @@ import { AdminDashboardView } from "./components/AdminDashboardView";
 import { WaliKelasDashboardView } from "./components/WaliKelasDashboardView";
 import { KamadDashboardView } from "./components/KamadDashboardView";
 import { AdminAkademikDashboardView } from "./components/AdminAkademikDashboardView";
+import { WakaDashboardView } from "./components/WakaDashboardView";
 
 interface BerandaModuleProps {
   activeRole: string;
@@ -37,7 +38,17 @@ export function BerandaModule({
   }, []);
 
   const activeUser = MysqlAuthService.getActiveUser();
-  const userName = activeUser?.full_name || userProfile?.name || userProfile?.full_name || "SOBIYATI, S.Pd";
+  const defaultFallbackName =
+    activeRole === "admin"
+      ? "Super Administrator"
+      : activeRole === "kamad"
+      ? "Kepala Madrasah"
+      : activeRole === "waka"
+      ? "Waka Kurikulum"
+      : activeRole === "siswa"
+      ? "Siswa Madrasah"
+      : "Pengguna LMS";
+  const userName = activeUser?.full_name || userProfile?.name || userProfile?.full_name || defaultFallbackName;
 
   const stats = {
     totalUsers: liveStats?.totalUsers ?? dbStats?.totalUsers ?? 0,
@@ -75,6 +86,19 @@ export function BerandaModule({
   if (role === "kamad" || role === "kepala_madrasah") {
     return (
       <KamadDashboardView
+        userName={userName}
+        role={role}
+        stats={stats}
+        currentDayName={currentDayName}
+        formattedTime={formattedTime}
+        setActiveTab={setActiveTab}
+      />
+    );
+  }
+
+  if (role === "waka") {
+    return (
+      <WakaDashboardView
         userName={userName}
         role={role}
         stats={stats}

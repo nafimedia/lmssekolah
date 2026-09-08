@@ -18,6 +18,8 @@ export interface UserRow {
   class_name?: string;
   subject_specialty?: string;
   role: string;
+  phone?: string;
+  address?: string;
 }
 
 export interface PengampuRow {
@@ -97,6 +99,11 @@ export interface AssignmentRow {
   due_date: string;
   description?: string;
   author_guru?: string;
+  attachment_url?: string;
+  questions_data?: string;
+  type?: string;
+  status?: string;
+  max_score?: number;
   created_at?: string;
 }
 
@@ -337,14 +344,38 @@ export interface HealthStatusResponse {
   uptimeSeconds: number;
   database: "connected" | "disconnected";
   version: string;
+  tableCount?: number;
+  dbSizeMb?: string;
+  activeUsersCount?: number;
 }
 
 export const getHealthStatusFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<HealthStatusResponse> => {
     try {
-      const { queryOne } = await import("@/lib/db");
+      const { query, queryOne } = await import("@/lib/db");
       const dbCheck = await queryOne<{ test: number }>("SELECT 1 as test");
       const isDbConnected = dbCheck?.test === 1;
+
+      let tableCount = 0;
+      let dbSizeMb = "0.00";
+      let activeUsersCount = 0;
+
+      if (isDbConnected) {
+        try {
+          const tables = await query<any[]>("SHOW TABLES");
+          tableCount = tables.length;
+          const sizeRes = await queryOne<{ size_mb: number }>(`
+            SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb 
+            FROM information_schema.TABLES 
+            WHERE table_schema = DATABASE()
+          `);
+          if (sizeRes?.size_mb) {
+            dbSizeMb = String(sizeRes.size_mb);
+          }
+          const userCountRes = await queryOne<{ count: number }>("SELECT COUNT(*) as count FROM users");
+          activeUsersCount = userCountRes?.count || 0;
+        } catch {}
+      }
 
       return {
         status: isDbConnected ? "ok" : "degraded",
@@ -352,6 +383,9 @@ export const getHealthStatusFn = createServerFn({ method: "GET" }).handler(
         uptimeSeconds: Math.floor(process.uptime ? process.uptime() : 0),
         database: isDbConnected ? "connected" : "disconnected",
         version: "2.5.0-production",
+        tableCount,
+        dbSizeMb,
+        activeUsersCount,
       };
     } catch (e) {
       return {
@@ -360,6 +394,9 @@ export const getHealthStatusFn = createServerFn({ method: "GET" }).handler(
         uptimeSeconds: Math.floor(process.uptime ? process.uptime() : 0),
         database: "disconnected",
         version: "2.5.0-production",
+        tableCount: 0,
+        dbSizeMb: "0.00",
+        activeUsersCount: 0,
       };
     }
   }
@@ -509,6 +546,21 @@ export interface P5ProjectRow {
   created_at?: string;
 }
 
+export interface P5SubmissionRow {
+  id?: number | string;
+  project_id?: number | string;
+  student_id: string;
+  student_name: string;
+  rombel: string;
+  title: string;
+  file_url: string;
+  file_name: string;
+  notes?: string;
+  score_status?: string; // 'MB' | 'SB' | 'BSH' | 'SAB'
+  feedback?: string;
+  submitted_at?: string;
+}
+
 // 1. STATS
 export const getDatabaseStatsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<DatabaseStats> => {
@@ -621,8 +673,31 @@ export const deleteUserFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<boolean> => {
     try {
       const session = await requireRole(["admin", "kamad"]);
-      const { execute } = await import("@/lib/db");
+      const { execute, queryOne } = await import("@/lib/db");
       const { createAuditLog } = await import("@/lib/logger");
+
+      const cleanEmail = (data.email || "").toLowerCase().trim();
+      const cleanId = (data.id || "").trim();
+
+      // Guard 1: Prevent self-delete
+      if ((cleanId && cleanId === session.id) || (cleanEmail && cleanEmail === (session.email || "").toLowerCase())) {
+        console.warn("[deleteUserFn] Menolak penghapusan akun sendiri oleh:", session.email);
+        return false;
+      }
+
+      // Guard 2: Prevent deleting default protected superadmin
+      if (cleanEmail === "admin@mail.com") {
+        console.warn("[deleteUserFn] Menolak penghapusan akun protected superadmin:", cleanEmail);
+        return false;
+      }
+
+      // Guard 3: Prevent deleting the last admin
+      const adminCountRes = await queryOne<{ count: number }>("SELECT COUNT(*) as count FROM users WHERE role LIKE '%admin%'");
+      const targetUser = await queryOne<{ role: string }>("SELECT role FROM users WHERE id = ? OR email = ?", [cleanId, cleanEmail]);
+      if (targetUser?.role?.includes("admin") && (adminCountRes?.count || 0) <= 1) {
+        console.warn("[deleteUserFn] Menolak penghapusan administrator terakhir!");
+        return false;
+      }
 
       if (data.id) {
         await execute("DELETE FROM users WHERE id = ? OR email = ?", [data.id, data.email || ""]);
@@ -719,6 +794,42 @@ export const updateUserProfileFn = createServerFn({ method: "POST" })
       return true;
     } catch (e) {
       console.error("[updateUserProfileFn Error]:", e);
+      return false;
+    }
+  });
+
+export const updateStudentParentContactFn = createServerFn({ method: "POST" })
+  .validator((data: { studentId: string; parentName?: string; parentWa?: string }) => data)
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      const sessionUser = await requireAuth();
+      const rLower = (sessionUser.role || "").toLowerCase();
+      const isAuthorized =
+        rLower === "admin" ||
+        rLower.includes("walikelas") ||
+        rLower.includes("waka") ||
+        rLower.includes("guru");
+
+      if (!isAuthorized) {
+        console.warn("[updateStudentParentContactFn Unauthorized]:", sessionUser.id);
+        return false;
+      }
+
+      const { execute } = await import("@/lib/db");
+      const cleanPhone = (data.parentWa || "").trim();
+      await execute("UPDATE users SET phone = ? WHERE id = ?", [cleanPhone || null, data.studentId]);
+
+      try {
+        await execute(
+          "INSERT INTO profiles (user_id, phone, tagline) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE phone = VALUES(phone), tagline = VALUES(tagline)",
+          [data.studentId, cleanPhone || null, data.parentName ? `Orang Tua: ${data.parentName}` : null]
+        );
+      } catch (pe) {
+        console.warn("[updateStudentParentContactFn profile warning]:", pe);
+      }
+      return true;
+    } catch (e) {
+      console.error("[updateStudentParentContactFn Error]:", e);
       return false;
     }
   });
@@ -1258,6 +1369,55 @@ export const saveCbtExamFn = createServerFn({ method: "POST" })
     }
   });
 
+export interface CbtQuestionDbRow {
+  id?: number | string;
+  exam_id?: number | string;
+  question_text: string;
+  option_a?: string;
+  option_b?: string;
+  option_c?: string;
+  option_d?: string;
+  correct_option: string;
+  points?: number;
+}
+
+export const getCbtQuestionsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CbtQuestionDbRow[]> => {
+    try {
+      const { query } = await import("@/lib/db");
+      return await query<CbtQuestionDbRow[]>("SELECT * FROM cbt_questions ORDER BY id DESC");
+    } catch {
+      return [];
+    }
+  }
+);
+
+export const saveCbtQuestionFn = createServerFn({ method: "POST" })
+  .validator((data: CbtQuestionDbRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: number | string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      const examId = data.exam_id || 1;
+      const res = await execute(
+        "INSERT INTO cbt_questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_option, points) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          examId,
+          data.question_text,
+          data.option_a || "",
+          data.option_b || "",
+          data.option_c || "",
+          data.option_d || "",
+          data.correct_option || "A",
+          data.points || 5,
+        ]
+      );
+      return { success: true, id: (res as any)?.insertId };
+    } catch (err: any) {
+      console.warn("saveCbtQuestionFn error:", err);
+      return { success: false };
+    }
+  });
+
 // 9. AUTHENTICATION & USER REGISTRATION (REAL MYSQL DATABASE)
 export interface AuthResponse {
   success: boolean;
@@ -1355,10 +1515,10 @@ export const authenticateUserServerFn = createServerFn({ method: "POST" })
         const DEFAULT_SEED_USERS: Record<string, { role: string; name: string; class?: string; nis_nip?: string; id_type?: string }> = {
           "admin@mail.com": { role: "admin", name: "Super Administrator MTsN 2", nis_nip: "198501012010011001", id_type: "NIP" },
           "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik,walikelas,guru", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", class: "VIII-B", nis_nip: "197205012005011001", id_type: "NIP" },
-          "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197905162006041020", id_type: "NIP" },
+          "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197203151998031002", id_type: "NIP" },
           "waka@mtsn2cilacap.sch.id": { role: "waka,guru", name: "ALI MANSUR, S.Pd", class: "VIII", nis_nip: "198302142023211010", id_type: "NIP" },
-          "walikelas@mtsn2cilacap.sch.id": { role: "walikelas,guru", name: "SOBIYATI, S.Pd", class: "IX-A", nis_nip: "197906142007102002", id_type: "NIP" },
-          "guru@mtsn2cilacap.sch.id": { role: "guru", name: "UMI KHAFSOH, S.Pd", class: "VIII-A", nis_nip: "197509192009012008", id_type: "NIP" },
+          "walikelas@mtsn2cilacap.sch.id": { role: "walikelas,guru", name: "SOBIYATI, S.Pd", class: "VIII-A", nis_nip: "197906142007102002", id_type: "NIP" },
+          "guru@mtsn2cilacap.sch.id": { role: "guru", name: "SOBIYATI, S.Pd", class: "VIII-A", nis_nip: "197906142007102002", id_type: "NIP" },
           "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class: "VIII-A", nis_nip: "0127790481", id_type: "NISN" },
         };
 
@@ -1751,7 +1911,28 @@ export const deleteMaterialFn = createServerFn({ method: "POST" })
   .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     try {
-      const { execute } = await import("@/lib/db");
+      const { query, execute } = await import("@/lib/db");
+
+      // Hapus file fisik di disk jika file_url mengarah ke /uploads/
+      const rows = await query<any[]>("SELECT file_url FROM materials WHERE id = ?", [data.id]);
+      if (rows && rows.length > 0 && rows[0].file_url) {
+        const fileUrl = rows[0].file_url as string;
+        if (typeof fileUrl === "string" && fileUrl.startsWith("/uploads/")) {
+          try {
+            const fs = await import("fs");
+            const path = await import("path");
+            const rel = fileUrl.replace(/^\/+/, "").replace(/\//g, path.sep);
+            const physicalPath = path.join(process.cwd(), "public", rel);
+            if (fs.existsSync(physicalPath)) {
+              fs.unlinkSync(physicalPath);
+              console.log(`[deleteMaterialFn] Berhasil menghapus file fisik: ${physicalPath}`);
+            }
+          } catch (fsErr) {
+            console.warn("[deleteMaterialFn] Gagal menghapus file fisik:", fsErr);
+          }
+        }
+      }
+
       await execute("DELETE FROM materials WHERE id = ?", [data.id]);
       return { success: true };
     } catch (e) {
@@ -1880,7 +2061,37 @@ export const deleteElibraryBookFn = createServerFn({ method: "POST" })
   .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     try {
-      const { execute } = await import("@/lib/db");
+      const { query, execute } = await import("@/lib/db");
+
+      // Cari file fisik url/media untuk dihapus dari folder disk
+      const rows = await query<any[]>("SELECT url, video_url, audio_url FROM elibrary_books WHERE id = ?", [data.id]);
+      if (rows && rows.length > 0) {
+        const book = rows[0];
+        const urlsToDelete = new Set<string>();
+        [book.url, book.video_url, book.audio_url].forEach((u) => {
+          if (typeof u === "string" && u.startsWith("/uploads/")) {
+            urlsToDelete.add(u);
+          }
+        });
+
+        if (urlsToDelete.size > 0) {
+          try {
+            const fs = await import("fs");
+            const path = await import("path");
+            for (const fileUrl of urlsToDelete) {
+              const rel = fileUrl.replace(/^\/+/, "").replace(/\//g, path.sep);
+              const physicalPath = path.join(process.cwd(), "public", rel);
+              if (fs.existsSync(physicalPath)) {
+                fs.unlinkSync(physicalPath);
+                console.log(`[deleteElibraryBookFn] Berhasil menghapus file fisik: ${physicalPath}`);
+              }
+            }
+          } catch (fsErr) {
+            console.warn("[deleteElibraryBookFn] Gagal menghapus file fisik:", fsErr);
+          }
+        }
+      }
+
       await execute("DELETE FROM elibrary_books WHERE id = ?", [data.id]);
       return { success: true };
     } catch (e) {
@@ -1908,6 +2119,13 @@ export const getHafalanFn = createServerFn({ method: "GET" }).handler(
           ustadz VARCHAR(255) NOT NULL,
           tgl VARCHAR(50) NOT NULL,
           murojaah VARCHAR(50),
+          jenis_setoran VARCHAR(50) DEFAULT 'ziyadah',
+          score_kelancaran INT DEFAULT 0,
+          score_tajwid INT DEFAULT 0,
+          score_makhraj INT DEFAULT 0,
+          score_fashahah INT DEFAULT 0,
+          score_adab INT DEFAULT 0,
+          notes TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
@@ -1938,12 +2156,19 @@ export const saveHafalanFn = createServerFn({ method: "POST" })
           ustadz VARCHAR(255) NOT NULL,
           tgl VARCHAR(50) NOT NULL,
           murojaah VARCHAR(50),
+          jenis_setoran VARCHAR(50) DEFAULT 'ziyadah',
+          score_kelancaran INT DEFAULT 0,
+          score_tajwid INT DEFAULT 0,
+          score_makhraj INT DEFAULT 0,
+          score_fashahah INT DEFAULT 0,
+          score_adab INT DEFAULT 0,
+          notes TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
       await execute(
-        `INSERT INTO tahfidz_hafalan (student_name, nisn, class_name, juz, surah, ayat, status, nilai, ustadz, tgl, murojaah)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO tahfidz_hafalan (student_name, nisn, class_name, juz, surah, ayat, status, nilai, ustadz, tgl, murojaah, jenis_setoran, score_kelancaran, score_tajwid, score_makhraj, score_fashahah, score_adab, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.student_name || null,
           data.nisn || null,
@@ -1956,6 +2181,13 @@ export const saveHafalanFn = createServerFn({ method: "POST" })
           data.ustadz,
           data.tgl,
           data.murojaah || null,
+          data.jenis_setoran || "ziyadah",
+          data.score_kelancaran || 0,
+          data.score_tajwid || 0,
+          data.score_makhraj || 0,
+          data.score_fashahah || 0,
+          data.score_adab || 0,
+          data.notes || null,
         ]
       );
       return { success: true };
@@ -2017,6 +2249,89 @@ export const saveP5ProjectFn = createServerFn({ method: "POST" })
       return { success: true };
     } catch (e) {
       console.error("[saveP5ProjectFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const getP5SubmissionsFn = createServerFn({ method: "GET" })
+  .validator((params: { student_id?: string; rombel?: string }) => params)
+  .handler(async ({ data }): Promise<P5SubmissionRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS p5_student_submissions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          project_id VARCHAR(64) DEFAULT NULL,
+          student_id VARCHAR(100) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          file_url VARCHAR(500) NOT NULL,
+          file_name VARCHAR(255) NOT NULL,
+          notes TEXT,
+          score_status VARCHAR(20) DEFAULT NULL,
+          feedback TEXT,
+          submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      if (data?.student_id) {
+        return await query<P5SubmissionRow[]>(
+          "SELECT * FROM p5_student_submissions WHERE student_id = ? ORDER BY id DESC",
+          [data.student_id]
+        );
+      }
+      if (data?.rombel) {
+        return await query<P5SubmissionRow[]>(
+          "SELECT * FROM p5_student_submissions WHERE rombel = ? ORDER BY id DESC",
+          [data.rombel]
+        );
+      }
+      return await query<P5SubmissionRow[]>("SELECT * FROM p5_student_submissions ORDER BY id DESC");
+    } catch (e) {
+      console.error("[getP5SubmissionsFn Error]:", e);
+      return [];
+    }
+  });
+
+export const saveP5SubmissionFn = createServerFn({ method: "POST" })
+  .validator((data: P5SubmissionRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: number }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS p5_student_submissions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          project_id VARCHAR(64) DEFAULT NULL,
+          student_id VARCHAR(100) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          rombel VARCHAR(50) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          file_url VARCHAR(500) NOT NULL,
+          file_name VARCHAR(255) NOT NULL,
+          notes TEXT,
+          score_status VARCHAR(20) DEFAULT NULL,
+          feedback TEXT,
+          submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const res = await execute(
+        `INSERT INTO p5_student_submissions (project_id, student_id, student_name, rombel, title, file_url, file_name, notes, score_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.project_id || null,
+          data.student_id,
+          data.student_name,
+          data.rombel,
+          data.title,
+          data.file_url,
+          data.file_name,
+          data.notes || "",
+          data.score_status || null,
+        ]
+      );
+      return { success: true, id: res.insertId };
+    } catch (e) {
+      console.error("[saveP5SubmissionFn Error]:", e);
       return { success: false };
     }
   });
@@ -2287,9 +2602,9 @@ export const getSubmissionsFn = createServerFn({ method: "GET" }).handler(
 
 export const saveSubmissionFn = createServerFn({ method: "POST" })
   .validator((data: SubmissionRow) => data)
-  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string; file_url?: string }> => {
     try {
-      const { execute } = await import("@/lib/db");
+      const { execute, query } = await import("@/lib/db");
       await execute(`
         CREATE TABLE IF NOT EXISTS assignment_submissions (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -2305,23 +2620,126 @@ export const saveSubmissionFn = createServerFn({ method: "POST" })
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
-      const res: any = await execute(
-        `INSERT INTO assignment_submissions (assignment_id, user_id, student_name, rombel, file_url, notes, score, feedback)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          data.assignment_id,
-          data.user_id,
-          data.student_name,
-          data.rombel,
-          data.file_url || "",
-          data.notes || "",
-          data.score || 0,
-          data.feedback || "",
-        ]
+
+      let finalFileUrl = data.file_url || "";
+
+      // Simpan berkas fisik ke File Server Disk jika berupa Base64 Data URL
+      if (finalFileUrl && finalFileUrl.startsWith("data:")) {
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          const uploadDir = path.join(process.cwd(), "public", "uploads", "submissions");
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+
+          const mimeMatch = finalFileUrl.match(/^data:([a-zA-Z0-9/.-]+);base64,/);
+          const mimeType = mimeMatch ? mimeMatch[1] : "application/pdf";
+          let ext = "pdf";
+          if (mimeType.includes("word") || mimeType.includes("docx")) ext = "docx";
+          else if (mimeType.includes("msword") || mimeType.includes("doc")) ext = "doc";
+          else if (mimeType.includes("jpeg") || mimeType.includes("jpg")) ext = "jpg";
+          else if (mimeType.includes("png")) ext = "png";
+
+          const base64Data = finalFileUrl.split(";base64,").pop();
+          if (base64Data) {
+            const cleanStudent = (data.student_name || "siswa").replace(/[^a-zA-Z0-9]/g, "_");
+            const uniqueFileName = `${Date.now()}_${cleanStudent}_tugas_${data.assignment_id}.${ext}`;
+            const physicalPath = path.join(uploadDir, uniqueFileName);
+            fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
+            finalFileUrl = `/uploads/submissions/${uniqueFileName}`;
+            console.log(`[saveSubmissionFn] Berkas fisik submisi tugas siswa disimpan di: ${physicalPath}`);
+          }
+        } catch (fsErr) {
+          console.warn("[saveSubmissionFn File Save Warning]:", fsErr);
+        }
+      }
+
+      // Cek apakah siswa sudah memiliki catatan pengumpulan untuk tugas ini
+      const existing: any[] = await query(
+        "SELECT id, file_url FROM assignment_submissions WHERE assignment_id = ? AND (user_id = ? OR student_name = ?)",
+        [data.assignment_id, data.user_id, data.student_name]
       );
-      return { success: true, id: String(res.insertId || "") };
+
+      // Jika berkas lama diganti atau dihapus, bersihkan berkas fisik lama dari disk server
+      if (existing.length > 0 && existing[0].file_url && existing[0].file_url !== finalFileUrl) {
+        if (existing[0].file_url.startsWith("/uploads/submissions/")) {
+          try {
+            const fs = await import("fs");
+            const path = await import("path");
+            const oldFilePath = path.join(process.cwd(), "public", existing[0].file_url.replace(/^\//, ""));
+            if (fs.existsSync(oldFilePath)) {
+              fs.unlinkSync(oldFilePath);
+              console.log(`[saveSubmissionFn] Berkas fisik lama dihapus dari disk: ${oldFilePath}`);
+            }
+          } catch (delErr) {
+            console.warn("[saveSubmissionFn Delete Old File Warning]:", delErr);
+          }
+        }
+      }
+
+      let resId = "";
+      if (existing.length > 0) {
+        await execute(
+          `UPDATE assignment_submissions 
+           SET file_url = ?, notes = ?, submitted_at = CURRENT_TIMESTAMP 
+           WHERE id = ?`,
+          [finalFileUrl, data.notes || "", existing[0].id]
+        );
+        resId = String(existing[0].id);
+      } else {
+        const res: any = await execute(
+          `INSERT INTO assignment_submissions (assignment_id, user_id, student_name, rombel, file_url, notes, score, feedback)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            data.assignment_id,
+            data.user_id,
+            data.student_name,
+            data.rombel,
+            finalFileUrl,
+            data.notes || "",
+            data.score || 0,
+            data.feedback || "",
+          ]
+        );
+        resId = String(res.insertId || "");
+      }
+
+      return { success: true, id: resId, file_url: finalFileUrl };
     } catch (e) {
       console.error("[saveSubmissionFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteSubmissionFileFn = createServerFn({ method: "POST" })
+  .validator((data: { assignment_id: string; user_id: string; student_name: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute, query } = await import("@/lib/db");
+      const existing: any[] = await query(
+        "SELECT id, file_url FROM assignment_submissions WHERE assignment_id = ? AND (user_id = ? OR student_name = ?)",
+        [data.assignment_id, data.user_id, data.student_name]
+      );
+      if (existing.length > 0 && existing[0].file_url) {
+        if (existing[0].file_url.startsWith("/uploads/submissions/")) {
+          try {
+            const fs = await import("fs");
+            const path = await import("path");
+            const oldFilePath = path.join(process.cwd(), "public", existing[0].file_url.replace(/^\//, ""));
+            if (fs.existsSync(oldFilePath)) {
+              fs.unlinkSync(oldFilePath);
+              console.log(`[deleteSubmissionFileFn] Berkas fisik dihapus dari disk: ${oldFilePath}`);
+            }
+          } catch (delErr) {
+            console.warn("[deleteSubmissionFileFn Delete File Warning]:", delErr);
+          }
+        }
+        await execute("UPDATE assignment_submissions SET file_url = '' WHERE id = ?", [existing[0].id]);
+      }
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteSubmissionFileFn Error]:", e);
       return { success: false };
     }
   });
@@ -2965,7 +3383,7 @@ export const saveKbmPresensiBatchFn = createServerFn({ method: "POST" })
 
       for (const item of data.records) {
         const nis = item.student_nis || item.student_name;
-        const teacherName = item.guru_name || sessionUser.full_name || "SOBIYATI, S.Pd";
+        const teacherName = item.guru_name || sessionUser.full_name || "Guru Pengampu";
         const status = item.status || "HADIR";
         const notes = item.notes || "";
 
@@ -3199,6 +3617,7 @@ export interface LkpdActivityRow {
   attachment_url?: string;
   submission_type?: string;
   quiz_data?: string;
+  questions_data?: string;
   created_at?: string;
 }
 
@@ -3239,6 +3658,7 @@ async function ensureLkpdSchema(execute: any) {
         attachment_url TEXT,
         submission_type VARCHAR(100) DEFAULT 'TEXT_AND_FILE',
         quiz_data LONGTEXT,
+        questions_data LONGTEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
@@ -3256,6 +3676,9 @@ async function ensureLkpdSchema(execute: any) {
     }
     if (!colNames.has("quiz_data")) {
       await execute("ALTER TABLE lkpd_activities ADD COLUMN quiz_data LONGTEXT").catch(() => {});
+    }
+    if (!colNames.has("questions_data")) {
+      await execute("ALTER TABLE lkpd_activities ADD COLUMN questions_data LONGTEXT").catch(() => {});
     }
     await execute(`
       CREATE TABLE IF NOT EXISTS lkpd_discussions (
@@ -3316,9 +3739,36 @@ export const saveLkpdActivityFn = createServerFn({ method: "POST" })
       await authorizeSubjectAccessServer(data.mapel);
       const { execute } = await import("@/lib/db");
       await ensureLkpdSchema(execute);
+
+      let finalAttachmentUrl = data.attachment_url || "";
+
+      // Simpan berkas fisik ke File Server Disk jika berupa Base64 Data URL
+      if (finalAttachmentUrl && finalAttachmentUrl.startsWith("data:")) {
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          const uploadDir = path.join(process.cwd(), "public", "uploads", "lkpd");
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          const base64Data = finalAttachmentUrl.split(";base64,").pop();
+          if (base64Data) {
+            const rawFileName = `${data.title || "LKPD"}.pdf`;
+            const cleanFileName = rawFileName.replace(/[^a-zA-Z0-9_.-]/g, "_");
+            const uniqueFileName = `${Date.now()}_${cleanFileName}`;
+            const physicalPath = path.join(uploadDir, uniqueFileName);
+            fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
+            finalAttachmentUrl = `/uploads/lkpd/${uniqueFileName}`;
+            console.log(`[saveLkpdActivityFn] Physical LKPD file saved to: ${physicalPath}`);
+          }
+        } catch (fsErr) {
+          console.warn("[saveLkpdActivityFn File Save Warning]:", fsErr);
+        }
+      }
+
       const res: any = await execute(
-        `INSERT INTO lkpd_activities (rombel, mapel, teacher_name, title, type, instructions, due_date, max_score, status, attachment_url, submission_type, quiz_data)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO lkpd_activities (rombel, mapel, teacher_name, title, type, instructions, due_date, max_score, status, attachment_url, submission_type, quiz_data, questions_data)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.rombel,
           data.mapel,
@@ -3329,14 +3779,51 @@ export const saveLkpdActivityFn = createServerFn({ method: "POST" })
           data.due_date,
           data.max_score || 100,
           data.status || "AKTIF",
-          data.attachment_url || "",
+          finalAttachmentUrl,
           data.submission_type || "TEXT_AND_FILE",
           data.quiz_data || "",
+          data.questions_data || "",
         ]
       );
       return { success: true, id: String(res?.insertId || Date.now()) };
     } catch (e) {
       console.error("[saveLkpdActivityFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const deleteLkpdActivityFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string | number }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+
+      // Cari file fisik lampiran di disk server jika ada
+      const rows = await query<any[]>("SELECT attachment_url FROM lkpd_activities WHERE id = ?", [data.id]);
+      if (rows && rows.length > 0 && rows[0].attachment_url) {
+        const fileUrl = rows[0].attachment_url as string;
+        if (typeof fileUrl === "string" && fileUrl.startsWith("/uploads/")) {
+          try {
+            const fs = await import("fs");
+            const path = await import("path");
+            const rel = fileUrl.replace(/^\/+/, "").replace(/\//g, path.sep);
+            const physicalPath = path.join(process.cwd(), "public", rel);
+            if (fs.existsSync(physicalPath)) {
+              fs.unlinkSync(physicalPath);
+              console.log(`[deleteLkpdActivityFn] Berhasil menghapus file fisik LKPD: ${physicalPath}`);
+            }
+          } catch (fsErr) {
+            console.warn("[deleteLkpdActivityFn] Gagal menghapus file fisik:", fsErr);
+          }
+        }
+      }
+
+      await execute("DELETE FROM lkpd_activities WHERE id = ?", [data.id]);
+      await execute("DELETE FROM lkpd_grades WHERE activity_id = ?", [data.id]);
+      await execute("DELETE FROM lkpd_discussions WHERE activity_id = ?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteLkpdActivityFn Error]:", e);
       return { success: false };
     }
   });
@@ -3370,6 +3857,33 @@ export const getLkpdGradesFn = createServerFn({ method: "POST" })
       return [];
     }
   });
+
+export const getAllLkpdGradesFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<LkpdGradeRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS lkpd_grades (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          activity_id VARCHAR(100) NOT NULL,
+          student_id VARCHAR(100),
+          student_nisn VARCHAR(100) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          status VARCHAR(50) DEFAULT 'BELUM_MENGUMPULKAN',
+          score VARCHAR(20) DEFAULT '',
+          feedback TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      const rows = await query<LkpdGradeRow[]>("SELECT * FROM lkpd_grades ORDER BY id DESC");
+      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.error("[getAllLkpdGradesFn Error]:", e);
+      return [];
+    }
+  }
+);
 
 export const saveLkpdGradesBatchFn = createServerFn({ method: "POST" })
   .validator((data: { activity_id: string; grades: LkpdGradeRow[] }) => data)
@@ -3804,4 +4318,367 @@ export const getJadwalPelajaranFn = createServerFn({ method: "GET" }).handler(
   }
 );
 
+export const exportDatabaseBackupFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ success: boolean; sql?: string; filename?: string; error?: string }> => {
+    try {
+      const { query } = await import("@/lib/db");
+      const tablesRaw = await query<any[]>("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'");
+      if (!tablesRaw || tablesRaw.length === 0) {
+        return { success: false, error: "Tidak ada tabel yang ditemukan pada database." };
+      }
 
+      const tableKey = Object.keys(tablesRaw[0])[0];
+      const tableNames = tablesRaw.map((t) => t[tableKey]);
+
+      const now = new Date();
+      const dateStamp = now.toISOString().replace(/T/, "_").replace(/\..+/, "").replace(/[-:]/g, "");
+      const filename = `backup_lms_mtsn2_${dateStamp}.sql`;
+
+      let sqlDump = `-- ========================================================\n`;
+      sqlDump += `-- Backup Database LMS MTs Negeri 2 Cilacap\n`;
+      sqlDump += `-- Waktu Pembuatan: ${now.toLocaleString("id-ID")}\n`;
+      sqlDump += `-- Sistem Basis Data: MySQL (InnoDB / utf8mb4)\n`;
+      sqlDump += `-- ========================================================\n\n`;
+      sqlDump += `SET FOREIGN_KEY_CHECKS = 0;\n`;
+      sqlDump += `SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";\n`;
+      sqlDump += `SET time_zone = "+00:00";\n\n`;
+
+      for (const table of tableNames) {
+        // DDL: CREATE TABLE
+        const createTableRaw = await query<any[]>(`SHOW CREATE TABLE \`${table}\``);
+        if (createTableRaw && createTableRaw.length > 0) {
+          const createSql = createTableRaw[0]["Create Table"];
+          sqlDump += `-- --------------------------------------------------------\n`;
+          sqlDump += `-- Struktur Tabel: \`${table}\`\n`;
+          sqlDump += `-- --------------------------------------------------------\n`;
+          sqlDump += `DROP TABLE IF EXISTS \`${table}\`;\n`;
+          sqlDump += `${createSql};\n\n`;
+        }
+
+        // DML: INSERT INTO data
+        const rows = await query<any[]>(`SELECT * FROM \`${table}\``);
+        if (rows && rows.length > 0) {
+          sqlDump += `-- Data untuk Tabel: \`${table}\` (${rows.length} baris)\n`;
+          const columns = Object.keys(rows[0]);
+          const colsEscaped = columns.map((c) => `\`${c}\``).join(", ");
+
+          // Insert in chunks of 50
+          const chunkSize = 50;
+          for (let i = 0; i < rows.length; i += chunkSize) {
+            const chunk = rows.slice(i, i + chunkSize);
+            const valuesSql = chunk
+              .map((row) => {
+                const vals = columns.map((col) => {
+                  const v = row[col];
+                  if (v === null || v === undefined) return "NULL";
+                  if (typeof v === "number") return v;
+                  if (typeof v === "boolean") return v ? 1 : 0;
+                  if (v instanceof Date) return `'${v.toISOString().slice(0, 19).replace("T", " ")}'`;
+                  const str = String(v)
+                    .replace(/\\/g, "\\\\")
+                    .replace(/'/g, "\\'")
+                    .replace(/\n/g, "\\n")
+                    .replace(/\r/g, "\\r");
+                  return `'${str}'`;
+                });
+                return `(${vals.join(", ")})`;
+              })
+              .join(",\n");
+
+            sqlDump += `INSERT INTO \`${table}\` (${colsEscaped}) VALUES\n${valuesSql};\n`;
+          }
+          sqlDump += `\n`;
+        }
+      }
+
+      sqlDump += `SET FOREIGN_KEY_CHECKS = 1;\n`;
+      sqlDump += `-- [Akhir Berkas Backup LMS MTsN 2 Cilacap]\n`;
+
+      return { success: true, sql: sqlDump, filename };
+    } catch (err: any) {
+      console.error("[exportDatabaseBackupFn Error]:", err);
+      return { success: false, error: err?.message || "Gagal membuat dump database." };
+    }
+  }
+);
+
+export const restoreDatabaseBackupFn = createServerFn({ method: "POST" })
+  .validator((data: { sql: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message?: string; executedCount?: number; error?: string }> => {
+    try {
+      const session = await requireRole(["admin"]);
+      const { createAuditLog } = await import("@/lib/logger");
+      const { execute } = await import("@/lib/db");
+
+      if (!data.sql || typeof data.sql !== "string" || data.sql.trim().length === 0) {
+        return { success: false, error: "Berkas SQL kosong atau tidak valid." };
+      }
+
+      if (!data.sql.includes("CREATE TABLE") && !data.sql.includes("INSERT INTO") && !data.sql.includes("TABLE")) {
+        return { success: false, error: "Format berkas tidak dikenali sebagai cadangan SQL LMS." };
+      }
+
+      const statements = data.sql
+        .replace(/\r\n/g, "\n")
+        .split(/;\s*\n/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0 && !s.startsWith("--") && !s.startsWith("/*"));
+
+      await execute("SET FOREIGN_KEY_CHECKS = 0;");
+      let executedCount = 0;
+
+      for (const statement of statements) {
+        const cleanStatement = statement
+          .split("\n")
+          .filter((line) => !line.trim().startsWith("--"))
+          .join("\n")
+          .trim();
+
+        if (cleanStatement) {
+          try {
+            await execute(cleanStatement);
+            executedCount++;
+          } catch (stmtErr: any) {
+            console.warn("[restoreDatabaseBackup statement warning]:", stmtErr?.message?.slice(0, 100));
+          }
+        }
+      }
+
+      await execute("SET FOREIGN_KEY_CHECKS = 1;");
+
+      await createAuditLog({
+        userId: session.id,
+        action: "RESTORE_DATABASE",
+        module: "Database Maintenance",
+        target: `Dipulihkan ${executedCount} perintah SQL`,
+        result: "SUCCESS",
+      });
+
+      return {
+        success: true,
+        message: `Database berhasil dipulihkan! ${executedCount} perintah SQL berhasil dijalankan.`,
+        executedCount,
+      };
+    } catch (err: any) {
+      console.error("[restoreDatabaseBackupFn Error]:", err);
+      return { success: false, error: err?.message || "Gagal memproses pemulihan database." };
+    }
+  });
+
+// 29. EXECUTIVE METRICS UNTUK KEPALA MADRASAH (KAMAD) & WAKA
+export interface KamadExecutiveMetrics {
+  nilaiRombel: { rombel: string; avg: number; status: string; color: string }[];
+  presensiSiswa: { label: string; percentage: number; count: string; color: string }[];
+  presensiGuru: { label: string; percentage: number; count: string; color: string }[];
+  supervisiWaka: {
+    totalMaterials: number;
+    verifiedCount: number;
+    pendingCount: number;
+    revisionCount: number;
+    percentage: number;
+  };
+}
+
+export const getKamadExecutiveMetricsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<KamadExecutiveMetrics> => {
+    try {
+      const { query } = await import("@/lib/db");
+
+      // 1. Ambil seluruh Rombel aktif
+      const rombelRows = (await query<{ name: string }[]>("SELECT name FROM master_rombels ORDER BY name ASC")) || [];
+      const rombels = rombelRows.length > 0
+        ? rombelRows.map(r => r.name)
+        : ["VII A", "VII B", "VIII A", "VIII B", "IX A", "IX B"];
+
+      // 2. Ambil nilai riil dari assignment_submissions, lkpd_grades, cbt_exam_results
+      const assignScores = (await query<{ rombel: string; avg_score: number }[]>(`
+        SELECT rombel, AVG(score) as avg_score
+        FROM assignment_submissions
+        WHERE score > 0
+        GROUP BY rombel
+      `)) || [];
+
+      const lkpdScores = (await query<{ rombel: string; avg_score: number }[]>(`
+        SELECT rombel, AVG(score) as avg_score
+        FROM lkpd_grades
+        WHERE score > 0
+        GROUP BY rombel
+      `)) || [];
+
+      const cbtScores = (await query<{ rombel: string; avg_score: number }[]>(`
+        SELECT rombel, AVG(score) as avg_score
+        FROM cbt_exam_results
+        WHERE score > 0
+        GROUP BY rombel
+      `)) || [];
+
+      const nilaiRombel = rombels.map((rombelName, idx) => {
+        const cleanName = rombelName.replace("Rombel", "").replace("Kelas", "").trim();
+        const aMatch = assignScores.find(s => s.rombel && (s.rombel.includes(cleanName) || cleanName.includes(s.rombel)));
+        const lMatch = lkpdScores.find(s => s.rombel && (s.rombel.includes(cleanName) || cleanName.includes(s.rombel)));
+        const cMatch = cbtScores.find(s => s.rombel && (s.rombel.includes(cleanName) || cleanName.includes(s.rombel)));
+
+        const validScores: number[] = [];
+        if (aMatch && aMatch.avg_score) validScores.push(Number(aMatch.avg_score));
+        if (lMatch && lMatch.avg_score) validScores.push(Number(lMatch.avg_score));
+        if (cMatch && cMatch.avg_score) validScores.push(Number(cMatch.avg_score));
+
+        let avgVal = validScores.length > 0
+          ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
+          : 0;
+
+        // Jika belum ada nilai di rombel tertentu, tampilkan 0 secara jujur
+        return {
+          rombel: rombelName.startsWith("Rombel") ? rombelName : `Rombel ${rombelName}`,
+          avg: avgVal,
+          status: avgVal >= 85 ? "Tuntas Mumtaz" : avgVal >= 75 ? "Tuntas KKM" : "Dalam Proses",
+          color: idx % 2 === 0 ? "bg-emerald-500" : "bg-teal-500",
+        };
+      });
+
+      // 3. Ambil data Presensi Siswa dari daily_presensi
+      const presensiRows = (await query<{ status: string; count: number }[]>(`
+        SELECT status, COUNT(*) as count
+        FROM daily_presensi
+        GROUP BY status
+      `)) || [];
+
+      const totalPresensi = presensiRows.reduce((acc, curr) => acc + Number(curr.count || 0), 0);
+      const hadirRow = presensiRows.find(p => p.status?.toUpperCase() === "HADIR");
+      const izinRow = presensiRows.find(p => p.status?.toUpperCase() === "IZIN");
+      const sakitRow = presensiRows.find(p => p.status?.toUpperCase() === "SAKIT");
+      const alpaRow = presensiRows.find(p => p.status?.toUpperCase() === "ALPA");
+
+      const hadirCount = hadirRow ? Number(hadirRow.count) : 0;
+      const izinCount = izinRow ? Number(izinRow.count) : 0;
+      const sakitCount = sakitRow ? Number(sakitRow.count) : 0;
+      const alpaCount = alpaRow ? Number(alpaRow.count) : 0;
+
+      const hadirPct = totalPresensi > 0 ? Math.round((hadirCount / totalPresensi) * 100) : 0;
+      const izinPct = totalPresensi > 0 ? Math.round((izinCount / totalPresensi) * 100) : 0;
+      const sakitPct = totalPresensi > 0 ? Math.round((sakitCount / totalPresensi) * 100) : 0;
+      const alpaPct = totalPresensi > 0 ? Math.round((alpaCount / totalPresensi) * 100) : 0;
+
+      const presensiSiswa = totalPresensi > 0 ? [
+        { label: "Hadir KBM", percentage: hadirPct, count: `${hadirCount} Siswa`, color: "bg-emerald-500" },
+        { label: "Izin / Dispensasi", percentage: izinPct, count: `${izinCount} Siswa`, color: "bg-blue-500" },
+        { label: "Sakit", percentage: sakitPct, count: `${sakitCount} Siswa`, color: "bg-amber-500" },
+        { label: "Alpa / Tanpa Ket.", percentage: alpaPct, count: `${alpaCount} Siswa`, color: "bg-rose-500" },
+      ] : [];
+
+      // 4. Ambil data Kehadiran Guru & GTK dari jurnal_mengajar & gtk_leaves
+      const teachers = (await query<{ id: string }[]>("SELECT id FROM users WHERE role NOT IN ('siswa', 'admin')")) || [];
+      const totalTeachers = teachers.length;
+
+      const journalsToday = (await query<{ count: number }[]>(`
+        SELECT COUNT(DISTINCT guru_name) as count
+        FROM jurnal_mengajar
+      `)) || [];
+      const teacherHadir = journalsToday[0]?.count || 0;
+
+      const leavesToday = (await query<{ count: number }[]>(`
+        SELECT COUNT(*) as count
+        FROM gtk_leaves
+        WHERE status = 'Disetujui'
+      `)) || [];
+      const teacherDinas = leavesToday[0]?.count || 0;
+
+      const teacherHadirPct = totalTeachers > 0 ? Math.round((teacherHadir / totalTeachers) * 100) : 0;
+      const teacherDinasPct = totalTeachers > 0 ? Math.round((teacherDinas / totalTeachers) * 100) : 0;
+
+      const presensiGuru = totalTeachers > 0 ? [
+        { label: "Hadir Mengajar KBM", percentage: teacherHadirPct, count: `${teacherHadir} Guru`, color: "bg-emerald-600" },
+        { label: "Tugas Luar / Dinas", percentage: teacherDinasPct, count: `${teacherDinas} Guru`, color: "bg-blue-600" },
+      ] : [];
+
+      // 5. Data Supervisi Perangkat Pembelajaran oleh Waka
+      const materials = (await query<{ status: string }[]>("SELECT status FROM materials")) || [];
+      const totalMaterials = materials.length;
+      const verifiedCount = materials.filter(m => m.status === "Terverifikasi Waka" || m.status === "Disahkan Waka Kurikulum").length;
+      const revisionCount = materials.filter(m => m.status === "Perlu Revisi").length;
+      const pendingCount = Math.max(0, totalMaterials - verifiedCount - revisionCount);
+      const percentage = totalMaterials > 0 ? Math.round((verifiedCount / totalMaterials) * 100) : 0;
+
+      return {
+        nilaiRombel,
+        presensiSiswa,
+        presensiGuru,
+        supervisiWaka: {
+          totalMaterials,
+          verifiedCount,
+          pendingCount,
+          revisionCount,
+          percentage,
+        },
+      };
+    } catch (err) {
+      console.error("[getKamadExecutiveMetricsFn Error]:", err);
+      return {
+        nilaiRombel: [],
+        presensiSiswa: [],
+        presensiGuru: [],
+        supervisiWaka: {
+          totalMaterials: 0,
+          verifiedCount: 0,
+          pendingCount: 0,
+          revisionCount: 0,
+          percentage: 0,
+        },
+      };
+    }
+  }
+);
+
+// 36. USER AVATAR UPLOAD & REMOVE (PHYSICAL FILE SYSTEM)
+export const uploadUserAvatarFn = createServerFn({ method: "POST" })
+  .validator((data: { userId: string; dataUrl: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; avatarUrl: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      let finalAvatarUrl = "";
+      if (data.dataUrl && data.dataUrl.startsWith("data:")) {
+        const fs = await import("fs");
+        const path = await import("path");
+        const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars");
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const ext = data.dataUrl.includes("image/png") ? "png" : data.dataUrl.includes("image/webp") ? "webp" : "jpg";
+        const base64Data = data.dataUrl.split(";base64,").pop();
+        if (base64Data) {
+          const cleanId = (data.userId || "user").replace(/[^a-zA-Z0-9_-]/g, "_");
+          const uniqueFileName = `avatar_${cleanId}_${Date.now()}.${ext}`;
+          const physicalPath = path.join(uploadDir, uniqueFileName);
+          fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
+          finalAvatarUrl = `/uploads/avatars/${uniqueFileName}`;
+          console.log(`[uploadUserAvatarFn] Saved avatar to disk: ${physicalPath}`);
+        }
+      } else {
+        finalAvatarUrl = data.dataUrl;
+      }
+
+      if (finalAvatarUrl) {
+        await execute(
+          "UPDATE users SET avatar_url = ? WHERE id = ? OR email = ?",
+          [finalAvatarUrl, data.userId, data.userId]
+        );
+      }
+      return { success: true, avatarUrl: finalAvatarUrl };
+    } catch (e) {
+      console.error("[uploadUserAvatarFn Error]:", e);
+      return { success: false, avatarUrl: "" };
+    }
+  });
+
+export const removeUserAvatarFn = createServerFn({ method: "POST" })
+  .validator((data: { userId: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("UPDATE users SET avatar_url = NULL WHERE id = ? OR email = ?", [data.userId, data.userId]);
+      return { success: true };
+    } catch (e) {
+      console.error("[removeUserAvatarFn Error]:", e);
+      return { success: false };
+    }
+  });

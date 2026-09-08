@@ -61,6 +61,11 @@ export const QURAN_JUZ_29_SURAHS: SurahMeta[] = [
   { number: 77, name: "المرسلات", latin: "Al-Mursalat", translation: "Malaikat-Malaikat Yang Diutus", numberOfAyah: 50, juz: 29 },
 ];
 
+export const QURAN_JUZ_1_SURAHS: SurahMeta[] = [
+  { number: 1, name: "الفاتحة", latin: "Al-Fatihah", translation: "Pembukaan", numberOfAyah: 7, juz: 1 },
+  { number: 2, name: "البقرة", latin: "Al-Baqarah (1-141)", translation: "Sapi Betina (Juz 1)", numberOfAyah: 141, juz: 1 },
+];
+
 export const TAHFIDZ_GRADE_TARGETS = {
   VII: {
     targetJuz: "Juz 30",
@@ -84,6 +89,58 @@ export const TAHFIDZ_GRADE_TARGETS = {
     description: "Target Kelas IX: Murojaah Umum Juz 29-30 & Ziyadah Surah Pilihan",
   },
 };
+
+export function getGradeLevel(classNameOrRombel?: string): "VII" | "VIII" | "IX" {
+  if (!classNameOrRombel) return "VIII";
+  const upper = classNameOrRombel.toUpperCase();
+  if (upper.includes("VIII") || upper.includes("8") || upper.includes("ROMBEL 8")) {
+    return "VIII";
+  }
+  if (upper.includes("IX") || upper.includes("9") || upper.includes("ROMBEL 9")) {
+    return "IX";
+  }
+  if (upper.includes("VII") || upper.includes("7") || upper.includes("ROMBEL 7")) {
+    return "VII";
+  }
+  return "VIII";
+}
+
+export function getTahfidzTarget(classNameOrRombel?: string, selectedJuz?: string) {
+  const grade = getGradeLevel(classNameOrRombel);
+  const baseTarget = TAHFIDZ_GRADE_TARGETS[grade];
+
+  if (!selectedJuz || selectedJuz === baseTarget.targetJuz) {
+    return baseTarget;
+  }
+
+  if (selectedJuz === "Juz 30") {
+    return {
+      targetJuz: "Juz 30",
+      targetSurahStart: "An-Naba'",
+      targetSurahEnd: "An-Nas",
+      totalSurah: 37,
+      description: `Target Hafal & Mutqin Juz 30 (An-Naba' s.d. An-Nas) • ${grade === "VII" ? "Kurikulum Inti Kelas VII" : "Murojaah / Pengayaan"}`,
+    };
+  } else if (selectedJuz === "Juz 29") {
+    return {
+      targetJuz: "Juz 29",
+      targetSurahStart: "Al-Mulk",
+      targetSurahEnd: "Al-Mursalat",
+      totalSurah: 11,
+      description: `Target Hafal & Mutqin Juz 29 (Al-Mulk s.d. Al-Mursalat) • ${grade === "VIII" ? "Kurikulum Inti Kelas VIII" : "Pengayaan Jenjang"}`,
+    };
+  } else if (selectedJuz === "Juz 1") {
+    return {
+      targetJuz: "Juz 1",
+      targetSurahStart: "Al-Fatihah",
+      targetSurahEnd: "Al-Baqarah (1-141)",
+      totalSurah: 2,
+      description: `Target Hafal & Mutqin Juz 1 (Al-Fatihah & Al-Baqarah 1-141) • ${grade === "IX" ? "Kurikulum Inti Kelas IX" : "Ziyadah Tingkat Lanjut"}`,
+    };
+  }
+
+  return baseTarget;
+}
 
 export function calculateFinalScore(
   kelancaran: number,

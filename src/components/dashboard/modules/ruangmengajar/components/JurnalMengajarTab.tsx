@@ -40,7 +40,7 @@ export function JurnalMengajarTab({
             <BookOpen className="h-10 w-10 text-muted-foreground/40 mx-auto" />
             <h4 className="font-bold text-xs text-foreground">Belum Ada Catatan Jurnal KBM Sesi Ini</h4>
             <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
-              Belum ada jurnal mengajar tersimpan di database untuk {activeRombel} ({activeMapel}). Klik tombol <strong>"Tulis Jurnal KBM Sesi Ini"</strong> di atas untuk mencatat jurnal baru.
+              Belum ada jurnal mengajar untuk {activeRombel} ({activeMapel}). Klik tombol <strong>"Tulis Jurnal KBM Sesi Ini"</strong> di atas untuk mencatat jurnal baru.
             </p>
           </div>
         ) : (

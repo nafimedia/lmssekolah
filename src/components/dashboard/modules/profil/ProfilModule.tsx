@@ -16,11 +16,10 @@ interface ProfilModuleProps {
   activeRole?: string;
 }
 
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+function SectionHeader({ title }: { title: string; sub?: string }) {
   return (
     <div className="mb-6">
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      {sub && <p className="text-sm text-muted-foreground mt-1">{sub}</p>}
     </div>
   );
 }
@@ -34,14 +33,15 @@ export function ProfilModule({
   const [updateNotification, setUpdateNotification] = useState<string | null>(null);
 
   // Form states for biodata
-  const [name, setName] = useState(userProfile?.name || "H. SOLIHUN, S.Pd., M.Si");
-  const [nipNis, setNipNis] = useState(userProfile?.nipNis || "197203151998031002");
-  const [email, setEmail] = useState(userProfile?.email || "kamad@mtsn2cilacap.sch.id");
-  const [phone, setPhone] = useState(userProfile?.phone || "081234567890");
-  const [address, setAddress] = useState(userProfile?.address || "Jl. Raya Cilacap No. 12, Karangpucung");
-  const [tagline, setTagline] = useState(userProfile?.tagline || "Meningkatkan Kualitas & Prestasi Madrasah MTsN 2 Cilacap 🚀");
-  const [classNameState, setClassNameState] = useState(userProfile?.className || "-");
-  const [rombelName, setRombelName] = useState(userProfile?.rombelName || "-");
+  const activeUserInit = MysqlAuthService.getActiveUser();
+  const [name, setName] = useState(userProfile?.name || activeUserInit?.full_name || "");
+  const [nipNis, setNipNis] = useState(userProfile?.nipNis || activeUserInit?.nis_nip || "");
+  const [email, setEmail] = useState(userProfile?.email || activeUserInit?.email || "");
+  const [phone, setPhone] = useState(userProfile?.phone || activeUserInit?.phone || "");
+  const [address, setAddress] = useState(userProfile?.address || activeUserInit?.address || "");
+  const [tagline, setTagline] = useState(userProfile?.tagline || "Belajar, Berprestasi, dan Berakhlakul Karimah 🚀");
+  const [classNameState, setClassNameState] = useState(userProfile?.className || activeUserInit?.class_name || "-");
+  const [rombelName, setRombelName] = useState(userProfile?.rombelName || activeUserInit?.class_name || "-");
   const [waliKelas, setWaliKelas] = useState(userProfile?.waliKelas || "-");
 
   // Avatar upload states
@@ -81,22 +81,18 @@ export function ProfilModule({
       } catch (e) {}
     }
 
-    const currentEmail = activeUser?.email || userProfile?.email || "kamad@mtsn2cilacap.sch.id";
-    const userBio = savedBio[currentEmail.toLowerCase()] || {};
+    const currentEmail = activeUser?.email || userProfile?.email || "";
+    const userBio = currentEmail ? (savedBio[currentEmail.toLowerCase()] || {}) : {};
 
-    let resolvedName = userBio.name || userProfile?.name || activeUser?.full_name || "H. SOLIHUN, S.Pd., M.Si";
-    if (currentEmail === "kamad@mtsn2cilacap.sch.id" || resolvedName.includes("Hidayatullah") || activeRole === "kamad") {
-      resolvedName = "H. SOLIHUN, S.Pd., M.Si";
-    }
-
+    const resolvedName = userBio.name || userProfile?.name || activeUser?.full_name || "";
     setName(resolvedName);
-    setEmail(userBio.email || userProfile?.email || activeUser?.email || "kamad@mtsn2cilacap.sch.id");
-    setNipNis(userBio.nipNis || userProfile?.nipNis || activeUser?.nis_nip || "197203151998031002");
-    setPhone(userBio.phone || userProfile?.phone || "081234567890");
-    setAddress(userBio.address || userProfile?.address || "Jl. Raya Cilacap No. 12, Karangpucung");
-    setTagline(userBio.tagline || userProfile?.tagline || "Meningkatkan Kualitas & Prestasi Madrasah MTsN 2 Cilacap 🚀");
-    setClassNameState(userBio.className || userProfile?.className || "-");
-    setRombelName(userBio.rombelName || userProfile?.rombelName || "-");
+    setEmail(userBio.email || userProfile?.email || activeUser?.email || "");
+    setNipNis(userBio.nipNis || userProfile?.nipNis || activeUser?.nis_nip || "");
+    setPhone(userBio.phone || userProfile?.phone || activeUser?.phone || "");
+    setAddress(userBio.address || userProfile?.address || activeUser?.address || "");
+    setTagline(userBio.tagline || userProfile?.tagline || "Belajar, Berprestasi, dan Berakhlakul Karimah 🚀");
+    setClassNameState(userBio.className || userProfile?.className || activeUser?.class_name || "-");
+    setRombelName(userBio.rombelName || userProfile?.rombelName || activeUser?.class_name || "-");
     setWaliKelas(userBio.waliKelas || userProfile?.waliKelas || "-");
   }, [userProfile]);
 
@@ -164,17 +160,19 @@ export function ProfilModule({
         className: classNameState,
       });
 
-      await MysqlDataService.saveWaLog({
-        parent_name: name.trim(),
-        phone: phone.trim() || "081234567890",
-        student_name: name.trim(),
-        category: "UPDATE PROFIL",
-        message: `[NOTIFIKASI AKTIVITAS USER]: Profil & email akun ${name.trim()} (${email.trim()}) berhasil diperbarui pada ${new Date().toLocaleTimeString("id-ID")} WIB.`,
-        status: "TERKIRIM",
-      }).catch(() => {});
+      if (phone.trim()) {
+        await MysqlDataService.saveWaLog({
+          parent_name: name.trim(),
+          phone: phone.trim(),
+          student_name: name.trim(),
+          category: "UPDATE PROFIL",
+          message: `[NOTIFIKASI AKTIVITAS USER]: Profil & email akun ${name.trim()} (${email.trim()}) berhasil diperbarui pada ${new Date().toLocaleTimeString("id-ID")} WIB.`,
+          status: "TERKIRIM",
+        }).catch(() => {});
+      }
     } catch (e) {}
 
-    const successMsg = `🎉 Pembaruan Berhasil! Data profil & email Anda (${email.trim()}) telah diperbarui secara permanen ke sistem MySQL.`;
+    const successMsg = `🎉 Pembaruan Berhasil! Data profil & email Anda (${email.trim()}) telah berhasil diperbarui.`;
     setUpdateNotification(successMsg);
 
     toast.success("✅ Perubahan Profil & Email Berhasil Disimpan!", {
@@ -198,31 +196,54 @@ export function ProfilModule({
     reader.readAsDataURL(file);
   };
 
-  const handleSaveAvatar = () => {
+  const handleSaveAvatar = async () => {
     if (!previewAvatar) return toast.error("Belum ada foto yang dipilih!");
+
+    const currentUser = MysqlAuthService.getActiveUser();
+    let finalUrl = previewAvatar;
+
+    if (currentUser?.id) {
+      try {
+        const uploadRes = await MysqlDataService.uploadUserAvatar(currentUser.id, previewAvatar);
+        if (uploadRes.success && uploadRes.avatarUrl) {
+          finalUrl = uploadRes.avatarUrl;
+        }
+      } catch (err) {
+        console.warn("Upload avatar to disk failed:", err);
+      }
+    }
 
     setUserProfile?.((prev: any) => ({
       ...prev,
-      avatarUrl: previewAvatar,
+      avatarUrl: finalUrl,
     }));
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("lms_user_avatar", previewAvatar);
-      const currentUser = MysqlAuthService.getActiveUser();
+      localStorage.setItem("lms_user_avatar", finalUrl);
       if (currentUser) {
         MysqlAuthService.setActiveUser({
           ...currentUser,
-          avatar_url: previewAvatar,
+          avatar_url: finalUrl,
         });
       }
     }
 
-    setUpdateNotification("📸 Foto Profil Avatar Anda berhasil diperbarui dan aktif di seluruh sistem LMS!");
-    toast.success("📸 Foto Profil Avatar Berhasil Diperbarui & Disimpan!");
+    setUpdateNotification("📸 Foto Profil Avatar Anda berhasil disimpan ke File Server & Database!");
+    toast.success("📸 Foto Profil Avatar Berhasil Disimpan & Aktif!");
   };
 
-  const handleResetAvatar = () => {
+  const handleResetAvatar = async () => {
     setPreviewAvatar(null);
+    const currentUser = MysqlAuthService.getActiveUser();
+
+    if (currentUser?.id) {
+      try {
+        await MysqlDataService.removeUserAvatar(currentUser.id);
+      } catch (err) {
+        console.warn("Remove avatar failed:", err);
+      }
+    }
+
     setUserProfile?.((prev: any) => ({
       ...prev,
       avatarUrl: null,
@@ -230,7 +251,6 @@ export function ProfilModule({
 
     if (typeof window !== "undefined") {
       localStorage.removeItem("lms_user_avatar");
-      const currentUser = MysqlAuthService.getActiveUser();
       if (currentUser) {
         const { avatar_url, ...rest } = currentUser;
         MysqlAuthService.setActiveUser(rest);

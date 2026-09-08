@@ -25,6 +25,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { toast } from "sonner";
 
 export interface TeacherAwardItem {
@@ -89,19 +90,6 @@ export function ApresiasiGuruModule({ activeRole }: { activeRole?: string }) {
         if (isMounted) setIsLoading(false);
       });
 
-    let persistedHistory: TeacherAwardItem[] = [];
-    if (typeof window !== "undefined") {
-      try {
-        const savedHistory = localStorage.getItem("lms_teacher_awards_history_v2");
-        if (savedHistory) {
-          const parsed = JSON.parse(savedHistory);
-          if (Array.isArray(parsed)) {
-            persistedHistory = parsed;
-          }
-        }
-      } catch (e) {}
-    }
-
     MysqlDataService.getAwards().then((dbAwards) => {
       if (!isMounted) return;
       if (dbAwards && dbAwards.length > 0) {
@@ -113,18 +101,11 @@ export function ApresiasiGuruModule({ activeRole }: { activeRole?: string }) {
           emote: item.warning_category ? "warning" : "award",
           comment: item.comment_text || "",
           date: item.created_at || "Hari ini",
-          awardedBy: item.awarded_by || "H. SOLIHUN, S.Pd., M.Si (Kepala Madrasah)",
+          awardedBy: item.awarded_by || "Kepala Madrasah",
         }));
-
-        const combined = [...dbMapped];
-        persistedHistory.forEach((p) => {
-          if (!combined.some((c) => c.id === p.id || (c.teacher === p.teacher && c.title === p.title))) {
-            combined.push(p);
-          }
-        });
-        setHistoryList(combined);
+        setHistoryList(dbMapped);
       } else {
-        setHistoryList(persistedHistory);
+        setHistoryList([]);
       }
     });
 
@@ -176,6 +157,11 @@ export function ApresiasiGuruModule({ activeRole }: { activeRole?: string }) {
     }
 
     const title = actionType === "award" ? badgeCategory : warningCategory;
+    const activeUser = MysqlAuthService.getActiveUser();
+    const currentAwarder = activeUser?.full_name
+      ? `${activeUser.full_name} (${activeUser.role === "kamad" ? "Kepala Madrasah" : activeUser.role === "waka" ? "Waka Kurikulum" : "Pimpinan Madrasah"})`
+      : "Kepala Madrasah";
+
     const newHistory: TeacherAwardItem = {
       id: String(Date.now()),
       teacher: selectedTeacher.name,
@@ -188,7 +174,7 @@ export function ApresiasiGuruModule({ activeRole }: { activeRole?: string }) {
           ? "Apresiasi atas dedikasi dan kinerja pembelajaran terbaik di MTsN 2 Cilacap."
           : "Catatan pembinaan resmi Kepala Madrasah untuk peningkatan kualitas KBM."),
       date: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-      awardedBy: "H. SOLIHUN, S.Pd., M.Si (Kepala Madrasah)",
+      awardedBy: currentAwarder,
     };
 
     MysqlDataService.saveAward({
@@ -196,17 +182,13 @@ export function ApresiasiGuruModule({ activeRole }: { activeRole?: string }) {
       badge_category: actionType === "award" ? title : undefined,
       warning_category: actionType === "warning" ? title : undefined,
       comment_text: newHistory.comment,
-      awarded_by: "H. SOLIHUN, S.Pd., M.Si (Kepala Madrasah)",
+      awarded_by: currentAwarder,
     }).catch((err) => console.warn("saveAward DB failed:", err));
 
     const updatedHistory = [newHistory, ...historyList];
     setHistoryList(updatedHistory);
 
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("lms_teacher_awards_history_v2", JSON.stringify(updatedHistory));
-      } catch (e) {}
-    }
+
 
     if (actionType === "award") {
       toast.success(`Award & Lencana ${title} resmi diserahkan oleh Kepala Madrasah kepada ${selectedTeacher.name}!`);
@@ -227,9 +209,6 @@ export function ApresiasiGuruModule({ activeRole }: { activeRole?: string }) {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Trophy className="h-6 w-6 text-amber-500" /> Apresiasi & Catatan Pembinaan Guru (Award & Warning)
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Portal Eksekutif Kepala Madrasah untuk memberikan penghargaan (award/badge) atau catatan pembinaan (warning) kepada Guru Pengampu resmi MTsN 2 Cilacap.
-          </p>
         </div>
       </div>
 

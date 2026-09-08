@@ -19,8 +19,8 @@ export function EditParentDialog({ isOpen, onClose, student, onSave }: EditParen
 
   useEffect(() => {
     if (student) {
-      setParentName(student.parentName || `Orang Tua ${student.name.split(" ")[0]}`);
-      setParentWa(student.parentWa || "081234567890");
+      setParentName(student.parentName && student.parentName !== "-" ? student.parentName : "");
+      setParentWa(student.parentWa && student.parentWa !== "-" ? student.parentWa : "");
     }
   }, [student]);
 

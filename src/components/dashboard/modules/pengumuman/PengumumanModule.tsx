@@ -91,8 +91,9 @@ export function PengumumanModule() {
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Master Pengumuman & Informasi</h1>
-          <p className="text-sm text-muted-foreground mt-1">Kelola berita resmi, pengumuman, dan agenda kegiatan MTsN 2 Cilacap</p>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Megaphone className="h-6 w-6 text-primary" /> Master Pengumuman & Informasi
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="gap-1.5 text-xs font-semibold" onClick={() => setIsImportOpen(true)}>

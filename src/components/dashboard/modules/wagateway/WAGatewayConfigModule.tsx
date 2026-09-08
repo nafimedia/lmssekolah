@@ -30,7 +30,7 @@ export function WAGatewayConfigModule() {
   const [config, setConfig] = useState<WaGatewayConfigRow>({
     provider: "fonnte",
     api_token: "",
-    sender_phone: "0812-3456-7890",
+    sender_phone: "",
     api_url: "https://api.fonnte.com/send",
     is_presensi_active: true,
     is_tahfidz_active: true,
@@ -47,7 +47,7 @@ export function WAGatewayConfigModule() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
 
-  const [testPhone, setTestPhone] = useState("081234567890");
+  const [testPhone, setTestPhone] = useState("");
   const [testMessage, setTestMessage] = useState("Assalamu'alaikum, ini adalah pesan uji coba dari sistem WA Gateway LMS MTsN 2.");
 
   const fetchConfig = async () => {
@@ -123,9 +123,6 @@ export function WAGatewayConfigModule() {
               </Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Kelola penyedia WA Gateway (Fonnte/Wablas/Whacenter), API Token, pemicu notifikasi otomatis, dan template pesan.
-          </p>
         </div>
 
         <Button
@@ -204,7 +201,7 @@ export function WAGatewayConfigModule() {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Nomor WA Pengirim (WA Center)</Label>
                   <Input
-                    placeholder="Misal: 081234567890"
+                    placeholder="Contoh: 0812xxxxxxxx"
                     value={config.sender_phone}
                     onChange={(e) => setConfig({ ...config, sender_phone: e.target.value })}
                     className="h-9 text-xs"
@@ -238,7 +235,7 @@ export function WAGatewayConfigModule() {
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Nomor HP Penerima Uji Coba</Label>
                 <Input
-                  placeholder="081234567890"
+                  placeholder="Contoh: 0812xxxxxxxx"
                   value={testPhone}
                   onChange={(e) => setTestPhone(e.target.value)}
                   className="h-9 text-xs font-mono"

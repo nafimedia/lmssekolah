@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Award, AlertTriangle, Star, Sparkles, Plus, Search, MessageSquare, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 
 export interface ApresiasiSiswaModuleProps {
   activeRole?: string;
@@ -19,24 +20,46 @@ export function ApresiasiSiswaModule({ activeRole }: ApresiasiSiswaModuleProps) 
   const [studentsList, setStudentsList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadData = () => {
     setIsLoading(true);
-
-    MysqlDataService.getUsers()
-      .then((users) => {
-        if (!isMounted) return;
+    Promise.all([
+      MysqlDataService.getUsers(),
+      MysqlDataService.getAwards().catch(() => []),
+    ])
+      .then(([users, awards]) => {
         if (users && users.length > 0) {
           const siswaList = users.filter((u: any) => u.role === "siswa");
           if (siswaList.length > 0) {
-            const mapped = siswaList.map((s: any, idx: number) => ({
-              id: s.id || `s_${idx}`,
-              name: s.full_name || s.name,
-              rombel: s.class_name || s.class || "Kelas VIII",
-              nis: s.nis_nip || s.nis || "-",
-              badges: [],
-              warningCount: 0,
-            }));
+            const mapped = siswaList.map((s: any, idx: number) => {
+              const sName = (s.full_name || s.name || "").toLowerCase();
+              const sNis = (s.nis_nip || s.nis || "").toLowerCase();
+              const sId = String(s.id || `s_${idx}`);
+
+              const matchedAwards = (awards || []).filter(
+                (a: any) =>
+                  (a.student_name && a.student_name.toLowerCase() === sName) ||
+                  (a.student_id && String(a.student_id) === sId) ||
+                  (a.student_nis && a.student_nis.toLowerCase() === sNis)
+              );
+
+              const badges = Array.from(
+                new Set(
+                  matchedAwards
+                    .filter((a: any) => a.badge_category && !a.warning_category)
+                    .map((a: any) => a.badge_category)
+                )
+              );
+              const warningCount = matchedAwards.filter((a: any) => !!a.warning_category).length;
+
+              return {
+                id: sId,
+                name: s.full_name || s.name,
+                rombel: s.class_name || s.class || "Kelas VIII",
+                nis: s.nis_nip || s.nis || "-",
+                badges,
+                warningCount,
+              };
+            });
             setStudentsList(mapped);
           } else {
             setStudentsList([]);
@@ -46,15 +69,15 @@ export function ApresiasiSiswaModule({ activeRole }: ApresiasiSiswaModuleProps) 
         }
       })
       .catch(() => {
-        if (isMounted) setStudentsList([]);
+        setStudentsList([]);
       })
       .finally(() => {
-        if (isMounted) setIsLoading(false);
+        setIsLoading(false);
       });
+  };
 
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    loadData();
   }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,20 +97,42 @@ export function ApresiasiSiswaModule({ activeRole }: ApresiasiSiswaModuleProps) 
     setIsModalOpen(true);
   };
 
-  const handleSaveAction = (e: React.FormEvent) => {
+  const handleSaveAction = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent) return;
     const title = actionType === "award" ? badgeCategory : warningCategory;
-    if (actionType === "award") {
-      setStudentsList(
-        studentsList.map((s) => (s.id === selectedStudent.id ? { ...s, badges: Array.from(new Set([...s.badges, title])) } : s))
-      );
-      toast.success(`Lencana ${title} berhasil diberikan kepada ${selectedStudent.name}!`);
-    } else {
-      setStudentsList(
-        studentsList.map((s) => (s.id === selectedStudent.id ? { ...s, warningCount: s.warningCount + 1 } : s))
-      );
-      toast.warning(`Catatan Pembinaan ${title} berhasil dikirimkan kepada ${selectedStudent.name}!`);
+    const me = MysqlAuthService.getActiveUser();
+    const awardedBy = me?.full_name || "Guru Pembina MTsN 2";
+
+    try {
+      await MysqlDataService.saveAward({
+        student_name: selectedStudent.name,
+        badge_category: actionType === "award" ? title : undefined,
+        warning_category: actionType === "warning" ? title : undefined,
+        comment_text: commentText.trim(),
+        awarded_by: awardedBy,
+      });
+
+      if (actionType === "award") {
+        setStudentsList((prev) =>
+          prev.map((s) =>
+            s.id === selectedStudent.id
+              ? { ...s, badges: Array.from(new Set([...s.badges, title])) }
+              : s
+          )
+        );
+        toast.success(`🎉 Lencana ${title} berhasil diberikan kepada ${selectedStudent.name}!`);
+      } else {
+        setStudentsList((prev) =>
+          prev.map((s) =>
+            s.id === selectedStudent.id ? { ...s, warningCount: s.warningCount + 1 } : s
+          )
+        );
+        toast.warning(`⚠️ Catatan pembinaan ${title} berhasil ditambahkan untuk ${selectedStudent.name}!`);
+      }
+    } catch (err) {
+      console.warn("Gagal menyimpan award/warning:", err);
+      toast.error("Gagal menyimpan data apresiasi.");
     }
     setIsModalOpen(false);
   };
@@ -105,9 +150,6 @@ export function ApresiasiSiswaModule({ activeRole }: ApresiasiSiswaModuleProps) 
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Award className="h-6 w-6 text-amber-500" /> Award, Badge & Warning Siswa
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Fitur Guru untuk memberikan apresiasi lencana karakter/prestasi dan catatan pembinaan kepada siswa di kelas yang diampu.
-          </p>
         </div>
 
         <Input
@@ -119,12 +161,12 @@ export function ApresiasiSiswaModule({ activeRole }: ApresiasiSiswaModuleProps) 
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-xs text-muted-foreground">Memuat data siswa dari database...</div>
+        <div className="p-8 text-center text-xs text-muted-foreground">Memuat data apresiasi siswa...</div>
       ) : filteredStudents.length === 0 ? (
         <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 bg-card">
           <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
           <div className="font-semibold text-foreground text-sm">Belum Ada Data Siswa Terdaftar</div>
-          <p>Database saat ini tidak memiliki akun siswa terdaftar. Tampilan dikosongkan secara jujur tanpa data sampel/dummy.</p>
+          <p>Belum ada data siswa terdaftar untuk saat ini.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

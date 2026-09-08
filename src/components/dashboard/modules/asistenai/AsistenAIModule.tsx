@@ -21,9 +21,6 @@ export function AsistenAIModule({ activeRole }: { activeRole?: string } = {}) {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Bot className="h-6 w-6 text-blue-500" /> Asisten AI & Digital Tools Pembelajaran Guru
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Kumpulan alat bantu kecerdasan buatan & media digital produksi pembelajaran yang terintegrasi untuk Guru MTsN 2 Cilacap.
-          </p>
         </div>
       </div>
 

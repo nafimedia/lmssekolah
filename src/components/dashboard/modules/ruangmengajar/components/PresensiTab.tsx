@@ -101,7 +101,7 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
     }
 
     setIsSaving(true);
-    const toastId = toast.loading(`⏳ Menyimpan presensi ${students.length} siswa ${activeRombel} ke Database MySQL...`);
+    const toastId = toast.loading(`⏳ Menyimpan presensi ${students.length} siswa ${activeRombel}...`);
 
     try {
       const activeTeacherName = MysqlAuthService.getActiveUser()?.full_name || "GURU PENGAMPU";
@@ -119,12 +119,12 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
 
       const success = await MysqlDataService.saveKbmPresensiBatch(activeRombel, activeMapel, dateToday, records as any);
       if (success) {
-        toast.success(`✅ Rekap Presensi KBM ${activeRombel} (${activeMapel}) berhasil disimpan permanen ke Database MySQL!`, {
+        toast.success(`✅ Rekap Presensi KBM ${activeRombel} (${activeMapel}) berhasil disimpan!`, {
           id: toastId,
           description: `${students.length} Siswa Terproses (Hadir: ${countHadir}, Sakit: ${countSakit}, Izin: ${countIzin}, Alpa: ${countAlpa})`,
         });
       } else {
-        toast.error(`❌ Gagal menyimpan presensi ke Database MySQL. Silakan periksa koneksi server.`, {
+        toast.error(`❌ Gagal menyimpan presensi. Silakan periksa koneksi server.`, {
           id: toastId,
         });
       }
@@ -198,7 +198,7 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
           <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2">
             <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
             <div className="font-semibold text-foreground text-sm">Belum Ada Siswa Terdaftar pada {activeRombel}</div>
-            <p>Database saat ini tidak memiliki akun siswa terdaftar untuk rombel ini.</p>
+            <p>Belum ada data siswa yang terdaftar untuk kelas / rombel ini.</p>
           </div>
         ) : (
           <div className="overflow-x-auto border border-border rounded-xl shadow-xs">

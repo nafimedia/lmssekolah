@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTExam } from "@/types/cbt";
-
+import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
 
@@ -53,7 +53,24 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
   const [inputToken, setInputToken] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [resetStudentName, setResetStudentName] = useState("Ahmad Dani Prasetya");
+  const [resetStudentName, setResetStudentName] = useState("");
+  const [realStudents, setRealStudents] = useState<{ id: string; name: string; nisn?: string; rombel?: string }[]>([]);
+
+  React.useEffect(() => {
+    MysqlDataService.getUsers()
+      .then((users) => {
+        const students = users
+          .filter((u: any) => u.role === "siswa")
+          .map((u: any) => ({
+            id: String(u.id),
+            name: u.full_name || u.name,
+            nisn: u.nis_nip || u.nisn || "",
+            rombel: normalizeRombelName(u.class_name || u.rombel || "Rombel 8A"),
+          }));
+        setRealStudents(students);
+      })
+      .catch(() => {});
+  }, []);
 
   // New Exam Form State
   const [newTitle, setNewTitle] = useState("");
@@ -81,7 +98,14 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
     }
 
     if (userRole === "siswa") {
-      return matchesSearch && (e.status === "Dibuka" || e.status === "Terjadwal");
+      const examClass = normalizeRombelName(e.kelas || "");
+      const isClassMatch =
+        !e.kelas ||
+        e.kelas === "Semua" ||
+        e.kelas === "Semua Rombel" ||
+        isSameClass(examClass, rawClass) ||
+        examClass.toLowerCase().includes(rawClass.toLowerCase().replace("rombel", "").trim());
+      return matchesSearch && (e.status === "Dibuka" || e.status === "Terjadwal") && isClassMatch;
     }
     return matchesSearch;
   });
@@ -134,10 +158,14 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
 
   const handleResetSessionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("🔄 Sesi Ujian Siswa Berhasil Direset!", {
-      description: `Akun ${resetStudentName} diizinkan login ulang & melanjutkan ujian CBT.`,
+    if (!resetStudentName.trim()) {
+      return toast.error("Silakan pilih atau ketik nama/NIS siswa yang ingin di-reset!");
+    }
+    toast.success("Sesi Ujian Siswa Berhasil Di-reset", {
+      description: `Siswa ${resetStudentName} diizinkan login ulang & melanjutkan ujian CBT.`,
     });
     setIsResetModalOpen(false);
+    setResetStudentName("");
   };
 
   const isExecutiveRole = userRole === "kamad" || userRole === "waka" || userRole === "admin";
@@ -451,10 +479,19 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Nama Siswa / NIS</Label>
               <Input
+                list="cbt-reset-students-list"
+                placeholder="Pilih atau cari nama siswa / NIS..."
                 value={resetStudentName}
                 onChange={(e) => setResetStudentName(e.target.value)}
                 className="text-xs"
               />
+              <datalist id="cbt-reset-students-list">
+                {realStudents.map((s) => (
+                  <option key={s.id} value={`${s.name} (${s.rombel})`}>
+                    {s.nisn ? `NIS: ${s.nisn}` : ""}
+                  </option>
+                ))}
+              </datalist>
             </div>
 
             <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">

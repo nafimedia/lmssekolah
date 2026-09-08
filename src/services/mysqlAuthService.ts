@@ -16,6 +16,8 @@ export interface UserSession {
   class_name?: string;
   subject_specialty?: string;
   avatar_url?: string;
+  phone?: string;
+  address?: string;
 }
 
 export interface RegisterPayload {
@@ -28,19 +30,7 @@ export interface RegisterPayload {
   subject_specialty?: string;
 }
 
-export const INITIAL_ROLE_USERS: Record<string, { role: string; name: string; class_name?: string; subject_specialty?: string; nis_nip?: string; identity_type?: "NISN" | "NIP" }> = {
-  "admin@mail.com": { role: "admin", name: "Super Administrator MTsN 2", nis_nip: "198501012010011001", identity_type: "NIP" },
-  "admin.akademik@mtsn2cilacap.sch.id": { role: "admin_akademik,walikelas,guru", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", class_name: "VIII-B", subject_specialty: "Bahasa Inggris", nis_nip: "197205012005011001", identity_type: "NIP" },
-  "makmun@mtsn2cilacap.sch.id": { role: "admin_akademik,walikelas,guru", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", class_name: "VIII-B", subject_specialty: "Bahasa Inggris", nis_nip: "197205012005011001", identity_type: "NIP" },
-  "197002272005011001@guru.mtsn2cilacap.sch.id": { role: "admin_akademik,walikelas,guru", name: "ACHMAD MAKMUN ROSID, S.Pd., M.Pd", class_name: "VIII-B", subject_specialty: "Bahasa Inggris", nis_nip: "197205012005011001", identity_type: "NIP" },
-  "kamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197203151998031002", identity_type: "NIP" },
-  "pakkamad@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197203151998031002", identity_type: "NIP" },
-  "solihun@mtsn2cilacap.sch.id": { role: "kamad", name: "H. SOLIHUN, S.Pd., M.Si", nis_nip: "197203151998031002", identity_type: "NIP" },
-  "waka@mtsn2cilacap.sch.id": { role: "waka,guru", name: "ALI MANSUR, S.Pd", class_name: "VIII", subject_specialty: "Ilmu Pendidikan Sosial", nis_nip: "198302142023211010", identity_type: "NIP" },
-  "walikelas@mtsn2cilacap.sch.id": { role: "walikelas,guru", name: "SOBIYATI, S.Pd", class_name: "IX-A", subject_specialty: "Matematika", nis_nip: "197808152005012004", identity_type: "NIP" },
-  "guru@mtsn2cilacap.sch.id": { role: "guru", name: "SOBIYATI, S.Pd", class_name: "VIII-A", subject_specialty: "Bahasa Indonesia", nis_nip: "197906142007102002", identity_type: "NIP" },
-  "siswa@mtsn2cilacap.sch.id": { role: "siswa", name: "ALIYA QIARA ABDULLAH", class_name: "VIII-A", nis_nip: "0127790481", identity_type: "NISN" },
-};
+export const INITIAL_ROLE_USERS: Record<string, { role: string; name: string; class_name?: string; subject_specialty?: string; nis_nip?: string; identity_type?: "NISN" | "NIP" }> = {};
 
 export function getPersistedUserProfileOverrides(): Record<string, { id: string; email: string; full_name: string; nis_nip?: string; class_name?: string; roles?: string[]; phone?: string }> {
   if (typeof window === "undefined") return {};
@@ -172,16 +162,7 @@ export class MysqlAuthService {
     const dataStr = localStorage.getItem(this.STORAGE_KEY);
     if (!dataStr) return null;
     try {
-      const user = JSON.parse(dataStr) as UserSession;
-      if (user) {
-        const cleanEmail = (user.email || "").toLowerCase().trim();
-        if (cleanEmail === "kamad@mtsn2cilacap.sch.id" || cleanEmail === "pakkamad@mtsn2cilacap.sch.id" || cleanEmail === "solihun@mtsn2cilacap.sch.id" || user.full_name?.includes("Hidayatullah")) {
-          user.full_name = "H. SOLIHUN, S.Pd., M.Si";
-          user.nis_nip = "197203151998031002";
-          user.identity_type = "NIP";
-        }
-      }
-      return user;
+      return JSON.parse(dataStr) as UserSession;
     } catch {
       return null;
     }
@@ -189,14 +170,6 @@ export class MysqlAuthService {
 
   static setActiveUser(user: UserSession): void {
     if (typeof window === "undefined") return;
-    if (user) {
-      const cleanEmail = (user.email || "").toLowerCase().trim();
-      if (cleanEmail === "kamad@mtsn2cilacap.sch.id" || cleanEmail === "pakkamad@mtsn2cilacap.sch.id" || cleanEmail === "solihun@mtsn2cilacap.sch.id" || user.full_name?.includes("Hidayatullah")) {
-        user.full_name = "H. SOLIHUN, S.Pd., M.Si";
-        user.nis_nip = "197203151998031002";
-        user.identity_type = "NIP";
-      }
-    }
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
   }
 

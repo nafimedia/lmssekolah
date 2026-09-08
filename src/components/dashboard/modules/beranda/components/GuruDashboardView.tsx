@@ -113,20 +113,21 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
 
   return (
     <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             Dashboard Guru Pengampu
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Selamat Datang, {userName} · Pengampu {activeSubjectName} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime} WIB)
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Selamat Datang, <span className="font-medium text-foreground">{userName}</span> · Pengampu {activeSubjectName} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime} WIB)
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shadow-xs"
             onClick={() => setActiveTab?.("ruang_mengajar")}
           >
             <PencilLine className="h-4 w-4" /> Masuk Ruang Mengajar
@@ -135,7 +136,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           <Button
             size="sm"
             variant="outline"
-            className="font-bold text-xs gap-1.5 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+            className="font-medium text-xs gap-1.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10"
             onClick={() => setActiveTab?.("nilai")}
           >
             <ClipboardCheck className="h-4 w-4" /> Penilaian Kelas
@@ -148,7 +149,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card
-            className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 hover:border-emerald-500/60 transition cursor-pointer"
+            className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 hover:border-emerald-500/60 transition cursor-pointer shadow-xs"
             onClick={() => jadwalHariIni.length > 0 && setSelectedJadwalModal(jadwalHariIni[0])}
           >
             <CardHeader className="pb-2">
@@ -156,12 +157,12 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
                 <span>Jadwal Mengajar Saya Hari Ini ({currentDayName})</span>
                 <CalendarClock className="h-4 w-4" />
               </CardDescription>
-              <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+              <CardTitle className="text-2xl font-bold text-foreground">
                 {jadwalHariIni.length} Sesi KBM
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-              <div className="font-bold text-slate-800 dark:text-slate-200 truncate" title={uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${mapelsTextDisplay})` : "Tidak ada jadwal mengajar hari ini"}>
+            <CardContent className="text-xs text-muted-foreground space-y-1">
+              <div className="font-semibold text-foreground truncate" title={uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${mapelsTextDisplay})` : "Tidak ada jadwal mengajar hari ini"}>
                 {uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${mapelsTextDisplay})` : "Tidak ada jadwal mengajar hari ini"}
               </div>
               <div>
@@ -173,7 +174,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           </Card>
 
           <Card
-            className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-500/60 transition cursor-pointer"
+            className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-500/60 transition cursor-pointer shadow-xs"
             onClick={() => tugasPerluDiperiksa.length > 0 && setSelectedTugasModal(tugasPerluDiperiksa[0])}
           >
             <CardHeader className="pb-2">
@@ -181,12 +182,12 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
                 <span>Tugas & LKPD Saya</span>
                 <CheckSquare className="h-4 w-4" />
               </CardDescription>
-              <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+              <CardTitle className="text-2xl font-bold text-foreground">
                 {tugasPerluDiperiksa.length} Berkas
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-              <div className="font-bold text-slate-800 dark:text-slate-200">
+            <CardContent className="text-xs text-muted-foreground space-y-1">
+              <div className="font-semibold text-foreground">
                 {tugasPerluDiperiksa.length > 0 ? `${tugasPerluDiperiksa.length} Tugas LKPD Digital` : "Belum ada tugas pending"}
               </div>
               <div>{tugasPerluDiperiksa.length > 0 ? "Perlu penilaian & koreksi nilai harian" : "Semua tugas di mapel pengampu telah diperiksa"}</div>
@@ -194,7 +195,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           </Card>
 
           <Card
-            className="border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20 hover:border-purple-500/60 transition cursor-pointer"
+            className="border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20 hover:border-purple-500/60 transition cursor-pointer shadow-xs"
             onClick={() => setSelectedCapaianModal({ materi: activeSubjectName, journalCount })}
           >
             <CardHeader className="pb-2">
@@ -202,13 +203,13 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
                 <span>Jurnal Mengajar Terisi</span>
                 <LineChart className="h-4 w-4" />
               </CardDescription>
-              <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+              <CardTitle className="text-2xl font-bold text-foreground">
                 {`${journalCount} Jurnal`}
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-              <div className="font-bold text-slate-800 dark:text-slate-200">{journalCount > 0 ? `${journalCount} Pertemuan KBM Tercatat` : "Belum ada jurnal terisi"}</div>
-              <div>Tersimpan di database MySQL KBM</div>
+            <CardContent className="text-xs text-muted-foreground space-y-1">
+              <div className="font-semibold text-foreground">{journalCount > 0 ? `${journalCount} Pertemuan KBM Tercatat` : "Belum ada jurnal terisi"}</div>
+              <div>Tercatat resmi di sistem KBM</div>
             </CardContent>
           </Card>
         </div>

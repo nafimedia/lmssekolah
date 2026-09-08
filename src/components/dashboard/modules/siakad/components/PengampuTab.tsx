@@ -46,7 +46,7 @@ export function PengampuTab({ pengampuList, onOpenAddModal, onDeletePengampu, is
             </Button>
           ) : (
             <Badge variant="outline" className="text-[10px] text-muted-foreground font-bold shrink-0">
-              🔒 Read-Only (Kamad)
+              🔒 Supervisi (Kamad)
             </Badge>
           )}
         </div>
@@ -89,7 +89,7 @@ export function PengampuTab({ pengampuList, onOpenAddModal, onDeletePengampu, is
                     </Button>
                   ) : (
                     <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                      🔒 Read-Only
+                      🔒 Supervisi
                     </Badge>
                   )}
                 </td>

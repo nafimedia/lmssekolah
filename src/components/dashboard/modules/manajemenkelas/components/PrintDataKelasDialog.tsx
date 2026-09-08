@@ -87,9 +87,9 @@ export function PrintDataKelasDialog({
                     <td className="border border-slate-300 p-2 text-center font-mono">{idx + 1}</td>
                     <td className="border border-slate-300 p-2 font-mono">{s.nisn}</td>
                     <td className="border border-slate-300 p-2 font-bold">{s.name}</td>
-                    <td className="border border-slate-300 p-2 text-center font-bold">{s.gender || "L"}</td>
-                    <td className="border border-slate-300 p-2">{s.parentName}</td>
-                    <td className="border border-slate-300 p-2 text-center font-mono">{s.parentWa}</td>
+                    <td className="border border-slate-300 p-2 text-center font-bold">{s.gender || "-"}</td>
+                    <td className="border border-slate-300 p-2">{s.parentName || "-"}</td>
+                    <td className="border border-slate-300 p-2 text-center font-mono">{s.parentWa || "-"}</td>
                     <td className="border border-slate-300 p-2 text-center font-mono font-bold text-emerald-800">{s.hadirPct}%</td>
                   </tr>
                 ))}

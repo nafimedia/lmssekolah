@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Trophy, BookOpen, CalendarClock, ArrowRight, CheckCircle2, UserCheck, Building2, Clock } from "lucide-react";
+import { GraduationCap, Trophy, BookOpen, CalendarClock, ArrowRight, CheckCircle2, UserCheck, Building2, Clock, Sparkles, FileText } from "lucide-react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
@@ -22,6 +22,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
   const siswaNisn = me?.nis_nip || "";
   const [presensiToday, setPresensiToday] = useState<any>(null);
   const [myTugasList, setMyTugasList] = useState<any[]>([]);
+  const [mySubmissions, setMySubmissions] = useState<any[]>([]);
   const [jadwalToday, setJadwalToday] = useState<any[]>([]);
 
   const [liveSession, setLiveSession] = useState<any | null>(null);
@@ -32,11 +33,12 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         const currentUser = MysqlAuthService.getActiveUser();
         const currentClass = currentUser?.class_name || "Rombel 8A";
         const todayStr = new Date().toISOString().split("T")[0];
-        const [dbPresensi, dbTugas, dbJadwal, dbSessions] = await Promise.all([
+        const [dbPresensi, dbTugas, dbJadwal, dbSessions, dbSubmissions] = await Promise.all([
           MysqlDataService.getKbmPresensi("ALL", "ALL", todayStr),
           MysqlDataService.getLkpdActivities(currentClass, "ALL"),
           MysqlDataService.getJadwalList(),
           MysqlDataService.getActiveKbmSessions(),
+          MysqlDataService.getSubmissions(),
         ]);
 
         const myPres = (dbPresensi || []).find((p: any) => {
@@ -55,6 +57,16 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         });
         setPresensiToday(myPres);
         setMyTugasList(dbTugas || []);
+
+        const mySubs = (dbSubmissions || []).filter((s: any) => {
+          const matchNis = s.student_nis && currentUser?.nis_nip && s.student_nis === currentUser.nis_nip;
+          const matchName =
+            s.student_name &&
+            currentUser?.full_name &&
+            s.student_name.toLowerCase().trim() === currentUser.full_name.toLowerCase().trim();
+          return matchNis || matchName;
+        });
+        setMySubmissions(mySubs);
 
         const liveSess = (dbSessions || []).find(
           (s: any) => s.status === "SEDANG_BERLANGSUNG" && isSameClass(s.rombel || "", currentClass)
@@ -94,8 +106,11 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
     ? "warning"
     : "warning";
 
+  const submittedTaskIds = new Set(mySubmissions.map((s: any) => String(s.assignment_id)));
+  const pendingTasks = myTugasList.filter((t: any) => !submittedTaskIds.has(String(t.id)));
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
       <StudentHeaderBanner
         title={`Ruang Belajar — ${userName}`}
         subtitle={`Portal akademik siswa MTsN 2 Cilacap • ${currentDayName}, ${formattedTime} WIB`}
@@ -105,43 +120,75 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         statusVariant={statusVariant}
       />
 
+      {/* Real-Time Alert: KBM Live Session in Student's Class */}
+      {liveSession && (
+        <Card className="border-2 border-emerald-500 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/5 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-950/20 shadow-md">
+          <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="h-11 w-11 rounded-xl bg-emerald-600 text-white grid place-items-center shrink-0 shadow-xs animate-pulse">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 animate-pulse">
+                    ● SESI KBM LIVE SEDANG AKTIF
+                  </Badge>
+                  <span className="text-xs font-semibold text-muted-foreground">{siswaClass}</span>
+                </div>
+                <h3 className="text-base font-bold text-foreground tracking-tight">
+                  {liveSession.guru_name || "Guru Pengampu"} sedang mengajar {liveSession.mapel}
+                </h3>
+                <p className="text-xs text-muted-foreground font-medium">
+                  Sesi KBM resmi di kelas Anda sedang dibuka guru. Ikuti pembelajaran tatap muka dan buka LKPD aktif hari ini.
+                </p>
+              </div>
+            </div>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shrink-0 shadow-xs"
+              onClick={() => setActiveTab?.("tugas")}
+            >
+              <BookOpen className="h-4 w-4" /> Buka LKPD / Tugas →
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card
-          className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 cursor-pointer hover:scale-[1.01] hover:shadow-md transition-all"
-          onClick={() => setActiveTab?.("kehadiran")}
-        >
+        <Card className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-xs">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
               <span>Kehadiran Presensi Saya</span>
               <CheckCircle2 className="h-4 w-4" />
             </CardDescription>
-            <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+            <CardTitle className="text-2xl font-bold text-foreground">
               {presensiStatus || "BELUM ABSEN"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
-            <span>{siswaClass} · Teratat di sistem presensi madrasah</span>
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Lihat →</span>
+          <CardContent className="text-xs text-muted-foreground flex items-center justify-between">
+            <span>{siswaClass} · Hari ini</span>
+            <Badge variant="outline" className="text-[10px] font-semibold border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+              Dicatat Resmi Guru/Wali
+            </Badge>
           </CardContent>
         </Card>
 
         <Card
           className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20 cursor-pointer hover:scale-[1.01] hover:shadow-md transition-all"
-          onClick={() => setActiveTab?.("asesmen")}
+          onClick={() => setActiveTab?.("tugas")}
         >
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center justify-between">
               <span>Tugas & LKPD Digital</span>
               <BookOpen className="h-4 w-4" />
             </CardDescription>
-            <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center justify-between">
+            <CardTitle className="text-2xl font-bold text-foreground flex items-center justify-between">
               <span>{myTugasList.length} Tugas</span>
-              <Badge className="bg-blue-600 text-white text-[10px] font-bold">Buka Tugas</Badge>
+              <Badge className="bg-blue-600 text-white text-[10px] font-semibold">Buka Tugas</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
+          <CardContent className="text-xs text-muted-foreground flex items-center justify-between">
             <span>Tersedia untuk dikerjakan di {siswaClass}</span>
-            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">Kerjakan →</span>
+            <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">Kerjakan →</span>
           </CardContent>
         </Card>
 
@@ -154,16 +201,96 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               <span>Status Keaktifan Siswa</span>
               <Trophy className="h-4 w-4" />
             </CardDescription>
-            <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+            <CardTitle className="text-2xl font-bold text-foreground">
               Siswa Aktif
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
+          <CardContent className="text-xs text-muted-foreground flex items-center justify-between">
             <span>MTs Negeri 2 Cilacap</span>
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">Profil →</span>
+            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Profil →</span>
           </CardContent>
         </Card>
       </div>
+
+      {/* To-Do List: Tasks & LKPD Pending Submission */}
+      <Card className="border-border shadow-xs">
+        <CardHeader className="p-4 border-b border-border flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-bold">
+              Tugas & LKPD Perlu Dikerjakan
+            </CardTitle>
+            {pendingTasks.length > 0 ? (
+              <Badge className="bg-amber-600 text-white text-[10px] font-bold">
+                {pendingTasks.length} Belum Dikumpulkan
+              </Badge>
+            ) : (
+              <Badge className="bg-emerald-600 text-white text-[10px] font-bold">
+                Semua Selesai
+              </Badge>
+            )}
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-xs font-bold text-blue-600 gap-1"
+            onClick={() => setActiveTab?.("tugas")}
+          >
+            Lihat Semua Tugas <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </CardHeader>
+        <CardContent className="p-4">
+          {pendingTasks.length === 0 ? (
+            <div className="p-5 text-center rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-500/20 flex flex-col items-center justify-center gap-1.5">
+              <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+              <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                Alhamdulillah! Semua Tugas & LKPD Kelas Anda Sudah Selesai
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                Tidak ada tugas tertunggak untuk kelas {siswaClass}. Pantau terus jadwal KBM berikutnya.
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {pendingTasks.slice(0, 3).map((task) => (
+                <div
+                  key={task.id}
+                  className="p-3.5 rounded-xl border border-border bg-card hover:border-blue-500/50 hover:bg-blue-50/20 dark:hover:bg-blue-950/20 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] font-bold border-blue-500/30 text-blue-600">
+                        {task.mapel || task.subject || "Mata Pelajaran"}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] font-mono text-muted-foreground">
+                        {task.type || "LKPD Digital"}
+                      </Badge>
+                      {task.teacher_name && task.teacher_name !== "Guru Pengampu" && (
+                        <span className="text-[11px] text-muted-foreground">
+                          • {task.teacher_name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-bold text-sm text-foreground">
+                      {task.title}
+                    </div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span>Batas Pengumpulan: <strong className="text-foreground">{task.due_date || task.deadline || "Hari ini"}</strong></span>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 self-start sm:self-center shrink-0 shadow-2xs"
+                    onClick={() => setActiveTab?.("tugas")}
+                  >
+                    Kerjakan Sekarang <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="border-slate-200 dark:border-slate-800 shadow-xs">
         <CardHeader className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-row items-center justify-between">
@@ -193,21 +320,21 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                   onClick={() => setActiveTab?.("asesmen")}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 px-3 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex items-center justify-center gap-1.5 border border-emerald-500/30 whitespace-nowrap">
+                    <div className="h-9 px-3 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center justify-center gap-1.5 border border-emerald-500/30 whitespace-nowrap">
                       <Clock className="h-3.5 w-3.5 text-emerald-600" />
                       <span>{displayJam}</span>
                     </div>
                     <div>
-                      <div className="font-extrabold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <div className="font-semibold text-sm text-foreground flex items-center gap-2">
                         {displayMapel}
                       </div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400 font-medium flex items-center gap-3 mt-0.5">
-                        <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
+                      <div className="text-xs text-muted-foreground font-medium flex items-center gap-3 mt-0.5">
+                        <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium">
                           <UserCheck className="h-3.5 w-3.5 text-emerald-600" /> {displayGuru}
                         </span>
-                        <span className="text-slate-400">•</span>
-                        <span className="flex items-center gap-1 text-slate-500">
-                          <Building2 className="h-3.5 w-3.5 text-slate-400" /> {displayRuang}
+                        <span className="text-muted-foreground/50">•</span>
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {displayRuang}
                         </span>
                       </div>
                     </div>

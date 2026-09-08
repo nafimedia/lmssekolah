@@ -65,7 +65,7 @@ export function DetailGtkDialog({ selectedGtk, isOpen, onOpenChange, gtkDocs }: 
 
           <div>
             <div className="font-bold text-xs text-foreground mb-2 flex items-center gap-1.5">
-              <FileCheck className="h-4 w-4 text-emerald-500" /> Dokumen Kepegawaian & SK Resmi (MySQL Storage):
+              <FileCheck className="h-4 w-4 text-emerald-500" /> Dokumen Kepegawaian & SK Resmi:
             </div>
             <div className="space-y-2">
               {docsList.length === 0 ? (

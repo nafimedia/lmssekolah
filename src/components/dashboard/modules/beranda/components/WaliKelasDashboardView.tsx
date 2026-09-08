@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
-import { isSameClass } from "@/utils/classNormalization";
+import { isSameClass, resolveWaliKelasRombel } from "@/utils/classNormalization";
 import { toast } from "sonner";
 
 interface WaliKelasDashboardViewProps {
@@ -40,27 +40,9 @@ export function WaliKelasDashboardView({
 }: WaliKelasDashboardViewProps) {
   const activeUser = MysqlAuthService.getActiveUser();
 
-  // Clean Rombel name (e.g. "Kelas IX A")
+  // Clean Rombel name (e.g. "Kelas VIII A")
   const rombelName = useMemo(() => {
-    const cleanName = (userName || activeUser?.full_name || "").toLowerCase();
-    const cleanNip = (activeUser?.nis_nip || "").trim();
-
-    if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Kelas VIII B";
-    if (cleanName.includes("misbah") || cleanName.includes("maulidia")) return "Kelas VII A";
-    if (cleanName.includes("endah") || cleanName.includes("rindang")) return "Kelas VII B";
-    if (cleanName.includes("sobiyati")) return "Kelas VIII A";
-    if (cleanName.includes("sobiyati")) return "Kelas IX A";
-    if (cleanName.includes("sayono")) return "Kelas IX B";
-
-    const rawRombel = activeUser?.class_name || "IX-A";
-    const clean = rawRombel.toUpperCase().replace("-", " ").trim();
-    if (clean.includes("7A") || clean.includes("VII A")) return "Kelas VII A";
-    if (clean.includes("7B") || clean.includes("VII B")) return "Kelas VII B";
-    if (clean.includes("8A") || clean.includes("VIII A")) return "Kelas VIII A";
-    if (clean.includes("8B") || clean.includes("VIII B")) return "Kelas VIII B";
-    if (clean.includes("9A") || clean.includes("IX A")) return "Kelas IX A";
-    if (clean.includes("9B") || clean.includes("IX B")) return "Kelas IX B";
-    return `Kelas ${rawRombel}`;
+    return resolveWaliKelasRombel(activeUser || { full_name: userName }, null, "kelas");
   }, [userName, activeUser]);
 
   const [students, setStudents] = useState<any[]>([]);
@@ -124,22 +106,56 @@ export function WaliKelasDashboardView({
   const totalStudents = students.length;
   const hadirPercentage = totalStudents > 0 ? ((hadirCount / totalStudents) * 100).toFixed(1) : "0.0";
 
+  const handleDirectWaReminder = (note: any) => {
+    const matchedStudent = students.find((s) =>
+      (s.full_name || "").toLowerCase().includes((note.student_name || "").toLowerCase()) ||
+      (note.student_name || "").toLowerCase().includes((s.full_name || "").toLowerCase())
+    );
+    const phone = matchedStudent?.phone || "";
+    if (!phone || phone === "-" || phone.trim().length < 8) {
+      toast.error(`Nomor WhatsApp orang tua ananda ${note.student_name} belum terdata di sistem. Silakan lengkapi di tab Manajemen Kelas.`);
+      return;
+    }
+
+    let cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.startsWith("0")) {
+      cleanPhone = "62" + cleanPhone.slice(1);
+    } else if (!cleanPhone.startsWith("62")) {
+      cleanPhone = "62" + cleanPhone;
+    }
+
+    const message = `Assalamu'alaikum Wr. Wb. Yth. Bapak/Ibu Wali dari ananda ${note.student_name} (${rombelName}). Kami dari pihak Wali Kelas menyampaikan catatan KBM dari Guru Mapel ${note.mapel}: "${note.notes}". Mohon dapat menjadi perhatian dan motivasi belajar ananda bersama di rumah. Terima kasih. - MTsN 2 Cilacap`;
+
+    MysqlDataService.saveWaLog({
+      parent_name: matchedStudent?.parent_name || `Wali Siswa ${note.student_name}`,
+      phone: cleanPhone,
+      student_name: note.student_name,
+      category: "REMINDER CATATAN SISWA",
+      message,
+      status: "TERKIRIM",
+    }).catch(() => {});
+
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
+    toast.success(`Membuka WhatsApp untuk menghubungi Orang Tua ${note.student_name}...`);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
       {/* Compact Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-border/50">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-foreground flex items-center gap-2">
-            Dashboard Wali Kelas <Badge className="bg-emerald-600 text-white font-extrabold text-xs">{rombelName}</Badge>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            Dashboard Wali Kelas <Badge className="bg-emerald-600 text-white font-bold text-xs">{rombelName}</Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Monitoring presensi, agenda KBM, dan perkembangan belajar siswa binaan {rombelName}.
+            Monitoring presensi, agenda KBM, dan perkembangan belajar siswa binaan <span className="font-medium text-foreground">{rombelName}</span>.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shadow-xs"
             onClick={() => setActiveTab && setActiveTab("kehadiran")}
           >
             <UserCheck className="h-4 w-4" /> Kelola Presensi Kelas
@@ -152,10 +168,10 @@ export function WaliKelasDashboardView({
         <Card className="border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-xs">
           <CardContent className="p-4 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Total Siswa Binaan</span>
+              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Total Siswa Binaan</span>
               <Users className="h-4 w-4 text-emerald-600" />
             </div>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{totalStudents} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
+            <p className="text-2xl font-bold text-foreground">{totalStudents} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
             <p className="text-[10px] text-muted-foreground font-medium">Terdaftar aktif di database {rombelName}</p>
           </CardContent>
         </Card>
@@ -163,21 +179,21 @@ export function WaliKelasDashboardView({
         <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 shadow-xs">
           <CardContent className="p-4 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-blue-700 dark:text-blue-400">Hadir Hari Ini</span>
+              <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Hadir Hari Ini</span>
               <CheckCircle2 className="h-4 w-4 text-blue-600" />
             </div>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{hadirCount} <span className="text-xs font-medium text-muted-foreground">/ {totalStudents} Siswa</span></p>
-            <p className="text-[10px] text-emerald-600 font-bold font-mono">{hadirPercentage}% Tingkat Kehadiran</p>
+            <p className="text-2xl font-bold text-foreground">{hadirCount} <span className="text-xs font-medium text-muted-foreground">/ {totalStudents} Siswa</span></p>
+            <p className="text-[10px] text-emerald-600 font-semibold font-mono">{hadirPercentage}% Tingkat Kehadiran</p>
           </CardContent>
         </Card>
 
         <Card className="border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20 shadow-xs">
           <CardContent className="p-4 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-700 dark:text-amber-400">Sakit / Izin</span>
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Sakit / Izin</span>
               <Clock className="h-4 w-4 text-amber-600" />
             </div>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{sakitCount + izinCount} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
+            <p className="text-2xl font-bold text-foreground">{sakitCount + izinCount} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
             <p className="text-[10px] text-muted-foreground">Sakit: {sakitCount} | Izin: {izinCount}</p>
           </CardContent>
         </Card>
@@ -185,11 +201,11 @@ export function WaliKelasDashboardView({
         <Card className="border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 shadow-xs">
           <CardContent className="p-4 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-red-700 dark:text-red-400">Alpa (Perlu Perhatian)</span>
+              <span className="text-xs font-semibold text-red-700 dark:text-red-400">Alpa (Perlu Perhatian)</span>
               <AlertTriangle className="h-4 w-4 text-red-600" />
             </div>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{alpaCount} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
-            <p className="text-[10px] text-red-600 dark:text-red-400 font-bold">
+            <p className="text-2xl font-bold text-foreground">{alpaCount} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
+            <p className="text-[10px] text-red-600 dark:text-red-400 font-semibold">
               {alpaCount > 0 ? "⚠️ Memerlukan follow-up Wali Kelas" : "✅ Nihil Alpa Hari Ini"}
             </p>
           </CardContent>
@@ -244,12 +260,12 @@ export function WaliKelasDashboardView({
                         className="p-3 rounded-xl bg-card border border-border flex items-center justify-between gap-3 shadow-2xs hover:border-emerald-500/50 transition"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex flex-col items-center justify-center shrink-0 border border-emerald-500/20 shadow-2xs">
-                            <span className="text-[9px] font-bold text-muted-foreground leading-none">Ke-</span>
-                            <span className="text-sm font-black font-mono leading-none">{jamNum}</span>
+                          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex flex-col items-center justify-center shrink-0 border border-emerald-500/20 shadow-2xs">
+                            <span className="text-[9px] font-semibold text-muted-foreground leading-none">Ke-</span>
+                            <span className="text-sm font-bold font-mono leading-none">{jamNum}</span>
                           </div>
                           <div>
-                            <h4 className="text-xs font-extrabold text-foreground">{item.mapel}</h4>
+                            <h4 className="text-xs font-semibold text-foreground">{item.mapel}</h4>
                             <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1.5 mt-0.5">
                               <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                               <span>{item.guru || "Guru Pengampu"}</span>
@@ -299,8 +315,8 @@ export function WaliKelasDashboardView({
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-foreground">{note.student_name}</span>
-                          <Badge variant="outline" className="text-[9px] font-bold border-amber-400 text-amber-700">
+                          <span className="font-semibold text-foreground">{note.student_name}</span>
+                          <Badge variant="outline" className="text-[9px] font-semibold border-amber-400 text-amber-700">
                             {note.mapel}
                           </Badge>
                         </div>
@@ -311,7 +327,7 @@ export function WaliKelasDashboardView({
                         size="sm"
                         variant="ghost"
                         className="h-7 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 shrink-0 gap-1"
-                        onClick={() => toast.success(`📱 Reminder terkirim ke Orang Tua ${note.student_name}`)}
+                        onClick={() => handleDirectWaReminder(note)}
                       >
                         <PhoneCall className="h-3.5 w-3.5" /> WA Ortus
                       </Button>

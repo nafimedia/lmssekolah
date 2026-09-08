@@ -14,8 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { Library, FileText, Video, Headphones, Upload, ExternalLink, Maximize2, Minimize2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { MysqlDataService, ElibraryLoanRow } from "@/services/mysqlDataService";
+import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { validateUploadedFile } from "@/lib/fileValidation";
 
 function parseMediaUrl(url: string): { embedUrl: string; provider: "youtube" | "gdrive" | "direct" } {
   if (!url) return { embedUrl: "", provider: "direct" };
@@ -52,16 +53,11 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   const [isVideoFullScreen, setIsVideoFullScreen] = useState(false);
 
-  const [loanList, setLoanList] = useState<ElibraryLoanRow[]>([]);
   const [bukuList, setBukuList] = useState<any[]>([]);
 
   const loadData = async () => {
     try {
-      const [loans, books] = await Promise.all([
-        MysqlDataService.getElibraryLoans(),
-        MysqlDataService.getElibraryBooks(),
-      ]);
-      setLoanList(loans || []);
+      const books = await MysqlDataService.getElibraryBooks();
       if (books && books.length > 0) {
         const mapped = books.map((b: any) => ({
           id: String(b.id),
@@ -90,31 +86,6 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
     loadData();
   }, []);
 
-  const handleBorrowBook = async (bookId: string, bookTitle: string) => {
-    const me = MysqlAuthService.getActiveUser();
-    const today = new Date();
-    const dueDate = new Date();
-    dueDate.setDate(today.getDate() + 7);
-
-    const res = await MysqlDataService.saveElibraryLoan({
-      book_id: bookId,
-      book_title: bookTitle,
-      user_id: me?.id || "usr-siswa-1",
-      borrower_name: me?.full_name || "Siswa MTsN 2",
-      rombel: (me as any)?.class_name || "VIII A",
-      loan_date: today.toISOString().split("T")[0],
-      due_date: dueDate.toISOString().split("T")[0],
-      status: "Dipinjam",
-    });
-
-    if (res.success) {
-      toast.success(`📚 Berhasil Meminjam "${bookTitle}"! Tersimpan di MySQL Database.`);
-      await loadData();
-    } else {
-      toast.error("Gagal mencatat peminjaman");
-    }
-  };
-
   const [isOpen, setIsOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -127,6 +98,19 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const validation = validateUploadedFile(file.name, file.size, file.type, {
+        maxSizeMb: 50,
+        allowedExtensions: ["pdf", "epub", "mp3", "mp4", "m4a", "docx", "doc", "pptx"],
+      });
+
+      if (!validation.valid) {
+        toast.error(`⚠️ Berkas Ditolak: ${validation.error}`);
+        e.target.value = "";
+        setSelectedFile(null);
+        setSelectedFileDataUrl("");
+        return;
+      }
+
       setSelectedFile(file);
       if (!title) {
         setTitle(file.name.replace(/\.[^/.]+$/, ""));
@@ -141,24 +125,18 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
     }
   };
 
-  const saveListToStorage = (list: any[]) => {
-    setBukuList(list);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("lms_elibrary_books_v2", JSON.stringify(list));
-      } catch (e) { }
-    }
-  };
-
   const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return toast.error("Judul modul / media tidak boleh kosong!");
-    if (uploadMode === "file" && !selectedFile && !mediaUrl.trim()) {
+    if (uploadMode === "file" && !selectedFile) {
       return toast.error("Harap pilih berkas dari perangkat Anda!");
+    }
+    if (uploadMode === "url" && !mediaUrl.trim()) {
+      return toast.error("Tautan media / URL video atau PDF tidak boleh kosong!");
     }
 
     const isVideo = tag === "Video YouTube" || tag === "Video G-Drive" || tag === "Video Tutorial";
-    const isAudio = tag === "Audio Murottal";
+    const isAudio = tag === "Audio" || tag === "Audio Murottal" || tag.toLowerCase().includes("audio");
     const isPdf = tag === "PDF Modul" || tag === "E-Book";
 
     let mediaType = isVideo ? "video" : isAudio ? "audio" : "pdf";
@@ -178,7 +156,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
         });
       }
     } else {
-      defaultUrl = mediaUrl.trim() || (isPdf ? "https://pdfobject.com/pdf/sample.pdf" : "https://www.youtube.com/watch?v=kYJzXv0h0bU");
+      defaultUrl = mediaUrl.trim();
     }
 
     const parsed = parseMediaUrl(defaultUrl);
@@ -238,14 +216,20 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
     }
   };
 
-  const filtered = bukuList.filter((b: any) => filterTag === "Semua" || b.tag === filterTag);
+  const filtered = bukuList.filter((b: any) => {
+    if (filterTag === "Semua") return true;
+    if (filterTag === "Audio") {
+      return b.tag === "Audio" || b.tag === "Audio Murottal" || b.type === "audio";
+    }
+    return b.tag === filterTag;
+  });
 
   return (
     <>
       {activeRole === "siswa" ? (
         <StudentHeaderBanner
           title="E-Library & Buku Digital Saya"
-          subtitle="Akses e-book modul pelajaran, video tutorial KBM, audio murottal, dan buku digital MTsN 2 Cilacap"
+          subtitle="Akses e-book modul pelajaran, video tutorial KBM, audio edukasi / listening, dan buku digital MTsN 2 Cilacap"
           icon={Library}
           statusText="Buku Digital Terverifikasi"
           statusVariant="success"
@@ -256,9 +240,6 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <Library className="h-6 w-6 text-primary" /> Perpustakaan Digital & E-Resources
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Koleksi PDF E-Book, Modul Digital, Embed Video YouTube & Google Drive, serta Audio Murottal Streaming MTsN 2 Cilacap.
-            </p>
           </div>
           <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => setIsOpen(true)}>
             + Tautkan / Unggah Berkas E-Library
@@ -267,7 +248,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
       )}
 
       <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-border pb-3">
-        {["Semua", "PDF Modul", "Video YouTube", "Video G-Drive", "Audio Murottal", "E-Book"].map((t) => (
+        {["Semua", "PDF Modul", "Video YouTube", "Video G-Drive", "Audio", "E-Book"].map((t) => (
           <Button
             key={t}
             size="sm"
@@ -284,7 +265,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
         <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-card space-y-2">
           <Library className="h-8 w-8 text-muted-foreground/40 mx-auto" />
           <div className="font-semibold text-foreground text-sm">Belum Ada Berkas E-Library Terdaftar</div>
-          <p>Database saat ini tidak memiliki data berkas perpustakaan digital terdaftar. Silakan unggah atau cantumkan berkas baru.</p>
+          <p>Belum ada koleksi buku atau berkas digital pada kategori ini. Silakan unggah buku atau materi baru.</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -347,15 +328,17 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
                     </Button>
                   )}
 
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-xs font-bold text-rose-600 hover:bg-rose-500/10 hover:text-rose-700 h-8 px-2 shrink-0 rounded-lg"
-                    onClick={() => setDeleteConfirmBook({ id: k.id, title: k.t })}
-                    title="Hapus Berkas dari E-Library"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {activeRole !== "siswa" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs font-bold text-rose-600 hover:bg-rose-500/10 hover:text-rose-700 h-8 px-2 shrink-0 rounded-lg"
+                      onClick={() => setDeleteConfirmBook({ id: k.id, title: k.t })}
+                      title="Hapus Berkas dari E-Library"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -516,7 +499,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
                   <div className="text-xs font-bold text-foreground">
                     {selectedFile ? `📄 ${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)` : "Klik atau seret file PDF / Media di sini"}
                   </div>
-                  <p className="text-[10px] text-muted-foreground">Format yang didukung: PDF, MP4, MP3, EPUB (Maks. 100 MB)</p>
+                  <p className="text-[10px] text-muted-foreground">Format yang didukung: PDF, MP4, MP3, EPUB (Maks. 50 MB)</p>
                 </div>
               </div>
             ) : (
@@ -552,7 +535,7 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
                 <option value="PDF Modul">📄 PDF Modul</option>
                 <option value="Video YouTube">▶ Video YouTube</option>
                 <option value="Video G-Drive">📁 Video Google Drive</option>
-                <option value="Audio Murottal">🎧 Audio Murottal</option>
+                <option value="Audio">🎧 Audio (Listening / Edukasi / Murottal)</option>
                 <option value="E-Book">📚 E-Book Digital</option>
               </select>
             </div>

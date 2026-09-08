@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { exportToExcelXml } from "@/utils/excelExporter";
 
 import { AddGtkDialog } from "./components/AddGtkDialog";
 import { EditGtkDialog } from "./components/EditGtkDialog";
@@ -65,36 +66,90 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isAddLeaveOpen, setIsAddLeaveOpen] = useState(false);
 
+  const isKamad = activeRole === "kamad";
+  const canDeleteGtk = activeRole === "admin" || activeRole === "superadmin" || activeRole === "kamad";
+
   useEffect(() => {
-    MysqlDataService.getUsers()
-      .then((users) => {
+    Promise.all([
+      MysqlDataService.getUsers(),
+      MysqlDataService.getJadwalPelajaran(),
+      MysqlDataService.getPengampuList(),
+      MysqlDataService.getGtkLeaves(),
+    ])
+      .then(([users, schedules, pengampuList, leaves]) => {
+        if (leaves) setLeavesList(leaves);
         if (users && users.length > 0) {
-          const teachers = users.filter((u: any) => u.role !== "siswa" && u.email !== "admin@mail.com" && !u.full_name?.toLowerCase().includes("super administrator"));
+          const teachers = users.filter(
+            (u: any) =>
+              u.role !== "siswa" &&
+              u.email !== "admin@mail.com" &&
+              !u.full_name?.toLowerCase().includes("super administrator")
+          );
+
           if (teachers.length > 0) {
-            const formatted = teachers.map((u: any) => ({
-              id: String(u.id || u.email),
-              nip: u.nis_nip || "-",
-              npk: u.nis_nip ? u.nis_nip.substring(0, 11) : "-",
-              name: u.full_name,
-              role: u.role || "guru",
-              golongan: "-",
-              statusKepegawaian: "PNS" as any,
-              mapelUtama: u.subject_specialty || "Umum",
-              totalJp: 24,
-              tugasTambahan: u.role === "walikelas" ? "Wali Kelas" : u.role === "waka" ? "Waka Kurikulum" : u.role === "kamad" ? "Kepala Madrasah" : "Guru Pengampu",
-              isSertifikasi: false,
-              email: u.email,
-              phone: u.phone || "-",
-            }));
+            const formatted = teachers.map((u: any) => {
+              const uNameLower = (u.full_name || "").toLowerCase().trim();
+
+              // Sesi tatap muka dari jadwal pelajaran real (1 sesi = 1 JP)
+              const scheduledJp = (schedules || []).filter((s: any) => {
+                const guru = (s.guru || "").toLowerCase().trim();
+                return guru && (guru.includes(uNameLower) || uNameLower.includes(guru));
+              }).length;
+
+              // Jam dari matriks pengampu
+              const matriksJp = (pengampuList || [])
+                .filter((p: any) => {
+                  const guru = (p.guru || "").toLowerCase().trim();
+                  return guru && (guru.includes(uNameLower) || uNameLower.includes(guru));
+                })
+                .reduce((sum: number, p: any) => {
+                  const jpVal = parseInt(p.jam || "0", 10) || 0;
+                  return sum + jpVal;
+                }, 0);
+
+              const baseTatapMuka = Math.max(scheduledJp, matriksJp);
+
+              // Ekuivalensi Beban Tambahan Sesuai Regulasi Kemenag / Simpatika
+              const rLower = (u.role || "").toLowerCase();
+              let ekuivalensiTambahan = 0;
+              let tugasLabel = "Guru Pengampu";
+
+              if (rLower.includes("kamad")) {
+                ekuivalensiTambahan = 24; // Ekuivalensi Manajerial Penuh Kepala Madrasah
+                tugasLabel = "Kepala Madrasah";
+              } else if (rLower.includes("waka")) {
+                ekuivalensiTambahan = 12; // Ekuivalensi Wakil Kepala Madrasah
+                tugasLabel = "Waka Kurikulum";
+              } else if (rLower.includes("walikelas")) {
+                ekuivalensiTambahan = 6; // Ekuivalensi Pembimbingan Rombel Wali Kelas
+                tugasLabel = "Wali Kelas";
+              }
+
+              const calculatedTotalJp = rLower.includes("kamad") ? 24 : baseTatapMuka + ekuivalensiTambahan;
+
+              return {
+                id: String(u.id || u.email),
+                nip: u.nis_nip || "-",
+                npk: u.nis_nip ? u.nis_nip.substring(0, 11) : "-",
+                name: u.full_name,
+                role: u.role || "guru",
+                golongan: "-",
+                statusKepegawaian: "PNS" as any,
+                mapelUtama: u.subject_specialty || "Umum",
+                totalJp: calculatedTotalJp,
+                tugasTambahan: tugasLabel,
+                isSertifikasi: calculatedTotalJp >= 24,
+                email: u.email,
+                phone: u.phone || "-",
+              };
+            });
             setGtkList(formatted);
           }
         }
       })
-      .catch(() => {});
-
-    MysqlDataService.getGtkLeaves()
-      .then((leaves) => setLeavesList(leaves || []))
-      .catch(() => {});
+      .catch((err) => {
+        console.warn("Failed loading SDM GTK data:", err);
+      });
   }, []);
 
   const handleOpenDetail = (item: GtkItem) => {
@@ -127,21 +182,25 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
         nipNis: updated.nip,
         phone: updated.phone || "",
       });
-      toast.success(`Perubahan data GTK "${updated.name}" berhasil tersimpan ke database MySQL.`);
+      toast.success(`Perubahan data GTK "${updated.name}" berhasil disimpan.`);
     } catch (e) {
       console.warn("Gagal simpan GTK ke MySQL:", e);
-      toast.error("Gagal menyimpan perubahan GTK ke database.");
+      toast.error("Gagal menyimpan perubahan data.");
     }
   };
 
   const handleDeleteGtk = async (item: GtkItem) => {
     if (confirm(`Apakah Anda yakin ingin menghapus data pegawai GTK ${item.name}?`)) {
-      setGtkList((prev) => prev.filter((g) => g.id !== item.id));
       try {
-        await MysqlDataService.deleteUser(item.id, item.email);
-        toast.success(`Data pegawai GTK ${item.name} berhasil dihapus dari database.`);
-      } catch (e) {
-        console.warn("Gagal hapus GTK di MySQL:", e);
+        const res = await MysqlDataService.deleteUser(item.id, item.email);
+        if (res) {
+          setGtkList((prev) => prev.filter((g) => g.id !== item.id));
+          toast.success(`Data pegawai GTK ${item.name} berhasil dihapus.`);
+        } else {
+          toast.error(`Gagal menghapus data ${item.name}: Anda tidak memiliki wewenang atau akun dilindungi.`);
+        }
+      } catch (e: any) {
+        toast.error(`Gagal menghapus data pegawai: ${e?.message || "Kesalahan server"}`);
       }
     }
   };
@@ -157,7 +216,7 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
         subject_specialty: newGtk.mapelUtama,
         password: "asd123",
       });
-      toast.success(`Data pegawai GTK ${newGtk.name} berhasil ditambahkan ke database!`);
+      toast.success(`Data pegawai GTK ${newGtk.name} berhasil ditambahkan!`);
     } catch (e) {
       console.warn("Gagal tambah GTK ke MySQL:", e);
     }
@@ -225,25 +284,57 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
     });
   }, [gtkList, search, filterStatus, sortColumn, sortDir]);
 
-  const totalGuru = gtkList.filter((g) => g.role === "guru" || !g.role).length;
-  const totalWaliWaka = gtkList.filter((g) => g.role === "walikelas" || g.role === "waka" || g.role === "kamad").length;
+  const countMemenuhi = gtkList.filter((g) => g.totalJp >= 24).length;
+  const countKurang = gtkList.filter((g) => g.totalJp < 24).length;
+
+  const handleExportGtkExcel = () => {
+    const headers = [
+      "Nama Pegawai GTK",
+      "NIP / NPK",
+      "Email / Akun",
+      "Mata Pelajaran",
+      "Tugas / Jabatan",
+      "Beban Tatap Muka (JP)",
+      "Status TPG Kemenag (≥24 JP)",
+    ];
+    const rows = filteredGtk.map((g) => [
+      g.name,
+      g.nip || "-",
+      g.email,
+      g.mapelUtama,
+      g.tugasTambahan || "-",
+      `${g.totalJp} JP`,
+      g.totalJp >= 24 ? "Memenuhi Syarat (≥24 JP)" : "Belum Memenuhi (<24 JP)",
+    ]);
+    exportToExcelXml("Rekap_Beban_Kerja_GTK_24JP", "Beban_GTK", headers, rows);
+    toast.success("Rekapitulasi Beban Kerja GTK berhasil diunduh ke Excel!");
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">SDM & Data Kepegawaian GTK</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Database kepegawaian guru, wali kelas, pimpinan, dan administrasi GTK.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Users className="h-6 w-6 text-primary" /> Data Guru, Staf & Beban Mengajar
+          </h1>
+          {isKamad && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              🏛️ Mode Pengawasan Eksekutif Kepala Madrasah — Monitoring kepatuhan jam mengajar TPG Kemenag.
+            </p>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10" onClick={handleExportGtkExcel}>
+            <FileSpreadsheet className="h-4 w-4" /> Export Excel Beban GTK
+          </Button>
           <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintOpen(true)}>
             <Printer className="h-4 w-4" /> Cetak Bio GTK PDF
           </Button>
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddOpen(true)}>
-            <Plus className="h-4 w-4" /> Tambah Pegawai GTK
-          </Button>
+          {!isKamad && (
+            <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddOpen(true)}>
+              <Plus className="h-4 w-4" /> Tambah Pegawai GTK
+            </Button>
+          )}
         </div>
       </div>
 
@@ -266,20 +357,20 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground font-medium">Guru Pengampu</div>
-              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{totalGuru} Guru</div>
+              <div className="text-xs text-muted-foreground font-medium">Memenuhi Beban (≥24 JP)</div>
+              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{countMemenuhi} Guru</div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card shadow-2xs">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
               <Award className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground font-medium">Wali Kelas & Pimpinan</div>
-              <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">{totalWaliWaka} Akun</div>
+              <div className="text-xs text-muted-foreground font-medium">Beban Kurang (&lt;24 JP)</div>
+              <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{countKurang} Guru</div>
             </div>
           </CardContent>
         </Card>
@@ -325,14 +416,14 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                   placeholder="Cari nama, NIP, email, mapel..."
                   className="pl-9 h-9 text-xs"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 />
               </div>
 
               <select
                 className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value)}
               >
                 <option value="semua">Semua Peran</option>
                 <option value="guru">Guru Pengampu</option>
@@ -417,18 +508,33 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                         {item.tugasTambahan || (item.role === "walikelas" ? "Wali Kelas" : item.role === "waka" ? "Waka Kurikulum" : item.role === "kamad" ? "Kepala Madrasah" : "Guru Pengampu")}
                       </Badge>
                     </td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-primary whitespace-nowrap">{item.totalJp} JP</td>
+                    <td className="py-3 px-3 text-center whitespace-nowrap">
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="font-mono font-bold text-foreground text-xs">{item.totalJp} JP</span>
+                        {item.totalJp >= 24 ? (
+                          <Badge className="bg-emerald-600 text-white font-bold text-[9px] px-1.5 py-0">
+                            ≥ 24 JP (Tuntas)
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-amber-600 border-amber-500/40 font-bold text-[9px] px-1.5 py-0">
+                            &lt; 24 JP (Kurang)
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
                     <td className="py-3 px-4 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs font-bold gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30"
-                          onClick={() => handleOpenEdit(item)}
-                          title="Edit Data Pegawai GTK"
-                        >
-                          <Pencil className="h-3.5 w-3.5" /> Edit
-                        </Button>
+                        {!isKamad && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs font-bold gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30"
+                            onClick={() => handleOpenEdit(item)}
+                            title="Edit Data Pegawai GTK"
+                          >
+                            <Pencil className="h-3.5 w-3.5" /> Edit
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
@@ -438,15 +544,17 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                         >
                           <Eye className="h-3.5 w-3.5" /> Detail
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 text-xs font-bold gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
-                          onClick={() => handleDeleteGtk(item)}
-                          title="Hapus Data Pegawai GTK"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" /> Hapus
-                        </Button>
+                        {canDeleteGtk && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs font-bold gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
+                            onClick={() => handleDeleteGtk(item)}
+                            title="Hapus Data Pegawai GTK"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Hapus
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>

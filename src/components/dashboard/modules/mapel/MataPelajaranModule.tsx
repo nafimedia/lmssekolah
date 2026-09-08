@@ -23,14 +23,18 @@ import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
+import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
+import { UploadPerangkatDialog } from "./components/UploadPerangkatDialog";
 
 export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
-  const isWakaOrKamad = activeRole === "waka" || activeRole === "kamad" || activeRole === "admin" || activeRole === "admin_akademik";
   const isWaka = activeRole === "waka";
   const isKamad = activeRole === "kamad";
+  // Peran supervisi & validasi operasional akademik (Waka Kurikulum, Kamad, Bagian Akademik & Admin)
+  const canSupervisePerangkat = activeRole === "waka" || activeRole === "admin_akademik" || activeRole === "admin" || isKamad;
+  const isWakaOrKamad = canSupervisePerangkat || isKamad;
   const me = MysqlAuthService.getActiveUser();
-  const currentTeacherName = me?.full_name || userProfile?.name || "Guru Pengampu";
+  const currentTeacherName = me?.full_name || userProfile?.full_name || userProfile?.name || (me as any)?.name || "Guru Pengampu";
 
   const rawClass = userProfile?.class_name || "VIII-A";
   const getStudentGradeKey = (cName: string): "VII" | "VIII" | "IX" => {
@@ -42,8 +46,21 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
   const [kelas, setKelas] = useState<"VII" | "VIII" | "IX">(isSiswa ? getStudentGradeKey(rawClass) : "VIII");
   const [selectedMapel, setSelectedMapel] = useState<string | null>(null);
 
-  // Dynamic Teacher & Subject State from MySQL
-  const [mapelsStateList, setMapelsStateList] = useState<any[]>([]);
+  // Upload Perangkat Dialog States
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [uploadMapelTarget, setUploadMapelTarget] = useState<string | null>(null);
+  const [uploadKelasTarget, setUploadKelasTarget] = useState<"VII" | "VIII" | "IX">("VIII");
+
+  const handleOpenUpload = (mapelName?: string | null, gradeName?: "VII" | "VIII" | "IX") => {
+    setUploadMapelTarget(mapelName || selectedMapel || null);
+    setUploadKelasTarget(gradeName || kelas);
+    setIsUploadOpen(true);
+  };
+
+  // Dynamic Teacher & Subject Raw Data from MySQL
+  const [rawSubjects, setRawSubjects] = useState<any[]>([]);
+  const [rawSchedules, setRawSchedules] = useState<any[]>([]);
+  const [rawUsers, setRawUsers] = useState<any[]>([]);
   const [isLoadingMapel, setIsLoadingMapel] = useState(true);
 
   // Real Database Perangkat Materials State
@@ -64,68 +81,205 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
         MysqlDataService.getJadwalPelajaran(),
         MysqlDataService.getUsers(),
       ]);
-
-      const baseList = (subjects && subjects.length >= 5) ? subjects : INITIAL_MASTER_MAPEL;
-
-      const formatted = baseList.map((r: any) => {
-        const subjectName = r.subject_name || r.name || "Mata Pelajaran";
-        const masterMatch = INITIAL_MASTER_MAPEL.find(
-          (m) => m.name.toLowerCase() === subjectName.toLowerCase()
-        );
-
-        // Find all assigned teachers dynamically from Schedule or User specialty in MySQL
-        const matchingFromSchedule = (schedules || [])
-          .filter(
-            (s: any) =>
-              s.mapel?.toLowerCase().trim() === subjectName.toLowerCase().trim() &&
-              s.guru &&
-              s.guru.trim() !== "-" &&
-              s.guru.trim() !== "Belum Ditentukan"
-          )
-          .map((s: any) => s.guru.trim());
-
-        const matchingFromUsers = (users || [])
-          .filter(
-            (u: any) =>
-              u.role !== "siswa" &&
-              ((u.subject_specialty && u.subject_specialty.toLowerCase().includes(subjectName.toLowerCase())) ||
-                (u.assignedSubject && u.assignedSubject.toLowerCase().includes(subjectName.toLowerCase())))
-          )
-          .map((u: any) => (u.full_name || u.name).trim());
-
-        const rawTeachers = [...matchingFromSchedule, ...matchingFromUsers];
-        const uniqueTeacherMap = new Map<string, string>();
-        rawTeachers.forEach((t) => {
-          if (!t) return;
-          const cleanKey = t.toLowerCase().replace(/[^a-z0-9]/g, "");
-          if (!uniqueTeacherMap.has(cleanKey)) {
-            uniqueTeacherMap.set(cleanKey, t);
-          }
-        });
-        const allTeachers = Array.from(uniqueTeacherMap.values());
-
-        const assignedTeacher =
-          allTeachers.length > 0
-            ? allTeachers.join(", ")
-            : r.teacher || masterMatch?.teacher || "Tim Guru Pengampu";
-
-        return {
-          code: r.code || masterMatch?.code || `MP-${r.id || Math.random()}`,
-          name: subjectName,
-          category: r.category || masterMatch?.category || "Umum",
-          teacher: assignedTeacher,
-          icon: masterMatch?.icon || "📖",
-          jp: r.jp_per_week || (masterMatch ? parseInt(masterMatch.jp) : 2),
-        };
-      });
-
-      setMapelsStateList(formatted);
+      setRawSubjects(subjects || []);
+      setRawSchedules(schedules || []);
+      setRawUsers(users || []);
     } catch (err) {
       console.warn("Fetch mapel error:", err);
     } finally {
       setIsLoadingMapel(false);
     }
   };
+
+  // Helper to test if a schedule entry belongs to the selected grade (VII, VIII, IX)
+  const isScheduleMatchingGrade = (s: any, grade: "VII" | "VIII" | "IX") => {
+    const rombel = (s.rombel || "").toUpperCase().trim();
+    const tingkat = (s.tingkat || "").toUpperCase().trim();
+    if (grade === "VII") {
+      return rombel.includes("7") || rombel.includes("VII") || tingkat === "VII" || tingkat === "7";
+    }
+    if (grade === "VIII") {
+      return rombel.includes("8") || rombel.includes("VIII") || tingkat === "VIII" || tingkat === "8";
+    }
+    if (grade === "IX") {
+      return rombel.includes("9") || rombel.includes("IX") || tingkat === "IX" || tingkat === "9";
+    }
+    return true;
+  };
+
+  // Helper to match subject names flexibly (handles short names & aliases)
+  const isSubjectNameMatch = (schedMapel: string, targetMapel: string) => {
+    const s1 = schedMapel.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const s2 = targetMapel.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (!s1 || !s2) return false;
+    if (s1 === s2) return true;
+
+    // Standard school subject aliases
+    if ((s1 === "ipa" || s1 === "ilmupendidikanalam") && (s2 === "ipa" || s2 === "ilmupendidikanalam")) return true;
+    if ((s1 === "ips" || s1 === "ilmupendidikansosial") && (s2 === "ips" || s2 === "ilmupendidikansosial")) return true;
+    if (s1.includes("jawa") && s2.includes("jawa")) return true;
+    if ((s1.includes("pjok") || s1.includes("jasmani")) && (s2.includes("pjok") || s2.includes("jasmani"))) return true;
+    if ((s1.includes("bk") || s1.includes("bimbingan")) && (s2.includes("bk") || s2.includes("bimbingan"))) return true;
+    if ((s1.includes("seni") || s1.includes("prakarya")) && (s2.includes("seni") || s2.includes("prakarya"))) return true;
+    if ((s1.includes("quran") || s1.includes("hadis") || s1.includes("hadist")) && (s2.includes("quran") || s2.includes("hadis") || s2.includes("hadist"))) return true;
+    if ((s1.includes("akidah") || s1.includes("akhlak")) && (s2.includes("akidah") || s2.includes("akhlak"))) return true;
+    if ((s1.includes("sejarah") || s1.includes("ski")) && (s2.includes("sejarah") || s2.includes("ski"))) return true;
+    if ((s1.includes("kewarganegaraan") || s1.includes("pkn")) && (s2.includes("kewarganegaraan") || s2.includes("pkn"))) return true;
+
+    return s1.includes(s2) || s2.includes(s1);
+  };
+
+  // Smart teacher name deduplication (normalizes honorifics, degrees, and typo tolerance)
+  const normalizeTeacherKey = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/^(drs\.|dr\.|h\.|hj\.|hjh\.|dra\.)\s+/gi, "")
+      .replace(/,\s*(s\.pd|m\.pd|m\.si|m\.ag|s\.ag|m\.pd\.i|s\.p|s\.pd\.i|s\.kom|s)\.?$/gi, "")
+      .replace(/[^a-z0-9]/gi, "")
+      .replace(/idana/g, "diana") // handle Diana vs Idana typo
+      .trim();
+  };
+
+  // Dynamic Mapel list computed for the selected Grade (Kelas VII, VIII, IX)
+  const mapelsStateList = useMemo(() => {
+    const baseList = (rawSubjects && rawSubjects.length >= 5) ? rawSubjects : INITIAL_MASTER_MAPEL;
+
+    return baseList.map((r: any) => {
+      const subjectName = r.subject_name || r.name || "Mata Pelajaran";
+      const masterMatch = INITIAL_MASTER_MAPEL.find(
+        (m) => m.name.toLowerCase() === subjectName.toLowerCase()
+      );
+
+      // 1. First priority: Real schedule matching the current grade (Tingkat VII/VIII/IX)
+      const gradeSchedules = (rawSchedules || []).filter(
+        (s: any) =>
+          isScheduleMatchingGrade(s, kelas) &&
+          isSubjectNameMatch(s.mapel || "", subjectName) &&
+          s.guru &&
+          s.guru.trim() !== "-" &&
+          s.guru.trim() !== "Belum Ditentukan"
+      );
+
+      let foundTeachers: string[] = [];
+
+      if (gradeSchedules.length > 0) {
+        // Use ONLY teachers assigned to this grade schedule
+        const uniqueGradeMap = new Map<string, string>();
+        gradeSchedules.forEach((s: any) => {
+          const gName = s.guru.trim();
+          const k = normalizeTeacherKey(gName);
+          if (!uniqueGradeMap.has(k)) {
+            uniqueGradeMap.set(k, gName);
+          }
+        });
+        foundTeachers = Array.from(uniqueGradeMap.values());
+      } else {
+        // 2. Fallback only if no schedule at all for this grade: check users table for specialists
+        const matchingFromUsers = (rawUsers || [])
+          .filter(
+            (u: any) =>
+              u.role !== "siswa" &&
+              ((u.subject_specialty && isSubjectNameMatch(u.subject_specialty, subjectName)) ||
+                (u.assignedSubject && isSubjectNameMatch(u.assignedSubject, subjectName)))
+          )
+          .map((u: any) => (u.full_name || u.name).trim());
+
+        const uniqueUsersMap = new Map<string, string>();
+        matchingFromUsers.forEach((uName: string) => {
+          const k = normalizeTeacherKey(uName);
+          if (!uniqueUsersMap.has(k)) {
+            uniqueUsersMap.set(k, uName);
+          }
+        });
+        foundTeachers = Array.from(uniqueUsersMap.values());
+      }
+
+      // Final teacher string
+      const assignedTeacher =
+        foundTeachers.length > 0
+          ? foundTeachers.join(", ")
+          : (r.teacher || masterMatch?.teacher || "Tim Guru Pengampu");
+
+      return {
+        code: r.code || masterMatch?.code || `MP-${r.id || Math.random()}`,
+        name: subjectName,
+        category: r.category || masterMatch?.category || "Umum",
+        teacher: assignedTeacher,
+        icon: masterMatch?.icon || "📖",
+        jp: r.jp_per_week || (masterMatch ? parseInt(masterMatch.jp) : 2),
+      };
+    });
+  }, [kelas, rawSubjects, rawSchedules, rawUsers]);
+
+  // Helper to check whether a subject belongs to the current logged-in teacher
+  const isSubjectBelongsToTeacher = (subjectName: string) => {
+    if (isWakaOrKamad || isSiswa) return true;
+
+    const teacherKey = normalizeTeacherKey(currentTeacherName);
+    const userSpecialty = (me?.subject_specialty || userProfile?.subject_specialty || "").trim();
+    const userAssigned = ((me as any)?.assignedSubject || userProfile?.assignedSubject || "").trim();
+
+    // 1. Direct match with user's subject_specialty field
+    if (userSpecialty) {
+      const parts = userSpecialty.split(",").map((p: string) => p.trim());
+      if (parts.some((p: string) => isSubjectNameMatch(p, subjectName))) return true;
+    }
+
+    // 2. Direct match with assignedSubject field
+    if (userAssigned) {
+      const parts = userAssigned.split(",").map((p: string) => p.trim());
+      if (parts.some((p: string) => isSubjectNameMatch(p, subjectName))) return true;
+    }
+
+    // 3. Check real teaching schedule in rawSchedules
+    const hasTeachingSchedule = (rawSchedules || []).some((s: any) => {
+      if (!s.guru || !s.mapel) return false;
+      const schedTeacherKey = normalizeTeacherKey(s.guru);
+      const isTeacher =
+        schedTeacherKey === teacherKey ||
+        schedTeacherKey.includes(teacherKey) ||
+        teacherKey.includes(schedTeacherKey);
+      return isTeacher && isSubjectNameMatch(s.mapel, subjectName);
+    });
+    if (hasTeachingSchedule) return true;
+
+    // 4. Check computed teacher string for this subject in the grade list
+    const currentSubjectItem = mapelsStateList.find((m) => isSubjectNameMatch(m.name, subjectName));
+    if (currentSubjectItem && currentSubjectItem.teacher) {
+      const assignedTeacherKey = normalizeTeacherKey(currentSubjectItem.teacher);
+      if (assignedTeacherKey.includes(teacherKey) || teacherKey.includes(assignedTeacherKey)) {
+        return true;
+      }
+    }
+
+    // 5. Fallback helper check (NIP mapping, etc.)
+    if (isSubjectAllowedForUser(subjectName, me)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Strictly filter subjects: Guru Pengampu ONLY accesses their own assigned subject(s)
+  const displayedMapels = useMemo(() => {
+    if (isWakaOrKamad || isSiswa) {
+      return mapelsStateList;
+    }
+    return mapelsStateList.filter((m) => isSubjectBelongsToTeacher(m.name));
+  }, [mapelsStateList, isWakaOrKamad, isSiswa, currentTeacherName, me, userProfile, rawSchedules]);
+
+  // Security Guard: Prevent unauthorized direct access to subjects outside teacher assignment
+  useEffect(() => {
+    if (selectedMapel && !isWakaOrKamad && !isSiswa) {
+      const isAllowed = displayedMapels.some(
+        (m) => m.name.toLowerCase() === selectedMapel.toLowerCase()
+      );
+      if (!isAllowed && displayedMapels.length > 0) {
+        toast.warning("Akses Dibatasi: Anda hanya dapat mengakses mata pelajaran pengampuan Anda.");
+        setSelectedMapel(null);
+      }
+    }
+  }, [selectedMapel, displayedMapels, isWakaOrKamad, isSiswa]);
 
   // Fetch Perangkat Pembelajaran Materials for Selected Subject
   const fetchPerangkatMaterials = async () => {
@@ -183,18 +337,30 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
     return found?.teacher || "Belum Ada Guru Pengampu";
   }, [selectedMapel, mapelsStateList]);
 
-  // Filtered Perangkat Materials
+  // Filtered Perangkat Materials (Separating Student Reading vs Teacher Admin Documents)
   const filteredMaterials = useMemo(() => {
     return realMaterials.filter((m) => {
+      if (isSiswa) {
+        const typeLower = (m.type || "").toLowerCase();
+        const isTeacherAdmin =
+          typeLower.includes("prota") ||
+          typeLower.includes("promes") ||
+          typeLower.includes("kktp") ||
+          typeLower.includes("atp") ||
+          typeLower.includes("silabus") ||
+          typeLower.includes("kisi");
+        if (isTeacherAdmin) return false;
+      }
       const matchJenis = jenisFilter === "semua" || (m.type || "").toLowerCase().includes(jenisFilter.toLowerCase());
       const matchStatus =
+        isSiswa ||
         statusFilter === "semua" ||
         (statusFilter === "verified" && m.status === "Terverifikasi Waka") ||
         (statusFilter === "pending" && m.status !== "Terverifikasi Waka" && m.status !== "Perlu Revisi") ||
         (statusFilter === "revisi" && m.status === "Perlu Revisi");
       return matchJenis && matchStatus;
     });
-  }, [realMaterials, jenisFilter, statusFilter]);
+  }, [realMaterials, jenisFilter, statusFilter, isSiswa]);
 
   return (
     <div className="space-y-6">
@@ -202,28 +368,40 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Perangkat Pembelajaran & Modul Ajar Resmi
+            <BookOpen className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            {isSiswa
+              ? `Materi & Buku Pelajaran Siswa — Tingkat ${kelas}`
+              : "Perangkat Pembelajaran & Modul Ajar Resmi"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Pengelolaan & Pengesahan Dokumen Administrasi KBM Resmi Guru (Modul Ajar, RPP, CP/TP, Silabus, Prota, Promes).
-          </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {(["VII", "VIII", "IX"] as const).map((g) => (
+        <div className="flex items-center gap-2 flex-wrap">
+          {!isSiswa && (
             <Button
-              key={g}
               size="sm"
-              variant={kelas === g ? "default" : "outline"}
-              className={`text-xs font-bold ${kelas === g ? "bg-emerald-600 text-white" : ""}`}
-              onClick={() => {
-                setKelas(g);
-                setSelectedMapel(null);
-              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+              onClick={() => handleOpenUpload(selectedMapel, kelas)}
             >
-              Tingkat {g}
+              <Upload className="h-4 w-4" /> + Unggah Perangkat
             </Button>
-          ))}
+          )}
+
+          <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg border border-border">
+            {(["VII", "VIII", "IX"] as const).map((g) => (
+              <Button
+                key={g}
+                size="sm"
+                variant={kelas === g ? "default" : "ghost"}
+                className={`text-xs font-bold h-7 px-3 ${kelas === g ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => {
+                  setKelas(g);
+                  setSelectedMapel(null);
+                }}
+              >
+                Tingkat {g}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -232,20 +410,32 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Daftar Mata Pelajaran Tingkat {kelas} (Data Guru Real-time MySQL):
+              {isWakaOrKamad || isSiswa
+                ? `Daftar Mata Pelajaran Tingkat ${kelas}:`
+                : `Mata Pelajaran Pengampuan Anda — Tingkat ${kelas}:`}
             </div>
             <Badge variant="outline" className="text-xs font-mono text-emerald-600 border-emerald-500/30 font-bold">
-              {mapelsStateList.length} Mata Pelajaran
+              {displayedMapels.length} Mata Pelajaran{isWakaOrKamad || isSiswa ? "" : " Pengampuan"}
             </Badge>
           </div>
 
           {isLoadingMapel ? (
             <div className="p-12 text-center text-xs text-muted-foreground animate-pulse">
-              Memuat data mata pelajaran & guru pengampu dari database MySQL...
+              Memuat data mata pelajaran...
+            </div>
+          ) : displayedMapels.length === 0 ? (
+            <div className="p-10 text-center border border-dashed border-border rounded-2xl bg-card space-y-3">
+              <BookOpen className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-foreground">Tidak Ada Mata Pelajaran Pengampuan di Tingkat {kelas}</h4>
+                <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                  Anda tidak memiliki jadwal atau penugasan mengajar di Tingkat {kelas}. Silakan beralih ke jenjang kelas yang Anda ampu (Tingkat VII, VIII, atau IX) pada pilihan di sudut kanan atas.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mapelsStateList.map((m) => (
+              {displayedMapels.map((m) => (
                 <Card
                   key={m.code}
                   className="border-border hover:border-emerald-500/50 transition shadow-xs cursor-pointer bg-card group"
@@ -293,74 +483,116 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
               </div>
             </div>
 
-            {isWakaOrKamad && (
+            {!isSiswa && !canSupervisePerangkat && (
               <div className="flex items-center gap-2 shrink-0">
-                <Badge variant="outline" className="text-xs font-bold border-amber-500/40 text-amber-600 bg-amber-500/10">
-                  🏛️ Mode Pengesahan Kurikulum (Waka / Kamad)
+                <Badge variant="outline" className="text-xs font-bold border-emerald-500/40 text-emerald-600 bg-emerald-500/10">
+                  👨‍🏫 Mata Pelajaran Pengampuan Anda
                 </Badge>
               </div>
             )}
           </div>
 
-          {/* Official Perangkat Pembelajaran Documents Table */}
+          {/* Official Perangkat Pembelajaran Documents Table / Student Learning Resources */}
           <Card className="border-border shadow-xs bg-card">
             <CardHeader className="p-5 pb-4 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <FileCheck className="h-5 w-5 text-emerald-600" />
-                  Berkas Perangkat Pembelajaran & Modul Ajar Resmi ({selectedMapel})
+                  {isSiswa
+                    ? `Bahan Ajar & Buku Siswa Digital (${selectedMapel})`
+                    : `Berkas Perangkat Pembelajaran & Modul Ajar Resmi (${selectedMapel})`}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Modul Ajar, RPP, CP/TP, Silabus, Prota, dan Promes resmi yang membutuhkan status pengesahan Waka Kurikulum.
+                  {isSiswa
+                    ? `Koleksi buku teks Kurikulum Merdeka, modul belajar, dan bahan tayang materi ${selectedMapel} untuk Anda pelajari.`
+                    : "Modul Ajar, RPP, CP/TP, Silabus, Prota, dan Promes resmi yang membutuhkan status pengesahan Waka Kurikulum."}
                 </CardDescription>
               </div>
 
-              {/* Status Filter Buttons */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Button
-                  size="sm"
-                  variant={statusFilter === "semua" ? "default" : "outline"}
-                  className={`h-7 text-[11px] font-bold ${statusFilter === "semua" ? "bg-emerald-600 text-white" : ""}`}
-                  onClick={() => setStatusFilter("semua")}
-                >
-                  Semua ({realMaterials.length})
-                </Button>
-                <Button
-                  size="sm"
-                  variant={statusFilter === "pending" ? "default" : "outline"}
-                  className={`h-7 text-[11px] font-bold ${statusFilter === "pending" ? "bg-amber-600 text-white" : ""}`}
-                  onClick={() => setStatusFilter("pending")}
-                >
-                  ⏳ Menunggu ({realMaterials.filter((m) => m.status !== "Terverifikasi Waka" && m.status !== "Perlu Revisi").length})
-                </Button>
-                <Button
-                  size="sm"
-                  variant={statusFilter === "verified" ? "default" : "outline"}
-                  className={`h-7 text-[11px] font-bold ${statusFilter === "verified" ? "bg-emerald-600 text-white" : ""}`}
-                  onClick={() => setStatusFilter("verified")}
-                >
-                  ✅ Disetujui ({realMaterials.filter((m) => m.status === "Terverifikasi Waka").length})
-                </Button>
+              {/* Status Filter Buttons & Action */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {isSiswa ? (
+                  <Badge className="bg-emerald-600 text-white text-xs font-bold gap-1 px-3 py-1">
+                    <BookOpen className="h-3.5 w-3.5" /> Sumber Belajar Resmi Siswa
+                  </Badge>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant={statusFilter === "semua" ? "default" : "outline"}
+                        className={`h-7 text-[11px] font-bold ${statusFilter === "semua" ? "bg-emerald-600 text-white" : ""}`}
+                        onClick={() => setStatusFilter("semua")}
+                      >
+                        Semua ({realMaterials.length})
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={statusFilter === "pending" ? "default" : "outline"}
+                        className={`h-7 text-[11px] font-bold ${statusFilter === "pending" ? "bg-amber-600 text-white" : ""}`}
+                        onClick={() => setStatusFilter("pending")}
+                      >
+                        ⏳ Menunggu ({realMaterials.filter((m) => m.status !== "Terverifikasi Waka" && m.status !== "Perlu Revisi").length})
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={statusFilter === "verified" ? "default" : "outline"}
+                        className={`h-7 text-[11px] font-bold ${statusFilter === "verified" ? "bg-emerald-600 text-white" : ""}`}
+                        onClick={() => setStatusFilter("verified")}
+                      >
+                        ✅ Disetujui ({realMaterials.filter((m) => m.status === "Terverifikasi Waka").length})
+                      </Button>
+                    </div>
+
+                    {!isKamad && (
+                      <Button
+                        size="sm"
+                        className="h-7 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1 shadow-xs"
+                        onClick={() => handleOpenUpload(selectedMapel, kelas)}
+                      >
+                        <Upload className="h-3.5 w-3.5" /> + Unggah Perangkat
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             </CardHeader>
 
             <CardContent className="p-5">
               {isLoadingMaterials ? (
                 <div className="py-12 text-center text-xs text-muted-foreground animate-pulse">
-                  Memuat berkas perangkat pembelajaran dari database MySQL...
+                  Memuat berkas bahan ajar...
                 </div>
               ) : filteredMaterials.length === 0 ? (
-                <div className="py-12 text-center border border-dashed border-border rounded-xl bg-muted/10 space-y-2">
+                <div className="py-12 text-center border border-dashed border-border rounded-xl bg-muted/10 space-y-3">
                   <Inbox className="h-10 w-10 text-muted-foreground/40 mx-auto" />
-                  <h4 className="font-bold text-xs text-foreground">Belum Ada Dokumen Perangkat Pembelajaran</h4>
-                  <p className="text-[11px] text-muted-foreground max-w-md mx-auto">
-                    Belum ada berkas Modul Ajar / RPP / Administrasi KBM tersimpan di database untuk mata pelajaran <strong>{selectedMapel} (Tingkat {kelas})</strong>.
-                  </p>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-xs text-foreground">
+                      {isSiswa
+                        ? `Belum Ada Bahan Ajar Digital untuk ${selectedMapel}`
+                        : "Belum Ada Dokumen Perangkat Pembelajaran"}
+                    </h4>
+                    <p className="text-[11px] text-muted-foreground max-w-md mx-auto">
+                      {isSiswa
+                        ? `Guru pengampu (${selectedMapelTeacher}) belum mengunggah berkas modul atau bahan bacaan digital untuk mata pelajaran ${selectedMapel}.`
+                        : `Belum ada berkas Modul Ajar / RPP / Administrasi KBM tersimpan di database untuk mata pelajaran ${selectedMapel} (Tingkat ${kelas}).`}
+                    </p>
+                  </div>
+                  {!isSiswa && !isKamad && (
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+                      onClick={() => handleOpenUpload(selectedMapel, kelas)}
+                    >
+                      <Upload className="h-3.5 w-3.5" /> Unggah Perangkat Sekarang
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
                   {filteredMaterials.map((mat: any) => {
-                    const isVerified = mat.status === "Terverifikasi Waka";
+                    const statusStr = (mat.status || "").toLowerCase();
+                    const isVerified = statusStr.includes("terverifikasi") || statusStr.includes("disahkan");
                     const isRevisi = mat.status === "Perlu Revisi";
 
                     return (
@@ -371,27 +603,29 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-600">
-                              {mat.type || "Modul Ajar / RPP"}
+                              {isSiswa ? "Bahan Belajar Siswa" : (mat.type || "Modul Ajar / RPP")}
                             </Badge>
-                            {isVerified ? (
-                              <Badge className="bg-emerald-600 text-white font-bold text-[10px] gap-1">
-                                <CheckCircle2 className="h-3 w-3" /> Disahkan Waka Kurikulum
-                              </Badge>
-                            ) : isRevisi ? (
-                              <Badge variant="destructive" className="font-bold text-[10px] gap-1">
-                                <AlertTriangle className="h-3 w-3" /> Perlu Revisi
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30 font-bold text-[10px] gap-1">
-                                <Clock className="h-3 w-3" /> Menunggu Verifikasi Waka
-                              </Badge>
+                            {!isSiswa && (
+                              isVerified ? (
+                                <Badge className="bg-emerald-600 text-white font-bold text-[10px] gap-1">
+                                  <CheckCircle2 className="h-3 w-3" /> {mat.status?.toLowerCase().includes("kamad") || mat.status?.toLowerCase().includes("kepala") ? "Disahkan Kepala Madrasah" : "Disahkan Waka Kurikulum"}
+                                </Badge>
+                              ) : isRevisi ? (
+                                <Badge variant="destructive" className="font-bold text-[10px] gap-1">
+                                  <AlertTriangle className="h-3 w-3" /> Perlu Revisi
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30 font-bold text-[10px] gap-1">
+                                  <Clock className="h-3 w-3" /> Menunggu Pengesahan
+                                </Badge>
+                              )
                             )}
                           </div>
 
                           <h3 className="font-bold text-sm text-foreground">{mat.title}</h3>
                           <p className="text-xs text-muted-foreground flex items-center gap-2">
                             <span>👨‍🏫 Pengunggah: <strong>{mat.uploaded_by || mat.teacher_name || selectedMapelTeacher}</strong></span>
-                            <span>• Ukuran: {mat.size || "3.5 MB"}</span>
+                            {mat.size && <span>• Ukuran: {mat.size}</span>}
                           </p>
                         </div>
 
@@ -404,24 +638,24 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                               setPreviewModal({
                                 title: mat.title,
                                 type: mat.type || "Bahan Ajar",
-                                size: mat.size || "3.5 MB",
+                                size: mat.size || "-",
                                 file_url: mat.file_url,
                                 status: mat.status,
                                 uploaded_by: mat.uploaded_by || mat.teacher_name || selectedMapelTeacher,
                               })
                             }
                           >
-                            <ExternalLink className="h-3.5 w-3.5" /> Buka Dokumen
+                            <ExternalLink className="h-3.5 w-3.5" /> {isSiswa ? "Baca Materi (PDF)" : "Buka Dokumen"}
                           </Button>
 
-                          {/* Approval Actions for Waka / Kamad */}
-                          {isWakaOrKamad && (
+                          {/* Operational Approval Actions: Waka Kurikulum, Kamad, dan Admin */}
+                          {canSupervisePerangkat && (
                             <>
                               {!isVerified && (
                                 <Button
                                   size="sm"
                                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1"
-                                  onClick={() => handleUpdateStatus(String(mat.id), mat.title, "Terverifikasi Waka")}
+                                  onClick={() => handleUpdateStatus(String(mat.id), mat.title, isKamad ? "Disahkan Kepala Madrasah" : "Terverifikasi Waka")}
                                 >
                                   <Check className="h-3.5 w-3.5" /> Sahkan
                                 </Button>
@@ -431,7 +665,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                                   size="sm"
                                   variant="outline"
                                   className="border-amber-500/40 text-amber-600 text-xs font-bold gap-1"
-                                  onClick={() => handleUpdateStatus(String(mat.id), mat.title, "Menunggu Verifikasi Waka")}
+                                  onClick={() => handleUpdateStatus(String(mat.id), mat.title, "Menunggu Pengesahan")}
                                 >
                                   <RotateCcw className="h-3.5 w-3.5" /> Batalkan Pengesahan
                                 </Button>
@@ -486,6 +720,19 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
           </DialogContent>
         </Dialog>
       )}
+
+      <UploadPerangkatDialog
+        isOpen={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+        defaultMapel={uploadMapelTarget}
+        defaultKelas={uploadKelasTarget}
+        allowedSubjectList={
+          isWakaOrKamad ? undefined : displayedMapels.map((m) => m.name)
+        }
+        onSuccess={async () => {
+          await fetchPerangkatMaterials();
+        }}
+      />
     </div>
   );
 }

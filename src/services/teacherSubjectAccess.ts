@@ -36,7 +36,7 @@ export function getTeacherAssignedClasses(user?: UserSession | null): string[] {
   const roleStr = (activeUser.role || "").toLowerCase();
   const roles = roleStr.split(",").map((r) => r.trim());
 
-  if (roles.includes("admin") || roles.includes("kamad")) {
+  if (roles.includes("admin") || roles.includes("kamad") || roles.includes("admin_akademik") || roles.includes("waka")) {
     return ALL_SCHOOL_CLASSES;
   }
 
@@ -92,20 +92,26 @@ export function getTeacherAssignedSubjects(user?: UserSession | null): string[] 
   const roles = roleStr.split(",").map((r) => r.trim());
   const nip = activeUser.nis_nip || "";
 
-  // Super Administrator, Kamad, atau Waka murni memiliki akses penuh ke semua Mapel
-  if (roles.includes("admin") || roles.includes("kamad") || roles.includes("waka")) {
+  // Super Administrator, Kamad, Waka, atau Admin Akademik memiliki akses penuh ke semua Mapel
+  if (roles.includes("admin") || roles.includes("kamad") || roles.includes("waka") || roles.includes("admin_akademik")) {
     return null; // Semua Mapel (Akses Penuh)
   }
 
   // Jika bukan guru (misal siswa), return null (sesuai view siswa)
-  const isGuru = roles.some((r) => ["guru", "guru_mapel", "walikelas", "admin_akademik"].includes(r));
+  const isGuru = roles.some((r) => ["guru", "guru_mapel", "walikelas"].includes(r));
   if (!isGuru) return null;
 
   const assigned: Set<string> = new Set();
 
-  // 1. Pure 100% MySQL Database subject_specialty field
+  // 1. Pure 100% MySQL Database subject_specialty or assignedSubject field
   if (activeUser.subject_specialty && activeUser.subject_specialty.trim()) {
     activeUser.subject_specialty.split(",").forEach((s) => {
+      const clean = s.trim();
+      if (clean) assigned.add(clean);
+    });
+  }
+  if ((activeUser as any).assignedSubject && (activeUser as any).assignedSubject.trim()) {
+    (activeUser as any).assignedSubject.split(",").forEach((s: string) => {
       const clean = s.trim();
       if (clean) assigned.add(clean);
     });

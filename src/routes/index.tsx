@@ -43,7 +43,10 @@ import {
   X,
   FileCheck,
   MapPin,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { PetunjukPenggunaanSection } from "@/components/landing/PetunjukPenggunaanSection";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -78,7 +81,7 @@ const ROLE_PREVIEWS = [
       "CBT Ujian Online dengan Token & Timer Countdown Real-time",
       "Modul Tahfidz Tracker (Juz 30, 29, & 1)",
       "Presensi One-Click & Forum Diskusi Kelas",
-      "E-Rapor Digital & Akses E-Library Murottal",
+      "E-Rapor Digital & Akses E-Library Audio & Modul",
     ],
   },
   {
@@ -87,88 +90,88 @@ const ROLE_PREVIEWS = [
     badge: "Ruang Mengajar",
     icon: BookOpen,
     color: "from-emerald-600 to-teal-700",
-    description: "Kelola perangkat ajar, bank soal CBT, penilaian otomatis, serta program remedial dan pengayaan.",
+    description: "Kelola rencana pembelajaran, bank soal ujian online, penilaian tugas, serta bimbingan belajar siswa.",
     features: [
-      "Manajemen Struktur Pertemuan 1–18 Per Rombel",
-      "Bank Soal CBT (Pilihan Ganda, Essay, Isian Singkat)",
-      "Auto-grading Skor PG & Analisis KKM (75)",
-      "Fitur 1-Click Kirim Remedial & Pengayaan",
+      "Struktur Pertemuan Belajar 1–18 Lengkap",
+      "Bank Soal Ujian (Pilihan Ganda, Isian, & Essay)",
+      "Koreksi Otomatis & Ketuntasan Belajar",
+      "Pemberian Remedial & Pengayaan Terarah",
       "Input Nilai Tugas & Rekap Presensi Otomatis",
     ],
   },
   {
     id: "walikelas",
     title: "Wali Kelas",
-    badge: "Monitoring Rombel",
+    badge: "Kelas Binaan",
     icon: Users,
     color: "from-cyan-600 to-teal-600",
-    description: "Pantau perkembangan akademik rombel, rekap presensi harian, dan cetak PDF E-Rapor resmi.",
+    description: "Pantau perkembangan belajar rombel binaan, kehadiran harian siswa, dan cetak lembar e-Rapor resmi.",
     features: [
-      "Dashboard Khusus Rekapitulasi Rombel",
-      "Monitoring Kehadiran & Catatan Wali Kelas",
+      "Ringkasan Perkembangan Siswa Rombel Binaan",
+      "Pemantauan Presensi & Catatan Wali Kelas",
       "Pengesahan Nilai Akademik & Ekstrakurikuler",
-      "Cetak PDF E-Rapor Official Kop Kemenag",
-      "Export Excel Rekap Nilai Rapor Class Level",
+      "Cetak Rapor Resmi Format Standar Kemenag",
+      "Unduh Rekap Nilai Rapor Kelas Format Excel",
     ],
   },
   {
     id: "kamad",
     title: "Kepala Madrasah",
-    badge: "Executive Dashboard",
+    badge: "Pimpinan Madrasah",
     icon: Building2,
     color: "from-amber-500 to-emerald-600",
-    description: "Executive monitoring statistik presensi, progress KBM mengajar guru, dan pengesahan e-Rapor.",
+    description: "Pemantauan kehadiran madrasah secara langsung, supervisi kegiatan mengajar guru, dan pengesahan e-Rapor.",
     features: [
-      "Statistik & Dashboard Kehadiran Real-time",
-      "Grafik Kehadiran & Early Warning System (EWS)",
-      "Monitoring Kelancaran Ujian CBT Online",
-      "Pengesahan Digital E-Rapor Madrasah",
-      "Laporan Monitoring Kinerja Akademik",
+      "Laporan & Statistik Kehadiran Terkini",
+      "Grafik Evaluasi Perkembangan Akademik",
+      "Pemantauan Kelancaran Ujian CBT Online",
+      "Pengesahan Resmi E-Rapor Madrasah",
+      "Laporan Kinerja & Mutu Pendidikan",
     ],
   },
   {
     id: "waka",
     title: "Waka Kurikulum",
-    badge: "Validasi Kurikulum",
+    badge: "Kurikulum Merdeka",
     icon: Layers,
     color: "from-teal-600 to-emerald-700",
-    description: "Validasi Perangkat Ajar (CP, TP, ATP, Bahan Ajar), matriks pengampu mapel, dan jadwal pelajaran.",
+    description: "Validasi perangkat ajar guru (Capaian & Tujuan Pembelajaran), jadwal mengajar, dan evaluasi hasil belajar.",
     features: [
-      "Validasi Perangkat Ajar Guru (CP, TP, ATP, Bahan Ajar)",
-      "Monitoring Kelengkapan Pertemuan 1–18",
-      "Matriks Penugasan Pengampu Mapel",
-      "Pengaturan Bobot Penilaian Rapor (10-30-30-30)",
-      "Evaluasi Ketuntasan Pembelajaran Semester",
+      "Validasi Perangkat Ajar Guru (CP, TP, Modul Ajar)",
+      "Pemantauan Kelengkapan Materi Pertemuan 1–18",
+      "Penataan Penugasan Guru Mata Pelajaran",
+      "Pengaturan Bobot Penilaian Rapor Madrasah",
+      "Evaluasi Ketuntasan Belajar Tiap Semester",
     ],
   },
   {
     id: "admin_akademik",
     title: "Admin Akademik",
-    badge: "SIAKAD Engine",
+    badge: "Layanan Akademik",
     icon: LayoutDashboard,
     color: "from-emerald-700 to-cyan-700",
-    description: "Kelola Master Data Siswa, Guru, Rombel, Master Jadwal, dan SIAKAD 4-Step Wizard Kenaikan Kelas.",
+    description: "Pengelolaan data siswa, guru, rombel kelas, jadwal pelajaran, dan proses kenaikan kelas.",
     features: [
-      "Master Data Siswa, Guru, Tingkat Kelas, & Rombel",
-      "Pengaturan Master Jadwal & Tahun Ajaran Active",
-      "SIAKAD 4-Step Wizard Kenaikan Kelas Massal",
-      "Manajemen Pengumuman Resmi & E-Library",
-      "Import / Export Data Excel Terintegrasi",
+      "Data Pokok Siswa, Guru, & Rombel Kelas",
+      "Pengaturan Jadwal Pelajaran & Tahun Ajaran Aktif",
+      "Pengelolaan Kenaikan Kelas Siswa Praktis",
+      "Pusat Pengumuman Resmi & Perpustakaan Digital",
+      "Dukungan Import / Export Data Berkas Excel",
     ],
   },
   {
     id: "admin",
     title: "Super Admin",
-    badge: "System Core",
+    badge: "Pusat Pengaturan",
     icon: ShieldCheck,
     color: "from-teal-700 to-indigo-800",
-    description: "Kontrol penuh sistem, audit trail aktivitas, backup & restore database SQL, dan status server.",
+    description: "Pengaturan sistem terpusat, pencadangan data madrasah, dan pengelolaan hak akses pengguna.",
     features: [
-      "Pengaturan Sistem & Manajemen RBAC 7 Roles",
-      "Monitoring Status Server (CPU, RAM, SSD, MySQL Engine)",
-      "Audit Log Trail Aktivitas Seluruh Pengguna",
-      "Backup Database (.SQL) 1-Click & Restore Fail-Safe",
-      "Pengaturan Mode Keamanan & Session Token",
+      "Pengaturan Hak Akses 7 Peran Pengguna",
+      "Pemantauan Keandalan & Kelancaran Sistem",
+      "Catatan Riwayat Aktivitas Pengguna",
+      "Pencadangan Data Otomatis & Terlindungi",
+      "Standar Keamanan Akun Terintegrasi",
     ],
   },
 ];
@@ -232,10 +235,11 @@ function LandingParticleCanvas() {
         if (p.x < 0 || p.x > width) p.vx *= -1;
         if (p.y < 0 || p.y > height) p.vy *= -1;
 
+        const isDarkCanvas = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.shadowBlur = 8;
+        ctx.fillStyle = isDarkCanvas ? p.color : "rgba(13, 148, 136, 0.45)";
+        ctx.shadowBlur = isDarkCanvas ? 8 : 0;
         ctx.shadowColor = p.color;
         ctx.fill();
 
@@ -250,7 +254,7 @@ function LandingParticleCanvas() {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(20, 184, 166, ${alpha})`;
+            ctx.strokeStyle = isDarkCanvas ? `rgba(20, 184, 166, ${alpha})` : `rgba(13, 148, 136, ${alpha * 0.65})`;
             ctx.lineWidth = 0.85;
             ctx.shadowBlur = 0;
             ctx.stroke();
@@ -292,23 +296,47 @@ function LandingPage() {
   const [activeRole, setActiveRole] = useState("siswa");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Synchronized Light & Dark Mode state
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("lms_theme");
+      if (saved) return saved === "dark";
+      return (
+        document.documentElement.classList.contains("dark") ||
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      );
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add("dark");
+      localStorage.setItem("lms_theme", "dark");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("lms_theme", "light");
+    }
+  }, [isDark]);
+
   const selectedRoleData = ROLE_PREVIEWS.find((r) => r.id === activeRole) || ROLE_PREVIEWS[0];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-teal-500 selection:text-white font-sans antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 selection:bg-teal-500 selection:text-white font-sans antialiased overflow-x-hidden transition-colors duration-300">
       {/* 🌌 Interactive Particle Constellation Canvas */}
       <LandingParticleCanvas />
 
       {/* Dynamic Background Ambient Blobs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-teal-500/20 to-emerald-500/15 rounded-full blur-[140px] animate-blob-1" />
-        <div className="absolute top-1/3 -right-40 w-[650px] h-[650px] bg-gradient-to-bl from-emerald-500/20 via-teal-500/15 to-cyan-500/20 rounded-full blur-[160px] animate-blob-2" />
-        <div className="absolute -bottom-40 left-1/3 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[130px] animate-blob-3" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b20_1px,transparent_1px),linear-gradient(to_bottom,#1e293b20_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-teal-300/25 to-emerald-200/20 dark:from-teal-500/20 dark:to-emerald-500/15 rounded-full blur-[140px] animate-blob-1" />
+        <div className="absolute top-1/3 -right-40 w-[650px] h-[650px] bg-gradient-to-bl from-emerald-300/25 via-teal-200/20 to-cyan-300/25 dark:from-emerald-500/20 dark:via-teal-500/15 dark:to-cyan-500/20 rounded-full blur-[160px] animate-blob-2" />
+        <div className="absolute -bottom-40 left-1/3 w-[500px] h-[500px] bg-amber-300/15 dark:bg-amber-500/10 rounded-full blur-[130px] animate-blob-3" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b20_1px,transparent_1px),linear-gradient(to_bottom,#1e293b20_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
       {/* Header Navigation */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-teal-900/40 transition-all">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/85 dark:bg-slate-950/80 border-b border-slate-200/80 dark:border-teal-900/40 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Title */}
           <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
@@ -322,53 +350,74 @@ function LandingPage() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm sm:text-xl tracking-tight bg-gradient-to-r from-teal-300 via-emerald-200 to-amber-300 bg-clip-text text-transparent truncate">
+                <span className="font-extrabold text-sm sm:text-xl tracking-tight bg-gradient-to-r from-teal-700 via-emerald-700 to-amber-600 dark:from-teal-300 dark:via-emerald-200 dark:to-amber-300 bg-clip-text text-transparent truncate">
                   LMS MTsN 2 Cilacap
                 </span>
-                <Badge className="hidden md:inline-flex bg-teal-950 text-teal-300 border-teal-700/50 text-[10px] px-2 py-0.5 shrink-0">
-                  v2.5 Kemenag
+                <Badge className="hidden md:inline-flex bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-700/50 text-[10px] px-2 py-0.5 shrink-0 font-medium">
+                  Kurikulum Merdeka
                 </Badge>
               </div>
-              <p className="hidden sm:block text-[11px] text-slate-400 font-medium truncate">Learning Management System & SIAKAD</p>
+              <p className="hidden sm:block text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Learning Management System & SIAKAD</p>
             </div>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-300">
-            <a href="#hero" className="hover:text-teal-300 transition-colors">
+          {/* Desktop Nav Links (Clean, Spacious & Concise) */}
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-7 text-xs xl:text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <a href="#hero" className="hover:text-teal-600 dark:hover:text-teal-300 transition-colors">
               Beranda
             </a>
-            <a href="#fitur" className="hover:text-teal-300 transition-colors">
-              Fitur Unggulan
+            <a href="#fitur" className="hover:text-teal-600 dark:hover:text-teal-300 transition-colors">
+              Fitur
             </a>
-            <a href="#alur" className="hover:text-teal-300 transition-colors">
-              Alur 18 Pertemuan
+            <a href="#alur" className="hover:text-teal-600 dark:hover:text-teal-300 transition-colors">
+              Alur Belajar
             </a>
-            <a href="#roles" className="hover:text-teal-300 transition-colors">
-              Akses Portal 7 Role
+            <a href="#roles" className="hover:text-teal-600 dark:hover:text-teal-300 transition-colors">
+              Portal Peran
             </a>
-            <a href="#faq" className="hover:text-teal-300 transition-colors">
-              FAQ
+            <Link to="/docs" className="hover:text-teal-600 dark:hover:text-teal-300 transition-colors flex items-center gap-1.5">
+              <span>Panduan</span>
+              <span className="rounded bg-teal-500/10 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 dark:text-teal-300 border border-teal-500/20">
+                Docs
+              </span>
+            </Link>
+            <a href="#faq" className="hover:text-teal-600 dark:hover:text-teal-300 transition-colors">
+              Bantuan
             </a>
           </nav>
 
-          {/* Action Button */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Action Buttons & Theme Switcher */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* Theme Toggle Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsDark(!isDark)}
+              className="h-9 w-9 rounded-xl border border-slate-200 dark:border-teal-800/60 bg-slate-100/80 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 shadow-2xs cursor-pointer"
+              title={isDark ? "Beralih ke Mode Terang (Light)" : "Beralih ke Mode Gelap (Dark)"}
+              aria-label="Toggle Theme"
+            >
+              {isDark ? (
+                <Sun className="h-4 w-4 text-amber-400 rotate-0 transition-transform duration-500 hover:rotate-90" />
+              ) : (
+                <Moon className="h-4 w-4 text-teal-600 rotate-0 transition-transform duration-500 hover:-rotate-45" />
+              )}
+            </Button>
+
             <Button
               asChild
-              className="relative group bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold shadow-lg shadow-teal-900/40 rounded-xl px-3 sm:px-5 py-2 sm:py-2.5 transition-all duration-300 border border-teal-400/30 text-xs sm:text-sm shrink-0"
+              className="relative group bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold shadow-md shadow-teal-900/20 rounded-xl px-3.5 sm:px-5 py-2 sm:py-2.5 transition-all duration-300 border border-teal-400/30 text-xs sm:text-sm shrink-0"
             >
               <Link to="/auth" className="flex items-center gap-1.5 sm:gap-2">
                 <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-0.5" />
-                <span className="hidden sm:inline">Masuk / Register</span>
-                <span className="sm:hidden">Masuk</span>
+                <span>Masuk Portal</span>
               </Link>
             </Button>
 
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-1.5 sm:p-2 text-slate-400 hover:text-white rounded-lg focus:outline-none shrink-0"
+              className="lg:hidden p-1.5 sm:p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg focus:outline-none shrink-0"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -377,42 +426,75 @@ function LandingPage() {
 
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden bg-slate-900/95 border-b border-teal-900/50 px-4 pt-3 pb-6 space-y-3 text-sm font-medium">
+          <div className="lg:hidden bg-white/95 dark:bg-slate-900/95 border-b border-slate-200 dark:border-teal-900/50 px-4 pt-3 pb-5 space-y-3 text-sm font-medium shadow-xl">
             <a
               href="#hero"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-2 text-slate-200 hover:text-teal-300"
+              className="block py-1.5 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-300"
             >
               Beranda
             </a>
             <a
               href="#fitur"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-2 text-slate-200 hover:text-teal-300"
+              className="block py-1.5 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-300"
             >
-              Fitur Unggulan
+              Fitur Utama
             </a>
             <a
               href="#alur"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-2 text-slate-200 hover:text-teal-300"
+              className="block py-1.5 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-300"
             >
-              Alur 18 Pertemuan
+              Alur Belajar
             </a>
             <a
               href="#roles"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-2 text-slate-200 hover:text-teal-300"
+              className="block py-1.5 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-300"
             >
-              Akses Portal 7 Role
+              Portal Peran
             </a>
+            <Link
+              to="/docs"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between py-1.5 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-300"
+            >
+              <span>Panduan Penggunaan</span>
+              <span className="rounded bg-teal-500/15 px-2 py-0.5 text-[10px] font-bold text-teal-700 dark:text-teal-300 border border-teal-500/30">
+                /docs
+              </span>
+            </Link>
             <a
               href="#faq"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-2 text-slate-200 hover:text-teal-300"
+              className="block py-1.5 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-300"
             >
-              FAQ
+              Pusat Bantuan
             </a>
+
+            {/* Mobile Theme Switcher Row */}
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tema Tampilan</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDark(!isDark)}
+                className="gap-2 text-xs border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+              >
+                {isDark ? (
+                  <>
+                    <Sun className="h-3.5 w-3.5 text-amber-400" />
+                    <span>Mode Terang</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-3.5 w-3.5 text-teal-600" />
+                    <span>Mode Gelap</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </header>
@@ -424,21 +506,21 @@ function LandingPage() {
             {/* Left Content */}
             <div className="lg:col-span-6 space-y-5 sm:space-y-6 text-center lg:text-left">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full bg-teal-950/80 border border-teal-500/40 text-teal-300 text-[11px] sm:text-sm font-medium shadow-inner shadow-teal-500/10 max-w-full leading-snug">
-                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 animate-pulse shrink-0" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full bg-teal-100/80 dark:bg-teal-950/80 border border-teal-300 dark:border-teal-500/40 text-teal-800 dark:text-teal-300 text-[11px] sm:text-sm font-medium shadow-xs max-w-full leading-snug">
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 dark:text-amber-400 animate-pulse shrink-0" />
                 <span className="truncate">Portal Pembelajaran Digital Modern MTsN 2 Cilacap</span>
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight sm:leading-[1.15]">
+              <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-tight sm:leading-[1.15]">
                 Educating The Future Generation with{" "}
-                <span className="bg-gradient-to-r from-teal-300 via-emerald-300 to-amber-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-teal-700 via-emerald-600 to-amber-600 dark:from-teal-300 dark:via-emerald-300 dark:to-amber-300 bg-clip-text text-transparent">
                   Islamic & Tech Excellence
                 </span>
               </h1>
 
               {/* Description */}
-              <p className="text-xs sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+              <p className="text-xs sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                 Platform LMS & SIAKAD Terpadu berstandar Kurikulum Merdeka Kemenag. Dilengkapi Computer-Based Test (CBT) Real-time, Modul Tahfidz Al-Qur&apos;an, dan Otomatisasi E-Rapor Madrasah.
               </p>
 
@@ -447,7 +529,7 @@ function LandingPage() {
                 <Button
                   asChild
                   size="lg"
-                  className="w-full sm:w-auto bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-extrabold text-sm sm:text-base shadow-xl shadow-teal-500/25 rounded-xl px-6 sm:px-8 py-3.5 sm:py-6 transition-all duration-300 hover:scale-[1.03]"
+                  className="w-full sm:w-auto bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-teal-500/25 rounded-xl px-6 sm:px-8 py-3.5 sm:py-6 transition-all duration-300 hover:scale-[1.03]"
                 >
                   <Link to="/auth" className="flex items-center justify-center gap-2 sm:gap-3">
                     <span>Masuk ke Portal LMS</span>
@@ -459,10 +541,10 @@ function LandingPage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto border-teal-500/40 bg-slate-900/60 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold text-xs sm:text-base rounded-xl px-5 sm:px-7 py-3.5 sm:py-6 backdrop-blur-sm"
+                  className="w-full sm:w-auto border-slate-300 dark:border-teal-500/40 bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white font-semibold text-xs sm:text-base rounded-xl px-5 sm:px-7 py-3.5 sm:py-6 backdrop-blur-sm shadow-xs"
                 >
                   <a href="#fitur" className="flex items-center justify-center gap-2">
-                    <PlayCircle className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
+                    <PlayCircle className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 dark:text-teal-400" />
                     <span>Jelajahi Fitur</span>
                   </a>
                 </Button>
@@ -473,20 +555,20 @@ function LandingPage() {
             <div className="lg:col-span-6 relative">
               <div className="relative group">
                 {/* Glow Backdrop */}
-                <div className="absolute -inset-1.5 rounded-3xl bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-500 opacity-40 blur-xl group-hover:opacity-75 transition duration-1000"></div>
+                <div className="absolute -inset-1.5 rounded-3xl bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-500 opacity-20 dark:opacity-40 blur-xl group-hover:opacity-50 dark:group-hover:opacity-75 transition duration-1000"></div>
 
                 {/* Banner Wrapper Frame */}
-                <div className="relative rounded-2xl overflow-hidden border border-teal-500/30 bg-slate-900 shadow-2xl">
+                <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-teal-500/30 bg-white dark:bg-slate-900 shadow-2xl">
                   {/* Window Bar Header */}
-                  <div className="bg-slate-950/90 px-4 py-3 border-b border-teal-900/40 flex items-center justify-between">
+                  <div className="bg-slate-100 dark:bg-slate-950/90 px-4 py-3 border-b border-slate-200 dark:border-teal-900/40 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
                       <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
                       <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-                      <span className="ml-2 text-xs font-mono text-slate-400">lms.mtsn2cilacap.sch.id</span>
+                      <span className="ml-2 text-xs font-mono text-slate-500 dark:text-slate-400">lms.mtsn2cilacap.sch.id</span>
                     </div>
-                    <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-400 bg-emerald-950/50">
-                      LIVE SYSTEM
+                    <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 font-semibold">
+                      STATUS AKTIF
                     </Badge>
                   </div>
 
@@ -500,35 +582,35 @@ function LandingPage() {
 
                     {/* Floating Overlay Widgets */}
                     {/* Top Right Widget */}
-                    <div className="absolute top-4 right-4 bg-slate-950/90 backdrop-blur-md border border-amber-500/40 rounded-xl p-3 shadow-xl hidden sm:flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                    <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-950/90 backdrop-blur-md border border-slate-200 dark:border-amber-500/40 rounded-xl p-3 shadow-xl hidden sm:flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
                         <Zap className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white">CBT Exam Engine</p>
-                        <p className="text-[10px] text-amber-300 font-mono">Token & Timer Presisi</p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">Ujian Online CBT</p>
+                        <p className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">Aman & Terjadwal</p>
                       </div>
                     </div>
 
                     {/* Bottom Left Widget */}
-                    <div className="absolute bottom-4 left-4 bg-slate-950/90 backdrop-blur-md border border-teal-500/40 rounded-xl p-3 shadow-xl hidden sm:flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-teal-500/20 text-teal-400">
+                    <div className="absolute bottom-4 left-4 bg-white/95 dark:bg-slate-950/90 backdrop-blur-md border border-slate-200 dark:border-teal-500/40 rounded-xl p-3 shadow-xl hidden sm:flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400">
                         <BookMarked className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white">Tahfidz Al-Qur&apos;an</p>
-                        <p className="text-[10px] text-teal-300">Modul Setoran Hafalan</p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">Tahfidz Al-Qur&apos;an</p>
+                        <p className="text-[10px] text-teal-700 dark:text-teal-300 font-medium">Setoran Hafalan Terpantau</p>
                       </div>
                     </div>
 
                     {/* Bottom Right Widget */}
-                    <div className="absolute bottom-4 right-4 bg-slate-950/90 backdrop-blur-md border border-emerald-500/40 rounded-xl p-3 shadow-xl hidden sm:flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
+                    <div className="absolute bottom-4 right-4 bg-white/95 dark:bg-slate-950/90 backdrop-blur-md border border-slate-200 dark:border-emerald-500/40 rounded-xl p-3 shadow-xl hidden sm:flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                         <FileCheck className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white">E-Rapor Kemenag</p>
-                        <p className="text-[10px] text-emerald-300">Official Kop & PDF Export</p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">E-Rapor Digital</p>
+                        <p className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">Format Resmi Kemenag</p>
                       </div>
                     </div>
                   </div>
@@ -540,123 +622,123 @@ function LandingPage() {
       </section>
 
       {/* Feature Value Highlights Bar (Clean & Professional) */}
-      <section className="py-8 border-y border-teal-900/40 bg-slate-900/60 backdrop-blur-md">
+      <section className="py-8 border-y border-slate-200/80 dark:border-teal-900/40 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-teal-900/30 flex flex-col items-center justify-center space-y-1">
-              <Building2 className="w-6 h-6 text-teal-400 mb-1" />
-              <p className="text-sm font-extrabold text-white">Integrasi SIAKAD</p>
-              <p className="text-[11px] text-slate-400">Master Data & Rombel</p>
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-teal-900/30 flex flex-col items-center justify-center space-y-1 shadow-xs">
+              <Building2 className="w-6 h-6 text-teal-600 dark:text-teal-400 mb-1" />
+              <p className="text-sm font-extrabold text-slate-900 dark:text-white">Integrasi SIAKAD</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Master Data & Rombel</p>
             </div>
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-teal-900/30 flex flex-col items-center justify-center space-y-1">
-              <Zap className="w-6 h-6 text-emerald-400 mb-1" />
-              <p className="text-sm font-extrabold text-white">CBT Exam Engine</p>
-              <p className="text-[11px] text-slate-400">Auto-Grading & Remedial</p>
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-teal-900/30 flex flex-col items-center justify-center space-y-1 shadow-xs">
+              <Zap className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mb-1" />
+              <p className="text-sm font-extrabold text-slate-900 dark:text-white">CBT Exam Engine</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Auto-Grading & Remedial</p>
             </div>
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-teal-900/30 flex flex-col items-center justify-center space-y-1">
-              <BookMarked className="w-6 h-6 text-amber-400 mb-1" />
-              <p className="text-sm font-extrabold text-white">Modul Tahfidz</p>
-              <p className="text-[11px] text-slate-400">Tracker Setoran Hafalan</p>
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-teal-900/30 flex flex-col items-center justify-center space-y-1 shadow-xs">
+              <BookMarked className="w-6 h-6 text-amber-600 dark:text-amber-400 mb-1" />
+              <p className="text-sm font-extrabold text-slate-900 dark:text-white">Modul Tahfidz</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Tracker Setoran Hafalan</p>
             </div>
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-teal-900/30 flex flex-col items-center justify-center space-y-1">
-              <FileCheck className="w-6 h-6 text-teal-300 mb-1" />
-              <p className="text-sm font-extrabold text-white">E-Rapor Kemenag</p>
-              <p className="text-[11px] text-slate-400">Kurikulum Merdeka PDF</p>
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-teal-900/30 flex flex-col items-center justify-center space-y-1 shadow-xs">
+              <FileCheck className="w-6 h-6 text-teal-600 dark:text-teal-300 mb-1" />
+              <p className="text-sm font-extrabold text-slate-900 dark:text-white">E-Rapor Kemenag</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Kurikulum Merdeka PDF</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Fitur Unggulan System Grid */}
-      <section id="fitur" className="py-20 relative">
+      <section id="fitur" className="py-20 relative bg-slate-50/50 dark:bg-transparent transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <Badge className="bg-teal-950 text-teal-300 border-teal-700/50 px-3 py-1 text-xs">
+            <Badge className="bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-700/50 px-3 py-1 text-xs font-semibold">
               TEKNOLOGI PEMBELAJARAN
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
               Fitur Unggulan System LMS MTsN 2 Cilacap
             </h2>
-            <p className="text-slate-400 text-base">
+            <p className="text-slate-600 dark:text-slate-400 text-base">
               Dirancang secara komprehensif untuk mendukung kegiatan belajar mengajar, evaluasi CBT, hingga administrasi madrasah modern.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Card 1 */}
-            <Card className="bg-slate-900/80 border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10 group">
+            <Card className="bg-white dark:bg-slate-900/80 border-slate-200 dark:border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg dark:hover:shadow-teal-500/10 group shadow-sm">
               <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-slate-950 font-bold mb-3 shadow-md shadow-teal-500/20 group-hover:scale-110 transition-transform">
-                  <Zap className="w-6 h-6 text-slate-950" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white font-bold mb-3 shadow-md shadow-teal-500/20 group-hover:scale-110 transition-transform">
+                  <Zap className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-white">Computer-Based Test (CBT)</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-xl text-slate-900 dark:text-white">Computer-Based Test (CBT)</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">
                   Engine Ujian Online Lengkap dengan Token Sesi, Live Countdown Timer, Acak Soal & Opsi, Auto-grading skor PG, serta analisis Remedial KKM (75).
                 </CardDescription>
               </CardHeader>
             </Card>
 
             {/* Card 2 */}
-            <Card className="bg-slate-900/80 border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10 group">
+            <Card className="bg-white dark:bg-slate-900/80 border-slate-200 dark:border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg dark:hover:shadow-teal-500/10 group shadow-sm">
               <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-slate-950 font-bold mb-3 shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform">
-                  <BookMarked className="w-6 h-6 text-slate-950" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold mb-3 shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                  <BookMarked className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-white">Modul Tahfidz Al-Qur&apos;an</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-xl text-slate-900 dark:text-white">Modul Tahfidz Al-Qur&apos;an</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">
                   Pencatatan setoran hafalan siswa (Juz 30, 29, 1), status Mutqin & Murojaah, penilaian Tajwid (Mumtaz), serta cetak Kartu Murojaah PDF Digital.
                 </CardDescription>
               </CardHeader>
             </Card>
 
             {/* Card 3 */}
-            <Card className="bg-slate-900/80 border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10 group">
+            <Card className="bg-white dark:bg-slate-900/80 border-slate-200 dark:border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg dark:hover:shadow-teal-500/10 group shadow-sm">
               <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center text-slate-950 font-bold mb-3 shadow-md shadow-cyan-500/20 group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-6 h-6 text-slate-950" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center text-white font-bold mb-3 shadow-md shadow-cyan-500/20 group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-white">Struktur 18 Pertemuan</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-xl text-slate-900 dark:text-white">Struktur 18 Pertemuan</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">
                   Alur materi terstruktur per semester (PDF, Video Tutorial, PPT, LKPD), Presensi One-Click, serta Forum Diskusi interaktif antar siswa & guru.
                 </CardDescription>
               </CardHeader>
             </Card>
 
             {/* Card 4 */}
-            <Card className="bg-slate-900/80 border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10 group">
+            <Card className="bg-white dark:bg-slate-900/80 border-slate-200 dark:border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg dark:hover:shadow-teal-500/10 group shadow-sm">
               <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 flex items-center justify-center text-slate-950 font-bold mb-3 shadow-md shadow-amber-500/20 group-hover:scale-110 transition-transform">
-                  <FileSpreadsheet className="w-6 h-6 text-slate-950" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 flex items-center justify-center text-white font-bold mb-3 shadow-md shadow-amber-500/20 group-hover:scale-110 transition-transform">
+                  <FileSpreadsheet className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-white">E-Rapor Kurikulum Merdeka</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-xl text-slate-900 dark:text-white">E-Rapor Kurikulum Merdeka</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">
                   Formulasi bobot nilai (Presensi 10% + Tugas 30% + UTS 30% + PAS 30%), Kop Resmi Kemenag MTsN 2 Cilacap, dan Cetak PDF Official.
                 </CardDescription>
               </CardHeader>
             </Card>
 
             {/* Card 5 */}
-            <Card className="bg-slate-900/80 border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10 group">
+            <Card className="bg-white dark:bg-slate-900/80 border-slate-200 dark:border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg dark:hover:shadow-teal-500/10 group shadow-sm">
               <CardHeader>
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-600 to-indigo-600 flex items-center justify-center text-white font-bold mb-3 shadow-md shadow-indigo-500/20 group-hover:scale-110 transition-transform">
                   <ShieldCheck className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-white">Strict RBAC 7 Roles</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Isolasi hak akses antarmuka yang presisi untuk Super Admin, Admin Akademik, Kamad, Waka Kurikulum, Wali Kelas, Guru, dan Siswa.
+                <CardTitle className="text-xl text-slate-900 dark:text-white">7 Hak Akses Terintegrasi</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">
+                  Pengaturan hak akses khusus yang aman dan terpadu untuk Kepala Madrasah, Waka, Guru, Wali Kelas, Siswa, dan Staf Akademik.
                 </CardDescription>
               </CardHeader>
             </Card>
 
             {/* Card 6 */}
-            <Card className="bg-slate-900/80 border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/10 group">
+            <Card className="bg-white dark:bg-slate-900/80 border-slate-200 dark:border-teal-900/40 hover:border-teal-500/60 transition-all duration-300 hover:shadow-lg dark:hover:shadow-teal-500/10 group shadow-sm">
               <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-cyan-600 flex items-center justify-center text-slate-950 font-bold mb-3 shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform">
-                  <Activity className="w-6 h-6 text-slate-950" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-cyan-600 flex items-center justify-center text-white font-bold mb-3 shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                  <Activity className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-white">Early Warning System (EWS)</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Notifikasi otomatis mendeteksi siswa di bawah KKM (&lt; 75) dan persentase kehadiran rendah (&lt; 80%) untuk tindakan cepat wali kelas & guru.
+                <CardTitle className="text-xl text-slate-900 dark:text-white">Pemantauan Ketuntasan Siswa</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">
+                  Peringatan dini untuk siswa yang membutuhkan remedial atau pendampingan presensi agar proses belajar selalu terpantau.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -665,67 +747,67 @@ function LandingPage() {
       </section>
 
       {/* Alur Pembelajaran 1–18 Visual */}
-      <section id="alur" className="py-20 bg-slate-900/50 border-y border-teal-900/40 relative">
+      <section id="alur" className="py-20 bg-slate-100/60 dark:bg-slate-900/50 border-y border-slate-200/80 dark:border-teal-900/40 relative transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <Badge className="bg-emerald-950 text-emerald-300 border-emerald-700/50 px-3 py-1 text-xs">
+            <Badge className="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700/50 px-3 py-1 text-xs font-semibold">
               MEKANISME KURIKULUM
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
               Alur Pembelajaran Terstruktur 1–18 Pertemuan
             </h2>
-            <p className="text-slate-400 text-base">
+            <p className="text-slate-600 dark:text-slate-400 text-base">
               Setiap mata pelajaran dikelola secara konsisten dalam siklus 18 pertemuan per semester.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-            <div className="bg-slate-950/80 p-6 rounded-2xl border border-teal-800/40 relative space-y-3">
-              <div className="w-8 h-8 rounded-full bg-teal-500 text-slate-950 font-bold flex items-center justify-center text-sm">
+            <div className="bg-white dark:bg-slate-950/80 p-6 rounded-2xl border border-slate-200 dark:border-teal-800/40 relative space-y-3 shadow-xs dark:shadow-md">
+              <div className="w-8 h-8 rounded-full bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-950 font-bold flex items-center justify-center text-sm shadow-xs">
                 1
               </div>
-              <h3 className="font-bold text-white text-lg">Pertemuan 1–8</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="font-bold text-slate-900 dark:text-white text-lg">Pertemuan 1–8</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Penyampaian Tujuan Pembelajaran, PDF Modul, Video Tutorial, PPT, LKPD, Presensi One-Click, & Forum Diskusi.
               </p>
             </div>
 
-            <div className="bg-slate-950/80 p-6 rounded-2xl border border-amber-500/50 relative space-y-3 shadow-lg shadow-amber-500/10">
-              <div className="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm">
+            <div className="bg-white dark:bg-slate-950/80 p-6 rounded-2xl border border-amber-300 dark:border-amber-500/50 relative space-y-3 shadow-xs dark:shadow-lg dark:shadow-amber-500/10">
+              <div className="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm shadow-xs">
                 2
               </div>
-              <h3 className="font-bold text-amber-300 text-lg">Pertemuan 9: CBT UTS</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="font-bold text-amber-800 dark:text-amber-300 text-lg">Pertemuan 9: CBT UTS</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Evaluasi Tengah Semester menggunakan CBT Exam Engine dengan Security Token & Timer Countdown.
               </p>
             </div>
 
-            <div className="bg-slate-950/80 p-6 rounded-2xl border border-teal-800/40 relative space-y-3">
-              <div className="w-8 h-8 rounded-full bg-teal-500 text-slate-950 font-bold flex items-center justify-center text-sm">
+            <div className="bg-white dark:bg-slate-950/80 p-6 rounded-2xl border border-slate-200 dark:border-teal-800/40 relative space-y-3 shadow-xs dark:shadow-md">
+              <div className="w-8 h-8 rounded-full bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-950 font-bold flex items-center justify-center text-sm shadow-xs">
                 3
               </div>
-              <h3 className="font-bold text-white text-lg">Pertemuan 10–17</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="font-bold text-slate-900 dark:text-white text-lg">Pertemuan 10–17</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Pembelajaran Lanjutan, Praktikum LKPD, Pengayaan & Auto Remedial bagi siswa di bawah KKM (75).
               </p>
             </div>
 
-            <div className="bg-slate-950/80 p-6 rounded-2xl border border-amber-500/50 relative space-y-3 shadow-lg shadow-amber-500/10">
-              <div className="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm">
+            <div className="bg-white dark:bg-slate-950/80 p-6 rounded-2xl border border-amber-300 dark:border-amber-500/50 relative space-y-3 shadow-xs dark:shadow-lg dark:shadow-amber-500/10">
+              <div className="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm shadow-xs">
                 4
               </div>
-              <h3 className="font-bold text-amber-300 text-lg">Pertemuan 18: CBT PAS</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="font-bold text-amber-800 dark:text-amber-300 text-lg">Pertemuan 18: CBT PAS</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Evaluasi Akhir Semester CBT PAS untuk penentuan nilai akhir & kelulusan mata pelajaran.
               </p>
             </div>
 
-            <div className="bg-slate-950/80 p-6 rounded-2xl border border-emerald-500/50 relative space-y-3 shadow-lg shadow-emerald-500/10">
-              <div className="w-8 h-8 rounded-full bg-emerald-400 text-slate-950 font-bold flex items-center justify-center text-sm">
+            <div className="bg-white dark:bg-slate-950/80 p-6 rounded-2xl border border-emerald-300 dark:border-emerald-500/50 relative space-y-3 shadow-xs dark:shadow-lg dark:shadow-emerald-500/10">
+              <div className="w-8 h-8 rounded-full bg-emerald-500 dark:bg-emerald-400 text-white dark:text-slate-950 font-bold flex items-center justify-center text-sm shadow-xs">
                 5
               </div>
-              <h3 className="font-bold text-emerald-300 text-lg">E-Rapor Official</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="font-bold text-emerald-800 dark:text-emerald-300 text-lg">E-Rapor Official</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Kalkulasi Otomatis (10-30-30-30), Pengesahan Wali Kelas & Kamad, serta Cetak PDF Kop Resmi Kemenag.
               </p>
             </div>
@@ -734,17 +816,17 @@ function LandingPage() {
       </section>
 
       {/* Akses Portal 7 Peran (Interactive Showcase) */}
-      <section id="roles" className="py-20 relative">
+      <section id="roles" className="py-20 relative bg-slate-50/50 dark:bg-transparent transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
-            <Badge className="bg-teal-950 text-teal-300 border-teal-700/50 px-3 py-1 text-xs">
-              RBAC MATRIX
+            <Badge className="bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-700/50 px-3 py-1 text-xs font-semibold">
+              HAK AKSES MADRASAH
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              Portal Akses Terisolasi Khusus 7 Peran
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              Portal Akses Khusus 7 Peran Pengguna
             </h2>
-            <p className="text-slate-400 text-base">
-              Setiap pengguna mendapatkan ruang kerja terisolasi yang disesuaikan persis dengan wewenang dan tugasnya.
+            <p className="text-slate-600 dark:text-slate-400 text-base">
+              Setiap pengguna mendapatkan ruang kerja terarah yang disesuaikan persis dengan wewenang dan tugasnya.
             </p>
           </div>
 
@@ -757,10 +839,10 @@ function LandingPage() {
                 <button
                   key={r.id}
                   onClick={() => setActiveRole(r.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-300 border ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 border ${
                     isActive
-                      ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 border-teal-300 shadow-lg shadow-teal-500/20"
-                      : "bg-slate-900 text-slate-300 border-slate-800 hover:border-teal-500/40 hover:text-white"
+                      ? "bg-gradient-to-r from-teal-600 to-emerald-600 text-white border-teal-500 shadow-md shadow-teal-500/25 scale-105"
+                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-teal-500/40 hover:text-slate-900 dark:hover:text-white shadow-xs"
                   }`}
                 >
                   <IconComp className="w-4 h-4" />
@@ -771,27 +853,27 @@ function LandingPage() {
           </div>
 
           {/* Selected Role Detail Display */}
-          <div className="bg-slate-900/90 border border-teal-800/50 rounded-2xl p-6 sm:p-10 shadow-2xl relative">
+          <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-teal-800/50 rounded-2xl p-6 sm:p-10 shadow-lg dark:shadow-2xl relative transition-colors duration-300">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-7 space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-950 border border-teal-700/50 text-teal-300 text-xs font-semibold">
-                  <Badge variant="outline" className="border-teal-500 text-teal-300 text-[10px]">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-700/50 text-teal-800 dark:text-teal-300 text-xs font-semibold">
+                  <Badge variant="outline" className="border-teal-500 text-teal-700 dark:text-teal-300 text-[10px]">
                     {selectedRoleData.badge}
                   </Badge>
-                  <span>Scope Isolation Active</span>
+                  <span>Akses Khusus Terproteksi</span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                   Peran {selectedRoleData.title}
                 </h3>
-                <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
                   {selectedRoleData.description}
                 </p>
 
                 <div className="space-y-2.5 pt-2">
                   {selectedRoleData.features.map((feat, idx) => (
-                    <div key={idx} className="flex items-center gap-3 text-sm text-slate-200">
-                      <div className="p-1 rounded-full bg-emerald-500/20 text-emerald-400">
+                    <div key={idx} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+                      <div className="p-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
                         <Check className="w-4 h-4" />
                       </div>
                       <span>{feat}</span>
@@ -802,7 +884,7 @@ function LandingPage() {
                 <div className="pt-4">
                   <Button
                     asChild
-                    className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl px-6"
+                    className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl px-6 shadow-md shadow-teal-500/20"
                   >
                     <Link to="/auth">Masuk Sebagai {selectedRoleData.title}</Link>
                   </Button>
@@ -810,19 +892,20 @@ function LandingPage() {
               </div>
 
               <div className="lg:col-span-5 flex justify-center">
-                <div className="w-full max-w-sm p-6 rounded-2xl bg-gradient-to-b from-slate-950 to-slate-900 border border-teal-700/40 text-center space-y-4 shadow-xl">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 mx-auto flex items-center justify-center text-slate-950 shadow-lg shadow-teal-500/30">
+                <div className="w-full max-w-sm p-6 rounded-2xl bg-slate-50 dark:bg-gradient-to-b dark:from-slate-950 dark:to-slate-900 border border-slate-200 dark:border-teal-700/40 text-center space-y-4 shadow-sm dark:shadow-xl">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 mx-auto flex items-center justify-center text-white shadow-lg shadow-teal-500/30">
                     {(() => {
                       const IconC = selectedRoleData.icon;
-                      return <IconC className="w-8 h-8 text-slate-950" />;
+                      return <IconC className="w-8 h-8 text-white" />;
                     })()}
                   </div>
-                  <h4 className="text-xl font-bold text-white">{selectedRoleData.title} Dashboard</h4>
-                  <p className="text-xs text-slate-400">
-                    Akses aman dengan autentikasi murni MySQL Database Engine & Session.
+                  <h4 className="text-xl font-bold text-slate-900 dark:text-white">Portal {selectedRoleData.title}</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Akses aman dan terpadu untuk mendukung pembelajaran madrasah.
                   </p>
-                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-left text-xs font-mono text-teal-300">
-                    Scope: /{selectedRoleData.id === "admin" ? "admin" : "dashboard"}
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center text-xs font-medium text-teal-800 dark:text-teal-300 flex items-center justify-center gap-2 shadow-2xs">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Portal Resmi Madrasah Siap Digunakan</span>
                   </div>
                 </div>
               </div>
@@ -831,50 +914,53 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* Petunjuk Penggunaan & Buku Manual Interaktif */}
+      <PetunjukPenggunaanSection />
+
       {/* FAQ Accordion */}
-      <section id="faq" className="py-20 bg-slate-900/40 border-t border-teal-900/40 relative">
+      <section id="faq" className="py-20 bg-slate-100/60 dark:bg-slate-900/40 border-t border-slate-200/80 dark:border-teal-900/40 relative transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 space-y-3">
-            <Badge className="bg-amber-950 text-amber-300 border-amber-700/50 px-3 py-1 text-xs">
+            <Badge className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-700/50 px-3 py-1 text-xs font-semibold">
               PUSAT BANTUAN
             </Badge>
-            <h2 className="text-3xl font-black text-white">Pertanyaan Sering Diajukan (FAQ)</h2>
-            <p className="text-slate-400 text-sm">Informasi penting seputar penggunaan LMS MTsN 2 Cilacap</p>
+            <h2 className="text-3xl font-black text-slate-900 dark:text-white">Pertanyaan Sering Diajukan (FAQ)</h2>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">Informasi penting seputar penggunaan LMS MTsN 2 Cilacap</p>
           </div>
 
           <Accordion type="single" collapsible className="space-y-4">
-            <AccordionItem value="item-1" className="border border-slate-800 rounded-xl px-4 bg-slate-900/80">
-              <AccordionTrigger className="text-white hover:text-teal-300 font-semibold text-left">
+            <AccordionItem value="item-1" className="border border-slate-200 dark:border-slate-800 rounded-xl px-4 bg-white dark:bg-slate-900/80 shadow-xs">
+              <AccordionTrigger className="text-slate-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-300 font-semibold text-left">
                 Bagaimana cara mendapatkan akun login LMS MTsN 2 Cilacap?
               </AccordionTrigger>
-              <AccordionContent className="text-slate-300 text-sm leading-relaxed">
-                Akun untuk Siswa dan Guru dibuat secara resmi oleh Admin Akademik MTsN 2 Cilacap. Anda juga dapat menggunakan tombol &quot;Masuk / Register&quot; di halaman Login untuk melakukan pendaftaran mandiri yang akan diverifikasi oleh admin.
+              <AccordionContent className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                Akun untuk Siswa dan Guru dibuat secara resmi oleh Admin Akademik MTsN 2 Cilacap. Anda juga dapat menggunakan tombol &quot;Masuk Portal&quot; di halaman Login untuk melakukan pendaftaran mandiri yang akan diverifikasi oleh admin.
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-2" className="border border-slate-800 rounded-xl px-4 bg-slate-900/80">
-              <AccordionTrigger className="text-white hover:text-teal-300 font-semibold text-left">
+            <AccordionItem value="item-2" className="border border-slate-200 dark:border-slate-800 rounded-xl px-4 bg-white dark:bg-slate-900/80 shadow-xs">
+              <AccordionTrigger className="text-slate-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-300 font-semibold text-left">
                 Apakah CBT Ujian Online dapat diakses melalui Smartphone / Tablet?
               </AccordionTrigger>
-              <AccordionContent className="text-slate-300 text-sm leading-relaxed">
-                Ya, CBT Exam Engine didesain 100% responsif dan ringan, sehingga sangat nyaman digunakan baik melalui smartphone, tablet, maupun laptop/komputer. Fitur Security Token dan Live Countdown Timer bekerja secara otomatis.
+              <AccordionContent className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                Ya, CBT didesain 100% responsif dan ringan, sehingga sangat nyaman digunakan baik melalui smartphone, tablet, maupun laptop/komputer. Fitur Security Token dan Live Countdown Timer bekerja secara otomatis.
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-3" className="border border-slate-800 rounded-xl px-4 bg-slate-900/80">
-              <AccordionTrigger className="text-white hover:text-teal-300 font-semibold text-left">
+            <AccordionItem value="item-3" className="border border-slate-200 dark:border-slate-800 rounded-xl px-4 bg-white dark:bg-slate-900/80 shadow-xs">
+              <AccordionTrigger className="text-slate-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-300 font-semibold text-left">
                 Bagaimana penilaian E-Rapor Kurikulum Merdeka dihitung?
               </AccordionTrigger>
-              <AccordionContent className="text-slate-300 text-sm leading-relaxed">
+              <AccordionContent className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                 Penilaian E-Rapor menggunakan formulasi bobot resmi Kemenag: Presensi (10%) + Tugas/LKPD (30%) + UTS (30%) + PAS (30%). Rapor dapat dicetak dalam format PDF resmi lengkap dengan Kop MTsN 2 Cilacap.
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-4" className="border border-slate-800 rounded-xl px-4 bg-slate-900/80">
-              <AccordionTrigger className="text-white hover:text-teal-300 font-semibold text-left">
+            <AccordionItem value="item-4" className="border border-slate-200 dark:border-slate-800 rounded-xl px-4 bg-white dark:bg-slate-900/80 shadow-xs">
+              <AccordionTrigger className="text-slate-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-300 font-semibold text-left">
                 Apa saja target hafalan pada Modul Tahfidz Al-Qur&apos;an?
               </AccordionTrigger>
-              <AccordionContent className="text-slate-300 text-sm leading-relaxed">
+              <AccordionContent className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                 Target hafalan utama meliputi Juz 30 (Juz &apos;Amma), Juz 29 (Juz Tabarak), dan Juz 1 (Al-Baqarah). Penilaian mencakup kelancaran (Mutqin/Murojaah) serta nilai Tajwid dengan fasilitas Cetak Kartu Murojaah PDF.
               </AccordionContent>
             </AccordionItem>
@@ -925,7 +1011,7 @@ function LandingPage() {
               <span className="font-extrabold text-lg text-white">MTs Negeri 2 Cilacap</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed max-w-md">
-              Learning Management System & SIAKAD Integrated v2.5.0-Production. Berstandar Kurikulum Merdeka Kemenag Edition. Unggul dalam Prestasi, Anggun dalam Akhlak, Terdepan dalam Teknologi.
+              Portal Pembelajaran & Layanan Akademik Digital MTs Negeri 2 Cilacap. Berstandar Kurikulum Merdeka Kementerian Agama Republik Indonesia. Unggul dalam Prestasi, Anggun dalam Akhlak, Terdepan dalam Teknologi.
             </p>
           </div>
 
@@ -939,17 +1025,27 @@ function LandingPage() {
               </li>
               <li>
                 <a href="#fitur" className="hover:text-teal-300">
-                  Fitur Unggulan
+                  Fitur Utama
                 </a>
               </li>
               <li>
                 <a href="#alur" className="hover:text-teal-300">
-                  Alur 18 Pertemuan
+                  Alur Belajar
                 </a>
               </li>
               <li>
                 <a href="#roles" className="hover:text-teal-300">
-                  Portal 7 Role
+                  Portal Peran
+                </a>
+              </li>
+              <li>
+                <a href="#panduan" className="hover:text-teal-300">
+                  Panduan Penggunaan
+                </a>
+              </li>
+              <li>
+                <a href="#faq" className="hover:text-teal-300">
+                  Pusat Bantuan
                 </a>
               </li>
             </ul>
@@ -974,7 +1070,7 @@ function LandingPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-900 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
           <p>© 2026 MTs Negeri 2 Cilacap. Hak Cipta Dilindungi Undang-Undang.</p>
-          <p className="mt-2 sm:mt-0 font-mono text-[11px] text-teal-500/70">Powered by LMS & SIAKAD Engine v2.5</p>
+          <p className="mt-2 sm:mt-0 font-medium text-[11px] text-teal-400/80">Portal Resmi MTs Negeri 2 Cilacap</p>
         </div>
       </footer>
     </div>

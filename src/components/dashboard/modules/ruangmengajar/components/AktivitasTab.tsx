@@ -8,6 +8,8 @@ import { MysqlDataService } from "@/services/mysqlDataService";
 import { ViewActivityDialog, ActivityDetail } from "./ViewActivityDialog";
 import { CreateActivityDialog, ActivityTypeOption } from "./CreateActivityDialog";
 
+import { isSameClass } from "@/utils/classNormalization";
+
 export interface LearningActivityItem {
   id: string;
   title: string;
@@ -20,6 +22,7 @@ export interface LearningActivityItem {
   attachment_url?: string;
   submission_type?: string;
   quiz_data?: string;
+  questions_data?: string;
 }
 
 interface AktivitasTabProps {
@@ -36,23 +39,42 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
 
   useEffect(() => {
     let isMounted = true;
-    MysqlDataService.getLkpdActivities(activeRombel, activeMapel).then((dbItems) => {
+    Promise.all([
+      MysqlDataService.getLkpdActivities(activeRombel, activeMapel),
+      MysqlDataService.getUsers(),
+      MysqlDataService.getSubmissions(),
+    ]).then(([dbItems, users, subs]) => {
       if (!isMounted) return;
+      const rombelStudents = (users || []).filter(
+        (u: any) => u.role === "siswa" && isSameClass(u.class_name || u.class, activeRombel)
+      );
+      const studentCount = rombelStudents.length;
+
       if (dbItems) {
         setActivities(
-          dbItems.map((item, idx) => ({
-            id: String(item.id || idx),
-            title: item.title,
-            type: item.type || "LKPD",
-            instructions: item.instructions,
-            dueDate: item.due_date || "Hari ini",
-            status: item.status || "AKTIF",
-            submittedCount: 0,
-            totalStudents: 30,
-            attachment_url: item.attachment_url,
-            submission_type: item.submission_type,
-            quiz_data: item.quiz_data,
-          }))
+          dbItems.map((item, idx) => {
+            const actId = String(item.id || idx);
+            const matchingSubs = (subs || []).filter(
+              (s: any) => String(s.assignment_id) === actId
+            );
+            return {
+              id: actId,
+              title: item.title,
+              type: item.type || "LKPD",
+              instructions: item.instructions,
+              dueDate: item.due_date || "Hari ini",
+              status: item.status || "AKTIF",
+              submittedCount: matchingSubs.length,
+              totalStudents:
+                studentCount > 0
+                  ? studentCount
+                  : users?.filter((u: any) => u.role === "siswa").length || 0,
+              attachment_url: item.attachment_url,
+              submission_type: item.submission_type,
+              quiz_data: item.quiz_data,
+              questions_data: item.questions_data,
+            };
+          })
         );
       } else {
         setActivities([]);
@@ -77,7 +99,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
     if (confirm(`Apakah Anda yakin ingin menghapus aktivitas "${title}"?`)) {
       setActivities((prev) => prev.filter((a) => a.id !== id));
       try {
-        await MysqlDataService.deleteAssignment(id);
+        await MysqlDataService.deleteLkpdActivity(id);
         toast.success(`🗑️ Aktivitas "${title}" berhasil dihapus dari database!`);
       } catch (e) {
         console.warn("Gagal hapus aktivitas di database:", e);

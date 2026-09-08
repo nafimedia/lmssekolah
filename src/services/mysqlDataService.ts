@@ -5,6 +5,7 @@ import {
   deleteUserFn,
   updateUserRoleFn,
   updateUserProfileFn,
+  updateStudentParentContactFn,
   getSubjectsFn,
   saveSubjectFn,
   deleteSubjectFn,
@@ -32,6 +33,8 @@ import {
   saveWaLogFn,
   getCbtExamsFn,
   saveCbtExamFn,
+  getCbtQuestionsFn,
+  saveCbtQuestionFn,
   getMaterialsFn,
   getMaterialsPaginatedFn,
   saveMaterialFn,
@@ -43,6 +46,8 @@ import {
   deleteElibraryBookFn,
   getP5ProjectsFn,
   saveP5ProjectFn,
+  getP5SubmissionsFn,
+  saveP5SubmissionFn,
   getJournalsFn,
   saveJournalFn,
   deleteJournalFn,
@@ -56,6 +61,7 @@ import {
   deleteAssignmentFn,
   getSubmissionsFn,
   saveSubmissionFn,
+  deleteSubmissionFileFn,
   getElibraryLoansFn,
   saveElibraryLoanFn,
   updateElibraryLoanStatusFn,
@@ -80,7 +86,9 @@ import {
   deleteStudentKbmNoteFn,
   getLkpdActivitiesFn,
   saveLkpdActivityFn,
+  deleteLkpdActivityFn,
   getLkpdGradesFn,
+  getAllLkpdGradesFn,
   saveLkpdGradesBatchFn,
   getLkpdDiscussionsFn,
   postLkpdDiscussionFn,
@@ -89,6 +97,12 @@ import {
   saveWaGatewayConfigFn,
   sendTestWaMessageFn,
   getAuditLogsServerFn,
+  exportDatabaseBackupFn,
+  restoreDatabaseBackupFn,
+  getKamadExecutiveMetricsFn,
+  uploadUserAvatarFn,
+  removeUserAvatarFn,
+  KamadExecutiveMetrics,
   AuditLogItem,
   WaGatewayConfigRow,
   getHealthStatusFn,
@@ -119,10 +133,12 @@ import {
   StudentAwardRow,
   WaLogRow,
   CbtExamRow,
+  CbtQuestionDbRow,
   MaterialRow,
   HafalanRow,
   ElibraryBookRow,
   P5ProjectRow,
+  P5SubmissionRow,
   PaginatedParams,
   PaginatedResult,
   HealthStatusResponse,
@@ -181,7 +197,7 @@ export class MysqlDataService {
     try {
       return await getDatabaseStatsFn();
     } catch {
-      return { totalUsers: 159, siswaCount: 117, guruStafCount: 42, totalRombel: 27, totalMapel: 18, cbtExamsCount: 12 };
+      return { totalUsers: 0, siswaCount: 0, guruStafCount: 0, totalRombel: 0, totalMapel: 0, cbtExamsCount: 0 };
     }
   }
 
@@ -192,48 +208,16 @@ export class MysqlDataService {
       const overrides = getPersistedUserProfileOverrides();
 
       const res = rawRes.map((u) => {
-        let name = u.full_name || "";
-        let nip = u.nis_nip || "";
-        let email = (u.email || "").toLowerCase().trim();
-        let identityType = u.identity_type;
-        let role = u.role;
-
-        if (email === "kamad@mtsn2cilacap.sch.id" || name.includes("Hidayatullah") || name.toLowerCase().includes("solihun")) {
-          name = "H. SOLIHUN, S.Pd., M.Si";
-          nip = "197905162006041020";
-          identityType = "NIP";
-          role = "kamad";
-        } else if (email === "guru@mtsn2cilacap.sch.id" || name.toLowerCase().includes("sobiyati")) {
-          name = "SOBIYATI, S.Pd";
-          nip = "197906142007102002";
-          identityType = "NIP";
-          role = "guru";
-        } else if (email === "walikelas@mtsn2cilacap.sch.id" || name.toLowerCase().includes("sobiyati")) {
-          name = "SOBIYATI, S.Pd";
-          nip = "197906142007102002";
-          identityType = "NIP";
-          role = "walikelas,guru";
-        } else if (email === "198302142023211010@guru.mtsn2cilacap.sch.id" || name.toLowerCase().includes("ali mansur")) {
-          name = "ALI MANSUR, S.Pd";
-          nip = "198302142023211010";
-          identityType = "NIP";
-          role = "waka,guru";
-        } else if (
-          email === "admin.akademik@mtsn2cilacap.sch.id" ||
-          email === "makmun@mtsn2cilacap.sch.id" ||
-          email === "197002272005011001@guru.mtsn2cilacap.sch.id" ||
-          email.includes("272005011001") ||
-          email.includes("197002272005011001") ||
-          name.toLowerCase().includes("makmun") ||
-          name.toLowerCase().includes("rosid")
-        ) {
-          name = "ACHMAD MAKMUN ROSID, S.Pd., M.Pd";
-          nip = "197002272005011001";
-          identityType = "NIP";
-          role = "admin_akademik,walikelas,guru";
+        const ov = overrides[u.id] || overrides[u.email];
+        if (ov) {
+          return {
+            ...u,
+            full_name: ov.full_name || u.full_name,
+            nis_nip: ov.nis_nip || u.nis_nip,
+            class_name: ov.class_name || u.class_name,
+          };
         }
-
-        return { ...u, full_name: name, nis_nip: nip, identity_type: identityType, role };
+        return u;
       });
 
       // Helper function to normalize teacher names for deduplication
@@ -354,6 +338,38 @@ export class MysqlDataService {
       return await updateUserProfileFn({ data });
     } catch (e) {
       console.warn("updateUserProfileFn failed:", e);
+      return false;
+    }
+  }
+
+  static async uploadUserAvatar(userId: string, dataUrl: string): Promise<{ success: boolean; avatarUrl: string }> {
+    try {
+      return await uploadUserAvatarFn({ data: { userId, dataUrl } });
+    } catch (e) {
+      console.warn("uploadUserAvatarFn failed:", e);
+      return { success: false, avatarUrl: "" };
+    }
+  }
+
+  static async removeUserAvatar(userId: string): Promise<boolean> {
+    try {
+      const res = await removeUserAvatarFn({ data: { userId } });
+      return res.success;
+    } catch (e) {
+      console.warn("removeUserAvatarFn failed:", e);
+      return false;
+    }
+  }
+
+  static async updateStudentParentContact(data: {
+    studentId: string;
+    parentName?: string;
+    parentWa?: string;
+  }): Promise<boolean> {
+    try {
+      return await updateStudentParentContactFn({ data });
+    } catch (e) {
+      console.warn("updateStudentParentContactFn failed:", e);
       return false;
     }
   }
@@ -623,6 +639,25 @@ export class MysqlDataService {
     }
   }
 
+  // CBT Questions
+  static async getCbtQuestions(): Promise<CbtQuestionDbRow[]> {
+    try {
+      return await getCbtQuestionsFn();
+    } catch (e) {
+      console.warn("getCbtQuestionsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveCbtQuestion(data: CbtQuestionDbRow): Promise<{ success: boolean; id?: number | string }> {
+    try {
+      return await saveCbtQuestionFn({ data });
+    } catch (e) {
+      console.warn("saveCbtQuestionFn failed:", e);
+      return { success: false };
+    }
+  }
+
   // Materials / Modul Ajar
   static async getMaterials(): Promise<MaterialRow[]> {
     try {
@@ -720,6 +755,25 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("saveP5ProjectFn failed:", e);
       return false;
+    }
+  }
+
+  // P5 Student Submissions
+  static async getP5Submissions(params?: { student_id?: string; rombel?: string }): Promise<P5SubmissionRow[]> {
+    try {
+      return await getP5SubmissionsFn({ data: params || {} });
+    } catch (e) {
+      console.warn("getP5SubmissionsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveP5Submission(data: P5SubmissionRow): Promise<{ success: boolean; id?: number }> {
+    try {
+      return await saveP5SubmissionFn({ data });
+    } catch (e) {
+      console.warn("saveP5SubmissionFn failed:", e);
+      return { success: false };
     }
   }
 
@@ -887,11 +941,20 @@ export class MysqlDataService {
     }
   }
 
-  static async saveSubmission(data: SubmissionRow): Promise<{ success: boolean; id?: string }> {
+  static async saveSubmission(data: SubmissionRow): Promise<{ success: boolean; id?: string; file_url?: string }> {
     try {
       return await saveSubmissionFn({ data });
     } catch (e) {
       console.warn("saveSubmissionFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteSubmissionFile(data: { assignment_id: string; user_id: string; student_name: string }): Promise<{ success: boolean }> {
+    try {
+      return await deleteSubmissionFileFn({ data });
+    } catch (e) {
+      console.warn("deleteSubmissionFileFn failed:", e);
       return { success: false };
     }
   }
@@ -1097,11 +1160,30 @@ export class MysqlDataService {
     }
   }
 
+  static async deleteLkpdActivity(id: string | number): Promise<boolean> {
+    try {
+      const res = await deleteLkpdActivityFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteLkpdActivityFn failed:", e);
+      return false;
+    }
+  }
+
   static async getLkpdGrades(activityId: string): Promise<LkpdGradeRow[]> {
     try {
       return await getLkpdGradesFn({ data: { activity_id: activityId } });
     } catch (e) {
       console.warn("getLkpdGradesFn failed:", e);
+      return [];
+    }
+  }
+
+  static async getAllLkpdGrades(): Promise<LkpdGradeRow[]> {
+    try {
+      return await getAllLkpdGradesFn();
+    } catch (e) {
+      console.warn("getAllLkpdGradesFn failed:", e);
       return [];
     }
   }
@@ -1183,6 +1265,44 @@ export class MysqlDataService {
       return [];
     }
   }
+
+  static async exportDatabaseBackup(): Promise<{ success: boolean; sql?: string; filename?: string; error?: string }> {
+    try {
+      return await exportDatabaseBackupFn();
+    } catch (e: any) {
+      console.warn("exportDatabaseBackupFn failed:", e);
+      return { success: false, error: e?.message || "Gagal membuat cadangan database." };
+    }
+  }
+
+  static async restoreDatabaseBackup(sql: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      return await restoreDatabaseBackupFn({ data: { sql } });
+    } catch (e: any) {
+      console.warn("restoreDatabaseBackupFn failed:", e);
+      return { success: false, error: e?.message || "Gagal memulihkan database." };
+    }
+  }
+
+  static async getKamadExecutiveMetrics(): Promise<KamadExecutiveMetrics> {
+    try {
+      return await getKamadExecutiveMetricsFn();
+    } catch (e) {
+      console.warn("getKamadExecutiveMetricsFn failed:", e);
+      return {
+        nilaiRombel: [],
+        presensiSiswa: [],
+        presensiGuru: [],
+        supervisiWaka: {
+          totalMaterials: 0,
+          verifiedCount: 0,
+          pendingCount: 0,
+          revisionCount: 0,
+          percentage: 0,
+        },
+      };
+    }
+  }
 }
 
-export type { WaGatewayConfigRow, AuditLogItem, LkpdDiscussionRow };
+export type { WaGatewayConfigRow, AuditLogItem, LkpdDiscussionRow, KamadExecutiveMetrics, CbtQuestionDbRow };

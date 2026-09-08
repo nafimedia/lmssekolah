@@ -13,7 +13,7 @@ import { CBTExamPlayerModal } from "./CBTExamPlayerModal";
 import { CBTExam, CBTQuestion, CBTGradeAnalysisItem } from "@/types/cbt";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
-import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
+import { isSameClass, normalizeRombelName, resolveWaliKelasRombel } from "@/utils/classNormalization";
 
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 
@@ -24,28 +24,16 @@ interface CBTModuleProps {
 
 export const CBTModule: React.FC<CBTModuleProps> = ({
   userRole = "siswa",
-  studentName = "Muhammad Fairuz Maulana",
+  studentName = "Siswa Madrasah",
 }) => {
   const isExecutive = userRole === "kamad" || userRole === "waka" || userRole === "admin" || userRole === "kepala_madrasah" || userRole === "admin_akademik";
   const isGuruRole = userRole === "guru" || (userRole || "").includes("guru");
-  const isWaliKelas = userRole === "walikelas" || userRole === "wali_kelas";
+  const isWaliKelas = userRole === "walikelas" || (userRole || "").includes("walikelas");
 
   const me = MysqlAuthService.getActiveUser();
-  const rawClass = me?.class_name || (me as any)?.class;
+  const rawClass = me?.class_name;
 
-  let binaanRombel = "Rombel 8A";
-  if (rawClass && rawClass !== "Semua" && rawClass !== "Semua Rombel") {
-    binaanRombel = normalizeRombelName(rawClass);
-  } else {
-    const name = (me?.full_name || "").toLowerCase();
-    const cleanNip = (me?.nis_nip || "").trim();
-    if (name.includes("achmad makmun") || cleanNip.includes("272005011001")) binaanRombel = "Rombel 8B";
-    else if (name.includes("sobiyati")) binaanRombel = "Rombel 8A";
-    else if (name.includes("novantya")) binaanRombel = "Rombel 9A";
-    else if (name.includes("indah nurrohmah")) binaanRombel = "Rombel 9B";
-    else if (name.includes("maulidia")) binaanRombel = "Rombel 7A";
-    else if (name.includes("rindang")) binaanRombel = "Rombel 7B";
-  }
+  const binaanRombel = resolveWaliKelasRombel(me, null, "rombel");
 
   const defaultRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Rombel 8A");
 
@@ -74,12 +62,36 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
       MysqlDataService.getCbtExams().catch(() => []),
       MysqlDataService.getCbtResults().catch(() => []),
       MysqlDataService.getMasterRombels().catch(() => []),
+      MysqlDataService.getCbtQuestions().catch(() => []),
     ])
-      .then(([dbExams, dbResults, rombels]) => {
+      .then(([dbExams, dbResults, rombels, dbQuestions]) => {
         if (!isMounted) return;
 
         if (rombels && rombels.length > 0) {
           setMasterRombels(rombels);
+        }
+
+        if (dbQuestions && dbQuestions.length > 0) {
+          const mappedQ: CBTQuestion[] = dbQuestions.map((q: any) => ({
+            id: String(q.id),
+            examId: String(q.exam_id || "1"),
+            questionType: "pg",
+            questionText: q.question_text || "",
+            options: {
+              A: q.option_a || "",
+              B: q.option_b || "",
+              C: q.option_c || "",
+              D: q.option_d || "",
+            },
+            correctOption: (q.correct_option || "A") as "A" | "B" | "C" | "D",
+            points: Number(q.points) || 5,
+            difficulty: "Sedang",
+            author: me?.full_name || "Guru Pengampu",
+            mapel: "Umum",
+          }));
+          setQuestions(mappedQ);
+        } else {
+          setQuestions([]);
         }
 
         if (dbExams && dbExams.length > 0) {
@@ -174,8 +186,22 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
     setExams((prev) => [newExam as CBTExam, ...prev]);
   };
 
-  const handleAddQuestion = (newQ: CBTQuestion) => {
+  const handleAddQuestion = async (newQ: CBTQuestion) => {
     setQuestions((prev) => [newQ, ...prev]);
+    try {
+      await MysqlDataService.saveCbtQuestion({
+        exam_id: Number(newQ.examId) || 1,
+        question_text: newQ.questionText,
+        option_a: newQ.options.A,
+        option_b: newQ.options.B,
+        option_c: newQ.options.C,
+        option_d: newQ.options.D,
+        correct_option: newQ.correctOption,
+        points: newQ.points,
+      });
+    } catch (err) {
+      console.warn("Gagal menyimpan butir soal CBT ke MySQL:", err);
+    }
   };
 
   const handleExamComplete = (result: { scorePg: number; totalScore: number; violationCount: number }) => {
@@ -276,32 +302,22 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
       {userRole === "siswa" ? (
         <StudentHeaderBanner
           title="CBT Ujian Online Saya"
-          subtitle="Portal Ujian Berbasis Komputer (CBT), pengerjaan tes, token kuis, dan analisis nilai"
+          subtitle="Pelaksanaan ujian berbasis komputer, latihan soal mandiri, dan hasil evaluasi belajar"
           icon={MonitorCheck}
-          statusText="Sistem CBT Aktif (Anti-Cheat 3x)"
+          statusText="Sistem Ujian Aktif"
           statusVariant="success"
         />
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground">
-                <MonitorCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                {isWaliKelas
-                  ? `Monitoring CBT Engine - ${binaanRombel}`
-                  : selectedRombel === "ALL"
-                    ? "Monitoring CBT Engine & Assessment Center (Seluruh Kelas)"
-                    : `Monitoring CBT Engine - ${selectedRombel}`}
-              </h1>
-              <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
-                <ShieldCheck className="h-3 w-3 mr-1" /> RBAC: {getRoleLabel()}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {isExecutive
-                ? "Dashboard Pengawasan Ujian Eksekutif Kamad & Waka Kurikulum untuk Audit Sesi CBT & Analisis Ketuntasan KKM"
-                : "Mesin Ujian Berbasis Komputer, Bank Soal Multi-Type, Anti-Cheat 3x, & Analisis Ketuntasan KKM (75)"}
-            </p>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground">
+              <MonitorCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              {isWaliKelas
+                ? `Monitoring CBT Engine - ${binaanRombel}`
+                : selectedRombel === "ALL"
+                  ? "Monitoring CBT Engine & Assessment Center (Seluruh Kelas)"
+                  : `Monitoring CBT Engine - ${selectedRombel}`}
+            </h1>
           </div>
           <div className="flex gap-2">
             <Button
@@ -362,12 +378,6 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-
-              {isExecutive && (
-                <Badge variant="secondary" className="hidden sm:inline-flex bg-emerald-600/10 text-emerald-600 border border-emerald-500/30 px-3 py-1.5 font-bold text-xs">
-                  <Building2 className="h-3.5 w-3.5 mr-1" /> Monitoring Kamad & Waka
-                </Badge>
-              )}
             </div>
           </div>
         </Card>
@@ -441,15 +451,17 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         >
           <MonitorCheck className="h-3.5 w-3.5" /> 1. Sesi Ujian Live CBT
         </Button>
-        <Button
-          size="sm"
-          variant={activeTab === "bank_soal" ? "default" : "outline"}
-          className={`gap-2 text-xs font-bold ${activeTab === "bank_soal" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
-            }`}
-          onClick={() => setActiveTab("bank_soal")}
-        >
-          <Brain className="h-3.5 w-3.5" /> 2. Bank Soal & Tipe Soal
-        </Button>
+        {userRole !== "siswa" && (
+          <Button
+            size="sm"
+            variant={activeTab === "bank_soal" ? "default" : "outline"}
+            className={`gap-2 text-xs font-bold ${activeTab === "bank_soal" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+              }`}
+            onClick={() => setActiveTab("bank_soal")}
+          >
+            <Brain className="h-3.5 w-3.5" /> 2. Bank Soal & Tipe Soal
+          </Button>
+        )}
         <Button
           size="sm"
           variant={activeTab === "analisis" ? "default" : "outline"}
@@ -457,7 +469,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
             }`}
           onClick={() => setActiveTab("analisis")}
         >
-          <BarChart3 className="h-3.5 w-3.5" /> 3. Analisis KKM (75) & Remedial
+          <BarChart3 className="h-3.5 w-3.5" /> {userRole === "siswa" ? "2. Riwayat & Analisis Nilai CBT Saya" : "3. Analisis KKM (75) & Remedial"}
         </Button>
       </div>
 
@@ -482,6 +494,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
       {activeTab === "analisis" && (
         <CBTGradeAnalysis
           grades={visibleGradeAnalysis}
+          questions={visibleQuestions}
           userRole={userRole}
           studentName={studentName}
         />

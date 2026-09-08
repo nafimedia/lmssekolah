@@ -11,13 +11,12 @@ import { PengumumanKelasTab, PengumumanItem } from "./components/PengumumanKelas
 import { CetakSuratDialog } from "./components/CetakSuratDialog";
 import { PrintDataKelasDialog } from "./components/PrintDataKelasDialog";
 
-import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
+import { isSameClass, normalizeRombelName, resolveWaliKelasRombel } from "@/utils/classNormalization";
 
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+function SectionHeader({ title }: { title: string; sub?: string }) {
   return (
     <div className="mb-6">
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      {sub && <p className="text-sm text-muted-foreground mt-1">{sub}</p>}
     </div>
   );
 }
@@ -37,24 +36,13 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
   const [activeTab, setActiveTab] = useState<"siswa" | "pengumuman" | "rekap_rombel">("siswa");
 
   const me = MysqlAuthService.getActiveUser();
-  const waliKelasName = me?.full_name || userProfile?.name || "SOBIYATI, S.Pd";
+  const waliKelasName = me?.full_name || userProfile?.name || "";
   const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik";
 
   const resolvedWaliClass = useMemo(() => {
     if (isExecutive) return "Semua";
-    const cleanName = (waliKelasName || "").toLowerCase();
-    const cleanNip = (me?.nis_nip || "").trim();
-
-    if (cleanName.includes("achmad makmun") || cleanNip.includes("272005011001")) return "Rombel 8B";
-    if (cleanName.includes("misbah")) return "Rombel 7A";
-    if (cleanName.includes("endah")) return "Rombel 7B";
-    if (cleanName.includes("sobiyati")) return "Rombel 8A";
-    if (cleanName.includes("sobiyati")) return "Rombel 9A";
-    if (cleanName.includes("sayono")) return "Rombel 9B";
-
-    if (userProfile?.assignedClass) return normalizeRombelName(userProfile.assignedClass);
-    return "Rombel 8A";
-  }, [waliKelasName, userProfile, me, isExecutive]);
+    return resolveWaliKelasRombel(me || userProfile, null, "rombel");
+  }, [userProfile, me, isExecutive]);
 
   const [selectedClass, setSelectedClass] = useState(resolvedWaliClass);
   const [dbRombels, setDbRombels] = useState<RombelExecutiveItem[]>([]);
@@ -74,9 +62,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
 
   const [students, setStudents] = useState<StudentItem[]>([]);
 
-  const [announcements, setAnnouncements] = useState<PengumumanItem[]>([
-    { id: "a1", title: "Rapat Koordinasi Wali Murid & Pembagian Rapor Formatif", content: "Disampaikan kepada seluruh orang tua/wali siswa kelas bimbingan untuk hadir pada rapat koordinasi Sabtu mendatang pukul 08:30 WIB di Aula MTsN 2 Cilacap.", date: "23 Agustus 2026", author: waliKelasName },
-  ]);
+  const [announcements, setAnnouncements] = useState<PengumumanItem[]>([]);
 
   const [selectedStudentForSurat, setSelectedStudentForSurat] = useState<StudentItem | null>(null);
   const [isSuratOpen, setIsSuratOpen] = useState(false);
@@ -89,8 +75,23 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
     Promise.all([
       MysqlDataService.getMasterRombels().catch(() => []),
       MysqlDataService.getUsers().catch(() => []),
-    ]).then(([rombelRows, users]) => {
+      MysqlDataService.getAnnouncements().catch(() => []),
+    ]).then(([rombelRows, users, anns]) => {
       if (!isMounted) return;
+
+      if (anns && anns.length > 0) {
+        setAnnouncements(
+          anns.map((a: any) => ({
+            id: a.id || `ann_${Date.now()}`,
+            title: a.title,
+            content: a.content,
+            date: a.date_str || (a.created_at ? new Date(a.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"),
+            author: a.author || waliKelasName || "Wali Kelas",
+          }))
+        );
+      } else {
+        setAnnouncements([]);
+      }
 
       const siswaList = (users || []).filter((u: any) => u.role === "siswa");
       if (siswaList.length > 0) {
@@ -98,12 +99,12 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
           const studentClass = normalizeRombelName(s.class_name || s.class);
           return {
             id: s.id || `s_${idx}`,
-            nisn: s.nis_nip || s.nis || `008192${1000 + idx}`,
-            name: s.full_name || s.name,
-            class: studentClass,
-            gender: idx % 2 === 0 ? "L" : "P",
-            parentName: `Bpk/Ibu ${s.full_name.split(" ")[0]}`,
-            parentWa: s.phone || "081234567890",
+            nisn: s.nis_nip || s.nis || "-",
+            name: s.full_name || s.name || "-",
+            class: studentClass || "-",
+            gender: s.gender || "-",
+            parentName: s.parent_name || "-",
+            parentWa: s.phone || "",
             hadirPct: 0,
             statusPresensi: "BELUM PRESENSI",
           };
@@ -177,31 +178,48 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
     setIsSuratOpen(true);
   };
 
-  const handleUpdateStudentParentData = (studentId: string, parentName: string, parentWa: string) => {
+  const handleUpdateStudentParentData = async (studentId: string, parentName: string, parentWa: string) => {
     setStudents((prev) =>
       prev.map((item) =>
         item.id === studentId ? { ...item, parentName, parentWa } : item
       )
     );
-    const targetStudent = students.find((s) => s.id === studentId);
-    MysqlDataService.updateUserProfile({
-      id: studentId,
-      fullName: targetStudent?.name || "",
-      email: `${studentId}@mail.com`,
-      phone: parentWa,
-    }).catch(() => {});
+    try {
+      const res = await MysqlDataService.updateStudentParentContact({
+        studentId,
+        parentName,
+        parentWa,
+      });
+      if (res) {
+        toast.success("Kontak orang tua siswa berhasil disimpan ke database!");
+      }
+    } catch (err: any) {
+      toast.error("Gagal menyimpan kontak orang tua: " + (err?.message || ""));
+    }
   };
 
-  const handleAddAnnouncement = (item: { title: string; content: string }) => {
-    const newAnn: PengumumanItem = {
-      id: "a_" + Date.now(),
-      title: item.title,
-      content: item.content,
-      date: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-      author: waliKelasName,
-    };
-    setAnnouncements((prev) => [newAnn, ...prev]);
-    toast.success(`Pengumuman kelas "${item.title}" berhasil diterbitkan!`);
+  const handleAddAnnouncement = async (item: { title: string; content: string }) => {
+    const formattedDate = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    try {
+      await MysqlDataService.saveAnnouncement({
+        title: item.title,
+        content: item.content,
+        tag: selectedClass !== "Semua" ? selectedClass : "Kelas",
+        date_str: formattedDate,
+      });
+
+      const newAnn: PengumumanItem = {
+        id: "a_" + Date.now(),
+        title: item.title,
+        content: item.content,
+        date: formattedDate,
+        author: waliKelasName || "Wali Kelas",
+      };
+      setAnnouncements((prev) => [newAnn, ...prev]);
+      toast.success(`Pengumuman kelas "${item.title}" berhasil diterbitkan ke database!`);
+    } catch (err: any) {
+      toast.error("Gagal menyimpan pengumuman: " + (err?.message || ""));
+    }
   };
 
   const handleBroadcastWaGroup = (title: string, content: string) => {
@@ -236,7 +254,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div>
                 <h3 className="font-extrabold text-sm text-foreground">
-                  🏛️ Mode Executive Monitoring {executiveRoleLabel} (Read-Only)
+                  🏛️ Supervisi Eksekutif {executiveRoleLabel}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Supervisi terpadu {totalRombelAktif} Rombel MTsN 2 Cilacap: Kehadiran siswa, kelengkapan Wali Kelas, & progres rapor.
@@ -360,11 +378,11 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               <CardContent className="p-0">
                 {isLoadingRombels ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
-                    Memuat matriks rombel riil dari database MySQL...
+                    Memuat data rombel...
                   </div>
                 ) : dbRombels.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
-                    Belum ada rombel terdaftar di database MySQL.
+                    Belum ada rombel terdaftar.
                   </div>
                 ) : (
                   <table className="w-full text-xs text-left">

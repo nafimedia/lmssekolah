@@ -14,7 +14,7 @@
         "MYSQL_DATABASE": "db_lms"
       }
     },
-    "puppeteer-ui-testing": {
+    "puppeteer": {
       "command": "npx",
       "args": [
         "-y",

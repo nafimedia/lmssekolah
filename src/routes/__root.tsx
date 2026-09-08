@@ -131,6 +131,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Learning Management System MTs Negeri 2 Cilacap" },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/400009d2-a0c2-4ff4-a4fc-e092d97ad72f/id-preview-1f3a6f0b--95bff19f-785d-4852-8073-ec3b3bd580ce.lovable.app-1784005379084.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/400009d2-a0c2-4ff4-a4fc-e092d97ad72f/id-preview-1f3a6f0b--95bff19f-785d-4852-8073-ec3b3bd580ce.lovable.app-1784005379084.png" },
+      { name: "theme-color", content: "#059669" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
     links: [
       {
@@ -138,6 +141,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "manifest", href: "/manifest.json" },
     ],
   }),
   shellComponent: RootShell,
@@ -166,11 +170,24 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 import { Toaster } from "@/components/ui/sonner";
+import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
+    // Register Service Worker for PWA
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          console.log("[PWA] Service Worker registered:", reg.scope);
+        })
+        .catch((err) => {
+          console.warn("[PWA] Service Worker registration skipped:", err);
+        });
+    }
+
     const handleChunkError = (e: ErrorEvent | PromiseRejectionEvent) => {
       const msg = "reason" in e ? (e.reason?.message || String(e.reason)) : e.message;
       if (msg && (msg.includes("Failed to fetch dynamically imported module") || msg.includes("Importing a module script failed"))) {
@@ -194,6 +211,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster position="top-center" richColors />
+      <PwaInstallPrompt />
     </QueryClientProvider>
   );
 }

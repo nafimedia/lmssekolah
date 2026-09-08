@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Database, Users, Calendar, ShieldCheck, CheckCircle2, Plus, Edit, Trash2, ArrowUpDown, BookOpen, Layers, Inbox } from "lucide-react";
+import { Database, Users, Calendar, ShieldCheck, CheckCircle2, Plus, Edit, Trash2, ArrowUpDown, BookOpen, Layers, Inbox, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,33 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
 
   const [isEditWaliOpen, setIsEditWaliOpen] = useState(false);
   const [editingRombel, setEditingRombel] = useState<any>(null);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+
+  const handleDownloadBackup = async () => {
+    setIsBackingUp(true);
+    toast.info("⏳ Menyiapkan berkas cadangan database MySQL...");
+    try {
+      const res = await MysqlDataService.exportDatabaseBackup();
+      if (res.success && res.sql) {
+        const blob = new Blob([res.sql], { type: "application/sql;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.filename || "backup_db_lms.sql";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success(`💾 Cadangan database "${res.filename}" berhasil diunduh!`);
+      } else {
+        toast.error(`Gagal membuat cadangan database: ${res.error || "Error tak dikenal"}`);
+      }
+    } catch (err: any) {
+      toast.error(`Terjadi kesalahan: ${err?.message || "Error"}`);
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
 
   // Modal Tambah Rombel State
   const [isAddRombelOpen, setIsAddRombelOpen] = useState(false);
@@ -89,7 +116,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
 
   const handleEditWaliClick = (rombelItem: any) => {
     if (isKamad) {
-      toast.info("🏛️ Kepala Madrasah berada dalam Mode Monitoring (Read-Only).");
+      toast.info("🏛️ Kepala Madrasah berada dalam Mode Supervisi.");
       return;
     }
     setEditingRombel(rombelItem);
@@ -98,22 +125,12 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
 
   const handleSaveWaliKelas = async (rombelId: string, newWaliName: string) => {
     if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+      toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       return;
     }
     setRombelList((prev) =>
       prev.map((r) => (r.id === rombelId ? { ...r, waliKelas: newWaliName } : r))
     );
-
-    if (typeof window !== "undefined") {
-      try {
-        const savedOverrides: Record<string, string> = JSON.parse(
-          localStorage.getItem("lms_rombel_wali_overrides") || "{}"
-        );
-        savedOverrides[rombelId] = newWaliName;
-        localStorage.setItem("lms_rombel_wali_overrides", JSON.stringify(savedOverrides));
-      } catch (e) { }
-    }
 
     try {
       const rombelObj = rombelList.find((r) => r.id === rombelId || r.code === rombelId);
@@ -126,7 +143,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         room: rombelObj?.room || "Ruang Rombel",
         siswa_count: rombelObj?.siswaCount || 0,
       });
-      toast.success(`Wali Kelas ${editingRombel?.name || "Rombel"} tersimpan ke database MySQL!`);
+      toast.success(`Wali Kelas ${editingRombel?.name || "Rombel"} berhasil disimpan!`);
     } catch (e) {
       console.warn("Gagal simpan wali kelas ke MySQL:", e);
       toast.success(`Wali Kelas ${editingRombel?.name || "Rombel"} berhasil diperbarui ke ${newWaliName}!`);
@@ -137,7 +154,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
 
   const handleCreateRombel = async () => {
     if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+      toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       return;
     }
     if (!newRombelName.trim()) {
@@ -145,18 +162,16 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       return;
     }
 
-    const cleanCode = newRombelName.toLowerCase().replace(/\s+/g, "");
     try {
       await MysqlDataService.saveMasterRombel({
-        code: cleanCode,
+        code: newRombelName.toLowerCase().replace(/\s+/g, ""),
         name: newRombelName.trim(),
-        grade: newRombelGrade,
         wali_kelas: newRombelWali || "Belum Ditentukan",
-        room: newRombelRoom || "Gedung Utama",
+        grade: newRombelGrade,
+        room: `Ruang ${newRombelName}`,
         siswa_count: 0,
       });
-
-      toast.success(`🎉 Rombel Baru "${newRombelName}" berhasil ditambahkan ke database!`);
+      toast.success(`Rombel "${newRombelName}" berhasil ditambahkan!`);
       setIsAddRombelOpen(false);
       setNewRombelName("");
       setNewRombelWali("");
@@ -169,14 +184,14 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
 
   const handleDeleteRombel = async (rombelItem: any) => {
     if (isKamad) {
-      toast.error("🔒 Akses ditolak: Kepala Madrasah hanya berhak memantau data (Read-Only).");
+      toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       return;
     }
-    if (!confirm(`Apakah Anda yakin ingin menghapus Rombel "${rombelItem.name}" dari database?`)) return;
+    if (!confirm(`Apakah Anda yakin ingin menghapus Rombel "${rombelItem.name}"?`)) return;
 
     try {
       await MysqlDataService.deleteMasterRombel(rombelItem.id);
-      toast.success(`🗑️ ${rombelItem.name} berhasil dihapus dari database!`);
+      toast.success(`🗑️ Rombel ${rombelItem.name} berhasil dihapus!`);
       loadData();
     } catch (e) {
       toast.error("Gagal menghapus rombel.");
@@ -188,12 +203,20 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Database className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Data Master Akademik
+            <Database className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Data Pokok Akademik
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Pengelolaan Rombongan Belajar (Rombel), Wali Kelas, Tahun Ajaran, & Skema Kriteria Ketuntasan (KKTP).
-          </p>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isBackingUp}
+          onClick={handleDownloadBackup}
+          className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 shadow-xs"
+        >
+          <Download className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          {isBackingUp ? "Mencadangkan..." : "Unduh Cadangan Data (.sql)"}
+        </Button>
       </div>
 
       {/* Tabs Selector */}
@@ -237,12 +260,12 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
           </div>
 
           {isLoadingRombel ? (
-            <div className="p-8 text-center text-xs text-muted-foreground">Memuat data rombel dari database...</div>
+            <div className="p-8 text-center text-xs text-muted-foreground">Memuat data rombel...</div>
           ) : rombelList.length === 0 ? (
             <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 bg-card">
               <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
               <div className="font-semibold text-foreground text-sm">Belum Ada Rombel Terdaftar</div>
-              <p>Database saat ini tidak memiliki data rombel terdaftar.</p>
+              <p>Belum ada kelas atau rombongan belajar terdaftar.</p>
               {!isKamad && (
                 <Button
                   size="sm"
@@ -278,7 +301,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
                           size="sm"
                           variant="ghost"
                           className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/10"
-                          title="Hapus Rombel dari Database"
+                          title="Hapus Rombel"
                           onClick={() => handleDeleteRombel(r)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -377,7 +400,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
               Batal
             </Button>
             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold" onClick={handleCreateRombel}>
-              Simpan Rombel Ke Database
+              Simpan Data Rombel
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, CheckCircle2, Clock, Calendar, Users, DoorOpen, Sparkles, CheckSquare, Square, XCircle, BookOpen, Video, FileText } from "lucide-react";
+import { Play, CheckCircle2, Clock, Calendar, DoorOpen, Sparkles, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,10 @@ interface KbmHeaderBannerProps {
   activeTab?: string;
   onSelectTab?: (tab: "jurnal" | "presensi" | "materi" | "aktivitas" | "catatan_siswa" | "riwayat") => void;
   onStartSession?: () => void;
+  onProgressChange?: (progress: { isPresensiDone: boolean; isJurnalDone: boolean; presensiCountStr: string }) => void;
 }
 
-export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelectTab, onStartSession }: KbmHeaderBannerProps) {
+export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelectTab, onStartSession, onProgressChange }: KbmHeaderBannerProps) {
   const [isSessionLive, setIsSessionLive] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
@@ -101,36 +102,37 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
       MysqlDataService.getKbmPresensi(activeRombel, activeMapel, todayStr),
       MysqlDataService.getJournals(),
     ]).then(([presRows, journals]) => {
-      if (!isMounted) return;
-
+      const presDone = Boolean(presRows && presRows.length > 0);
+      setIsPresensiDone(presDone);
+      let countStr = "Isi Kehadiran";
       if (presRows && presRows.length > 0) {
-        setIsPresensiDone(true);
         const hadirCount = presRows.filter((r: any) => r.status === "HADIR").length;
-        setPresensiCountStr(`${hadirCount}/${presRows.length} Hadir`);
-      } else {
-        setIsPresensiDone(false);
-        setPresensiCountStr("Isi Kehadiran");
+        countStr = `${hadirCount}/${presRows.length} Hadir`;
       }
+      setPresensiCountStr(countStr);
 
-      if (journals && journals.length > 0) {
-        const hasJournalToday = journals.some(
-          (j: any) =>
-            isSameClass(j.rombel || "", activeRombel) &&
-            (j.mapel?.toLowerCase() === activeMapel.toLowerCase() || j.topic || j.materi)
-        );
-        setIsJurnalDone(hasJournalToday);
-      } else {
-        setIsJurnalDone(false);
-      }
+      const jurDone = Boolean(
+        journals &&
+          journals.length > 0 &&
+          journals.some(
+            (j: any) =>
+              isSameClass(j.rombel || "", activeRombel) &&
+              (j.mapel?.toLowerCase() === activeMapel.toLowerCase() || j.topic || j.materi)
+          )
+      );
+      setIsJurnalDone(jurDone);
+
+      onProgressChange?.({
+        isPresensiDone: presDone,
+        isJurnalDone: jurDone,
+        presensiCountStr: countStr,
+      });
     });
 
     return () => {
       isMounted = false;
     };
   }, [activeRombel, activeMapel, todayStr]);
-
-  const completedStepsCount = (isPresensiDone ? 1 : 0) + (isMateriDone ? 1 : 0) + (isJurnalDone ? 1 : 0);
-  const progressPct = Math.round((completedStepsCount / 3) * 100);
 
   const handleToggleSession = async () => {
     const me = MysqlAuthService.getActiveUser();
@@ -181,20 +183,20 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
   const formattedTodayDate = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <Card className={`border-2 transition-all shadow-md ${
+    <Card className={`border transition-all shadow-sm ${
       isSessionLive
-        ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+        ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20"
         : sessionCompleted
         ? "border-blue-500/50 bg-blue-50/30 dark:bg-blue-950/20"
         : isScheduledToday
-        ? "border-primary/40 bg-card"
+        ? "border-border bg-card"
         : "border-slate-300 dark:border-slate-800 bg-slate-500/5"
     }`}>
-      <CardContent className="p-5 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/80 pb-4">
-          <div className="space-y-1">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className={`font-extrabold text-xs px-3 py-1 gap-1.5 ${
+              <Badge className={`font-extrabold text-[11px] px-2.5 py-0.5 gap-1.5 ${
                 isSessionLive
                   ? "bg-emerald-600 text-white animate-pulse"
                   : sessionCompleted
@@ -203,18 +205,18 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
                   ? "bg-amber-600 text-white"
                   : "bg-slate-500 text-white"
               }`}>
-                {isSessionLive && <><Sparkles className="h-3.5 w-3.5" /> SESI KBM BERLANGSUNG (LIVE)</>}
-                {sessionCompleted && <><CheckCircle2 className="h-3.5 w-3.5" /> SESI KBM SELESAI</>}
-                {!isSessionLive && !sessionCompleted && isScheduledToday && <><Clock className="h-3.5 w-3.5" /> KBM SIAP DIMULAI</>}
-                {!isSessionLive && !sessionCompleted && !isScheduledToday && <><XCircle className="h-3.5 w-3.5" /> TIDAK ADA JADWAL HARI INI ({currentDayName})</>}
+                {isSessionLive && <><Sparkles className="h-3 w-3" /> SESI KBM BERLANGSUNG (LIVE)</>}
+                {sessionCompleted && <><CheckCircle2 className="h-3 w-3" /> SESI KBM SELESAI</>}
+                {!isSessionLive && !sessionCompleted && isScheduledToday && <><Clock className="h-3 w-3" /> KBM SIAP DIMULAI</>}
+                {!isSessionLive && !sessionCompleted && !isScheduledToday && <><XCircle className="h-3 w-3" /> TIDAK ADA JADWAL HARI INI ({currentDayName})</>}
               </Badge>
 
               <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1 font-mono">
-                <Calendar className="h-3.5 w-3.5 text-primary" /> {currentDayName}, {formattedTodayDate} · Jam KBM Aktif
+                <Calendar className="h-3.5 w-3.5 text-primary" /> {currentDayName}, {formattedTodayDate}
               </span>
             </div>
 
-            <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-black text-foreground tracking-tight flex items-center gap-2">
               <DoorOpen className="h-5 w-5 text-primary" /> {activeRombel} — {activeMapel}
             </h2>
             <p className="text-xs text-muted-foreground font-medium">
@@ -226,7 +228,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
 
           <Button
             size="lg"
-            className={`font-black text-xs gap-2 px-6 py-3 shadow-md transition-all ${
+            className={`font-black text-xs gap-2 px-5 py-2.5 shadow-sm transition-all shrink-0 ${
               isSessionLive
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
                 : sessionCompleted
@@ -237,116 +239,18 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
           >
             {isSessionLive ? (
               <>
-                <CheckCircle2 className="h-5 w-5" /> Selesaikan Sesi KBM
+                <CheckCircle2 className="h-4 w-4" /> Selesaikan Sesi KBM
               </>
             ) : sessionCompleted ? (
               <>
-                <Sparkles className="h-5 w-5" /> Buka Sesi KBM Kembali
+                <Sparkles className="h-4 w-4" /> Buka Sesi KBM Kembali
               </>
             ) : (
               <>
-                <Play className="h-5 w-5 fill-current" /> Mulai Sesi Mengajar Harian
+                <Play className="h-4 w-4 fill-current" /> Mulai Sesi Mengajar
               </>
             )}
           </Button>
-        </div>
-
-        {/* Guided 3-Step Workflow Bar with Interactive Checkboxes */}
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <CheckSquare className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> Alur Terpandu Sesi KBM Harian (Ceklis Progres):
-            </span>
-            <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
-              {completedStepsCount}/3 Langkah Selesai ({progressPct}%)
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {/* STEP 1: PRESENSI SISWA */}
-            <button
-              type="button"
-              onClick={() => onSelectTab?.("presensi")}
-              className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between ${
-                activeTab === "presensi"
-                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-xs ring-1 ring-emerald-500/30"
-                  : "border-border bg-background hover:bg-muted/40"
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`h-7 w-7 rounded-lg grid place-items-center shrink-0 font-bold transition-all ${
-                  isPresensiDone ? "bg-emerald-600 text-white shadow-xs" : "bg-muted text-muted-foreground border border-border"
-                }`}>
-                  {isPresensiDone ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
-                </div>
-                <div>
-                  <span className="font-bold text-xs block text-foreground">Langkah 1: Presensi Siswa</span>
-                  <span className="text-[10px] text-muted-foreground font-medium">{presensiCountStr}</span>
-                </div>
-              </div>
-              <Badge className={`text-[9px] font-extrabold gap-1 ${
-                isPresensiDone ? "bg-emerald-600 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
-              }`}>
-                {isPresensiDone ? "✓ Presensi Terisi" : "⏳ Isi Presensi"}
-              </Badge>
-            </button>
-
-            {/* STEP 2: MATERI & LKPD */}
-            <button
-              type="button"
-              onClick={() => onSelectTab?.("materi")}
-              className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between ${
-                activeTab === "materi" || activeTab === "aktivitas"
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 shadow-xs ring-1 ring-blue-500/30"
-                  : "border-border bg-background hover:bg-muted/40"
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`h-7 w-7 rounded-lg grid place-items-center shrink-0 font-bold transition-all ${
-                  isMateriDone ? "bg-blue-600 text-white shadow-xs" : "bg-muted text-muted-foreground border border-border"
-                }`}>
-                  {isMateriDone ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
-                </div>
-                <div>
-                  <span className="font-bold text-xs block text-foreground">Langkah 2: Materi & LKPD</span>
-                  <span className="text-[10px] text-muted-foreground font-medium">Bahan ajar hari ini</span>
-                </div>
-              </div>
-              <Badge className={`text-[9px] font-extrabold gap-1 ${
-                isMateriDone ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"
-              }`}>
-                {isMateriDone ? "✓ Materi Siap" : "⏳ Buka Bahan"}
-              </Badge>
-            </button>
-
-            {/* STEP 3: JURNAL & REFLEKSI */}
-            <button
-              type="button"
-              onClick={() => onSelectTab?.("jurnal")}
-              className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between ${
-                activeTab === "jurnal"
-                  ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40 shadow-xs ring-1 ring-amber-500/30"
-                  : "border-border bg-background hover:bg-muted/40"
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`h-7 w-7 rounded-lg grid place-items-center shrink-0 font-bold transition-all ${
-                  isJurnalDone ? "bg-amber-600 text-white shadow-xs" : "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30"
-                }`}>
-                  {isJurnalDone ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
-                </div>
-                <div>
-                  <span className="font-bold text-xs block text-foreground">Langkah 3: Jurnal & Refleksi</span>
-                  <span className="text-[10px] text-muted-foreground font-medium">Simpan ringkasan KBM</span>
-                </div>
-              </div>
-              <Badge className={`text-[9px] font-extrabold gap-1 ${
-                isJurnalDone ? "bg-amber-600 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
-              }`}>
-                {isJurnalDone ? "✓ Jurnal Terisi" : "⏳ Tulis Jurnal"}
-              </Badge>
-            </button>
-          </div>
         </div>
       </CardContent>
     </Card>

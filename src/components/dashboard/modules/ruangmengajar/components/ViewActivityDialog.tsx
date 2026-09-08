@@ -21,6 +21,7 @@ export interface ActivityDetail {
   attachment_url?: string;
   submission_type?: string;
   quiz_data?: string;
+  questions_data?: string;
 }
 
 interface StudentGradeRow {
@@ -163,7 +164,7 @@ export function ViewActivityDialog({
   const handleSaveGrades = async () => {
     if (!activity) return;
     if (!isAllowed) {
-      return toast.error("Akses Ditolak: Anda hanya memiliki hak akses Lihat (Read-Only) pada Mata Pelajaran ini.");
+      return toast.error("Akses Ditolak: Anda hanya memiliki hak akses Lihat pada Mata Pelajaran ini.");
     }
     const dbGrades = grades.map((g) => ({
       activity_id: activity.id,
@@ -176,7 +177,7 @@ export function ViewActivityDialog({
     }));
 
     await MysqlDataService.saveLkpdGradesBatch(activity.id, dbGrades);
-    toast.success(`✅ Nilai LKPD "${activity.title}" berhasil disimpan ke Database MySQL & tersinkronisasi ke Penilaian Kelas!`);
+    toast.success(`✅ Nilai LKPD "${activity.title}" berhasil disimpan & tersinkronisasi ke Penilaian Kelas!`);
     onOpenChange(false);
   };
 
@@ -187,6 +188,16 @@ export function ViewActivityDialog({
       parsedQuizQuestions = JSON.parse(activity.quiz_data);
     } catch (e) {
       parsedQuizQuestions = [];
+    }
+  }
+
+  // Parse LKPD Questions if available
+  let parsedLkpdQuestions: any[] = [];
+  if (activity.questions_data) {
+    try {
+      parsedLkpdQuestions = JSON.parse(activity.questions_data);
+    } catch (e) {
+      parsedLkpdQuestions = [];
     }
   }
 
@@ -232,9 +243,10 @@ export function ViewActivityDialog({
                   href={activity.attachment_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1 bg-background px-2.5 py-1 rounded-md border border-emerald-500/30"
+                  className="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:underline flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-md border border-emerald-500/40 shadow-2xs"
                 >
-                  <ExternalLink className="h-3.5 w-3.5" /> Buka Lampiran Berkas / PDF
+                  <ExternalLink className="h-3.5 w-3.5 text-emerald-600" />
+                  {activity.attachment_url.startsWith("/uploads/") ? "📄 Buka Lembar PDF LKPD (File Server)" : "🔗 Buka Lampiran Eksternal"}
                 </a>
               )}
             </div>
@@ -242,6 +254,36 @@ export function ViewActivityDialog({
               {activity.instructions || "Tuliskan petunjuk pengerjaan dan bahan rujukan..."}
             </p>
           </div>
+
+          {/* Tampilan Butir Soal Terstruktur LKPD / Praktikum */}
+          {parsedLkpdQuestions.length > 0 && (
+            <div className="p-4 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-emerald-600" /> Lembar Butir Pertanyaan / Tugas Terstruktur ({parsedLkpdQuestions.length} Butir Soal)
+                </h4>
+                <Badge variant="outline" className="text-[10px] font-bold border-emerald-400 text-emerald-700 dark:text-emerald-300">
+                  Total {parsedLkpdQuestions.reduce((acc, q) => acc + (Number(q.points) || 0), 0)} Poin
+                </Badge>
+              </div>
+
+              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                {parsedLkpdQuestions.map((q: any, idx: number) => (
+                  <div key={idx} className="p-3 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-card text-xs space-y-1.5 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                        Pertanyaan #{idx + 1}
+                      </span>
+                      <Badge className="bg-emerald-600 text-white font-mono text-[10px]">
+                        Bobot: {q.points || 0} Poin
+                      </Badge>
+                    </div>
+                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{q.question}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Tampilan Soal Kuis Formatif (Jika jenis QUIZ) */}
           {activity.type === "QUIZ" && parsedQuizQuestions.length > 0 && (

@@ -106,8 +106,9 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Agenda & Kalender Akademik Resmi</h1>
-          <p className="text-sm text-muted-foreground mt-1">Jadwal kegiatan akademik, ujian, dan kalender kegiatan madrasah.</p>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <CalendarDays className="h-6 w-6 text-primary" /> Agenda & Kalender Akademik Resmi
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddAgendaOpen(true)}>

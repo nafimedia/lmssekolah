@@ -4,6 +4,7 @@ import { UserCog, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import {
   Dialog,
   DialogContent,
@@ -29,8 +30,15 @@ export function EditRolesDialog({ user, isOpen, onOpenChange, onSaveRoles }: Edi
     }
   }, [user]);
 
+  const activeUser = MysqlAuthService.getActiveUser();
+  const isSelf = activeUser && user && (activeUser.id === user.id || activeUser.email.toLowerCase() === user.email.toLowerCase());
+  const isProtectedAdmin = user?.email.toLowerCase() === "admin@mail.com";
+
   const toggleTempEditRole = (role: string) => {
     if (tempEditRoles.includes(role)) {
+      if (role === "admin" && (isSelf || isProtectedAdmin)) {
+        return toast.error("Role Super Administrator tidak dapat dicabut dari akun Anda sendiri!");
+      }
       if (tempEditRoles.length <= 1) {
         return toast.error("Minimal 1 role aktif wajib dimiliki pengguna!");
       }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
+import { MysqlDataService } from "@/services/mysqlDataService";
 
 interface AddGtkDialogProps {
   isOpen: boolean;
@@ -20,11 +21,23 @@ interface AddGtkDialogProps {
 }
 
 export function AddGtkDialog({ isOpen, onOpenChange, onAddGtk }: AddGtkDialogProps) {
+  const [subjects, setSubjects] = useState<any[]>(INITIAL_MASTER_MAPEL);
   const [formName, setFormName] = useState("");
   const [formNip, setFormNip] = useState("");
   const [formStatus, setFormStatus] = useState<"PNS" | "PPPK" | "GTT / Honor">("PNS");
   const [formGolongan, setFormGolongan] = useState("Penata (III/c)");
   const [formMapel, setFormMapel] = useState(INITIAL_MASTER_MAPEL[0]?.name || "Al Qur'an Hadis");
+
+  useEffect(() => {
+    MysqlDataService.getSubjects().then((res) => {
+      if (res && res.length > 0) {
+        setSubjects(res);
+        if (!formMapel || formMapel === INITIAL_MASTER_MAPEL[0]?.name) {
+          setFormMapel(res[0].name);
+        }
+      }
+    }).catch(console.error);
+  }, []);
   const [formJp, setFormJp] = useState(24);
   const [formTugas, setFormTugas] = useState("Guru Pengampu");
   const [formSertifikasi, setFormSertifikasi] = useState(true);
@@ -46,7 +59,7 @@ export function AddGtkDialog({ isOpen, onOpenChange, onAddGtk }: AddGtkDialogPro
       tugasTambahan: formTugas,
       isSertifikasi: formSertifikasi,
       email: `${formNip}@guru.mtsn2cilacap.sch.id`,
-      phone: formPhone || "081234567890",
+      phone: formPhone || "",
     });
 
     onOpenChange(false);
@@ -81,8 +94,8 @@ export function AddGtkDialog({ isOpen, onOpenChange, onAddGtk }: AddGtkDialogPro
             <div>
               <Label className="text-xs font-semibold">Mata Pelajaran Utama</Label>
               <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1" value={formMapel} onChange={(e) => setFormMapel(e.target.value)}>
-                {INITIAL_MASTER_MAPEL.map((m) => (
-                  <option key={m.code} value={m.name}>{m.name}</option>
+                {subjects.map((m) => (
+                  <option key={m.code || m.id || m.name} value={m.name}>{m.name}</option>
                 ))}
               </select>
             </div>

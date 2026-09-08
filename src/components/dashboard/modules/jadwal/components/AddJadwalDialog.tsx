@@ -110,7 +110,7 @@ export function AddJadwalDialog({ isOpen, onOpenChange, onAddJadwal }: AddJadwal
           </div>
 
           <div>
-            <Label className="text-xs font-semibold">Guru Pengampu (Master Data MySQL)</Label>
+            <Label className="text-xs font-semibold">Guru Pengampu</Label>
             <select
               className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               value={guru}

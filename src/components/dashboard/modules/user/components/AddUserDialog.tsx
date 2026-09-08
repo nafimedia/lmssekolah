@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { MysqlDataService } from "@/services/mysqlDataService";
 import { toast } from "sonner";
 import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ export function AddUserDialog({ isOpen, onOpenChange, onUserCreated }: AddUserDi
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("MtsN2#2026!Sec");
   const [nis, setNis] = useState("");
-  const [userClass, setUserClass] = useState("8A");
+  const [userClass, setUserClass] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>(["guru"]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -44,35 +45,58 @@ export function AddUserDialog({ isOpen, onOpenChange, onUserCreated }: AddUserDi
     }
 
     const primaryRole = selectedRoles[0];
+    const isSiswa = selectedRoles.includes("siswa");
+    const idPrefix = isSiswa ? "NISN. " : "NIP. ";
+    const cleanNisInput = nis.trim();
+    const formattedNis = cleanNisInput
+      ? cleanNisInput.startsWith("NISN.") || cleanNisInput.startsWith("NIP.")
+        ? cleanNisInput
+        : `${idPrefix}${cleanNisInput}`
+      : "";
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanFullName = fullName.trim();
+    const cleanClass = userClass.trim() || "Semua";
+
     const newUserObj = {
       id: String(Date.now()),
-      full_name: fullName,
-      email: email.trim().toLowerCase(),
-      nis: nis || (primaryRole === "siswa" ? "NISN. 008" + Math.floor(100000 + Math.random() * 900000) : "NIP. 199" + Math.floor(10000000 + Math.random() * 90000000)),
-      class: userClass || "Semua",
+      full_name: cleanFullName,
+      email: cleanEmail,
+      nis: formattedNis,
+      class: cleanClass,
       roles: selectedRoles,
     };
 
     try {
-      await MysqlAuthService.registerUser({
-        email,
+      const regRes = await MysqlAuthService.registerUser({
+        email: cleanEmail,
         password,
-        full_name: fullName,
+        full_name: cleanFullName,
         role: primaryRole as any,
-        nis_nip: newUserObj.nis,
-        class_name: userClass,
+        nis_nip: formattedNis,
+        class_name: cleanClass,
       });
+
+      // Save all assigned roles to MySQL if multi-role selected
+      if (selectedRoles.length > 1 || selectedRoles[0] !== primaryRole) {
+        await MysqlDataService.updateUserRole(
+          (regRes as any)?.id || newUserObj.id,
+          selectedRoles,
+          cleanEmail,
+          formattedNis
+        );
+      }
     } catch (err) {}
 
     onUserCreated(newUserObj);
-    toast.success(`Akun pengguna ${fullName} dengan ${selectedRoles.length} role (${selectedRoles.join(", ").toUpperCase()}) berhasil ditambahkan!`);
+    toast.success(`Akun pengguna ${cleanFullName} dengan ${selectedRoles.length} role (${selectedRoles.join(", ").toUpperCase()}) berhasil ditambahkan ke database MySQL!`);
     onOpenChange(false);
 
     setFullName("");
     setEmail("");
     setPassword("MtsN2#2026!Sec");
     setNis("");
-    setUserClass("8A");
+    setUserClass("");
     setSelectedRoles(["guru"]);
   };
 

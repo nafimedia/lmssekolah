@@ -25,10 +25,14 @@ import {
   Sparkles,
   Trash2,
   Edit3,
+  FileCheck,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTQuestion, QuestionType } from "@/types/cbt";
 import { filterSubjectsForUser, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
+import { downloadQuizTemplateExcel, parseQuizExcelFile } from "@/utils/quizExcelHelper";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 
 interface CBTQuestionBankProps {
   questions: CBTQuestion[];
@@ -79,21 +83,26 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
       return toast.error("Teks butir soal tidak boleh kosong!");
     }
 
+    if (qType === "pg" && (!optA.trim() || !optB.trim() || !optC.trim() || !optD.trim())) {
+      return toast.error("Semua opsi pilihan jawaban (A, B, C, D) harus diisi!");
+    }
+
+    const activeUser = MysqlAuthService.getActiveUser();
     const newQuestion: CBTQuestion = {
       id: String(Date.now()),
       questionType: qType,
-      questionText: qText,
+      questionText: qText.trim(),
       options: {
-        A: optA || "Pilihan A",
-        B: optB || "Pilihan B",
-        C: optC || "Pilihan C",
-        D: optD || "Pilihan D",
+        A: optA.trim(),
+        B: optB.trim(),
+        C: optC.trim(),
+        D: optD.trim(),
       },
       correctOption: correctKey,
       points: parseInt(qPoints, 10) || 5,
       difficulty: qDifficulty,
       mapel: qMapel || allowedMapels[0] || "Matematika",
-      author: "Guru Pengampu",
+      author: activeUser?.full_name || "Guru Pengampu",
     };
 
     onAddQuestion?.(newQuestion);
@@ -108,11 +117,51 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
     setOptD("");
   };
 
-  const handleSimulatedImportExcel = () => {
-    toast.success("📊 Import 20 Butir Soal Excel Berhasil!", {
-      description: "Seluruh soal telah tervalidasi & diimpor ke Bank Soal CBT.",
-    });
-    setIsImportModalOpen(false);
+  const [selectedExcelFile, setSelectedExcelFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+
+  const handleRealImportExcel = async () => {
+    if (!selectedExcelFile) {
+      return toast.error("Silakan pilih berkas Excel (.xlsx / .csv) terlebih dahulu!");
+    }
+
+    try {
+      setImporting(true);
+      const parsed = await parseQuizExcelFile(selectedExcelFile);
+      if (parsed.length === 0) {
+        return toast.error("Tidak ada data butir soal yang valid dalam berkas Excel.");
+      }
+
+      const activeUser = MysqlAuthService.getActiveUser();
+      parsed.forEach((item, index) => {
+        const newQuestion: CBTQuestion = {
+          id: `cbt_q_${Date.now()}_${index}`,
+          questionText: item.question,
+          questionType: "pg",
+          mapel: qMapel,
+          options: {
+            A: item.optionA,
+            B: item.optionB,
+            C: item.optionC,
+            D: item.optionD,
+          },
+          correctOption: item.keyAnswer,
+          points: 5,
+          difficulty: "Sedang",
+          author: activeUser?.full_name || "Guru Pengampu",
+        };
+        onAddQuestion?.(newQuestion);
+      });
+
+      toast.success(`📊 Berhasil mengimpor ${parsed.length} butir soal dari "${selectedExcelFile.name}"!`);
+      setSelectedExcelFile(null);
+      setIsImportModalOpen(false);
+    } catch (err: any) {
+      console.error("Gagal import Excel CBT:", err);
+      toast.error(`Gagal membaca berkas Excel: ${err?.message || "Format tidak sesuai"}`);
+    } finally {
+      setImporting(false);
+    }
   };
 
   // RBAC Access Lock View for Siswa
@@ -380,17 +429,55 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
           </DialogHeader>
 
           <div className="space-y-4 py-3">
-            <div className="p-4 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center text-center gap-2 hover:border-emerald-500/50 transition-colors bg-muted/20">
-              <Upload className="h-8 w-8 text-emerald-600" />
-              <div className="text-xs font-semibold text-foreground">Drag & Drop berkas Excel di sini</div>
-              <p className="text-[11px] text-muted-foreground">atau klik untuk memilih file dari komputer Anda</p>
-            </div>
+            <input
+              type="file"
+              id="cbt-excel-file-input"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setSelectedExcelFile(f);
+              }}
+            />
+
+            {!selectedExcelFile ? (
+              <label
+                htmlFor="cbt-excel-file-input"
+                className="p-5 border-2 border-dashed border-emerald-500/40 rounded-xl flex flex-col items-center justify-center text-center gap-2 hover:border-emerald-500 transition-colors bg-emerald-50/20 dark:bg-emerald-950/10 cursor-pointer"
+              >
+                <Upload className="h-8 w-8 text-emerald-600" />
+                <div className="text-xs font-semibold text-foreground">Klik untuk Memilih Berkas Excel (.xlsx / .csv)</div>
+                <p className="text-[11px] text-muted-foreground">Format resmi Bank Soal Pilihan Ganda MTsN 2 Cilacap</p>
+              </label>
+            ) : (
+              <div className="p-3 rounded-lg border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FileCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+                  <div className="truncate">
+                    <p className="text-xs font-bold text-foreground truncate">{selectedExcelFile.name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {(selectedExcelFile.size / 1024).toFixed(1)} KB · Siap diimpor ke Bank Soal
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedExcelFile(null)}
+                  className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
 
             <Button
+              type="button"
               variant="outline"
               size="sm"
-              onClick={() => toast.success("Template Excel Terunduh!")}
-              className="w-full text-xs gap-1.5 font-semibold"
+              onClick={() => downloadQuizTemplateExcel("Template_Bank_Soal_CBT_MTsN2.xlsx")}
+              className="w-full text-xs gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10"
             >
               <Download className="h-3.5 w-3.5" /> Unduh Format Template Excel (.xlsx)
             </Button>
@@ -400,8 +487,13 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
             <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(false)} className="text-xs">
               Batal
             </Button>
-            <Button size="sm" onClick={handleSimulatedImportExcel} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5">
-              <Check className="h-4 w-4" /> Unggah & Impor Soal
+            <Button
+              size="sm"
+              disabled={!selectedExcelFile || importing}
+              onClick={handleRealImportExcel}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+            >
+              <Check className="h-4 w-4" /> {importing ? "Memproses..." : "Unggah & Impor Soal"}
             </Button>
           </DialogFooter>
         </DialogContent>

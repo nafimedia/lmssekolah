@@ -55,19 +55,6 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
     let isMounted = true;
     setIsLoading(true);
 
-    let persisted: P5ProjectItem[] = [];
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("lms_p5_projects_v2");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            persisted = parsed;
-          }
-        }
-      } catch (e) { }
-    }
-
     MysqlDataService.getP5Projects()
       .then((dbList) => {
         if (!isMounted) return;
@@ -84,15 +71,12 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
             dimensions: item.target_dimension || "Profil Pelajar Pancasila",
           }));
           setProjectsList(mapped);
-        } else if (persisted.length > 0) {
-          setProjectsList(persisted);
         } else {
-          // If no data exists in DB or localStorage, keep empty array
           setProjectsList([]);
         }
       })
       .catch(() => {
-        if (isMounted) setProjectsList(persisted);
+        if (isMounted) setProjectsList([]);
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -160,9 +144,6 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <FolderKanban className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Laporan Eksekutif Kokurikuler (P5 & PPA-RA)
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Rekapitulasi Eksekutif Kepala Madrasah atas Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil 'Alamin MTsN 2 Cilacap.
-          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button
@@ -432,9 +413,6 @@ export function KokurikulerSiswaModule() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <FolderKanban className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Kegiatan Kokurikuler & Projek P5-PPRA
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil 'Alamin: Kehadiran projek & Laporan Gelar Karya Siswa.
-          </p>
         </div>
       </div>
 

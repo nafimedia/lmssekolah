@@ -82,26 +82,17 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       return;
     }
 
-    const dummyPdf = `%PDF-1.4\n1 0 obj\n<< /Title (${title}) /Author (MTsN 2 Cilacap) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`;
-    const blob = new Blob([dummyPdf], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${title.replace(/\s+/g, "_")}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success(`📄 Berkas PDF "${title}" berhasil diunduh!`);
+    toast.error(`Berkas fisik untuk "${title}" belum diunggah oleh guru pengampu.`);
   };
 
   const handleToggleVerification = async (id: string, currentStatus: string, title: string) => {
-    const nextStatus = currentStatus === "Terverifikasi Waka" ? "Menunggu Verifikasi Waka" : "Terverifikasi Waka";
+    const verifierTitle = activeRole === "admin_akademik" ? "Admin Akademik" : activeRole === "admin" ? "Super Administrator" : "Waka Kurikulum";
+    const nextStatus = currentStatus.includes("Terverifikasi") ? "Menunggu Verifikasi Waka" : "Terverifikasi Waka";
     setModulList((prev) => {
       return prev.map((m) => {
         if (m.id === id) {
           if (nextStatus === "Terverifikasi Waka") {
-            toast.success(`✅ Berhasil! Modul Ajar "${title}" resmi diverifikasi dan disahkan oleh Waka Kurikulum.`);
+            toast.success(`✅ Berhasil! Modul Ajar "${title}" resmi diverifikasi dan disahkan oleh ${verifierTitle}.`);
           } else {
             toast.info(`ℹ️ Status Modul Ajar "${title}" dikembalikan ke Menunggu Verifikasi.`);
           }
@@ -198,9 +189,6 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
             Bahan Ajar{" "}
             {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs">📍 Kelas {rawClass}</Badge>}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Pustaka Berkas PDF Bahan Ajar, Buku Paket Mapel, & Bahan Rujukan KBM (Bisa Diakses Langsung — Tanpa Verifikasi Pengesahan Waka).
-          </p>
         </div>
         {!isSiswa && !isKamad && (
           <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs" onClick={() => setIsUploadOpen(true)}>
@@ -213,9 +201,9 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold mb-6">
           <span className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-amber-600 shrink-0" />
-            <span>🏛️ <strong>Mode Monitoring Eksekutif Kepala Madrasah</strong> — Tampilan Read-Only. Memantau bahan ajar guru tanpa melakukan pengunggahan/penghapusan.</span>
+            <span>🏛️ <strong>Mode Supervisi Kepala Madrasah</strong> — Memantau ketersediaan bahan ajar guru madrasah.</span>
           </span>
-          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-mono text-[10px]">READ ONLY MONITORING</Badge>
+          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400 font-bold text-[10px]">SUPERVISI</Badge>
         </div>
       )}
 
@@ -285,8 +273,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           <h3 className="text-base font-bold text-foreground">Belum Ada Bahan Ajar Terdaftar</h3>
           <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
             {isLoading
-              ? "Sedang memuat berkas Bahan Ajar dari database MySQL..."
-              : "Belum ada berkas Bahan Ajar yang diunggah di database. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk mengunggah berkas baru."}
+              ? "Sedang memuat berkas Bahan Ajar..."
+              : "Belum ada berkas Bahan Ajar yang diunggah. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk mengunggah berkas baru."}
           </p>
         </Card>
       ) : (

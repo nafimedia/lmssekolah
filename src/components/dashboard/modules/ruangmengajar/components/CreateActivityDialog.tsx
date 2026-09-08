@@ -86,7 +86,7 @@ export function CreateActivityForm({
   const [title, setTitle] = useState("");
   const [type, setType] = useState<ActivityTypeOption>("LKPD");
   const [instructions, setInstructions] = useState("");
-  const [dueDate, setDueDate] = useState("Hari ini, 15:00 WIB");
+  const [dueDate, setDueDate] = useState("");
   const [maxScore, setMaxScore] = useState("100");
   const [submissionType, setSubmissionType] = useState("TEXT_AND_FILE");
 
@@ -100,104 +100,54 @@ export function CreateActivityForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
 
-  // Structured Questions Builder for LKPD, Praktikum, Tugas Mandiri
-  const [lkpdQuestions, setLkpdQuestions] = useState<LkpdQuestionItem[]>([
-    {
-      id: 1,
-      question: "Identifikasi 2 pokok permasalahan atau temuan kasus pada materi KBM hari ini!",
-      points: 50,
-    },
-    {
-      id: 2,
-      question: "Tuliskan solusi alternatif atau gagasan pemecahan masalah serta kesimpulan analisis Anda!",
-      points: 50,
-    },
-  ]);
+  // Structured Questions Builder for LKPD, Praktikum, Tugas Mandiri (100% Bersih / Murni Kosong)
+  const [lkpdQuestions, setLkpdQuestions] = useState<LkpdQuestionItem[]>([]);
 
-  // Quiz Builder State (Khusus tipe QUIZ)
+  // Quiz Builder State (Khusus tipe QUIZ - 100% Bersih / Murni Kosong)
   const [quizQuestions, setQuizQuestions] = useState<
     Array<{ id: number; question: string; optionA: string; optionB: string; optionC: string; optionD: string; keyAnswer: string }>
-  >([
-    {
-      id: 1,
-      question: "Sebutkan poin utama dari pembahasan materi KBM hari ini!",
-      optionA: "Pernyataan Opsi A (Benar)",
-      optionB: "Pernyataan Opsi B",
-      optionC: "Pernyataan Opsi C",
-      optionD: "Pernyataan Opsi D",
-      keyAnswer: "A",
-    },
-  ]);
+  >([]);
 
-  const activityOptions: { id: ActivityTypeOption; label: string; templateTitle: string; templateInstr: string; color: string }[] = [
+  const activityOptions: { id: ActivityTypeOption; label: string; color: string }[] = [
     {
       id: "LKPD",
       label: "📄 LKPD Digital",
-      templateTitle: "LKPD 1 — Analisis Studi Kasus Penerapan Aturan & Norma",
-      templateInstr: "Bacalah uraian materi atau buka berkas PDF LKPD yang dilampirkan, kemudian jawablah butir pertanyaan analisis di bawah ini.",
       color: "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
     },
     {
       id: "TUGAS_KELOMPOK",
       label: "👥 Diskusi & Kelompok",
-      templateTitle: "Tugas Kelompok — Forum Diskusi & Presentasi KBM",
-      templateInstr: "Buatlah poster infografis kreatif bersama kelompok (4-5 siswa), lalu persiapkan bahan presentasi singkat di depan kelas dan tulis tanggapan di forum diskusi.",
       color: "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
     },
     {
       id: "QUIZ",
       label: "⚡ Kuis Formatif",
-      templateTitle: "Kuis Formatif Sesi 1 — Soal Pemahaman Konsep",
-      templateInstr: "Kerjakan soal pilihan ganda di bawah ini secara mandiri untuk mengukur pemahaman materi KBM hari ini.",
       color: "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300",
     },
     {
       id: "TUGAS_MANDIRI",
       label: "✍️ Tugas Mandiri",
-      templateTitle: "Tugas Mandiri — Ringkasan Rangkuman Materi & Latihan",
-      templateInstr: "Tuliskan ringkasan poin penting dari bahan ajar hari ini dan kerjakan latihan soal di buku tugas atau lembar isian di bawah.",
       color: "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
     },
     {
       id: "PRAKTIKUM",
       label: "🔬 Praktikum & Lab",
-      templateTitle: "Lembar Praktikum / Laporan Pengamatan Lapangan",
-      templateInstr: "Catat data hasil percobaan/pengamatan, buat analisis hasil uji, lalu simpulkan sesuai metode ilmiah pada form di bawah.",
       color: "border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-950/30 dark:text-teal-300",
     },
     {
       id: "PROYEK_P5",
       label: "🎯 Proyek P5 / PPRA",
-      templateTitle: "Jurnal & Laporan Perkembangan Projek P5 Sesi Hari Ini",
-      templateInstr: "Dokumentasikan progres aktivitas kelompok projek P5/PPRA hari ini, sertakan foto produk/kegiatan dan kendala tim.",
       color: "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
     },
     {
       id: "HAFALAN",
       label: "📖 Setoran Hafalan",
-      templateTitle: "Setoran Hafalan & Resitasi Sesi KBM",
-      templateInstr: "Siapkan hafalan target surah/ayat/hadits/kosakata hari ini dan lakukan setoran langsung kepada guru pengampu.",
       color: "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300",
     },
   ];
 
   const handleSelectType = (opt: typeof activityOptions[0]) => {
     setType(opt.id);
-    if (!title.trim()) setTitle(opt.templateTitle);
-    if (!instructions.trim()) setInstructions(opt.templateInstr);
-
-    // Otomatis sesuaikan template pertanyaan
-    if (opt.id === "LKPD" && lkpdQuestions.length === 0) {
-      setLkpdQuestions([
-        { id: 1, question: "Identifikasi 2 pokok permasalahan atau temuan kasus pada materi KBM hari ini!", points: 50 },
-        { id: 2, question: "Tuliskan solusi alternatif atau gagasan pemecahan masalah serta kesimpulan analisis Anda!", points: 50 },
-      ]);
-    } else if (opt.id === "PRAKTIKUM" && lkpdQuestions.length === 0) {
-      setLkpdQuestions([
-        { id: 1, question: "Tuliskan data hasil percobaan / pengamatan yang diperoleh!", points: 50 },
-        { id: 2, question: "Buatlah analisis kesimpulan hasil uji sesuai metode ilmiah!", points: 50 },
-      ]);
-    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -785,73 +735,78 @@ export function CreateActivityForm({
                 </div>
               </div>
 
-              <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                {quizQuestions.map((q, idx) => (
-                  <div key={idx} className="p-3 rounded-lg border border-purple-200 dark:border-purple-900 bg-card space-y-2 text-xs">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-purple-700 dark:text-purple-300">Soal #{idx + 1}</span>
-                      <div className="flex items-center gap-2">
-                        <label className="text-[11px] font-bold text-muted-foreground">Kunci Jawaban:</label>
-                        <select
-                          value={q.keyAnswer}
-                          onChange={(e) => handleQuizQuestionChange(idx, "keyAnswer", e.target.value)}
-                          className="h-7 px-2 rounded border border-purple-300 text-xs font-bold text-purple-700 bg-background"
-                        >
-                          <option value="A">A</option>
-                          <option value="B">B</option>
-                          <option value="C">C</option>
-                          <option value="D">D</option>
-                        </select>
-                        {quizQuestions.length > 1 && (
+              {quizQuestions.length === 0 ? (
+                <div className="text-center py-5 border border-dashed border-purple-500/25 rounded-lg text-muted-foreground text-xs font-medium">
+                  Belum ada butir soal kuis. Klik <strong>+ Tambah Soal</strong> atau <strong>Import Excel</strong> di atas untuk menyusun soal pilihan ganda.
+                </div>
+              ) : (
+                <div className="space-y-3 pr-1">
+                  {quizQuestions.map((q, idx) => (
+                    <div key={idx} className="p-3 rounded-lg border border-purple-200 dark:border-purple-900 bg-card space-y-2 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-purple-700 dark:text-purple-300">Soal #{idx + 1}</span>
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] font-bold text-muted-foreground">Kunci Jawaban:</label>
+                          <select
+                            value={q.keyAnswer}
+                            onChange={(e) => handleQuizQuestionChange(idx, "keyAnswer", e.target.value)}
+                            className="h-7 px-2 rounded border border-purple-300 text-xs font-bold text-purple-700 bg-background"
+                          >
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                          </select>
                           <Button
                             type="button"
                             size="sm"
                             variant="ghost"
                             onClick={() => handleRemoveQuizQuestion(idx)}
                             className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10"
+                            title="Hapus Butir Soal"
                           >
-                            <X className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
-                        )}
+                        </div>
+                      </div>
+
+                      <Input
+                        placeholder={`Tulis pertanyaan soal #${idx + 1}...`}
+                        value={q.question}
+                        onChange={(e) => handleQuizQuestionChange(idx, "question", e.target.value)}
+                        className="text-xs font-bold"
+                      />
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          placeholder="Opsi A"
+                          value={q.optionA}
+                          onChange={(e) => handleQuizQuestionChange(idx, "optionA", e.target.value)}
+                          className="text-xs"
+                        />
+                        <Input
+                          placeholder="Opsi B"
+                          value={q.optionB}
+                          onChange={(e) => handleQuizQuestionChange(idx, "optionB", e.target.value)}
+                          className="text-xs"
+                        />
+                        <Input
+                          placeholder="Opsi C"
+                          value={q.optionC}
+                          onChange={(e) => handleQuizQuestionChange(idx, "optionC", e.target.value)}
+                          className="text-xs"
+                        />
+                        <Input
+                          placeholder="Opsi D"
+                          value={q.optionD}
+                          onChange={(e) => handleQuizQuestionChange(idx, "optionD", e.target.value)}
+                          className="text-xs"
+                        />
                       </div>
                     </div>
-
-                    <Input
-                      placeholder={`Tulis pertanyaan soal #${idx + 1}...`}
-                      value={q.question}
-                      onChange={(e) => handleQuizQuestionChange(idx, "question", e.target.value)}
-                      className="text-xs font-bold"
-                    />
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        placeholder="Opsi A"
-                        value={q.optionA}
-                        onChange={(e) => handleQuizQuestionChange(idx, "optionA", e.target.value)}
-                        className="text-xs"
-                      />
-                      <Input
-                        placeholder="Opsi B"
-                        value={q.optionB}
-                        onChange={(e) => handleQuizQuestionChange(idx, "optionB", e.target.value)}
-                        className="text-xs"
-                      />
-                      <Input
-                        placeholder="Opsi C"
-                        value={q.optionC}
-                        onChange={(e) => handleQuizQuestionChange(idx, "optionC", e.target.value)}
-                        className="text-xs"
-                      />
-                      <Input
-                        placeholder="Opsi D"
-                        value={q.optionD}
-                        onChange={(e) => handleQuizQuestionChange(idx, "optionD", e.target.value)}
-                        className="text-xs"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

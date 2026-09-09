@@ -140,13 +140,13 @@ export function WaliKelasDashboardView({
   };
 
   return (
-    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+    <div className="space-y-4 text-slate-800 dark:text-slate-200 font-sans">
       {/* Compact Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            Dashboard Wali Kelas <Badge className="bg-emerald-600 text-white font-bold text-xs">{rombelName}</Badge>
+            Dashboard Wali Kelas <Badge className="bg-emerald-600 text-white font-bold text-xs px-2 py-0.5">{rombelName}</Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Monitoring presensi, agenda KBM, dan perkembangan belajar siswa binaan <span className="font-medium text-foreground">{rombelName}</span>.
@@ -155,64 +155,58 @@ export function WaliKelasDashboardView({
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shadow-xs"
+            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shadow-2xs px-3"
             onClick={() => setActiveTab && setActiveTab("kehadiran")}
           >
-            <UserCheck className="h-4 w-4" /> Kelola Presensi Kelas
+            <UserCheck className="h-3.5 w-3.5" /> Kelola Presensi Kelas
           </Button>
         </div>
       </div>
 
-      {/* KPI Stats Cards - Presensi & Total Siswa Rombel */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <Card className="border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-xs">
-          <CardContent className="p-4 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Total Siswa Binaan</span>
-              <Users className="h-4 w-4 text-emerald-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{totalStudents} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
-            <p className="text-[10px] text-muted-foreground font-medium">Terdaftar aktif di database {rombelName}</p>
-          </CardContent>
-        </Card>
+      {/* Horizontal Compact Metric Strip (~42px) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Users className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Siswa Binaan</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{totalStudents} Siswa</p>
+          </div>
+        </div>
 
-        <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 shadow-xs">
-          <CardContent className="p-4 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Hadir Hari Ini</span>
-              <CheckCircle2 className="h-4 w-4 text-blue-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{hadirCount} <span className="text-xs font-medium text-muted-foreground">/ {totalStudents} Siswa</span></p>
-            <p className="text-[10px] text-emerald-600 font-semibold font-mono">{hadirPercentage}% Tingkat Kehadiran</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Hadir Hari Ini</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{hadirCount}/{totalStudents} <span className="text-[11px] text-emerald-600 font-mono">({hadirPercentage}%)</span></p>
+          </div>
+        </div>
 
-        <Card className="border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20 shadow-xs">
-          <CardContent className="p-4 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Sakit / Izin</span>
-              <Clock className="h-4 w-4 text-amber-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{sakitCount + izinCount} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
-            <p className="text-[10px] text-muted-foreground">Sakit: {sakitCount} | Izin: {izinCount}</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Clock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Sakit / Izin</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{sakitCount + izinCount} Siswa</p>
+          </div>
+        </div>
 
-        <Card className="border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 shadow-xs">
-          <CardContent className="p-4 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-red-700 dark:text-red-400">Alpa (Perlu Perhatian)</span>
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{alpaCount} <span className="text-xs font-medium text-muted-foreground">Siswa</span></p>
-            <p className="text-[10px] text-red-600 dark:text-red-400 font-semibold">
-              {alpaCount > 0 ? "⚠️ Memerlukan follow-up Wali Kelas" : "✅ Nihil Alpa Hari Ini"}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${alpaCount > 0 ? "bg-rose-500/15 text-rose-600" : "bg-emerald-500/15 text-emerald-600"}`}>
+            <AlertTriangle className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Alpa Hari Ini</p>
+            <p className={`text-sm font-bold leading-tight mt-0.5 ${alpaCount > 0 ? "text-rose-600 font-bold" : "text-emerald-600"}`}>{alpaCount} Siswa</p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left Column: Schedule & Real-time KBM Today */}
         <div className="lg:col-span-2 space-y-6">
           {/* Schedule Today Card */}

@@ -363,36 +363,41 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
   }, [realMaterials, jenisFilter, statusFilter, isSiswa]);
 
   return (
-    <div className="space-y-6">
-      {/* Module Title */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Module Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             {isSiswa
               ? `Materi & Buku Pelajaran Siswa — Tingkat ${kelas}`
-              : "Perangkat Pembelajaran & Modul Ajar Resmi"}
+              : "Perangkat Pembelajaran & Modul Ajar"}
           </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {isSiswa
+              ? `Akses modul materi, silabus, dan buku pegangan siswa terdaftar tingkat ${kelas}.`
+              : "Validasi silabus, RPP, modul ajar, dan kelengkapan perangkat kurikulum madrasah."}
+          </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {!isSiswa && (
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+              className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-2xs px-3"
               onClick={() => handleOpenUpload(selectedMapel, kelas)}
             >
-              <Upload className="h-4 w-4" /> + Unggah Perangkat
+              <Upload className="h-3.5 w-3.5" /> Unggah Dokumen
             </Button>
           )}
 
-          <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg border border-border">
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 h-8">
             {(["VII", "VIII", "IX"] as const).map((g) => (
               <Button
                 key={g}
                 size="sm"
                 variant={kelas === g ? "default" : "ghost"}
-                className={`text-xs font-bold h-7 px-3 ${kelas === g ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
+                className={`text-xs font-bold h-6 px-2.5 rounded-lg ${kelas === g ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => {
                   setKelas(g);
                   setSelectedMapel(null);
@@ -401,6 +406,51 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                 Tingkat {g}
               </Button>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Horizontal Compact Metric Strip (~42px) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <BookOpen className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Mata Pelajaran</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{displayedMapels.length} Mapel</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <FileText className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Tingkat Aktif</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">Tingkat {kelas}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+            <FileCheck className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Terverifikasi</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
+              {realMaterials.filter((m: any) => (m.status || "").includes("Terverifikasi")).length} Dokumen
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Clock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Status Supervisi</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">Supervisi Aktif</p>
           </div>
         </div>
       </div>

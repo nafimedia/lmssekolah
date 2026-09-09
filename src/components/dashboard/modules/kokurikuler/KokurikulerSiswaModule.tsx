@@ -241,39 +241,90 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <StudentHeaderBanner
-        title="Projek P5-PPRA Saya"
-        subtitle="Pelaksanaan Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil 'Alamin"
-        icon={FolderKanban}
-        studentClass={`Kelas ${studentRombel}`}
-        statusText=""
-        actionButtons={
+    <div className="space-y-4">
+      {/* Compact Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+            <FolderKanban className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-bold tracking-tight text-foreground">Projek P5-PPRA Siswa</h1>
+              <Badge variant="outline" className="text-[10px] font-semibold h-5 px-1.5 border-purple-500/30 text-purple-700 dark:text-purple-300">
+                Kelas {studentRombel}
+              </Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-none mt-0.5">
+              Pelaksanaan Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil 'Alamin
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             variant="outline"
             onClick={handlePrintPortfolio}
-            className="gap-1.5 text-xs font-bold border-purple-500/40 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10"
+            className="h-8 gap-1.5 text-xs font-semibold border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10"
           >
-            <Printer className="h-4 w-4" /> Cetak Portofolio PDF
+            <Printer className="h-3.5 w-3.5" /> Cetak Portofolio PDF
           </Button>
-        }
-      />
+          <Button
+            size="sm"
+            onClick={() => handleOpenUpload()}
+            className="h-8 gap-1.5 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <Upload className="h-3.5 w-3.5" /> Unggah Laporan
+          </Button>
+        </div>
+      </div>
+
+      {/* Compact Metric Strip ~42px */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+            <FolderKanban className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Tema Projek</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{projectsList.length} Projek</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <Award className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Laporan Portofolio</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{mySubmissions.length} Berkas</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Status Kelas</p>
+            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">Kelas {studentRombel}</p>
+          </div>
+        </div>
+      </div>
 
       {/* Tabs Navigasi P5 Sederhana & Fungsional */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-        <TabsList className="grid grid-cols-2 h-auto p-1 bg-muted/60 rounded-xl mb-6">
-          <TabsTrigger value="projek" className="text-xs font-bold py-2 gap-1.5">
-            <FolderKanban className="h-3.5 w-3.5" /> 1. Tema Projek Rombel ({projectsList.length})
+        <TabsList className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 h-9 w-fit mb-3">
+          <TabsTrigger value="projek" className="text-xs font-semibold h-7 px-3 gap-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs">
+            <FolderKanban className="h-3.5 w-3.5" /> 1. Tema Projek Kelas ({projectsList.length})
           </TabsTrigger>
-          <TabsTrigger value="portofolio" className="text-xs font-bold py-2 gap-1.5">
+          <TabsTrigger value="portofolio" className="text-xs font-semibold h-7 px-3 gap-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs">
             <Award className="h-3.5 w-3.5" /> 2. Portofolio & Laporan Saya ({mySubmissions.length})
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB 1: DAFTAR TEMA PROJEK ROMBEL */}
-        <TabsContent value="projek" className="space-y-4">
+        {/* TAB 1: DAFTAR TEMA PROJEK KELAS */}
+        <TabsContent value="projek" className="space-y-3">
           {isLoading ? (
             <div className="p-8 text-center text-xs text-muted-foreground">Memuat data kegiatan projek kokurikuler...</div>
           ) : projectsList.length === 0 ? (

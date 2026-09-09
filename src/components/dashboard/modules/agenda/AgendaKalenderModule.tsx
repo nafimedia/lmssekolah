@@ -726,28 +726,36 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
   };
 
   return (
-    <>
-      {/* Header Halaman */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground">
-            <CalendarDays className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Kalender Akademik & Hari Besar
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Sistem penanggalan terpadu Masehi, Hijriah (Kemenag), dan Pasaran Jawa MTsN 2 Cilacap.
-          </p>
+    <div className="space-y-4">
+      {/* Header Halaman Compact Single-Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <CalendarDays className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-bold tracking-tight text-foreground">Kalender Akademik & Hari Besar</h1>
+              <Badge variant="outline" className="text-[10px] font-semibold h-5 px-1.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+                {currentMonthAgendas.length} Agenda
+              </Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-none mt-0.5">
+              Sistem penanggalan terpadu Masehi, Hijriah (Kemenag), dan Pasaran Jawa MTsN 2 Cilacap
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Tombol Khusus Superadmin: Penyesuaian Kalender Hijriah Hasil Sidang Isbat */}
           {(!activeRole || activeRole.toUpperCase().includes("ADMIN")) && (
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-xs font-bold border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shadow-xs"
+              className="h-8 gap-1.5 text-xs font-semibold border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shadow-xs"
               onClick={() => setIsCalendarSettingsOpen(true)}
               title="Penyesuaian Koreksi Kalender Hijriah Hasil Sidang Isbat Kemenag RI"
             >
-              <Settings2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <Settings2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Penyesuaian Kalender</span>
               {hijriOffsetDays !== 0 && (
                 <span className="ml-0.5 px-1.5 py-0.2 text-[9px] rounded-full bg-amber-500 text-white font-black">
@@ -759,11 +767,60 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
 
           <Button
             size="sm"
-            className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+            className="h-8 gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
             onClick={() => setIsAddAgendaOpen(true)}
           >
-            <Plus className="h-4 w-4" /> Tambah Agenda Baru
+            <Plus className="h-3.5 w-3.5" /> Tambah Agenda
           </Button>
+        </div>
+      </div>
+
+      {/* Metric Strip Compact ~42px */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <CalendarDays className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Bulan Ini</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{currentMonthAgendas.length} Agenda</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+            <CalendarClock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Libur Nasional</p>
+            <p className="text-sm font-bold text-red-600 dark:text-red-400 leading-tight mt-0.5">
+              {currentMonthAgendas.filter((x) => x.isRedDate || x.category === "libur").length} Hari
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Ujian CBT</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
+              {currentMonthAgendas.filter((x) => x.category === "cbt").length} Jadwal
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Info className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">KBM & Kegiatan</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
+              {currentMonthAgendas.filter((x) => x.category === "kbm" || x.category === "kokurikuler").length} Agenda
+            </p>
+          </div>
         </div>
       </div>
 
@@ -1141,6 +1198,6 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
         currentHijriOffset={hijriOffsetDays}
         onSaveHijriOffset={handleSaveHijriOffset}
       />
-    </>
+    </div>
   );
 }

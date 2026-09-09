@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { MysqlDataService, KamadExecutiveMetrics } from "@/services/mysqlDataService";
 import { exportToExcelXml } from "@/utils/excelExporter";
+import { normalizeRombelName } from "@/utils/classNormalization";
 import { toast } from "sonner";
 
 interface KamadDashboardViewProps {
@@ -86,13 +87,13 @@ export function KamadDashboardView({
       ["Statistik Madrasah", "Total Pengguna Terdaftar", `${stats.totalUsers || 0} Akun`, "Aktif"],
       ["Statistik Madrasah", "Total Siswa Aktif", `${stats.siswaCount || 0} Siswa`, "Aktif"],
       ["Statistik Madrasah", "Guru & Staf GTK", `${stats.guruStafCount || 0} Orang`, "Aktif"],
-      ["Statistik Madrasah", "Total Rombel", `${stats.totalRombel || 0} Rombel`, "TA 2026/2027"],
+      ["Statistik Madrasah", "Total Kelas", `${stats.totalRombel || 0} Kelas`, "TA 2026/2027"],
       ["Supervisi Waka", "Perangkat Disahkan Waka", `${supervisiWaka.verifiedCount} dari ${supervisiWaka.totalMaterials} Berkas`, `${supervisiWaka.percentage}% Tuntas`],
       ["Supervisi Waka", "Perangkat Menunggu Telaah", `${supervisiWaka.pendingCount} Berkas`, "Dalam Proses"],
     ];
 
     nilaiRombelData.forEach((item) => {
-      rows.push(["Akademik Rombel", `Rata-rata ${item.rombel}`, `${item.avg} / 100`, item.status]);
+      rows.push(["Akademik Kelas", `Rata-rata ${normalizeRombelName(item.rombel)}`, `${item.avg} / 100`, item.status]);
     });
 
     kehadiranSiswaData.forEach((item) => {
@@ -134,7 +135,7 @@ export function KamadDashboardView({
   }, []);
 
   return (
-    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+    <div className="space-y-4 text-slate-800 dark:text-slate-200 font-sans">
       {/* Header Elegan & Berwibawa */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/70">
         <div>
@@ -152,7 +153,7 @@ export function KamadDashboardView({
             size="sm"
             variant="outline"
             onClick={handleExportExecutiveReport}
-            className="h-8 border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium text-xs gap-1.5 shadow-none"
+            className="h-8 border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium text-xs gap-1.5 shadow-2xs"
           >
             <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" /> Unduh Laporan Eksekutif
           </Button>
@@ -167,7 +168,7 @@ export function KamadDashboardView({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 px-3 rounded-full text-xs font-medium gap-1.5 border-border hover:border-rose-500/40 hover:bg-rose-500/5 text-foreground shrink-0 shadow-none"
+          className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 border-border hover:border-rose-500/40 hover:bg-rose-500/5 text-foreground shrink-0 shadow-2xs"
           onClick={() => setActiveTab?.("monitoring_kbm_live")}
         >
           <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
@@ -176,25 +177,16 @@ export function KamadDashboardView({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 px-3 rounded-full text-xs font-medium gap-1.5 border-border hover:border-teal-500/40 hover:bg-teal-500/5 text-foreground shrink-0 shadow-none"
+          className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 border-border hover:border-teal-500/40 hover:bg-teal-500/5 text-foreground shrink-0 shadow-2xs"
           onClick={() => setActiveTab?.("sdm_gtk")}
         >
-          <GraduationCap className="h-3.5 w-3.5 text-teal-600" />
-          Kinerja Guru
+          <Users className="h-3.5 w-3.5 text-teal-600" />
+          Kinerja GTK
         </Button>
         <Button
           variant="outline"
           size="sm"
-          className="h-8 px-3 rounded-full text-xs font-medium gap-1.5 border-border hover:border-purple-500/40 hover:bg-purple-500/5 text-foreground shrink-0 shadow-none"
-          onClick={() => setActiveTab?.("perangkat_pembelajaran")}
-        >
-          <FileCheck className="h-3.5 w-3.5 text-purple-600" />
-          Perangkat Ajar
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 px-3 rounded-full text-xs font-medium gap-1.5 border-border hover:border-emerald-500/40 hover:bg-emerald-500/5 text-foreground shrink-0 shadow-none"
+          className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 border-border hover:border-emerald-500/40 hover:bg-emerald-500/5 text-foreground shrink-0 shadow-2xs"
           onClick={() => setActiveTab?.("nilai")}
         >
           <BarChart3 className="h-3.5 w-3.5 text-emerald-600" />
@@ -203,7 +195,7 @@ export function KamadDashboardView({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 px-3 rounded-full text-xs font-medium gap-1.5 border-border hover:border-blue-500/40 hover:bg-blue-500/5 text-foreground shrink-0 shadow-none"
+          className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 border-border hover:border-blue-500/40 hover:bg-blue-500/5 text-foreground shrink-0 shadow-2xs"
           onClick={() => setActiveTab?.("jadwal")}
         >
           <CalendarCheck className="h-3.5 w-3.5 text-blue-600" />
@@ -212,7 +204,7 @@ export function KamadDashboardView({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 px-3 rounded-full text-xs font-medium gap-1.5 border-border hover:border-amber-500/40 hover:bg-amber-500/5 text-foreground shrink-0 shadow-none"
+          className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 border-border hover:border-amber-500/40 hover:bg-amber-500/5 text-foreground shrink-0 shadow-2xs"
           onClick={() => setActiveTab?.("apresiasi_guru")}
         >
           <Award className="h-3.5 w-3.5 text-amber-600" />
@@ -220,60 +212,52 @@ export function KamadDashboardView({
         </Button>
       </div>
 
-      {/* 4 Kartu Metrik Utama Eksekutif */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <Card className="border-border/80 shadow-none bg-card hover:bg-muted/10 transition">
-          <CardContent className="p-3.5 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0">
-              <UserCheck className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-[11px] text-muted-foreground font-medium">Siswa Aktif</div>
-              <div className="text-lg font-bold text-foreground">{stats.siswaCount} Siswa</div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* 4 Kartu Metrik Utama Eksekutif (~42px Compact Strip) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
+            <UserCheck className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Siswa Aktif</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{stats.siswaCount} Siswa</p>
+          </div>
+        </div>
 
-        <Card className="border-border/80 shadow-none bg-card hover:bg-muted/10 transition">
-          <CardContent className="p-3.5 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 grid place-items-center shrink-0">
-              <GraduationCap className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-[11px] text-muted-foreground font-medium">Guru & Staf GTK</div>
-              <div className="text-lg font-bold text-foreground">{stats.guruStafCount} Orang</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-teal-500/15 text-teal-600 flex items-center justify-center shrink-0">
+            <GraduationCap className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Guru & Staf GTK</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{stats.guruStafCount} Orang</p>
+          </div>
+        </div>
 
-        <Card className="border-border/80 shadow-none bg-card hover:bg-muted/10 transition">
-          <CardContent className="p-3.5 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 grid place-items-center shrink-0">
-              <MonitorCheck className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-[11px] text-muted-foreground font-medium">KBM Berlangsung</div>
-              <div className="text-lg font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse inline-block" />
-                {activeKbmCount} Sesi
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-rose-500/15 text-rose-600 flex items-center justify-center shrink-0">
+            <MonitorCheck className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">KBM Berlangsung</p>
+            <p className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1 leading-tight mt-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+              {activeKbmCount} Sesi
+            </p>
+          </div>
+        </div>
 
-        <Card className="border-border/80 shadow-none bg-card hover:bg-muted/10 transition">
-          <CardContent className="p-3.5 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0">
-              <FileCheck className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-[11px] text-muted-foreground font-medium">Supervisi Perangkat</div>
-              <div className="text-lg font-bold text-foreground">
-                {supervisiWaka.verifiedCount}/{supervisiWaka.totalMaterials} <span className="text-xs font-normal text-muted-foreground">({supervisiWaka.percentage}%)</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0">
+            <FileCheck className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Supervisi Perangkat</p>
+            <p className="text-sm font-bold text-purple-600 dark:text-purple-400 leading-tight mt-0.5">
+              {supervisiWaka.verifiedCount}/{supervisiWaka.totalMaterials} ({supervisiWaka.percentage}%)
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* 3 Executive Monitoring Charts (Empty state when no data exists) */}

@@ -181,24 +181,28 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
   const pendingCount = modulList.length - verifiedCount;
 
   return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FileText className="h-6 w-6 text-emerald-500" />
-            Bahan Ajar{" "}
-            {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs">📍 Kelas {rawClass}</Badge>}
+          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <FileText className="h-5 w-5 text-emerald-500" />
+            Bahan Ajar & Modul Kurikulum
+            {isSiswa && <Badge className="bg-emerald-600 text-white font-bold text-xs px-2 py-0.5">Kelas {rawClass}</Badge>}
           </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Manajemen dokumen bahan ajar, modul KBM, dan verifikasi kurikulum madrasah.
+          </p>
         </div>
         {!isSiswa && !isKamad && (
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs" onClick={() => setIsUploadOpen(true)}>
+          <Button size="sm" className="h-8 gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs px-3" onClick={() => setIsUploadOpen(true)}>
             <Upload className="h-3.5 w-3.5" /> Unggah Bahan Ajar
           </Button>
         )}
       </div>
 
       {isKamad && (
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold mb-6">
+        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold shadow-2xs">
           <span className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-amber-600 shrink-0" />
             <span>🏛️ <strong>Mode Supervisi Kepala Madrasah</strong> — Memantau ketersediaan bahan ajar guru madrasah.</span>
@@ -207,60 +211,84 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         </div>
       )}
 
-      {isWakaOrAdmin && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 rounded-xl border border-border bg-card space-y-1 shadow-xs">
-            <div className="text-xs text-muted-foreground font-medium">Total Bahan Ajar Diunggah</div>
-            <div className="text-2xl font-bold text-foreground">{modulList.length} Berkas</div>
-            <div className="text-[11px] text-muted-foreground">Persyaratan Kurikulum Merdeka</div>
+      {/* Horizontal Compact Metric Strip (~42px) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <FileText className="h-3.5 w-3.5" />
           </div>
-
-          <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-1 shadow-xs cursor-pointer hover:bg-amber-500/10 transition" onClick={() => setSelectedStatusFilter("pending")}>
-            <div className="text-xs text-amber-700 dark:text-amber-400 font-semibold flex items-center justify-between">
-              <span>Menunggu Verifikasi Waka</span>
-              <span>⏳</span>
-            </div>
-            <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{pendingCount} Modul</div>
-            <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Perlu peninjauan & pengesahan</div>
-          </div>
-
-          <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-1 shadow-xs cursor-pointer hover:bg-emerald-500/10 transition" onClick={() => setSelectedStatusFilter("verified")}>
-            <div className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold flex items-center justify-between">
-              <span>Resmi Terverifikasi Waka</span>
-              <span>✅</span>
-            </div>
-            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{verifiedCount} Modul</div>
-            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Siap digunakan KBM & e-Rapor</div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Bahan Ajar</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{modulList.length} Berkas</p>
           </div>
         </div>
-      )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 border-b border-border pb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-muted-foreground mr-1">Filter Jenjang:</span>
-          {["semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((j) => (
-            <Button
-              key={j}
-              size="sm"
-              variant={selectedJenjang === j ? "default" : "outline"}
-              className="text-xs font-bold"
-              onClick={() => setSelectedJenjang(j)}
-            >
-              {j === "semua" ? "Semua Jenjang" : j}
-            </Button>
-          ))}
+        <div
+          className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs cursor-pointer hover:border-amber-500/50 transition-colors"
+          onClick={() => setSelectedStatusFilter("pending")}
+        >
+          <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <span className="text-xs">⏳</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Menunggu Verifikasi</p>
+            <p className="text-sm font-bold text-amber-600 dark:text-amber-400 leading-tight mt-0.5">{pendingCount} Modul</p>
+          </div>
+        </div>
+
+        <div
+          className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs cursor-pointer hover:border-emerald-500/50 transition-colors"
+          onClick={() => setSelectedStatusFilter("verified")}
+        >
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <span className="text-xs">✅</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Telah Terverifikasi</p>
+            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{verifiedCount} Modul</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold">🏫</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Jenjang Filter</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5 truncate">{selectedJenjang === "semua" ? "Semua Jenjang" : selectedJenjang}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pill Filter Toolbar */}
+      <div className="p-2.5 rounded-xl bg-card border border-border flex flex-wrap items-center justify-between gap-2.5 shadow-2xs text-xs">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[11px] font-semibold text-muted-foreground mr-1">Filter Jenjang:</span>
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 h-8">
+            {["semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((j) => (
+              <Button
+                key={j}
+                size="sm"
+                variant={selectedJenjang === j ? "default" : "ghost"}
+                className={`text-xs font-bold h-6 px-2.5 rounded-lg ${selectedJenjang === j ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setSelectedJenjang(j)}
+              >
+                {j === "semua" ? "Semua" : j}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {isWakaOrAdmin && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-muted-foreground">Status Verifikasi:</span>
+            <span className="text-[11px] font-semibold text-muted-foreground">Status:</span>
             <select
-              className="bg-background text-xs font-bold text-foreground border border-input rounded-md px-2.5 py-1 focus:outline-hidden cursor-pointer"
+              className="h-8 bg-background text-xs font-semibold text-foreground border border-input rounded-lg px-2.5 cursor-pointer hover:border-primary/50 transition"
               value={selectedStatusFilter}
               onChange={(e) => setSelectedStatusFilter(e.target.value)}
             >
               <option value="semua">Semua Status</option>
-              <option value="pending">⏳ Menunggu Verifikasi Waka</option>
+              <option value="pending">⏳ Menunggu Verifikasi</option>
               <option value="verified">✅ Terverifikasi Waka</option>
             </select>
           </div>
@@ -375,6 +403,6 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         onOpenChange={(open) => !open && setDeleteConfirmModul(null)}
         onConfirmDelete={handleDeleteModul}
       />
-    </>
+    </div>
   );
 }

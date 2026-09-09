@@ -80,8 +80,8 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
     userProfile?.class_name ||
     userProfile?.class ||
     activeUser?.class_name;
-  const binaanRombel = resolveWaliKelasRombel(activeUser || userProfile, null, "rombel");
-  const activeRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Rombel 8B");
+  const binaanRombel = resolveWaliKelasRombel(activeUser || userProfile, null, "kelas");
+  const activeRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Kelas 8B");
 
   // Dynamic Grade Level
   const studentGrade = useMemo(() => {
@@ -476,19 +476,19 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               <>
                 <Button
                   size="sm"
-                  className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                  className="h-8 gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs px-3"
                   onClick={() => setIsZiyadahOpen(true)}
                 >
-                  <Plus className="h-3.5 w-3.5" /> + Setoran Baru (Ziyadah)
+                  <Plus className="h-3.5 w-3.5" /> Setoran Baru (Ziyadah)
                 </Button>
 
                 <Button
                   size="sm"
                   variant="outline"
-                  className="gap-1.5 text-xs font-bold border-teal-500/40 text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 shadow-xs"
+                  className="h-8 gap-1.5 text-xs font-semibold border-teal-500/40 text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 px-3"
                   onClick={() => setIsMurojaahOpen(true)}
                 >
-                  <RotateCcw className="h-3.5 w-3.5" /> + Catat Murojaah
+                  <RotateCcw className="h-3.5 w-3.5" /> Catat Murojaah
                 </Button>
               </>
             )}
@@ -496,130 +496,110 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
         </div>
       )}
 
-      {/* Rombel Filter & Executive Controls (For Kamad, Waka, Admin, Teachers) */}
+      {/* Kelas Filter & Search Bar */}
       {!isSiswa && (
-        <Card className="border-border shadow-xs bg-card p-4">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Filter className="h-5 w-5" />
+        <div className="p-2.5 rounded-xl bg-card border border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 shadow-2xs text-xs">
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <span className="text-[11px] font-semibold text-muted-foreground shrink-0">Pilih Kelas:</span>
+            {isWaliKelas ? (
+              <div className="h-8 px-2.5 rounded-lg border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-1.5 font-bold text-xs text-emerald-700 dark:text-emerald-300">
+                <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Kelas Binaan: {binaanRombel}</span>
               </div>
-              <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Rombel / Mode Tahfidz</label>
-                {isWaliKelas ? (
-                  <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
-                    <Building2 className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Rombel Binaan: {binaanRombel}</span>
-                  </div>
-                ) : (
-                  <select
-                    className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    value={selectedRombel}
-                    onChange={(e) => setSelectedRombel(e.target.value)}
-                  >
-                    {isExecutive && (
-                      <option value="ALL" className="font-bold">
-                        ✨ Semua Rombel (Monitoring Eksekutif Kamad & Waka)
-                      </option>
-                    )}
-                    {rombelOptions.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
+            ) : (
+              <select
+                className="h-8 rounded-lg border border-border bg-background px-2.5 text-xs font-semibold text-foreground cursor-pointer hover:border-primary/50 transition min-w-[200px]"
+                value={selectedRombel}
+                onChange={(e) => setSelectedRombel(e.target.value)}
+              >
+                {isExecutive && (
+                  <option value="ALL" className="font-bold">
+                    ✨ Semua Kelas (Monitoring Madrasah)
+                  </option>
                 )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari siswa, NISN, atau surah..."
-                  className="pl-8 h-9 text-xs"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
+                {rombelOptions.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-        </Card>
-      )}
 
-      {/* Executive Tahfidz KPI Summary Cards (Kamad & Waka View) */}
-      {isExecutive && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-border shadow-xs bg-card">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-semibold">Total Siswa Peserta Tahfidz</p>
-                <h3 className="text-2xl font-bold text-foreground mt-1">{filteredStudents.length} Siswa</h3>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Siswa terdaftar aktif</p>
-              </div>
-              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Users className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border shadow-xs bg-card">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-semibold">Total Setoran Terdaftar</p>
-                <h3 className="text-2xl font-bold text-foreground mt-1">{filteredHafalan.length} Record</h3>
-                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Ziyadah & Murojaah</p>
-              </div>
-              <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                <BookOpen className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border shadow-xs bg-card">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-semibold">Rata-Rata Nilai Tahfidz</p>
-                <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{avgGrade > 0 ? `${avgGrade} Poin` : "0 Poin"}</h3>
-                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Evaluasi 5 komponen tajwid</p>
-              </div>
-              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Award className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border shadow-xs bg-card">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-semibold">Target Lulus Mutqin</p>
-                <h3 className="text-2xl font-bold text-foreground mt-1">{mutqinCount} Record</h3>
-                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Hafalan lancar & mutqin</p>
-              </div>
-              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                <GraduationCap className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Cari siswa, NISN, surah..."
+              className="pl-8 h-8 text-xs rounded-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       )}
 
-      {/* Tabs Sub-Nav Navigation */}
-      <div className="flex items-center gap-1.5 p-1.5 bg-muted/40 rounded-xl border border-border/80 w-fit flex-wrap">
+      {/* Horizontal Compact Metric Strip (~42px) */}
+      {isExecutive && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <Users className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Siswa Peserta</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{filteredStudents.length} Siswa Aktif</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <BookOpen className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Setoran</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{filteredHafalan.length} Record</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <Award className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Rata-Rata Nilai</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{avgGrade > 0 ? `${avgGrade} Poin` : "0 Poin"}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <GraduationCap className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Lulus Mutqin</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{mutqinCount} Record</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tabs Sub-Nav Navigation (Segmented Pill Style) */}
+      <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 h-9 w-fit flex-wrap">
         {navTabs.map((t) => (
-          <button
+          <Button
             key={t.id}
-            type="button"
+            size="sm"
+            variant={activeTab === t.id ? "default" : "ghost"}
             onClick={() => setActiveTab(t.id as any)}
-            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`h-7 px-2.5 rounded-lg text-xs font-bold gap-1.5 ${
               activeTab === t.id
-                ? "bg-emerald-600 text-white shadow-xs"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <t.icon className="h-4 w-4" />
+            <t.icon className="h-3.5 w-3.5" />
             <span>{t.label}</span>
-          </button>
+          </Button>
         ))}
       </div>
 

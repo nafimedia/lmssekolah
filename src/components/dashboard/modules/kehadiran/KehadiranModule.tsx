@@ -58,7 +58,7 @@ import { MysqlAuthService } from "@/services/mysqlAuthService";
 export function KehadiranModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any } = {}) {
   const me = MysqlAuthService.getActiveUser();
   const initialClass = useMemo(() => {
-    return resolveWaliKelasRombel(me || userProfile, null, "rombel");
+    return resolveWaliKelasRombel(me || userProfile, null, "kelas");
   }, [userProfile, me]);
 
   const [selectedRombelFilter, setSelectedRombelFilter] = useState(initialClass);
@@ -410,7 +410,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
     const todayStatus = myDaily?.status || "HADIR";
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <StudentHeaderBanner
           title="Kehadiran & Rekapitulasi Presensi Saya"
           subtitle="Status kehadiran resmi yang dicatat oleh Wali Kelas & Guru Pengampu saat KBM di madrasah"
@@ -420,7 +420,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
         />
 
         {/* Read-Only Status Banner */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-border pb-3 bg-card p-4 rounded-xl shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-border pb-3 bg-card p-3 rounded-xl shadow-xs">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="font-mono text-xs font-bold">
               🎓 {studentClass} • NISN: {studentNis}
@@ -430,89 +430,74 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
             </Badge>
           </div>
 
-          <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 bg-muted/40 px-3 py-1.5 rounded-lg border border-border">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" /> Presensi Terintegrasi E-Rapor
+          <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 bg-muted/40 px-2.5 py-1 rounded-lg border border-border">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Presensi Terintegrasi E-Rapor
           </div>
         </div>
 
-        {/* Info Banner */}
-        <div className="p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-xs text-blue-700 dark:text-blue-300 font-semibold flex items-center gap-2">
-          <span className="text-base">💡</span>
-          <span>Catatan: Siswa tidak melakukan presensi mandiri. Seluruh pencatatan presensi harian dilakukan secara resmi oleh Wali Kelas & Guru Pengampu saat KBM di kelas.</span>
-        </div>
+        {/* Horizontal Compact Metric Strip (~42px) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Hadir</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{totalHadir} Hari ({pct}%)</p>
+            </div>
+          </div>
 
-        {/* Summary Stats Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Card className="border-border bg-card shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
-                ✓
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-medium">Total Hadir</div>
-                <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
-                  {totalHadir} Hari ({pct}%)
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Clock className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Izin</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{totalIzin} Hari</p>
+            </div>
+          </div>
 
-          <Card className="border-border bg-card shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
-                ℹ️
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-medium">Total Izin</div>
-                <div className="text-lg font-extrabold text-foreground">{totalIzin} Hari</div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Sakit</p>
+              <p className="text-sm font-bold text-amber-600 dark:text-amber-400 leading-tight mt-0.5">{totalSakit} Hari</p>
+            </div>
+          </div>
 
-          <Card className="border-border bg-card shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-                🟡
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-medium">Total Sakit</div>
-                <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{totalSakit} Hari</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400 grid place-items-center shrink-0 font-bold">
-                ✨
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground font-medium">Tanpa Keterangan</div>
-                <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
-                  {totalAlpa === 0 ? "0 Hari (Disiplin)" : `${totalAlpa} Hari`}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <UserCheck className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Tanpa Keterangan</p>
+              <p className="text-sm font-bold leading-tight mt-0.5">{totalAlpa === 0 ? "0 Hari (Disiplin)" : `${totalAlpa} Hari`}</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Presensi Harian & Kehadiran Siswa
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <CalendarCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Presensi & Kehadiran Siswa
           </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Pencatatan presensi harian per kelas, monitoring ketidakhadiran, dan integrasi e-Rapor.
+          </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             size="sm"
             variant="outline"
-            className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
+            className="h-8 gap-1.5 text-xs font-semibold border-border px-3 text-muted-foreground hover:text-foreground"
             onClick={handleExportExcel}
             disabled={filteredData.length === 0}
           >
@@ -521,70 +506,107 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 p-1 bg-muted/40 rounded-xl border border-border">
-        <button
-          type="button"
+      {/* Segmented Pill Tabs Navigation */}
+      <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 h-9 w-fit">
+        <Button
+          size="sm"
+          variant={activeTab === "harian_wali" ? "default" : "ghost"}
+          className={`gap-1.5 text-xs font-bold h-7 px-3 rounded-lg ${activeTab === "harian_wali" ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setActiveTab("harian_wali")}
-          className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 ${
-            activeTab === "harian_wali"
-              ? "bg-emerald-600 text-white shadow-xs"
-              : "text-muted-foreground hover:bg-muted/50"
-          }`}
         >
-          <CalendarCheck className="h-4 w-4" /> Form Presensi Harian Rombel (Wali Kelas)
-        </button>
+          <CalendarCheck className="h-3.5 w-3.5" /> 1. Form Presensi Harian Kelas
+        </Button>
 
-        <button
-          type="button"
+        <Button
+          size="sm"
+          variant={activeTab === "rekap_rekomendasi" ? "default" : "ghost"}
+          className={`gap-1.5 text-xs font-bold h-7 px-3 rounded-lg ${activeTab === "rekap_rekomendasi" ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setActiveTab("rekap_rekomendasi")}
-          className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 ${
-            activeTab === "rekap_rekomendasi"
-              ? "bg-emerald-600 text-white shadow-xs"
-              : "text-muted-foreground hover:bg-muted/50"
-          }`}
         >
-          <BookOpen className="h-4 w-4" /> Rekapitulasi & Laporan Kehadiran
-        </button>
+          <BookOpen className="h-3.5 w-3.5" /> 2. Rekapitulasi & Laporan
+        </Button>
+      </div>
+
+      {/* Horizontal Compact Metric Strip (~42px) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Users className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Siswa Terdata</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{dailyStudents.length} Siswa</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Hadir Hari Ini</p>
+            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{countDailyHadir} Siswa</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Clock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Sakit / Izin</p>
+            <p className="text-sm font-bold text-amber-600 dark:text-amber-400 leading-tight mt-0.5">{countDailySakit + countDailyIzin} Siswa</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${countDailyAlpa > 0 ? "bg-rose-500/15 text-rose-600" : "bg-muted text-muted-foreground"}`}>
+            <AlertTriangle className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Alpa Hari Ini</p>
+            <p className={`text-sm font-bold leading-tight mt-0.5 ${countDailyAlpa > 0 ? "text-rose-600" : "text-foreground"}`}>{countDailyAlpa} Siswa</p>
+          </div>
+        </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="p-4 bg-card rounded-xl border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Cari nama atau NISN..."
-            className="pl-8 h-9 text-xs"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
+      <div className="p-2.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-2xs text-xs">
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs font-bold text-muted-foreground shrink-0">Pilih Rombel:</span>
+          <span className="text-[11px] font-semibold text-muted-foreground shrink-0">Pilih Kelas:</span>
           <select
-            className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+            className="h-8 rounded-lg border border-border bg-background px-2.5 text-xs font-semibold text-foreground cursor-pointer hover:border-primary/50 transition min-w-[180px]"
             value={selectedRombelFilter}
             onChange={(e) => setSelectedRombelFilter(e.target.value)}
           >
-            <option value="Semua Rombel">Semua Rombel</option>
-            <option value="Rombel 7A">Rombel 7A</option>
-            <option value="Rombel 7B">Rombel 7B</option>
-            <option value="Rombel 8A">Rombel 8A</option>
-            <option value="Rombel 8B">Rombel 8B</option>
-            <option value="Rombel 9A">Rombel 9A</option>
-            <option value="Rombel 9B">Rombel 9B</option>
+            <option value="Semua Rombel">Semua Kelas</option>
+            <option value="Kelas 7A">Kelas 7A</option>
+            <option value="Kelas 7B">Kelas 7B</option>
+            <option value="Kelas 8A">Kelas 8A</option>
+            <option value="Kelas 8B">Kelas 8B</option>
+            <option value="Kelas 9A">Kelas 9A</option>
+            <option value="Kelas 9B">Kelas 9B</option>
           </select>
+        </div>
+
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Cari nama atau NISN..."
+            className="pl-8 h-8 text-xs rounded-lg"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
       {activeTab === "harian_wali" ? (
         /* TAB 1: FORM PRESENSI HARIAN WALI KELAS */
         <Card className="border-border shadow-xs bg-card">
-          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Presensi Harian Rombel ({selectedRombelFilter})
+              <CardTitle className="text-xs font-bold flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> Presensi Harian Kelas ({selectedRombelFilter})
               </CardTitle>
               <CardDescription className="text-xs">
                 Tanggal: {todayStr} · Wali Kelas: {me?.full_name || userProfile?.name || "Wali Kelas"} · Tandai siswa yang Sakit, Izin, atau Alpa hari ini.

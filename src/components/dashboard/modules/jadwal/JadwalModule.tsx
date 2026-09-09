@@ -141,7 +141,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
 
   const handlePrintJadwal = () => {
     window.print();
-    toast.success(`🖨️ Cetak Matriks Jadwal Pelajaran KBM (${filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}) berhasil diproses!`);
+    toast.success(`🖨️ Cetak Matriks Jadwal Pelajaran KBM (${filterRombel === "Semua" ? "Seluruh Kelas" : filterRombel}) berhasil diproses!`);
   };
 
   return (
@@ -154,37 +154,83 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
           statusText="Pelajaran Aktif 2026/2027"
           statusVariant="success"
           actionButtons={
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
-              <Printer className="h-3.5 w-3.5" /> Cetak Jadwal KBM PDF
+            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 px-3" onClick={() => setIsPrintJadwalOpen(true)}>
+              <Printer className="h-3.5 w-3.5" /> Cetak Jadwal (PDF)
             </Button>
           }
         />
       ) : (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border mb-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <CalendarClock className="h-6 w-6 text-primary" /> Jadwal Pelajaran
+            <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <CalendarClock className="h-5 w-5 text-primary" /> Jadwal Pelajaran
             </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Alokasi jam KBM tatap muka madrasah, ruang kelas, dan distribusi beban pendidik.
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
-              <Printer className="h-3.5 w-3.5" /> Cetak Jadwal KBM PDF
+            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs font-semibold border-border px-3" onClick={() => setIsPrintJadwalOpen(true)}>
+              <Printer className="h-3.5 w-3.5 text-muted-foreground" /> Cetak Jadwal (PDF)
             </Button>
             {!isReadOnlyRole && (
-              <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-                <Plus className="h-3.5 w-3.5" /> Tambah Jadwal Pelajaran
+              <Button size="sm" className="h-8 gap-1.5 text-xs font-bold bg-primary text-primary-foreground shadow-2xs px-3" onClick={() => setIsOpen(true)}>
+                <Plus className="h-3.5 w-3.5" /> Tambah Jadwal
               </Button>
             )}
           </div>
         </div>
       )}
 
+      {/* Horizontal Compact Metric Strip (~42px) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs mb-4">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <CalendarClock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Jadwal KBM</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{jadwalList.length} Sesi</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Building2 className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Kelas Terdaftar</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">6 Kelas Aktif</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${activeSessions.length > 0 ? "bg-emerald-500/15 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+            <CalendarClock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">KBM Live Berjalan</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{activeSessions.length} Sesi Live</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+            <CalendarClock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Hari Pembelajaran</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">6 Hari (Senin - Sabtu)</p>
+          </div>
+        </div>
+      </div>
+
       {!isRestrictedRole ? (
-        <div className="p-3.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 shadow-2xs">
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <span className="text-xs font-bold text-muted-foreground shrink-0">Filter Kelas:</span>
+        <div className="p-2.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-4 shadow-2xs text-xs">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-[11px] font-semibold text-muted-foreground shrink-0">Filter Kelas:</span>
             <select
-              className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer hover:border-primary/50 transition shrink-0 min-w-[220px]"
+              className="h-8 rounded-lg border border-border bg-background px-2.5 text-xs font-semibold text-foreground cursor-pointer hover:border-primary/50 transition shrink-0 min-w-[200px]"
               value={filterRombel}
               onChange={(e) => {
                 const val = e.target.value;
@@ -205,18 +251,18 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
             </select>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-            <span>📍 Menampilkan: <strong className="underline decoration-emerald-500 font-bold">{filterRombel === "Semua" ? "Seluruh Kelas" : filterRombel}</strong></span>
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs font-mono font-semibold shrink-0">
-              {jadwalList.length} Sesi Pelajaran
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <span>Menampilkan: <strong className="text-foreground">{filterRombel === "Semua" ? "Seluruh Kelas" : filterRombel}</strong></span>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/25 text-[11px] font-mono font-bold shrink-0">
+              {jadwalList.length} Sesi
             </Badge>
           </div>
         </div>
       ) : (
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-2xs">
-          <div className="flex items-center gap-2.5 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-            <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>Jadwal Pelajaran <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{resolvedInitialRombel}</strong></span>
+        <div className="p-2.5 rounded-xl bg-muted/40 border border-border/80 flex items-center justify-between gap-4 mb-4 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+            <Building2 className="h-4 w-4 text-primary shrink-0" />
+            <span>Jadwal Pelajaran <strong className="text-primary font-bold">{resolvedInitialRombel}</strong></span>
           </div>
         </div>
       )}

@@ -16,6 +16,7 @@ import { getTeacherAssignedSubjects, isSubjectAllowedForUser } from "@/services/
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { CardStatsSkeleton } from "@/components/dashboard/components/ModuleSkeleton";
+import { normalizeRombelName } from "@/utils/classNormalization";
 
 interface GuruDashboardViewProps {
   userName: string;
@@ -106,16 +107,16 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
     loadRealData();
   }, [currentDayName, userName]);
 
-  const uniqueRombelsHariIni = Array.from(new Set(jadwalHariIni.map((j: any) => j.rombel).filter(Boolean)));
+  const uniqueRombelsHariIni = Array.from(new Set(jadwalHariIni.map((j: any) => normalizeRombelName(j.rombel)).filter(Boolean)));
   const rombelsTextDisplay = uniqueRombelsHariIni.join(", ");
   const uniqueMapelsHariIni = Array.from(new Set(jadwalHariIni.map((j: any) => j.mapel).filter(Boolean)));
   const mapelsTextDisplay = uniqueMapelsHariIni.length > 0 ? uniqueMapelsHariIni.join(", ") : activeSubjectName;
 
   return (
-    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+    <div className="space-y-4 text-slate-800 dark:text-slate-200 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             Dashboard Guru Pengampu
           </h1>
@@ -127,19 +128,19 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shadow-xs"
+            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shadow-2xs px-3"
             onClick={() => setActiveTab?.("ruang_mengajar")}
           >
-            <PencilLine className="h-4 w-4" /> Masuk Ruang Mengajar
+            <PencilLine className="h-3.5 w-3.5" /> Masuk Ruang Mengajar
           </Button>
 
           <Button
             size="sm"
             variant="outline"
-            className="font-medium text-xs gap-1.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10"
+            className="h-8 font-medium text-xs gap-1.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 px-3"
             onClick={() => setActiveTab?.("nilai")}
           >
-            <ClipboardCheck className="h-4 w-4" /> Penilaian Kelas
+            <ClipboardCheck className="h-3.5 w-3.5" /> Penilaian Kelas
           </Button>
         </div>
       </div>
@@ -147,75 +148,65 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
       {isLoading ? (
         <CardStatsSkeleton count={3} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card
-            className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 hover:border-emerald-500/60 transition cursor-pointer shadow-xs"
+        /* Horizontal Compact Metric Strip (~42px) */
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+          <div
+            className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs cursor-pointer hover:border-emerald-500/50 transition-colors"
             onClick={() => jadwalHariIni.length > 0 && setSelectedJadwalModal(jadwalHariIni[0])}
           >
-            <CardHeader className="pb-2">
-              <CardDescription className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
-                <span>Jadwal Mengajar Saya Hari Ini ({currentDayName})</span>
-                <CalendarClock className="h-4 w-4" />
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold text-foreground">
-                {jadwalHariIni.length} Sesi KBM
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-muted-foreground space-y-1">
-              <div className="font-semibold text-foreground truncate" title={uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${mapelsTextDisplay})` : "Tidak ada jadwal mengajar hari ini"}>
-                {uniqueRombelsHariIni.length > 0 ? `${rombelsTextDisplay} (${mapelsTextDisplay})` : "Tidak ada jadwal mengajar hari ini"}
+            <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <CalendarClock className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Jadwal Mengajar Hari Ini</p>
+                <span className="text-[10px] text-emerald-600 font-semibold font-mono">{currentDayName}</span>
               </div>
-              <div>
-                {jadwalHariIni.length > 0
-                  ? `Sesi: ${jadwalHariIni.map((j: any) => j.jam).filter(Boolean).join(" · ") || "Sesuai"}`
-                  : `Jadwal KBM ${currentDayName}: 0 Jam`}
-              </div>
-            </CardContent>
-          </Card>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5 truncate">
+                {jadwalHariIni.length} Sesi KBM <span className="text-xs font-normal text-muted-foreground">({rombelsTextDisplay || "Nihil"})</span>
+              </p>
+            </div>
+          </div>
 
-          <Card
-            className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-500/60 transition cursor-pointer shadow-xs"
+          <div
+            className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs cursor-pointer hover:border-blue-500/50 transition-colors"
             onClick={() => tugasPerluDiperiksa.length > 0 && setSelectedTugasModal(tugasPerluDiperiksa[0])}
           >
-            <CardHeader className="pb-2">
-              <CardDescription className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center justify-between">
-                <span>Tugas & LKPD Saya</span>
-                <CheckSquare className="h-4 w-4" />
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold text-foreground">
-                {tugasPerluDiperiksa.length} Berkas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-muted-foreground space-y-1">
-              <div className="font-semibold text-foreground">
-                {tugasPerluDiperiksa.length > 0 ? `${tugasPerluDiperiksa.length} Tugas LKPD Digital` : "Belum ada tugas pending"}
+            <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <CheckSquare className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Tugas & LKPD</p>
+                <span className="text-[10px] text-blue-600 font-semibold">Aktif</span>
               </div>
-              <div>{tugasPerluDiperiksa.length > 0 ? "Perlu penilaian & koreksi nilai harian" : "Semua tugas di mapel pengampu telah diperiksa"}</div>
-            </CardContent>
-          </Card>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5 truncate">
+                {tugasPerluDiperiksa.length} Berkas <span className="text-xs font-normal text-muted-foreground">(Perlu Dinilai)</span>
+              </p>
+            </div>
+          </div>
 
-          <Card
-            className="border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20 hover:border-purple-500/60 transition cursor-pointer shadow-xs"
+          <div
+            className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs cursor-pointer hover:border-purple-500/50 transition-colors"
             onClick={() => setSelectedCapaianModal({ materi: activeSubjectName, journalCount })}
           >
-            <CardHeader className="pb-2">
-              <CardDescription className="text-xs font-semibold text-purple-600 dark:text-purple-400 flex items-center justify-between">
-                <span>Jurnal Mengajar Terisi</span>
-                <LineChart className="h-4 w-4" />
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold text-foreground">
-                {`${journalCount} Jurnal`}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-muted-foreground space-y-1">
-              <div className="font-semibold text-foreground">{journalCount > 0 ? `${journalCount} Pertemuan KBM Tercatat` : "Belum ada jurnal terisi"}</div>
-              <div>Tercatat resmi di sistem KBM</div>
-            </CardContent>
-          </Card>
+            <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <LineChart className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Jurnal Mengajar</p>
+                <span className="text-[10px] text-purple-600 font-semibold">Tercatat</span>
+              </div>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5 truncate">
+                {journalCount} Jurnal Pertemuan
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           <Card className="border-slate-200 dark:border-slate-800 shadow-xs">
             <CardHeader className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-row items-center justify-between">

@@ -20,6 +20,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { normalizeRombelName } from "@/utils/classNormalization";
 
 interface WakaDashboardViewProps {
   userName: string;
@@ -72,7 +73,7 @@ export function WakaDashboardView({
 
         if (metrics.nilaiRombel && metrics.nilaiRombel.length > 0) {
           const mapped = metrics.nilaiRombel.map((item: any) => ({
-            class: item.rombel,
+            class: normalizeRombelName(item.rombel),
             avg: Number(item.avg || 0),
             color: item.color || "bg-emerald-500",
           }));
@@ -92,11 +93,11 @@ export function WakaDashboardView({
   }, []);
 
   return (
-    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+    <div className="space-y-4 text-slate-800 dark:text-slate-200 font-sans">
       {/* Header Waka Kurikulum */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" /> Portal Dashboard Waka Kurikulum
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -104,139 +105,135 @@ export function WakaDashboardView({
           </p>
         </div>
 
-        <Badge className="bg-primary/15 text-primary border-primary/30 font-medium text-xs px-3 py-1.5 self-start sm:self-auto gap-1.5">
+        <Badge className="bg-primary/15 text-primary border-primary/30 font-medium text-xs px-2.5 py-1 self-start sm:self-auto gap-1.5">
           <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Supervisi & Validasi Kurikulum Aktif
         </Badge>
       </div>
 
-      {/* Stat Cards Overview Kurikulum */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-amber-500/5 via-card to-card border-amber-500/25 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Perlu Validasi</div>
-              <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
-                {pendingPerangkatCount} Dokumen
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Horizontal Compact Metric Strip (~42px) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Clock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Perlu Validasi</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{pendingPerangkatCount} Dokumen</p>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-emerald-500/5 via-card to-card border-emerald-500/25 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
-              <FileCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Telah Disahkan</div>
-              <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                {verifiedPerangkatCount} Dokumen
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <FileCheck className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Telah Disahkan</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{verifiedPerangkatCount} Dokumen</p>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-blue-500/5 via-card to-card border-blue-500/25 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
-              <CalendarClock className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Jadwal Sesi KBM</div>
-              <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                {totalJadwalCount} Sesi
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <CalendarClock className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Jadwal Sesi KBM</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{totalJadwalCount} Sesi</p>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-purple-500/5 via-card to-card border-purple-500/25 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Guru Pengampu KBM</div>
-              <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
-                {stats.guruStafCount} Pendidik
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+            <Users className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Guru Pengampu</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{stats.guruStafCount} Pendidik</p>
+          </div>
+        </div>
       </div>
 
       {/* Main Grid: Pintasan Operasional Waka & Chart Capaian Akademik */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pintasan Operasional Kurikulum */}
         <Card className="border-border shadow-xs bg-card">
-          <CardHeader className="p-4 border-b border-border flex flex-row items-center justify-between">
+          <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-primary" /> Pintasan Pengelolaan Kurikulum
+              <CardTitle className="text-xs font-bold flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5 text-primary" /> Pintasan Pengelolaan Kurikulum
               </CardTitle>
-              <CardDescription className="text-xs mt-0.5">
+              <CardDescription className="text-[11px] mt-0.5">
                 Akses cepat validasi dan supervisi pembelajaran madrasah.
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <CardContent className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
             <Button
               variant="outline"
-              className="h-16 flex flex-col items-center justify-center text-xs font-bold gap-1 border-amber-500/30 hover:bg-amber-500/10 text-foreground"
+              size="sm"
+              className="h-10 flex items-center justify-start px-2.5 text-xs font-semibold gap-2 border-amber-500/30 hover:bg-amber-500/10 text-foreground"
               onClick={() => setActiveTab?.("perangkat_pembelajaran")}
             >
-              <FileCheck className="h-4 w-4 text-amber-600" /> Validasi Perangkat
+              <FileCheck className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+              <span className="truncate">Validasi Perangkat</span>
             </Button>
             <Button
               variant="outline"
-              className="h-16 flex flex-col items-center justify-center text-xs font-bold gap-1 border-emerald-500/30 hover:bg-emerald-500/10 text-foreground"
+              size="sm"
+              className="h-10 flex items-center justify-start px-2.5 text-xs font-semibold gap-2 border-emerald-500/30 hover:bg-emerald-500/10 text-foreground"
               onClick={() => setActiveTab?.("modul_ajar")}
             >
-              <BookMarked className="h-4 w-4 text-emerald-600" /> Validasi Bahan Ajar
+              <BookMarked className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+              <span className="truncate">Bahan Ajar</span>
             </Button>
             <Button
               variant="outline"
-              className="h-16 flex flex-col items-center justify-center text-xs font-bold gap-1 border-blue-500/30 hover:bg-blue-500/10 text-foreground"
+              size="sm"
+              className="h-10 flex items-center justify-start px-2.5 text-xs font-semibold gap-2 border-blue-500/30 hover:bg-blue-500/10 text-foreground"
               onClick={() => setActiveTab?.("jadwal")}
             >
-              <CalendarClock className="h-4 w-4 text-blue-600" /> Jadwal Pelajaran
+              <CalendarClock className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+              <span className="truncate">Jadwal KBM</span>
             </Button>
             <Button
               variant="outline"
-              className="h-16 flex flex-col items-center justify-center text-xs font-bold gap-1 border-purple-500/30 hover:bg-purple-500/10 text-foreground"
+              size="sm"
+              className="h-10 flex items-center justify-start px-2.5 text-xs font-semibold gap-2 border-purple-500/30 hover:bg-purple-500/10 text-foreground"
               onClick={() => setActiveTab?.("sdm_gtk")}
             >
-              <Users className="h-4 w-4 text-purple-600" /> Beban Mengajar Guru
+              <Users className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+              <span className="truncate">Beban Guru</span>
             </Button>
             <Button
               variant="outline"
-              className="h-16 flex flex-col items-center justify-center text-xs font-bold gap-1 border-rose-500/30 hover:bg-rose-500/10 text-foreground"
+              size="sm"
+              className="h-10 flex items-center justify-start px-2.5 text-xs font-semibold gap-2 border-rose-500/30 hover:bg-rose-500/10 text-foreground"
               onClick={() => setActiveTab?.("monitoring_kbm_live")}
             >
-              <Radio className="h-4 w-4 text-rose-600" /> Pantau KBM Langsung
+              <Radio className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+              <span className="truncate">Live KBM</span>
             </Button>
             <Button
               variant="outline"
-              className="h-16 flex flex-col items-center justify-center text-xs font-bold gap-1 border-teal-500/30 hover:bg-teal-500/10 text-foreground"
+              size="sm"
+              className="h-10 flex items-center justify-start px-2.5 text-xs font-semibold gap-2 border-teal-500/30 hover:bg-teal-500/10 text-foreground"
               onClick={() => setActiveTab?.("nilai")}
             >
-              <FileSpreadsheet className="h-4 w-4 text-teal-600" /> Laporan Nilai
+              <FileSpreadsheet className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+              <span className="truncate">Laporan Nilai</span>
             </Button>
           </CardContent>
         </Card>
 
         {/* Chart Capaian Akademik Rombel */}
         <Card className="border-border shadow-xs bg-card">
-          <CardHeader className="p-4 pb-3 border-b border-border flex flex-row items-center justify-between">
+          <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" /> Capaian Akademik Antar Rombel
+              <CardTitle className="text-xs font-bold flex items-center gap-1.5">
+                <BarChart3 className="h-3.5 w-3.5 text-primary" /> Capaian Akademik Antar Kelas
               </CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                Grafik perbandingan nilai rata-rata tiap rombel.
+              <CardDescription className="text-[11px] mt-0.5">
+                Grafik perbandingan nilai rata-rata tiap kelas.
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">

@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { MysqlDataService } from "@/services/mysqlDataService";
+import { normalizeRombelName } from "@/utils/classNormalization";
 
 interface AdminAkademikDashboardViewProps {
   userName: string;
@@ -49,7 +50,7 @@ export function AdminAkademikDashboardView({
         if (!isMounted) return;
         if (metrics.nilaiRombel && metrics.nilaiRombel.length > 0) {
           const mapped = metrics.nilaiRombel.map((item: any) => ({
-            class: item.rombel,
+            class: normalizeRombelName(item.rombel),
             avg: Number(item.avg || 0),
             color: item.color || "bg-emerald-500",
           }));
@@ -71,7 +72,7 @@ export function AdminAkademikDashboardView({
   }, []);
 
   return (
-    <div className="space-y-6 text-slate-800 dark:text-slate-200 font-sans">
+    <div className="space-y-4 text-slate-800 dark:text-slate-200 font-sans">
       {/* Header Admin Akademik */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
@@ -83,60 +84,52 @@ export function AdminAkademikDashboardView({
           </p>
         </div>
 
-        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-medium text-xs px-3 py-1.5 self-start sm:self-auto gap-1.5">
+        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-semibold text-xs px-2.5 py-1 self-start sm:self-auto gap-1.5 shadow-2xs">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Portal Akademik Aktif
         </Badge>
       </div>
 
-      {/* Stat Cards Overview */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500/5 via-card to-card border-blue-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Total Pengguna</div>
-              <div className="text-xl font-bold text-foreground">{stats.totalUsers} Akun</div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Compact Metric Strip (~42px high) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 flex items-center justify-center shrink-0">
+            <Users className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Pengguna</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{stats.totalUsers} Akun</p>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-emerald-500/5 via-card to-card border-emerald-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
-              <UserCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Total Siswa Aktif</div>
-              <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{stats.siswaCount} Siswa</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
+            <UserCheck className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Siswa Aktif</p>
+            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{stats.siswaCount} Siswa</p>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-teal-500/5 via-card to-card border-teal-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 grid place-items-center shrink-0 font-bold">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Guru & Staf GTK</div>
-              <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{stats.guruStafCount} Orang</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0">
+            <Building2 className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Guru & Staf GTK</p>
+            <p className="text-sm font-bold text-purple-600 dark:text-purple-400 leading-tight mt-0.5">{stats.guruStafCount} Orang</p>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-amber-500/5 via-card to-card border-amber-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-              <MonitorCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-semibold">Ujian CBT Aktif</div>
-              <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.cbtExamsCount} Sesi</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+            <MonitorCheck className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Ujian CBT Aktif</p>
+            <p className="text-sm font-bold text-amber-600 dark:text-amber-400 leading-tight mt-0.5">{stats.cbtExamsCount} Sesi</p>
+          </div>
+        </div>
       </div>
 
       {/* Main Grid: Pintasan Operasional Akademik & Chart Nilai */}

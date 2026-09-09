@@ -88,20 +88,65 @@ export function PengumumanModule() {
   };
 
   return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Megaphone className="h-6 w-6 text-primary" /> Master Pengumuman & Informasi
-          </h1>
+    <div className="space-y-4">
+      {/* Header Halaman Compact Single-Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Megaphone className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-bold tracking-tight text-foreground">Pengumuman & Informasi</h1>
+              <Badge variant="outline" className="text-[10px] font-semibold h-5 px-1.5">
+                {list.length} Berita
+              </Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-none mt-0.5">
+              Pusat penerbitan pengumuman resmi madrasah untuk GTK, Guru, dan Siswa
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-semibold" onClick={() => setIsImportOpen(true)}>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-semibold" onClick={() => setIsImportOpen(true)}>
             <Upload className="h-3.5 w-3.5" /> Import Excel
           </Button>
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
-            + Tambah Pengumuman Baru
+          <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-primary text-primary-foreground" onClick={() => setIsOpen(true)}>
+            + Buat Pengumuman
           </Button>
+        </div>
+      </div>
+
+      {/* Metric Strip Compact ~42px */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Megaphone className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Pengumuman</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{list.length} Publikasi</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <FileSpreadsheet className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Status Database</p>
+            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">Tersinkron Real-time</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <Upload className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Distribusi Sasaran</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">Semua Role & Kelas</p>
+          </div>
         </div>
       </div>
 
@@ -218,6 +263,6 @@ export function PengumumanModule() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

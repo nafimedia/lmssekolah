@@ -100,11 +100,11 @@ export function RaporModule({
     activeUser?.class_name ||
     (activeUser as any)?.class;
 
-  const binaanRombel = resolveWaliKelasRombel(activeUser, null, "rombel");
+  const binaanRombel = resolveWaliKelasRombel(activeUser, null, "kelas");
 
   const defaultRombel = isWaliKelas
     ? binaanRombel
-    : normalizeRombelName(rawClass || "Rombel 8B");
+    : normalizeRombelName(rawClass || "Kelas 8B");
 
   const [selectedClass, setSelectedClass] = useState<string>(
     isWaliKelas ? binaanRombel : isExecutive ? "ALL" : defaultRombel
@@ -1146,7 +1146,7 @@ export function RaporModule({
   // -------------------------------------------------------------
   if (isSiswa) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <StudentHeaderBanner
           title="Rekap Nilai & Progress Belajar"
           subtitle={`Transkrip nilai asesmen dan capaian pembelajaran ${formatClassName(targetStudent?.rombel || defaultRombel)}`}
@@ -1169,82 +1169,54 @@ export function RaporModule({
             <Button
               size="sm"
               onClick={() => setIsPrintRaporOpen(true)}
-              className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs"
+              className="h-8 gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs px-3"
             >
-              <FileText className="h-4 w-4" /> Cetak E-Rapor PDF
+              <FileText className="h-3.5 w-3.5" /> Cetak E-Rapor PDF
             </Button>
           }
         />
 
-        {/* 4 Summary Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-border shadow-xs bg-card">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-semibold">Rata-Rata Nilai Akhir</p>
-                <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                  {studentMetrics.avgFinalScore}
-                </h3>
-                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                  Standar Kelulusan (KKTP): 75
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Award className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Horizontal Compact Metric Strip (~42px) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <Award className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Rata-Rata Nilai Akhir</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{studentMetrics.avgFinalScore} <span className="text-[10px] font-normal text-muted-foreground">(KKTP 75)</span></p>
+            </div>
+          </div>
 
-          <Card className="border-border shadow-xs bg-card">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-semibold">Ketuntasan KKTP</p>
-                <h3 className="text-2xl font-bold text-foreground mt-1">
-                  {studentMetrics.tuntasCount} / {studentMetrics.totalSubjects}
-                </h3>
-                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                  Mata Pelajaran Tuntas
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Ketuntasan KKTP</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{studentMetrics.tuntasCount} / {studentMetrics.totalSubjects} Mapel</p>
+            </div>
+          </div>
 
-          <Card className="border-border shadow-xs bg-card">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-semibold">Aktivitas & Asesmen</p>
-                <h3 className="text-2xl font-bold text-foreground mt-1">
-                  {studentMetrics.totalCompletedTasks + studentMetrics.totalCompletedCbts}
-                </h3>
-                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                  {studentMetrics.totalCompletedTasks} Tugas LKPD • {studentMetrics.totalCompletedCbts} Ujian CBT
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                <FileText className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <FileText className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Aktivitas & Asesmen</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{studentMetrics.totalCompletedTasks + studentMetrics.totalCompletedCbts} Selesai</p>
+            </div>
+          </div>
 
-          <Card className="border-border shadow-xs bg-card">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground font-semibold">Rata-Rata Capaian Belajar</p>
-                <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                  {studentMetrics.avgCpPct}%
-                </h3>
-                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                  Tingkat pemahaman materi semester
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                <TrendingUp className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <TrendingUp className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Rata-Rata Capaian (CP)</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{studentMetrics.avgCpPct}%</p>
+            </div>
+          </div>
         </div>
 
         {/* Tab Navigation: Transkrip Nilai vs Progress Capaian Pembelajaran */}
@@ -1253,7 +1225,7 @@ export function RaporModule({
           onValueChange={(val: any) => setActiveStudentTab(val)}
           className="space-y-4"
         >
-          <TabsList className="bg-muted p-1 rounded-xl w-full sm:w-auto grid grid-cols-2 sm:inline-flex">
+          <TabsList className="bg-muted/60 p-1 rounded-xl border border-border/70 h-9 w-fit flex gap-1">
             <TabsTrigger
               value="nilai"
               className="gap-2 text-xs font-bold py-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
@@ -1504,172 +1476,142 @@ export function RaporModule({
   // GURU / WALI KELAS / KAMAD / WAKA DASHBOARD VIEW
   // -------------------------------------------------------------
   return (
-    <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Award className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Award className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             {selectedClass === "ALL"
               ? "Laporan Pembelajaran & Rekap Leger Seluruh Kelas"
               : `Laporan Pembelajaran & Rekap Leger ${selectedClass}`}
           </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Monitoring e-Rapor Kurikulum Merdeka, KKTP, capaian formatif & sumatif terpadu.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportExcelLeger}
-            className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+            className="h-8 gap-1.5 text-xs font-semibold border-border px-3 text-muted-foreground hover:text-foreground"
           >
-            <Download className="h-4 w-4 text-emerald-500" /> Unduh Leger Excel
+            <Download className="h-3.5 w-3.5 text-muted-foreground" /> Unduh Leger (Excel)
           </Button>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* Rombel Filter & Control Bar */}
-        <Card className="border-border shadow-xs bg-card p-4">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Filter className="h-5 w-5" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-0.5">
-                  Pilih Rombel / Mode Laporan
-                </label>
-                {isWaliKelas ? (
-                  <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
-                    <Building2 className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Rombel Binaan: {binaanRombel}</span>
-                  </div>
-                ) : (
-                  <select
-                    className="h-9 rounded-md border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    value={selectedClass}
-                    onChange={(e) => setSelectedClass(e.target.value)}
-                  >
-                    {isExecutive && (
-                      <option value="ALL" className="font-bold">
-                        ✨ Semua Kelas (Monitoring Leger Madrasah Kamad & Waka)
-                      </option>
-                    )}
-                    {rombelOptions.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+      {/* Kelas Filter & Search Bar */}
+      <div className="p-2.5 rounded-xl bg-card border border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 shadow-2xs text-xs">
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <span className="text-[11px] font-semibold text-muted-foreground shrink-0">
+            Pilih Kelas:
+          </span>
+          {isWaliKelas ? (
+            <div className="h-8 px-2.5 rounded-lg border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-1.5 font-bold text-xs text-emerald-700 dark:text-emerald-300">
+              <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Kelas Binaan: {binaanRombel}</span>
             </div>
+          ) : (
+            <select
+              className="h-8 rounded-lg border border-border bg-background px-2.5 text-xs font-semibold text-foreground cursor-pointer hover:border-primary/50 transition min-w-[200px]"
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+            >
+              {isExecutive && (
+                <option value="ALL" className="font-bold">
+                  ✨ Semua Kelas (Monitoring Leger Madrasah)
+                </option>
+              )}
+              {rombelOptions.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari nama siswa, NISN, atau kelas..."
-                  className="pl-8 h-9 text-xs"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Cari siswa, NISN, atau kelas..."
+              className="pl-8 h-8 text-xs rounded-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
 
+      {/* Horizontal Compact Metric Strip (~42px) for Kamad & Waka */}
+      {isExecutive && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <Building2 className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Kelas</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{overallStats.totalRombel} Kelas Aktif</p>
             </div>
           </div>
-        </Card>
 
-        {/* Executive Summary Stat Cards for Kamad & Waka */}
-        {isExecutive && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-border shadow-xs bg-card">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground font-semibold">Total Rombel Terdaftar</p>
-                  <h3 className="text-2xl font-bold text-foreground mt-1">
-                    {overallStats.totalRombel} Rombel
-                  </h3>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
-                    Seluruh kelas aktif
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <Building2 className="h-6 w-6" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border shadow-xs bg-card">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground font-semibold">Total Siswa Terdaftar</p>
-                  <h3 className="text-2xl font-bold text-foreground mt-1">
-                    {overallStats.totalSiswa} Siswa
-                  </h3>
-                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                    {overallStats.totalTuntas} Siswa Tuntas KKTP (≥75)
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                  <Users className="h-6 w-6" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border shadow-xs bg-card">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground font-semibold">Rata-Rata Nilai Madrasah</p>
-                  <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                    {overallStats.avgMadrasah} Poin
-                  </h3>
-                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Standar KKTP: 75</p>
-                </div>
-                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <BarChart3 className="h-6 w-6" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border shadow-xs bg-card">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground font-semibold">Ketuntasan KKTP Madrasah</p>
-                  <h3 className="text-2xl font-bold text-foreground mt-1">
-                    {overallStats.totalSiswa > 0
-                      ? Math.round((overallStats.totalTuntas / overallStats.totalSiswa) * 100)
-                      : 0}
-                    %
-                  </h3>
-                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                    Persentase siswa tuntas
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  <GraduationCap className="h-6 w-6" />
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Users className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Siswa</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{overallStats.totalSiswa} Siswa</p>
+            </div>
           </div>
-        )}
 
-        {/* SECTION 1: TABEL MATRIKS REKAPITULASI LEGER KELAS (Kamad & Waka Overview) */}
-        {selectedClass === "ALL" && (
-          <Card className="border-border shadow-xs bg-card">
-            <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-emerald-600" />
-                  <span>Matriks Rekapitulasi Leger Pembelajaran Per Kelas</span>
-                </CardTitle>
-                <CardDescription className="text-xs mt-0.5">
-                  Overview rerata nilai akhir dan statistik ketuntasan KKTP per rombel.
-                </CardDescription>
-              </div>
-              <Badge className="bg-emerald-600 text-white font-bold text-xs">
-                {classSummaries.length} Rombel
-              </Badge>
-            </CardHeader>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <BarChart3 className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Rata-Rata Nilai</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{overallStats.avgMadrasah} Poin</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <GraduationCap className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Ketuntasan KKTP (≥75)</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
+                {overallStats.totalSiswa > 0
+                  ? Math.round((overallStats.totalTuntas / overallStats.totalSiswa) * 100)
+                  : 0}
+                % Tuntas
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 1: TABEL MATRIKS REKAPITULASI LEGER KELAS (Kamad & Waka Overview) */}
+      {selectedClass === "ALL" && (
+        <Card className="border-border shadow-xs bg-card">
+          <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xs font-bold flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Matriks Rekapitulasi Leger Pembelajaran Per Kelas</span>
+              </CardTitle>
+              <CardDescription className="text-[11px] mt-0.5">
+                Overview rerata nilai akhir dan statistik ketuntasan KKTP per kelas.
+              </CardDescription>
+            </div>
+            <Badge className="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5">
+              {classSummaries.length} Kelas
+            </Badge>
+          </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               {isLoading ? (
                 <div className="p-8 text-center text-xs text-muted-foreground">
@@ -1846,10 +1788,9 @@ export function RaporModule({
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* 🖨️ MODAL PRATINJAU & CETAK E-RAPOR PDF (REAL DATA ONLY) */}
       {renderPrintDialog()}
-    </>
+    </div>
   );
 }

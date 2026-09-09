@@ -43,15 +43,15 @@ export interface LiveRombelSession {
 }
 
 function normalizeRombelName(r: string): string {
-  if (!r) return "Rombel 7A";
+  if (!r) return "Kelas 7A";
   const s = r.toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
-  if (s.includes("7A") || s.includes("VIIA")) return "Rombel 7A";
-  if (s.includes("7B") || s.includes("VIIB")) return "Rombel 7B";
-  if (s.includes("8A") || s.includes("VIIIA")) return "Rombel 8A";
-  if (s.includes("8B") || s.includes("VIIIB")) return "Rombel 8B";
-  if (s.includes("9A") || s.includes("IXA")) return "Rombel 9A";
-  if (s.includes("9B") || s.includes("IXB")) return "Rombel 9B";
-  return r;
+  if (s.includes("7A") || s.includes("VIIA")) return "Kelas 7A";
+  if (s.includes("7B") || s.includes("VIIB")) return "Kelas 7B";
+  if (s.includes("8A") || s.includes("VIIIA")) return "Kelas 8A";
+  if (s.includes("8B") || s.includes("VIIIB")) return "Kelas 8B";
+  if (s.includes("9A") || s.includes("IXA")) return "Kelas 9A";
+  if (s.includes("9B") || s.includes("IXB")) return "Kelas 9B";
+  return r.replace(/rombel/gi, "Kelas").trim();
 }
 
 export function MonitoringKbmLiveModule() {
@@ -225,7 +225,7 @@ export function MonitoringKbmLiveModule() {
           teacherScheduleMap[key] = {
             guru: gName,
             mapel: sch.mapel || "Mata Pelajaran",
-            rombel: sch.rombel || sch.kelas || "-",
+            rombel: normalizeRombelName(sch.rombel || sch.kelas || "-"),
             hasFilled: !!matchedJournal,
             materi: matchedJournal?.materi,
           };
@@ -273,163 +273,202 @@ export function MonitoringKbmLiveModule() {
   const completedSessionsCount = rombelSessions.filter((s) => s.status === "SELESAI").length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* 1. Header Ringkas & Lega */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Activity className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Pemantauan KBM Langsung
           </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Supervisi waktu-nyata pembelajaran tatap muka di kelas dan kepatuhan pengisian jurnal mengajar guru.
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             variant="outline"
-            className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
+            className="h-8 text-xs font-semibold gap-1.5 border-border hover:bg-muted shadow-2xs"
             onClick={loadLiveData}
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} /> Perbarui Data
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin text-emerald-600" : ""}`} />
+            <span>Perbarui Data</span>
           </Button>
         </div>
       </div>
 
-      {/* Stat Cards Overview (4 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-emerald-500/5 via-card to-card border-emerald-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 grid place-items-center shrink-0 font-bold">
-              <MonitorCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Total Rombel Terpantau</div>
-              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{totalSessionsCount} Rombel</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-teal-500/5 via-card to-card border-teal-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-teal-500/10 text-teal-600 grid place-items-center shrink-0 font-bold">
-              <Activity className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">KBM Sedang Berlangsung</div>
-              <div className="text-xl font-extrabold text-teal-600 dark:text-teal-400">{activeSessionsCount} Sesi Berlangsung</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500/5 via-card to-card border-blue-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 grid place-items-center shrink-0 font-bold">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">KBM Selesai Hari Ini</div>
-              <div className="text-xl font-extrabold text-blue-600 dark:text-blue-400">{completedSessionsCount} Sesi Tuntas</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500/5 via-card to-card border-purple-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-600 grid place-items-center shrink-0 font-bold">
-              <ClipboardCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Kepatuhan Jurnal Guru</div>
-              <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">
-                {journalCompliance.filledCount}/{journalCompliance.totalScheduled} Guru
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* 2. Modern Segmented Tab Bar */}
+      <div className="flex items-center border-b border-border/70 pb-2.5">
+        <div className="bg-muted/60 p-1 rounded-xl border border-border/80 inline-flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("live")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              viewMode === "live"
+                ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            }`}
+          >
+            <Activity className={`h-3.5 w-3.5 ${viewMode === "live" ? "text-emerald-600" : "opacity-60"}`} />
+            <span>Sesi KBM Live ({activeSessionsCount})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("jurnal")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              viewMode === "jurnal"
+                ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            }`}
+          >
+            <ClipboardCheck className={`h-3.5 w-3.5 ${viewMode === "jurnal" ? "text-purple-600" : "opacity-60"}`} />
+            <span>Checklist Jurnal Guru ({journalCompliance.filledCount}/{journalCompliance.totalScheduled})</span>
+          </button>
+        </div>
       </div>
 
-      {/* View Mode Switcher */}
-      <div className="flex items-center gap-2 border-b border-border pb-3">
-        <Button
-          size="sm"
-          variant={viewMode === "live" ? "default" : "outline"}
-          className={`text-xs font-bold gap-1.5 ${viewMode === "live" ? "bg-emerald-600 text-white" : ""}`}
-          onClick={() => setViewMode("live")}
-        >
-          <Activity className="h-3.5 w-3.5" /> Sesi KBM Live ({activeSessionsCount})
-        </Button>
-        <Button
-          size="sm"
-          variant={viewMode === "jurnal" ? "default" : "outline"}
-          className={`text-xs font-bold gap-1.5 ${viewMode === "jurnal" ? "bg-purple-600 text-white" : ""}`}
-          onClick={() => setViewMode("jurnal")}
-        >
-          <ClipboardCheck className="h-3.5 w-3.5" /> Checklist Jurnal KBM Hari Ini ({journalCompliance.filledCount}/{journalCompliance.totalScheduled})
-        </Button>
+      {/* 3. Compact Metrics Strip (Horizontal ~44px) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border/80 rounded-xl shadow-2xs">
+          <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
+            <MonitorCheck className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Total Kelas</div>
+            <div className="text-sm font-extrabold text-foreground truncate">{totalSessionsCount} Kelas</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border/80 rounded-xl shadow-2xs">
+          <div className="h-8 w-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 grid place-items-center shrink-0 font-bold">
+            <Activity className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Sedang KBM Live</div>
+            <div className="text-sm font-extrabold text-teal-600 dark:text-teal-400 truncate">{activeSessionsCount} Sesi</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border/80 rounded-xl shadow-2xs">
+          <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
+            <CheckCircle2 className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Selesai Hari Ini</div>
+            <div className="text-sm font-extrabold text-blue-600 dark:text-blue-400 truncate">{completedSessionsCount} Sesi</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border/80 rounded-xl shadow-2xs">
+          <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
+            <ClipboardCheck className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Jurnal Guru</div>
+            <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400 truncate">
+              {journalCompliance.filledCount}/{journalCompliance.totalScheduled} Guru
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Conditional Content by ViewMode */}
+      {/* 4. Content Area */}
       {viewMode === "live" ? (
         isLoading ? (
           <div className="p-8 text-center text-xs text-muted-foreground">Memuat data monitoring KBM live...</div>
         ) : filteredSessions.length === 0 ? (
-          <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2">
-            <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
-            <div className="font-semibold text-foreground text-sm">Belum Ada Sesi KBM Live Berlangsung</div>
+          <div className="p-10 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-1.5">
+            <Inbox className="h-7 w-7 text-muted-foreground/40 mx-auto" />
+            <div className="font-semibold text-foreground text-sm">Belum Ada Sesi KBM Terjadwal Hari Ini</div>
             <p>Tidak ada sesi KBM live yang sedang berlangsung untuk saat ini.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredSessions.map((session) => (
-              <Card key={session.id} className="border-border hover:border-emerald-500/40 transition shadow-xs bg-card">
-                <CardHeader className="p-4 pb-2 border-b border-border flex flex-row items-center justify-between">
-                  <div>
-                    <Badge className="bg-emerald-600 text-white text-[10px] mb-1">{session.rombel}</Badge>
-                    <CardTitle className="text-base font-bold">{session.mapel}</CardTitle>
-                    <CardDescription className="text-xs">Guru: {session.guruName}</CardDescription>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {filteredSessions.map((session) => {
+              const isLive = session.status === "SEDANG_BERLANGSUNG";
+              const isDone = session.status === "SELESAI";
+              return (
+                <div
+                  key={session.id}
+                  className={`p-3.5 rounded-xl border transition-all bg-card shadow-2xs flex flex-col justify-between gap-2.5 ${
+                    isLive
+                      ? "border-emerald-500/50 bg-emerald-500/[0.02] ring-1 ring-emerald-500/20"
+                      : "border-border/80 hover:border-border"
+                  }`}
+                >
+                  {/* Baris Atas: Kelas & Mapel + Status Pill */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] shrink-0">
+                        {session.rombel}
+                      </span>
+                      <span className="font-bold text-sm text-foreground truncate">
+                        {session.mapel}
+                      </span>
+                    </div>
+
+                    <div className="shrink-0">
+                      {isLive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 animate-pulse">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                          KBM LIVE
+                        </span>
+                      ) : isDone ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-muted text-muted-foreground border border-border/80">
+                          ✓ Selesai
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted/60 text-muted-foreground border border-border/60">
+                          Belum Mulai
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <Badge variant="outline" className="text-emerald-600 border-emerald-500/30 font-bold text-[10px]">
-                    {session.status}
-                  </Badge>
-                </CardHeader>
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground font-medium">
-                    <span>
-                      Presensi Siswa: <strong className="text-foreground">{session.hadirCount} / {session.totalStudents} Siswa Hadir</strong>
+
+                  {/* Baris Tengah: Info Guru */}
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <span className="text-foreground font-semibold">Guru:</span>
+                    <span className="font-medium text-foreground/90">{session.guruName}</span>
+                  </div>
+
+                  {/* Baris Bawah: Presensi Siswa & Tombol Akhiri */}
+                  <div className="pt-2 border-t border-border/50 flex items-center justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground text-[11px]">
+                      Presensi Siswa: <strong className="text-foreground font-bold">{session.hadirCount} / {session.totalStudents} Hadir</strong>
                     </span>
-                    {session.status === "SEDANG_BERLANGSUNG" && (
+
+                    {isLive && (
                       <Button
                         size="sm"
                         variant="destructive"
-                        className="h-7 text-[11px] font-bold px-3 gap-1 shadow-2xs self-start sm:self-center"
+                        className="h-6 text-[10px] font-bold px-2.5 gap-1 shadow-2xs cursor-pointer"
                         onClick={() => handleCloseSession(session)}
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Akhiri Sesi KBM
+                        <CheckCircle2 className="h-3 w-3" /> Akhiri KBM
                       </Button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )
       ) : (
         /* Journal Compliance Checklist View */
         <Card className="border-border bg-card shadow-xs">
-          <CardHeader className="p-4 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5 text-purple-600" /> Checklist Kepatuhan Pengisian Jurnal Mengajar
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Daftar guru yang terjadwal KBM hari ini beserta status pengisian jurnal di database.
-              </CardDescription>
+          <div className="p-3 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-muted/20">
+            <div className="text-xs font-bold text-foreground flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4 text-purple-600" />
+              <span>Checklist Jurnal Mengajar Hari Ini ({journalCompliance.filledCount}/{journalCompliance.totalScheduled} Guru Terisi)</span>
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-60">
-                <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
+              <div className="relative flex-1 sm:w-64">
+                <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-muted-foreground" />
                 <Input
-                  placeholder="Cari guru, mapel, rombel..."
-                  className="pl-9 h-8 text-xs"
+                  placeholder="Cari guru, mapel, kelas..."
+                  className="pl-8 h-8 text-xs bg-background"
                   value={jurnalSearch}
                   onChange={(e) => setJurnalSearch(e.target.value)}
                 />
@@ -439,7 +478,7 @@ export function MonitoringKbmLiveModule() {
                 variant="outline"
                 className="h-8 text-xs font-bold gap-1 text-emerald-600 border-emerald-500/30"
                 onClick={() => {
-                  const headers = ["Nama Guru", "Mata Pelajaran", "Rombel", "Status Jurnal", "Catatan Materi"];
+                  const headers = ["Nama Guru", "Mata Pelajaran", "Kelas", "Status Jurnal", "Catatan Materi"];
                   const rows = journalCompliance.teachers.map((t) => [
                     t.guru,
                     t.mapel,
@@ -451,10 +490,10 @@ export function MonitoringKbmLiveModule() {
                   toast.success("Rekapitulasi Jurnal Mengajar Berhasil Diunduh!");
                 }}
               >
-                <FileSpreadsheet className="h-4 w-4" /> Export Excel
+                <FileSpreadsheet className="h-3.5 w-3.5" /> Export Excel
               </Button>
             </div>
-          </CardHeader>
+          </div>
 
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -463,7 +502,7 @@ export function MonitoringKbmLiveModule() {
                   <tr>
                     <th className="py-3 px-4">Nama Guru Terjadwal</th>
                     <th className="py-3 px-4">Mata Pelajaran</th>
-                    <th className="py-3 px-4">Rombel</th>
+                    <th className="py-3 px-4">Kelas</th>
                     <th className="py-3 px-4 text-center">Status Pengisian</th>
                     <th className="py-3 px-4">Materi Pembelajaran</th>
                   </tr>

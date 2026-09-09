@@ -404,6 +404,242 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     }
   };
 
+  const renderPeerModal = () => (
+    <Dialog open={isPeerModalOpen} onOpenChange={setIsPeerModalOpen}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="border-b border-border pb-3">
+          <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+            <Star className="h-5 w-5 text-amber-500 fill-amber-400" />
+            Penilaian Antarteman (Peer Assessment)
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+            Berikan apresiasi dan nilai kontribusi rekan kelompok Anda secara jujur, adil, dan objektif. Penilaian ini bersifat rahasia antar-siswa.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-3 space-y-4 text-xs">
+          {/* Pilih Nama Rekan yang Dinilai */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground block">
+              Pilih Teman yang Dinilai:
+            </label>
+            <Select
+              value={targetPeerNisn}
+              onValueChange={(val) => {
+                setTargetPeerNisn(val);
+                const found = classmates.find((c) => (c.nis_nip || c.nis || "") === val);
+                if (found) {
+                  setTargetPeerName(found.full_name || found.name || "");
+                  const prev = peerAssessments.find(
+                    (p) =>
+                      p.evaluatee_nisn === val &&
+                      (p.evaluator_nisn === studentNisn || (p.evaluator_name && p.evaluator_name.toLowerCase() === studentName.toLowerCase()))
+                  );
+                  if (prev) {
+                    setStarKeaktifan(prev.score_keaktifan || 4);
+                    setStarKerjasama(prev.score_kerjasama || 4);
+                    setStarTanggungJawab(prev.score_tanggung_jawab || 4);
+                    setStarSikap(prev.score_sikap || 4);
+                    setPeerFeedback(prev.feedback || "");
+                  }
+                }
+              }}
+            >
+              <SelectTrigger className="w-full text-xs rounded-xl">
+                <SelectValue placeholder="-- Pilih nama rekan satu kelas / kelompok --" />
+              </SelectTrigger>
+              <SelectContent className="max-h-56">
+                {classmates.map((c) => {
+                  const nisn = c.nis_nip || c.nis || "";
+                  const name = c.full_name || c.name || "Siswa";
+                  return (
+                    <SelectItem key={nisn || name} value={nisn} className="text-xs">
+                      {name} {nisn ? `(${nisn})` : ""}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 4 Pilar Kriteria Asesmen Format Bintang */}
+          <div className="space-y-2.5 pt-1">
+            <div className="p-3 rounded-xl border border-border bg-card space-y-1.5 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-foreground">1. Keaktifan & Inisiatif Ide</span>
+                <span className="font-bold text-amber-600 font-mono text-[11px]">{starKeaktifan} / 4 ★</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Aktif memberi usulan ide dan berdiskusi bersama tim.</p>
+              <div className="flex items-center gap-1.5 pt-1">
+                {[1, 2, 3, 4].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStarKeaktifan(s)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                      starKeaktifan >= s
+                        ? "bg-amber-500 text-white border-amber-500 shadow-xs"
+                        : "bg-background text-muted-foreground border-border hover:border-amber-300"
+                    }`}
+                  >
+                    <Star className={`h-3 w-3 ${starKeaktifan >= s ? "fill-white" : ""}`} />
+                    <span>{s}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl border border-border bg-card space-y-1.5 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-foreground">2. Kerjasama & Kontribusi Tim</span>
+                <span className="font-bold text-blue-600 font-mono text-[11px]">{starKerjasama} / 4 ★</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Kompak, tidak egois, dan saling membantu menyelesaikan tugas.</p>
+              <div className="flex items-center gap-1.5 pt-1">
+                {[1, 2, 3, 4].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStarKerjasama(s)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                      starKerjasama >= s
+                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                        : "bg-background text-muted-foreground border-border hover:border-blue-300"
+                    }`}
+                  >
+                    <Star className={`h-3 w-3 ${starKerjasama >= s ? "fill-white" : ""}`} />
+                    <span>{s}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl border border-border bg-card space-y-1.5 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-foreground">3. Tanggung Jawab Tugas</span>
+                <span className="font-bold text-emerald-600 font-mono text-[11px]">{starTanggungJawab} / 4 ★</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Menyelesaikan bagian tugasnya tepat waktu dan sungguh-sungguh.</p>
+              <div className="flex items-center gap-1.5 pt-1">
+                {[1, 2, 3, 4].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStarTanggungJawab(s)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                      starTanggungJawab >= s
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                        : "bg-background text-muted-foreground border-border hover:border-emerald-300"
+                    }`}
+                  >
+                    <Star className={`h-3 w-3 ${starTanggungJawab >= s ? "fill-white" : ""}`} />
+                    <span>{s}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl border border-border bg-card space-y-1.5 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-foreground">4. Sikap & Menghargai Pendapat</span>
+                <span className="font-bold text-purple-600 font-mono text-[11px]">{starSikap} / 4 ★</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Sopan, menghormati saran teman, dan tidak memaksakan kehendak.</p>
+              <div className="flex items-center gap-1.5 pt-1">
+                {[1, 2, 3, 4].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStarSikap(s)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                      starSikap >= s
+                        ? "bg-purple-600 text-white border-purple-600 shadow-xs"
+                        : "bg-background text-muted-foreground border-border hover:border-purple-300"
+                    }`}
+                  >
+                    <Star className={`h-3 w-3 ${starSikap >= s ? "fill-white" : ""}`} />
+                    <span>{s}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Pesan / Masukan Konstruktif */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground block">
+              Pesan Umpan Balik Konstruktif (Opsional):
+            </label>
+            <Input
+              placeholder="Tuliskan ucapan terima kasih atau masukan membangun..."
+              value={peerFeedback}
+              onChange={(e) => setPeerFeedback(e.target.value)}
+              className="text-xs rounded-xl"
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-2 border-t border-border">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsPeerModalOpen(false)}
+            className="text-xs rounded-xl"
+          >
+            Batal
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={isSavingPeer}
+            onClick={async () => {
+              const currAct: any = selectedAssignment;
+              if (!currAct) return;
+              if (!targetPeerNisn || !targetPeerName) {
+                return toast.error("Silakan pilih teman yang ingin dinilai!");
+              }
+
+              setIsSavingPeer(true);
+              const avg = Number(((starKeaktifan + starKerjasama + starTanggungJawab + starSikap) / 4).toFixed(2));
+              const payload: PeerAssessmentRow = {
+                activity_id: String(currAct.id),
+                rombel: currAct.rombel || studentRombel,
+                mapel: currAct.mapel || currAct.subject_name || "Mata Pelajaran",
+                evaluator_nisn: studentNisn || "0123456789",
+                evaluator_name: studentName,
+                evaluatee_nisn: targetPeerNisn,
+                evaluatee_name: targetPeerName,
+                score_keaktifan: starKeaktifan,
+                score_kerjasama: starKerjasama,
+                score_tanggung_jawab: starTanggungJawab,
+                score_sikap: starSikap,
+                average_score: avg,
+                feedback: peerFeedback.trim(),
+              };
+
+              const res = await MysqlDataService.savePeerAssessment(payload);
+              setIsSavingPeer(false);
+
+              if (res.success) {
+                toast.success(`✅ Penilaian untuk ${targetPeerName} berhasil dikirim!`);
+                setIsPeerModalOpen(false);
+                const updatedList = await MysqlDataService.getPeerAssessments(String(currAct.id));
+                if (updatedList) setPeerAssessments(updatedList);
+              } else {
+                toast.error("Gagal menyimpan penilaian antarteman.");
+              }
+            }}
+            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs gap-1.5 rounded-xl shadow-xs"
+          >
+            <Star className="h-3.5 w-3.5 fill-white" />
+            {isSavingPeer ? "Mengirim Penilaian..." : "Kirim Penilaian Antarteman"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   // Jika siswa membuka/mengerjakan tugas, tampilkan Halaman Workspace Penuh (bukan popup dialog)
   if (selectedAssignment) {
     const taskState = getTaskStatus(selectedAssignment);
@@ -624,7 +860,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
             </Card>
 
             {/* Kartu Penilaian Antarteman (Peer Assessment) */}
-            {(selectedAssignment.type === "TUGAS_KELOMPOK" || selectedAssignment.type === "PROYEK_P5" || (selectedAssignment as any).peer_assessment_enabled) && (
+            {(selectedAssignment.type === "TUGAS_KELOMPOK" || selectedAssignment.type === "PROYEK_P5" || (selectedAssignment as any).peer_assessment_enabled || selectedAssignment.title.toLowerCase().includes("kelompok") || String((selectedAssignment as any).type || "").toLowerCase().includes("kelompok")) && (
               <Card className="border-amber-300 dark:border-amber-900 bg-amber-50/20 dark:bg-amber-950/10 shadow-xs">
                 <CardHeader className="p-4 pb-3 border-b border-amber-200 dark:border-amber-900 bg-amber-100/40 dark:bg-amber-950/30">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -948,6 +1184,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
             </Card>
           </div>
         </div>
+        {renderPeerModal()}
       </div>
     );
   }
@@ -1157,240 +1394,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       </Card>
 
       {/* Dialog Modal Penilaian Antarteman (Peer Assessment) */}
-      <Dialog open={isPeerModalOpen} onOpenChange={setIsPeerModalOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="border-b border-border pb-3">
-            <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground">
-              <Star className="h-5 w-5 text-amber-500 fill-amber-400" />
-              Penilaian Antarteman (Peer Assessment)
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
-              Berikan apresiasi dan nilai kontribusi rekan kelompok Anda secara jujur, adil, dan objektif. Penilaian ini bersifat rahasia antar-siswa.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-3 space-y-4 text-xs">
-            {/* Pilih Nama Rekan yang Dinilai */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground block">
-                Pilih Teman yang Dinilai:
-              </label>
-              <Select
-                value={targetPeerNisn}
-                onValueChange={(val) => {
-                  setTargetPeerNisn(val);
-                  const found = classmates.find((c) => (c.nis_nip || c.nis || "") === val);
-                  if (found) {
-                    setTargetPeerName(found.full_name || found.name || "");
-                    const prev = peerAssessments.find(
-                      (p) =>
-                        p.evaluatee_nisn === val &&
-                        (p.evaluator_nisn === studentNisn || (p.evaluator_name && p.evaluator_name.toLowerCase() === studentName.toLowerCase()))
-                    );
-                    if (prev) {
-                      setStarKeaktifan(prev.score_keaktifan || 4);
-                      setStarKerjasama(prev.score_kerjasama || 4);
-                      setStarTanggungJawab(prev.score_tanggung_jawab || 4);
-                      setStarSikap(prev.score_sikap || 4);
-                      setPeerFeedback(prev.feedback || "");
-                    }
-                  }
-                }}
-              >
-                <SelectTrigger className="w-full text-xs rounded-xl">
-                  <SelectValue placeholder="-- Pilih nama rekan satu kelas / kelompok --" />
-                </SelectTrigger>
-                <SelectContent className="max-h-56">
-                  {classmates.map((c) => {
-                    const nisn = c.nis_nip || c.nis || "";
-                    const name = c.full_name || c.name || "Siswa";
-                    return (
-                      <SelectItem key={nisn || name} value={nisn} className="text-xs">
-                        {name} {nisn ? `(${nisn})` : ""}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 4 Pilar Kriteria Asesmen Format Bintang */}
-            <div className="space-y-2.5 pt-1">
-              <div className="p-3 rounded-xl border border-border bg-card space-y-1.5 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-foreground">1. Keaktifan & Inisiatif Ide</span>
-                  <span className="font-bold text-amber-600 font-mono text-[11px]">{starKeaktifan} / 4 ★</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground">Aktif memberi usulan ide dan berdiskusi bersama tim.</p>
-                <div className="flex items-center gap-1.5 pt-1">
-                  {[1, 2, 3, 4].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setStarKeaktifan(s)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                        starKeaktifan >= s
-                          ? "bg-amber-500 text-white border-amber-500 shadow-xs"
-                          : "bg-background text-muted-foreground border-border hover:border-amber-300"
-                      }`}
-                    >
-                      <Star className={`h-3 w-3 ${starKeaktifan >= s ? "fill-white" : ""}`} />
-                      <span>{s}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-border bg-card space-y-1.5 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-foreground">2. Kerjasama & Kontribusi Tim</span>
-                  <span className="font-bold text-blue-600 font-mono text-[11px]">{starKerjasama} / 4 ★</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground">Kompak, tidak egois, dan saling membantu menyelesaikan tugas.</p>
-                <div className="flex items-center gap-1.5 pt-1">
-                  {[1, 2, 3, 4].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setStarKerjasama(s)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                        starKerjasama >= s
-                          ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                          : "bg-background text-muted-foreground border-border hover:border-blue-300"
-                      }`}
-                    >
-                      <Star className={`h-3 w-3 ${starKerjasama >= s ? "fill-white" : ""}`} />
-                      <span>{s}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-border bg-card space-y-1.5 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-foreground">3. Tanggung Jawab Penyelesaian</span>
-                  <span className="font-bold text-amber-600 font-mono text-[11px]">{starTanggungJawab} / 4 ★</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground">Menyelesaikan bagian tugas yang diberikan secara tuntas dan tepat waktu.</p>
-                <div className="flex items-center gap-1.5 pt-1">
-                  {[1, 2, 3, 4].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setStarTanggungJawab(s)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                        starTanggungJawab >= s
-                          ? "bg-amber-500 text-white border-amber-500 shadow-xs"
-                          : "bg-background text-muted-foreground border-border hover:border-amber-300"
-                      }`}
-                    >
-                      <Star className={`h-3 w-3 ${starTanggungJawab >= s ? "fill-white" : ""}`} />
-                      <span>{s}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-border bg-card space-y-1.5 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-foreground">4. Sikap Saling Menghargai (Tasamuh)</span>
-                  <span className="font-bold text-teal-600 font-mono text-[11px]">{starSikap} / 4 ★</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground">Santun dalam berbicara, menghormati pendapat teman, dan tidak memaksakan kehendak.</p>
-                <div className="flex items-center gap-1.5 pt-1">
-                  {[1, 2, 3, 4].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setStarSikap(s)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                        starSikap >= s
-                          ? "bg-teal-600 text-white border-teal-600 shadow-xs"
-                          : "bg-background text-muted-foreground border-border hover:border-teal-300"
-                      }`}
-                    >
-                      <Star className={`h-3 w-3 ${starSikap >= s ? "fill-white" : ""}`} />
-                      <span>{s}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Masukan / Komentar Apresiasi */}
-            <div className="space-y-1.5 pt-1">
-              <label className="text-xs font-semibold text-foreground block">
-                Catatan Apresiasi & Pesan Positif untuk Teman:
-              </label>
-              <Textarea
-                placeholder="Contoh: Terima kasih sudah sangat kompak dan membantu mencari bahan materi diskusi!"
-                value={peerFeedback}
-                onChange={(e) => setPeerFeedback(e.target.value)}
-                rows={3}
-                className="text-xs rounded-xl"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-2 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsPeerModalOpen(false)}
-              className="text-xs rounded-xl"
-            >
-              Batal
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              disabled={isSavingPeer}
-              onClick={async () => {
-                const currAct: any = selectedAssignment;
-                if (!currAct) return;
-                if (!targetPeerNisn || !targetPeerName) {
-                  return toast.error("Silakan pilih teman yang ingin dinilai!");
-                }
-
-                setIsSavingPeer(true);
-                const avg = Number(((starKeaktifan + starKerjasama + starTanggungJawab + starSikap) / 4).toFixed(2));
-                const payload: PeerAssessmentRow = {
-                  activity_id: String(currAct.id),
-                  rombel: currAct.rombel || studentRombel,
-                  mapel: currAct.mapel || currAct.subject_name || "Mata Pelajaran",
-                  evaluator_nisn: studentNisn || "0123456789",
-                  evaluator_name: studentName,
-                  evaluatee_nisn: targetPeerNisn,
-                  evaluatee_name: targetPeerName,
-                  score_keaktifan: starKeaktifan,
-                  score_kerjasama: starKerjasama,
-                  score_tanggung_jawab: starTanggungJawab,
-                  score_sikap: starSikap,
-                  average_score: avg,
-                  feedback: peerFeedback.trim(),
-                };
-
-                const res = await MysqlDataService.savePeerAssessment(payload);
-                setIsSavingPeer(false);
-
-                if (res.success) {
-                  toast.success(`✅ Penilaian untuk ${targetPeerName} berhasil dikirim!`);
-                  setIsPeerModalOpen(false);
-                  const updatedList = await MysqlDataService.getPeerAssessments(String(currAct.id));
-                  if (updatedList) setPeerAssessments(updatedList);
-                } else {
-                  toast.error("Gagal menyimpan penilaian antarteman.");
-                }
-              }}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs gap-1.5 rounded-xl shadow-xs"
-            >
-              <Star className="h-3.5 w-3.5 fill-white" />
-              {isSavingPeer ? "Mengirim Penilaian..." : "Kirim Penilaian Antarteman"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {renderPeerModal()}
     </div>
   );
 }

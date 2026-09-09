@@ -411,7 +411,14 @@ const ROLE_LABELS: Record<string, { label: string; icon: string }> = {
 };
 
 function Dashboard() {
-  const [active, setActive] = useState<MenuKey>("beranda");
+  const [active, setActive] = useState<MenuKey>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab") as MenuKey;
+      if (tab) return tab;
+    }
+    return "beranda";
+  });
   const [openMobile, setOpenMobile] = useState(false);
   const [dark, setDark] = useState(false);
   const [isWaModalOpen, setIsWaModalOpen] = useState(false);

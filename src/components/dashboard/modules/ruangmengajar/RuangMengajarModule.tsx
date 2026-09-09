@@ -33,7 +33,16 @@ import { isSameClass } from "@/utils/classNormalization";
 
 export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isKamad = activeRole === "kamad";
-  const [activeTab, setActiveTab] = useState<"jurnal" | "presensi" | "materi" | "aktivitas" | "catatan_siswa" | "riwayat">("jurnal");
+  const [activeTab, setActiveTab] = useState<"jurnal" | "presensi" | "materi" | "aktivitas" | "catatan_siswa" | "riwayat">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const sub = params.get("subtab") as any;
+      if (sub && ["jurnal", "presensi", "materi", "aktivitas", "catatan_siswa", "riwayat"].includes(sub)) {
+        return sub;
+      }
+    }
+    return "jurnal";
+  });
   const me = MysqlAuthService.getActiveUser();
   const currentTeacherName = me?.full_name || userProfile?.name || "Guru Pengampu";
 

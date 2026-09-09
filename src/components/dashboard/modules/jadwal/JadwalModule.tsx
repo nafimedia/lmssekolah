@@ -48,17 +48,38 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
   const [isEditJadwalOpen, setIsEditJadwalOpen] = useState(false);
   const [editingJadwal, setEditingJadwal] = useState<JadwalRow | null>(null);
   const [isPrintJadwalOpen, setIsPrintJadwalOpen] = useState(false);
+  const [activeSessions, setActiveSessions] = useState<any[]>([]);
 
   const loadJadwalData = async () => {
     setIsLoadingJadwal(true);
     try {
-      const data = await MysqlDataService.getJadwalList();
+      const [data, sessions] = await Promise.all([
+        MysqlDataService.getJadwalList(),
+        MysqlDataService.getActiveKbmSessions().catch(() => []),
+      ]);
       setJadwalList(data || []);
+      setActiveSessions(sessions || []);
     } catch (e) {
       console.warn("Gagal memuat jadwal dari MySQL:", e);
     } finally {
       setIsLoadingJadwal(false);
     }
+  };
+
+  const checkIsLive = (s: any, h: string) => {
+    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const currentDayName = dayNames[new Date().getDay()] || "";
+    if (h.toLowerCase() !== currentDayName.toLowerCase()) return false;
+    const sMapel = (s.mapel || "").toLowerCase().trim();
+    return (activeSessions || []).some((sess: any) => {
+      const sessMapel = (sess.mapel || "").toLowerCase().trim();
+      const isMatchMapel = sMapel && (sessMapel.includes(sMapel) || sMapel.includes(sessMapel));
+      return (
+        sess.status === "SEDANG_BERLANGSUNG" &&
+        isSameClass(sess.rombel, s.rombel) &&
+        isMatchMapel
+      );
+    });
   };
 
   useEffect(() => {
@@ -229,20 +250,36 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                   {listForDay.length === 0 && (
                     <div className="text-xs text-muted-foreground py-3 text-center">Belum ada jadwal untuk filter ini</div>
                   )}
-                  {listForDay.map((s) => (
-                    <div key={s.id || `${s.hari}-${s.jam}-${s.rombel}`} className="flex items-start justify-between gap-2 border-l-4 border-primary pl-3 py-2 bg-card rounded-r-lg shadow-2xs group hover:border-primary/80 transition">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-bold text-xs text-foreground truncate">{s.mapel}</div>
-                        <div className="flex items-center gap-1.5 my-1 flex-wrap">
-                          <Badge className="text-[9px] font-bold bg-primary/15 text-primary border-primary/20">
-                            🏫 {normalizeRombelName(s.rombel)}
-                          </Badge>
+                  {listForDay.map((s) => {
+                    const isLive = checkIsLive(s, h);
+                    return (
+                      <div
+                        key={s.id || `${s.hari}-${s.jam}-${s.rombel}`}
+                        className={`flex items-start justify-between gap-2 border-l-4 pl-3 py-2 bg-card rounded-r-lg shadow-2xs group transition ${
+                          isLive
+                            ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-950/25 ring-1 ring-emerald-500/40"
+                            : "border-primary hover:border-primary/80"
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-xs text-foreground truncate">{s.mapel}</span>
+                            {isLive && (
+                              <Badge className="text-[9px] font-extrabold bg-emerald-600 text-white border-none animate-pulse px-1.5 py-0">
+                                ● KBM LIVE
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 my-1 flex-wrap">
+                            <Badge className="text-[9px] font-bold bg-primary/15 text-primary border-primary/20">
+                              🏫 {normalizeRombelName(s.rombel)}
+                            </Badge>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            👨‍🏫 {s.guru && s.guru.trim() !== "-" ? s.guru : "Belum Ditentukan"}
+                          </div>
+                          <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.jam}</div>
                         </div>
-                        <div className="text-[11px] text-muted-foreground truncate">
-                          👨‍🏫 {s.guru && s.guru.trim() !== "-" ? s.guru : "Belum Ditentukan"}
-                        </div>
-                        <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.jam}</div>
-                      </div>
 
                       {!isReadOnlyRole && (
                         <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100 transition">
@@ -267,7 +304,8 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                         </div>
                       )}
                     </div>
-                  ))}
+                  );
+                })}
                 </CardContent>
               </Card>
             );

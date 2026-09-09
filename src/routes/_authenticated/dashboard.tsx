@@ -10,7 +10,7 @@ import { NotificationCenterPopover } from "@/components/dashboard/components/Not
 import { TableRowsSkeleton } from "@/components/dashboard/components/ModuleSkeleton";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 import { isSubjectAllowedForUser, filterSubjectsForUser, getTeacherAssignedSubjects, getTeacherAssignedClasses, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
-import { resolveWaliKelasRombel } from "@/utils/classNormalization";
+import { resolveWaliKelasRombel, isSameClass } from "@/utils/classNormalization";
 import { useEffect, useState, useMemo, Fragment, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { getVendorLicenseConfigFn } from "@/services/mysqlServerFns";
@@ -622,6 +622,23 @@ function Dashboard() {
     staleTime: 1000 * 30,
   });
 
+  // Real-Time Active KBM Sessions Query for Global Student Live Indicator
+  const { data: activeKbmSessions = [] } = useQuery({
+    queryKey: ["active_kbm_sessions_global"],
+    queryFn: async () => {
+      return await MysqlDataService.getActiveKbmSessions();
+    },
+    refetchInterval: 8000,
+  });
+
+  const studentActiveLiveSession = useMemo(() => {
+    if (activeRole !== "siswa") return null;
+    const userClass = (userProfile as any)?.class_name || (me as any)?.class_name || (me as any)?.class || "Kelas 8B";
+    return (activeKbmSessions || []).find(
+      (s: any) => s.status === "SEDANG_BERLANGSUNG" && isSameClass(s.rombel || "", userClass)
+    );
+  }, [activeRole, activeKbmSessions, userProfile, me]);
+
   const isCbtActive = vendorLicense?.cbt_enabled ?? true;
 
   const roleInfo = ROLE_PERMISSIONS[activeRole] || ROLE_PERMISSIONS.siswa;
@@ -732,6 +749,7 @@ function Dashboard() {
         setIsWaModalOpen={setIsWaModalOpen}
         isCbtActive={isCbtActive}
         vendorLicense={vendorLicense}
+        studentActiveLiveSession={studentActiveLiveSession}
       />
     </SidebarProvider>
   );
@@ -756,6 +774,7 @@ function DashboardContent({
   setIsWaModalOpen,
   isCbtActive = true,
   vendorLicense,
+  studentActiveLiveSession,
 }: any) {
   const { setOpenMobile } = useSidebar();
 
@@ -924,6 +943,24 @@ function DashboardContent({
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2.5 min-w-0">
+            {/* Student KBM Live Indicator Pill */}
+            {activeRole === "siswa" && studentActiveLiveSession && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setActive("tugas")}
+                className="h-8 sm:h-9 px-2 sm:px-3 text-[11px] sm:text-xs font-bold gap-1.5 border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25 animate-pulse shrink-0 shadow-2xs cursor-pointer"
+                title={`${studentActiveLiveSession.guru_name || "Guru"} sedang mengajar ${studentActiveLiveSession.mapel}. Klik untuk buka tugas.`}
+              >
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="hidden sm:inline">KBM Live:</span>
+                <span className="font-extrabold truncate max-w-[110px]">{studentActiveLiveSession.mapel}</span>
+              </Button>
+            )}
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"

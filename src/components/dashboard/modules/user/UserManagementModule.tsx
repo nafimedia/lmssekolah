@@ -40,7 +40,7 @@ function setPersistedRoleOverride(identifier: string, roles: string[]) {
   } catch {}
 }
 
-export function UserManagementModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+export function UserManagementModule({ activeRole, userProfile, hideHeader = false }: { activeRole?: string; userProfile?: any; hideHeader?: boolean }) {
   const isKamad = activeRole === "kamad";
   const [search, setSearch] = useState("");
   const [usersList, setUsersList] = useState<Array<UserItem>>([]);
@@ -239,7 +239,9 @@ export function UserManagementModule({ activeRole, userProfile }: { activeRole?:
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Manajemen Pengguna & Hak Akses (Role)" sub="Kelola akun pengguna, pengelompokan peran, dan hak akses sistem." />
+      {!hideHeader && (
+        <SectionHeader title="Manajemen Pengguna & Hak Akses" sub="Kelola akun pengguna, pengelompokan peran, dan hak akses sistem." />
+      )}
 
       {isKamad && (
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 flex items-center justify-between text-xs font-semibold">

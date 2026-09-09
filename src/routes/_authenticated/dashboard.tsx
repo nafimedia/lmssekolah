@@ -207,10 +207,9 @@ const MENU: { key: MenuKey; label: string; icon: typeof Home; group?: string }[]
   { key: "beranda", label: "Beranda", icon: Home, group: "Utama" },
   { key: "monitoring_kbm_live", label: "Pantau KBM Langsung", icon: Activity, group: "Utama" },
   { key: "ruang_mengajar", label: "Ruang Mengajar Hub", icon: BookOpen, group: "Utama" },
-  { key: "sdm_gtk", label: "Manajemen SDM GTK", icon: Users, group: "Utama" },
+  { key: "sdm_gtk", label: "Manajemen SDM & Akun", icon: Users, group: "Utama" },
   { key: "siakad", label: "Data Pokok Akademik", icon: BarChart3, group: "Utama" },
   { key: "manajemen_kelas", label: "Manajemen Kelas & Rombel", icon: Layers, group: "Utama" },
-  { key: "users", label: "Kelola Akun & Hak Akses", icon: Shield, group: "Utama" },
   { key: "pengumuman", label: "Pengumuman", icon: Megaphone, group: "Utama" },
   { key: "jadwal", label: "Jadwal Pelajaran", icon: CalendarClock, group: "Utama" },
   { key: "agenda", label: "Agenda & Kalender Akademik", icon: CalendarDays, group: "Utama" },
@@ -245,9 +244,8 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Superadmin", group: "Utama & Kontrol" },
       { key: "monitoring_kbm_live", label: "🔴 Pantau KBM Langsung", group: "Utama & Kontrol" },
-      { key: "sdm_gtk", label: "Manajemen SDM GTK", group: "Utama & Kontrol" },
+      { key: "sdm_gtk", label: "Manajemen SDM & Akun", group: "Utama & Kontrol" },
       { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Utama & Kontrol" },
-      { key: "users", label: "Kelola Akun & Hak Akses", group: "Utama & Kontrol" },
       { key: "siakad", label: "Data Pokok Akademik", group: "Akademik" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Akademik" },
       { key: "modul_ajar", label: "Bahan Ajar", group: "Akademik" },
@@ -269,9 +267,8 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Akademik", group: "Utama & Monitoring" },
       { key: "monitoring_kbm_live", label: "🔴 Pantau KBM Langsung", group: "Utama & Monitoring" },
-      { key: "sdm_gtk", label: "Manajemen SDM GTK", group: "Utama & Monitoring" },
+      { key: "sdm_gtk", label: "Manajemen SDM & Akun", group: "Utama & Monitoring" },
       { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Utama & Monitoring" },
-      { key: "users", label: "Data Akun Madrasah", group: "Utama & Monitoring" },
       { key: "siakad", label: "Data Pokok Akademik", group: "Akademik & Kurikulum" },
       { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran", group: "Akademik & Kurikulum" },
       { key: "modul_ajar", label: "Pustaka Bahan Ajar", group: "Akademik & Kurikulum" },
@@ -1069,7 +1066,7 @@ function DashboardContent({
                 <DropdownMenuItem onClick={() => setActive("profil")}>
                   <UserIcon className="h-4 w-4 mr-2" /> Profil Saya
                 </DropdownMenuItem>
-                {allowedKeys.includes("users") && (
+                {(allowedKeys.includes("users") || allowedKeys.includes("sdm_gtk")) && (
                   <DropdownMenuItem onClick={() => setActive("users")}>
                     <Shield className="h-4 w-4 mr-2" /> Kelola Akun & Hak Akses
                   </DropdownMenuItem>
@@ -1100,12 +1097,12 @@ function DashboardContent({
                 )
               )}
               {active === "ruang_mengajar" && <RuangMengajarModule activeRole={activeRole} userProfile={userProfile} />}
-              {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "sdm_gtk" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} initialTab="daftar" />}
               {active === "siakad" && <SiakadMasterDataModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "manajemen_kelas" && <ManajemenKelasModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "perangkat_pembelajaran" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "mapel" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
-              {active === "users" && activeRole !== "siswa" && <UserManagementModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "users" && activeRole !== "siswa" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} initialTab="akun" />}
               {active === "kehadiran" && activeRole !== "siswa" && <KehadiranModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "jadwal" && <JadwalModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "modul_ajar" && <ModulAjarModule activeRole={activeRole} userProfile={userProfile} />}

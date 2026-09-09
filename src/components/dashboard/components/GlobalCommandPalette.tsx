@@ -67,6 +67,7 @@ export function GlobalCommandPalette({
 
   const rawNavMenuItems = [
     { key: "beranda", label: "Beranda Ringkasan & Dashboard Utama", icon: Home, group: "Modul Utama" },
+    { key: "sdm_gtk", label: "Manajemen SDM GTK & Akun Pengguna", icon: Users, group: "Modul Utama" },
     { key: "kehadiran", label: activeRole === "siswa" ? "Kehadiran Saya" : "Presensi Pagi & Sesi Mengajar KBM", icon: UserCheck, group: "Modul Utama" },
     { key: "ruang_mengajar", label: "Ruang Mengajar, Jurnal & LKPD", icon: BookOpen, group: "Modul Utama" },
     { key: "perangkat_pembelajaran", label: "Perangkat Pembelajaran & Modul Ajar", icon: BookOpen, group: "Pembelajaran & Nilai" },

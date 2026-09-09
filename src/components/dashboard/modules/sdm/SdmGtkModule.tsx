@@ -15,6 +15,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  ShieldCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ import { EditGtkDialog } from "./components/EditGtkDialog";
 import { DetailGtkDialog } from "./components/DetailGtkDialog";
 import { PrintGtkDialog } from "./components/PrintGtkDialog";
 import { CutiIzinDialog } from "./components/CutiIzinDialog";
+import { UserManagementModule } from "@/components/dashboard/modules/user/UserManagementModule";
 
 export interface GtkItem {
   id: string;
@@ -47,8 +49,22 @@ export interface GtkItem {
   jabatan?: string;
 }
 
-export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
-  const [activeTab, setActiveTab] = useState<"daftar" | "cuti">("daftar");
+export function SdmGtkModule({
+  activeRole,
+  userProfile,
+  initialTab = "daftar",
+}: {
+  activeRole?: string;
+  userProfile?: any;
+  initialTab?: "daftar" | "cuti" | "akun";
+}) {
+  const [activeTab, setActiveTab] = useState<"daftar" | "cuti" | "akun">(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("semua");
 
@@ -312,258 +328,296 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" /> Data Guru, Staf & Beban Mengajar
+            <Users className="h-6 w-6 text-primary" /> Manajemen SDM & Akun Madrasah
           </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Pusat terpadu kepegawaian GTK, monitoring beban mengajar (≥24 JP), layanan cuti, serta manajemen akun & hak akses sistem.
+          </p>
           {isKamad && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              🏛️ Mode Pengawasan Eksekutif Kepala Madrasah — Monitoring kepatuhan jam mengajar TPG Kemenag.
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">
+              🏛️ Mode Pengawasan Eksekutif Kepala Madrasah — Monitoring kepatuhan jam mengajar TPG Kemenag & penugasan akun.
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10" onClick={handleExportGtkExcel}>
-            <FileSpreadsheet className="h-4 w-4" /> Export Excel Beban GTK
-          </Button>
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintOpen(true)}>
-            <Printer className="h-4 w-4" /> Cetak Bio GTK PDF
-          </Button>
-          {!isKamad && (
-            <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddOpen(true)}>
-              <Plus className="h-4 w-4" /> Tambah Pegawai GTK
+        {activeTab === "daftar" && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10" onClick={handleExportGtkExcel}>
+              <FileSpreadsheet className="h-4 w-4" /> Export Excel Beban GTK
             </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-border bg-card shadow-2xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Total Pegawai GTK</div>
-              <div className="text-xl font-extrabold text-foreground">{gtkList.length} Orang</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-2xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
-              <UserCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Memenuhi Beban (≥24 JP)</div>
-              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{countMemenuhi} Guru</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-2xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-              <Award className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Beban Kurang (&lt;24 JP)</div>
-              <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{countKurang} Guru</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card shadow-2xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-              <FileSpreadsheet className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground font-medium">Layanan Cuti Aktif</div>
-              <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{leavesList.length} Berkas</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-border shadow-sm">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            {[
-              { id: "daftar", label: "Daftar Pegawai GTK", icon: Users },
-              { id: "cuti", label: "Layanan Cuti & Izin", icon: FileSpreadsheet },
-            ].map((t) => (
-              <Button
-                key={t.id}
-                size="sm"
-                variant={activeTab === t.id ? "default" : "outline"}
-                className="text-xs font-bold gap-1.5"
-                onClick={() => setActiveTab(t.id as any)}
-              >
-                <t.icon className="h-3.5 w-3.5" />
-                <span>{t.label}</span>
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintOpen(true)}>
+              <Printer className="h-4 w-4" /> Cetak Bio GTK PDF
+            </Button>
+            {!isKamad && (
+              <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddOpen(true)}>
+                <Plus className="h-4 w-4" /> Tambah Pegawai GTK
               </Button>
-            ))}
+            )}
+          </div>
+        )}
+        {activeTab === "cuti" && !isKamad && (
+          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddLeaveOpen(true)}>
+            <Plus className="h-4 w-4" /> Ajukan Cuti Baru
+          </Button>
+        )}
+      </div>
+
+      {/* Navigation Sub-Tabs */}
+      <div className="flex items-center gap-2 border-b border-border pb-3">
+        {[
+          { id: "daftar", label: "Kepegawaian & Beban GTK", icon: Users },
+          { id: "cuti", label: "Layanan Cuti & Izin", icon: FileSpreadsheet },
+          { id: "akun", label: "Akun Pengguna & Hak Akses", icon: ShieldCheck },
+        ].map((t) => (
+          <Button
+            key={t.id}
+            size="sm"
+            variant={activeTab === t.id ? "default" : "outline"}
+            className={`text-xs font-bold gap-2 ${activeTab === t.id ? "shadow-xs" : ""}`}
+            onClick={() => setActiveTab(t.id as any)}
+          >
+            <t.icon className="h-4 w-4" />
+            <span>{t.label}</span>
+          </Button>
+        ))}
+      </div>
+
+      {activeTab === "daftar" && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <Card className="border-border bg-card shadow-2xs">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium">Total Pegawai GTK</div>
+                  <div className="text-xl font-extrabold text-foreground">{gtkList.length} Orang</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-card shadow-2xs">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
+                  <UserCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium">Memenuhi Beban (≥24 JP)</div>
+                  <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{countMemenuhi} Guru</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-card shadow-2xs">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+                  <Award className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium">Beban Kurang (&lt;24 JP)</div>
+                  <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{countKurang} Guru</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-card shadow-2xs">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium">Layanan Cuti Aktif</div>
+                  <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{leavesList.length} Berkas</div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {activeTab === "daftar" && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-60">
-                <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
-                <Input
-                  placeholder="Cari nama, NIP, email, mapel..."
-                  className="pl-9 h-9 text-xs"
-                  value={search}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                />
+          <Card className="border-border shadow-sm">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+              <div>
+                <div className="font-bold text-base text-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" /> Data Induk GTK & Pemenuhan Jam Mengajar
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Daftar guru & pegawai, validasi beban 24 JP sertifikasi Kemenag, dan status kepegawaian.
+                </div>
               </div>
 
-              <select
-                className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
-                value={filterStatus}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value)}
-              >
-                <option value="semua">Semua Peran</option>
-                <option value="guru">Guru Pengampu</option>
-                <option value="walikelas">Wali Kelas</option>
-                <option value="waka">Waka Kurikulum</option>
-                <option value="kamad">Kepala Madrasah</option>
-              </select>
-            </div>
-          )}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-60">
+                  <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari nama, NIP, email, mapel..."
+                    className="pl-9 h-9 text-xs"
+                    value={search}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                  />
+                </div>
 
-          {activeTab === "cuti" && (
-            <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddLeaveOpen(true)}>
-              + Pengajuan Cuti Baru
-            </Button>
-          )}
-        </CardHeader>
+                <select
+                  className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+                  value={filterStatus}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value)}
+                >
+                  <option value="semua">Semua Peran</option>
+                  <option value="guru">Guru Pengampu</option>
+                  <option value="walikelas">Wali Kelas</option>
+                  <option value="waka">Waka Kurikulum</option>
+                  <option value="kamad">Kepala Madrasah</option>
+                </select>
+              </div>
+            </CardHeader>
 
-        <CardContent className="p-0 overflow-x-auto">
-          {activeTab === "daftar" && (
-            <table className="w-full text-xs min-w-[950px]">
-              <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
-                <tr>
-                  <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none min-w-[220px]" onClick={() => handleSort("name")}>
-                    <div className="flex items-center gap-1.5">
-                      <span>Nama Pegawai & NIP</span>
-                      {sortColumn === "name" ? (
-                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none min-w-[200px]" onClick={() => handleSort("email")}>
-                    <div className="flex items-center gap-1.5">
-                      <span>Email / Username</span>
-                      {sortColumn === "email" ? (
-                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none min-w-[160px]" onClick={() => handleSort("mapel")}>
-                    <div className="flex items-center gap-1.5">
-                      <span>Mapel Utama</span>
-                      {sortColumn === "mapel" ? (
-                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="py-3 px-3 min-w-[140px]">Peran / Tugas</th>
-                  <th className="py-3 px-3 text-center cursor-pointer hover:bg-muted/80 select-none whitespace-nowrap" onClick={() => handleSort("bebanJp")}>
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span>Beban JP</span>
-                      {sortColumn === "bebanJp" ? (
-                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="py-3 px-4 text-center min-w-[200px] whitespace-nowrap">Aksi & Kontrol</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredGtk.map((item) => (
-                  <tr key={item.id} className="hover:bg-muted/30 transition">
-                    <td className="py-3 px-4 font-semibold">
-                      <div className="font-bold text-foreground flex items-center gap-1.5">
-                        {item.name}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground font-mono">NIP: {item.nip}</div>
-                    </td>
-                    <td className="py-3 px-3 font-mono text-muted-foreground max-w-[210px] truncate" title={item.email}>
-                      {item.email}
-                    </td>
-                    <td className="py-3 px-3 font-bold whitespace-nowrap">{item.mapelUtama}</td>
-                    <td className="py-3 px-3 whitespace-nowrap">
-                      <Badge className={item.role === "kamad" ? "bg-amber-600 text-white" : item.role === "waka" ? "bg-purple-600 text-white" : item.role === "walikelas" ? "bg-blue-600 text-white" : "bg-emerald-600 text-white"}>
-                        {item.tugasTambahan || (item.role === "walikelas" ? "Wali Kelas" : item.role === "waka" ? "Waka Kurikulum" : item.role === "kamad" ? "Kepala Madrasah" : "Guru Pengampu")}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-3 text-center whitespace-nowrap">
-                      <div className="flex flex-col items-center gap-0.5">
-                        <span className="font-mono font-bold text-foreground text-xs">{item.totalJp} JP</span>
-                        {item.totalJp >= 24 ? (
-                          <Badge className="bg-emerald-600 text-white font-bold text-[9px] px-1.5 py-0">
-                            ≥ 24 JP (Tuntas)
-                          </Badge>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-xs min-w-[950px]">
+                <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
+                  <tr>
+                    <th className="py-3 px-4 cursor-pointer hover:bg-muted/80 select-none min-w-[220px]" onClick={() => handleSort("name")}>
+                      <div className="flex items-center gap-1.5">
+                        Nama Pegawai GTK
+                        {sortColumn === "name" ? (
+                          sortDir === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
                         ) : (
-                          <Badge variant="outline" className="text-amber-600 border-amber-500/40 font-bold text-[9px] px-1.5 py-0">
-                            &lt; 24 JP (Kurang)
-                          </Badge>
+                          <ArrowUpDown className="h-3 w-3 opacity-40" />
                         )}
                       </div>
-                    </td>
-                    <td className="py-3 px-4 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1.5">
-                        {!isKamad && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs font-bold gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30"
-                            onClick={() => handleOpenEdit(item)}
-                            title="Edit Data Pegawai GTK"
-                          >
-                            <Pencil className="h-3.5 w-3.5" /> Edit
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs font-bold gap-1"
-                          onClick={() => handleOpenDetail(item)}
-                          title="Lihat Detail Profil"
-                        >
-                          <Eye className="h-3.5 w-3.5" /> Detail
-                        </Button>
-                        {canDeleteGtk && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 text-xs font-bold gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
-                            onClick={() => handleDeleteGtk(item)}
-                            title="Hapus Data Pegawai GTK"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" /> Hapus
-                          </Button>
+                    </th>
+                    <th className="py-3 px-3 min-w-[140px]">NIP / NPK</th>
+                    <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none min-w-[180px]" onClick={() => handleSort("email")}>
+                      <div className="flex items-center gap-1.5">
+                        Email / Akun
+                        {sortColumn === "email" ? (
+                          sortDir === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-40" />
                         )}
                       </div>
-                    </td>
+                    </th>
+                    <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none min-w-[150px]" onClick={() => handleSort("mapel")}>
+                      <div className="flex items-center gap-1.5">
+                        Mapel Utama
+                        {sortColumn === "mapel" ? (
+                          sortDir === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-40" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="py-3 px-3 cursor-pointer hover:bg-muted/80 select-none min-w-[110px]" onClick={() => handleSort("bebanJp")}>
+                      <div className="flex items-center gap-1.5">
+                        Beban Tatap Muka
+                        {sortColumn === "bebanJp" ? (
+                          sortDir === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-40" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="py-3 px-3 text-center min-w-[120px]">Status 24 JP TPG</th>
+                    <th className="py-3 px-4 text-center min-w-[180px]">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredGtk.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-muted-foreground font-semibold">
+                        Tidak ada data pegawai GTK yang sesuai pencarian.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredGtk.map((item) => (
+                      <tr key={item.id} className="hover:bg-muted/30 transition">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-foreground text-xs">{item.name}</div>
+                          <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                            <span className="font-medium">{item.statusKepegawaian}</span>
+                            {item.golongan && <span>• Gol. {item.golongan}</span>}
+                            {item.tugasTambahan && <span className="text-primary font-semibold">• {item.tugasTambahan}</span>}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 font-mono text-muted-foreground">{item.nip || "-"}</td>
+                        <td className="py-3 px-3 text-muted-foreground">{item.email}</td>
+                        <td className="py-3 px-3 font-medium">{item.mapelUtama}</td>
+                        <td className="py-3 px-3">
+                          <span className="font-bold text-foreground">{item.totalJp} JP</span>
+                          <span className="text-[10px] text-muted-foreground ml-1">/minggu</span>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {item.totalJp >= 24 ? (
+                            <Badge className="bg-emerald-600 text-white font-bold text-[10px] whitespace-nowrap">
+                              ✓ Memenuhi
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-amber-600 border-amber-500/40 text-[10px] whitespace-nowrap">
+                              Kurang {24 - item.totalJp} JP
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs font-bold gap-1"
+                              onClick={() => handleOpenEdit(item)}
+                              title="Edit Data GTK"
+                            >
+                              <Pencil className="h-3.5 w-3.5" /> Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs font-bold gap-1"
+                              onClick={() => handleOpenDetail(item)}
+                              title="Lihat Detail Profil"
+                            >
+                              <Eye className="h-3.5 w-3.5" /> Detail
+                            </Button>
+                            {canDeleteGtk && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs font-bold gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border border-rose-500/20"
+                                onClick={() => handleDeleteGtk(item)}
+                                title="Hapus Data Pegawai GTK"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" /> Hapus
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-          {activeTab === "cuti" && (
+      {activeTab === "cuti" && (
+        <Card className="border-border shadow-sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+            <div>
+              <div className="font-bold text-base text-foreground flex items-center gap-2">
+                <FileSpreadsheet className="h-4 w-4 text-amber-600" /> Layanan Cuti & Surat Izin GTK
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Rekapitulasi berkas pengajuan cuti tahunan, sakit, dan izin dinas tenaga pendidik.
+              </div>
+            </div>
+            {!isKamad && (
+              <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddLeaveOpen(true)}>
+                <Plus className="h-4 w-4" /> Ajukan Cuti Baru
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-xs">
               <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">
                 <tr>
@@ -575,24 +629,36 @@ export function SdmGtkModule({ activeRole, userProfile }: { activeRole?: string;
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {leavesList.map((l) => (
-                  <tr key={l.id} className="hover:bg-muted/30 transition">
-                    <td className="py-3 px-4 font-bold text-foreground">{l.guru_name}</td>
-                    <td className="py-3 px-3 font-semibold">{l.leave_type}</td>
-                    <td className="py-3 px-3 font-mono">{l.start_date} s/d {l.end_date}</td>
-                    <td className="py-3 px-3 text-muted-foreground">{l.reason}</td>
-                    <td className="py-3 px-4 text-center">
-                      <Badge className="bg-emerald-600 text-white font-bold text-[10px]">
-                        ✓ {l.status}
-                      </Badge>
+                {leavesList.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-muted-foreground font-semibold">
+                      Belum ada berkas pengajuan cuti yang tercatat.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  leavesList.map((l) => (
+                    <tr key={l.id} className="hover:bg-muted/30 transition">
+                      <td className="py-3 px-4 font-bold text-foreground">{l.guru_name}</td>
+                      <td className="py-3 px-3 font-semibold">{l.leave_type}</td>
+                      <td className="py-3 px-3 font-mono">{l.start_date} s/d {l.end_date}</td>
+                      <td className="py-3 px-3 text-muted-foreground">{l.reason}</td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge className="bg-emerald-600 text-white font-bold text-[10px]">
+                          ✓ {l.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === "akun" && (
+        <UserManagementModule activeRole={activeRole} userProfile={userProfile} hideHeader={true} />
+      )}
 
       <AddGtkDialog
         isOpen={isAddOpen}

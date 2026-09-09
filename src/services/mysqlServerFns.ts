@@ -1432,18 +1432,36 @@ export const saveWaLogFn = createServerFn({ method: "POST" })
   });
 
 // 8. CBT EXAMS & QUESTIONS
+let hasMigratedCbtSchema = false;
+async function ensureCbtSchemaMigrated() {
+  if (hasMigratedCbtSchema) return;
+  try {
+    const { execute } = await import("@/lib/db");
+    await execute("ALTER TABLE cbt_exams ADD COLUMN class_name VARCHAR(100) DEFAULT 'Semua Kelas'").catch(() => {});
+    await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_questions TINYINT(1) DEFAULT 0").catch(() => {});
+    await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_options TINYINT(1) DEFAULT 0").catch(() => {});
+    await execute("ALTER TABLE cbt_exams ADD COLUMN question_limit INT DEFAULT 0").catch(() => {});
+    await execute("ALTER TABLE cbt_exams ADD COLUMN is_remedial TINYINT(1) DEFAULT 0").catch(() => {});
+    await execute("ALTER TABLE cbt_exams ADD COLUMN parent_exam_id INT DEFAULT NULL").catch(() => {});
+    await execute("ALTER TABLE cbt_exams ADD COLUMN start_time DATETIME DEFAULT NULL").catch(() => {});
+    await execute("ALTER TABLE cbt_exams ADD COLUMN end_time DATETIME DEFAULT NULL").catch(() => {});
+    await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
+    await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
+    await execute("ALTER TABLE cbt_questions ADD COLUMN audio_url VARCHAR(500) DEFAULT NULL").catch(() => {});
+    await execute("ALTER TABLE cbt_exam_results ADD COLUMN essay_score DECIMAL(5,2) DEFAULT 0").catch(() => {});
+    await execute("ALTER TABLE cbt_exam_results ADD COLUMN student_answers LONGTEXT").catch(() => {});
+    await execute("ALTER TABLE cbt_exam_results ADD COLUMN violations_count INT DEFAULT 0").catch(() => {});
+    hasMigratedCbtSchema = true;
+  } catch {
+    // ignore
+  }
+}
+
 export const getCbtExamsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<CbtExamRow[]> => {
     try {
-      const { query, execute } = await import("@/lib/db");
-      await execute("ALTER TABLE cbt_exams ADD COLUMN class_name VARCHAR(100) DEFAULT 'Semua Kelas'").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_questions TINYINT(1) DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_options TINYINT(1) DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN question_limit INT DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN is_remedial TINYINT(1) DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN parent_exam_id INT DEFAULT NULL").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN start_time DATETIME DEFAULT NULL").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN end_time DATETIME DEFAULT NULL").catch(() => {});
+      await ensureCbtSchemaMigrated();
+      const { query } = await import("@/lib/db");
 
       return await query<CbtExamRow[]>("SELECT * FROM cbt_exams ORDER BY id DESC");
     } catch {
@@ -1456,15 +1474,8 @@ export const saveCbtExamFn = createServerFn({ method: "POST" })
   .validator((data: CbtExamRow) => data)
   .handler(async ({ data }): Promise<{ success: boolean; id?: number }> => {
     try {
+      await ensureCbtSchemaMigrated();
       const { execute } = await import("@/lib/db");
-      await execute("ALTER TABLE cbt_exams ADD COLUMN class_name VARCHAR(100) DEFAULT 'Semua Kelas'").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_questions TINYINT(1) DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_options TINYINT(1) DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN question_limit INT DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN is_remedial TINYINT(1) DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN parent_exam_id INT DEFAULT NULL").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN start_time DATETIME DEFAULT NULL").catch(() => {});
-      await execute("ALTER TABLE cbt_exams ADD COLUMN end_time DATETIME DEFAULT NULL").catch(() => {});
 
       const res: any = await execute(
         `INSERT INTO cbt_exams (title, subject_name, token, duration_minutes, passing_score, class_name, randomize_questions, randomize_options, question_limit, is_remedial, parent_exam_id) 
@@ -1520,10 +1531,8 @@ export interface CbtQuestionDbRow {
 export const getCbtQuestionsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<CbtQuestionDbRow[]> => {
     try {
-      const { query, execute } = await import("@/lib/db");
-      await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
-      await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
-      await execute("ALTER TABLE cbt_questions ADD COLUMN audio_url VARCHAR(500) DEFAULT NULL").catch(() => {});
+      await ensureCbtSchemaMigrated();
+      const { query } = await import("@/lib/db");
 
       return await query<CbtQuestionDbRow[]>("SELECT * FROM cbt_questions ORDER BY id DESC");
     } catch {
@@ -1536,10 +1545,8 @@ export const saveCbtQuestionFn = createServerFn({ method: "POST" })
   .validator((data: CbtQuestionDbRow) => data)
   .handler(async ({ data }): Promise<{ success: boolean; id?: number | string }> => {
     try {
+      await ensureCbtSchemaMigrated();
       const { execute } = await import("@/lib/db");
-      await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
-      await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
-      await execute("ALTER TABLE cbt_questions ADD COLUMN audio_url VARCHAR(500) DEFAULT NULL").catch(() => {});
 
       const examId = data.exam_id || 1;
       const res = await execute(
@@ -1570,10 +1577,8 @@ export const batchInsertCbtQuestionsFn = createServerFn({ method: "POST" })
   .validator((data: { examId: number | string; questions: CbtQuestionDbRow[] }) => data)
   .handler(async ({ data }): Promise<{ success: boolean; insertedCount: number }> => {
     try {
+      await ensureCbtSchemaMigrated();
       const { execute } = await import("@/lib/db");
-      await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
-      await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
-      await execute("ALTER TABLE cbt_questions ADD COLUMN audio_url VARCHAR(500) DEFAULT NULL").catch(() => {});
 
       let count = 0;
       for (const q of data.questions) {
@@ -2557,9 +2562,7 @@ export const getCbtResultsFn = createServerFn({ method: "GET" }).handler(
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
-      await execute("ALTER TABLE cbt_exam_results ADD COLUMN essay_score DECIMAL(5,2) DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exam_results ADD COLUMN student_answers LONGTEXT").catch(() => {});
-      await execute("ALTER TABLE cbt_exam_results ADD COLUMN violations_count INT DEFAULT 0").catch(() => {});
+      await ensureCbtSchemaMigrated();
 
       return await query<CbtResultRow[]>("SELECT * FROM cbt_exam_results ORDER BY id DESC");
     } catch (e) {
@@ -2593,9 +2596,7 @@ export const saveCbtResultFn = createServerFn({ method: "POST" })
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
-      await execute("ALTER TABLE cbt_exam_results ADD COLUMN essay_score DECIMAL(5,2) DEFAULT 0").catch(() => {});
-      await execute("ALTER TABLE cbt_exam_results ADD COLUMN student_answers LONGTEXT").catch(() => {});
-      await execute("ALTER TABLE cbt_exam_results ADD COLUMN violations_count INT DEFAULT 0").catch(() => {});
+      await ensureCbtSchemaMigrated();
 
       const res: any = await execute(
         `INSERT INTO cbt_exam_results (exam_id, exam_title, user_id, student_name, rombel, score, total_correct, total_questions, essay_score, status, student_answers, violations_count)

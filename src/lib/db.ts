@@ -67,7 +67,15 @@ export async function execute(sql: string, params?: any[]): Promise<any> {
     const [result] = await pool.execute(sql, params);
     return result;
   } catch (err: any) {
-    console.error(`[MySQL Execute Error]: ${err?.message || err}`);
+    const isDuplicateFieldOrKey =
+      err?.code === 'ER_DUP_FIELDNAME' ||
+      err?.errno === 1060 ||
+      err?.code === 'ER_DUP_KEYNAME' ||
+      err?.errno === 1061;
+
+    if (!isDuplicateFieldOrKey) {
+      console.error(`[MySQL Execute Error]: ${err?.message || err}`);
+    }
     throw err;
   }
 }

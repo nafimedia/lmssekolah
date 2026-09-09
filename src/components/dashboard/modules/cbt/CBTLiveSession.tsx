@@ -182,46 +182,6 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* RBAC Role Scope Notification Banner */}
-      <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="font-semibold text-foreground">
-            Akses Hak Peran (RBAC):{" "}
-            <span className="font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
-              {userRole === "siswa"
-                ? "Siswa (Peserta CBT)"
-                : userRole === "guru"
-                  ? "Guru Pengampu (Proktor & Pembuat Sesi)"
-                  : userRole === "walikelas" || userRole === "wali_kelas"
-                    ? "Wali Kelas (Monitoring Rombel Binaan)"
-                    : userRole === "kamad"
-                      ? "Kepala Madrasah (Executive Monitoring)"
-                      : userRole === "waka"
-                        ? "Waka Kurikulum (Audit & Proktor)"
-                        : "Super Admin (Full Access)"}
-            </span>
-          </span>
-        </div>
-
-        {/* {isWaliKelas && (
-          <Badge variant="outline" className="bg-emerald-600/10 text-emerald-600 border border-emerald-500/30 px-3 py-1 font-bold text-xs gap-1">
-            <Lock className="h-3.5 w-3.5" /> 🔒 Terkunci Rombel Binaan: {binaanRombel}
-          </Badge>
-        )} */}
-
-        {isTeacherOrAdmin && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsResetModalOpen(true)}
-            className="gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400 border-amber-400/40 hover:bg-amber-500/10 h-7"
-          >
-            <RotateCcw className="h-3.5 w-3.5" /> Reset Sesi Terkunci Siswa
-          </Button>
-        )}
-      </div>
-
       {/* Header & Filter Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
@@ -235,13 +195,23 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
         </div>
 
         {isTeacherOrAdmin && (
-          <Button
-            size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-          >
-            <Plus className="h-4 w-4" /> Terbitkan Sesi CBT Baru
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsResetModalOpen(true)}
+              className="gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 border-amber-400/40 hover:bg-amber-500/10"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Reset Sesi Terkunci Siswa
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <Plus className="h-4 w-4" /> Terbitkan Sesi CBT Baru
+            </Button>
+          </div>
         )}
       </div>
 

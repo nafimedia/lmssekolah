@@ -291,8 +291,8 @@ export function PengaturanModule() {
           </CardHeader>
           <CardContent className="p-4 space-y-2.5 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Security Guard RBAC:</span>
-              <Badge className="bg-purple-600 text-white text-[10px]">Role Guard Active</Badge>
+              <span className="text-muted-foreground">Proteksi Hak Akses Akun:</span>
+              <Badge className="bg-emerald-600 text-white text-[10px]">Aktif Terlindungi</Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Total Akun Terdaftar:</span>

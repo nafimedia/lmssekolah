@@ -4,10 +4,17 @@ import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Lock,
@@ -28,6 +35,9 @@ import {
   Sun,
   Moon,
   ArrowLeft,
+  KeyRound,
+  Building2,
+  MessageSquare,
 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
@@ -59,6 +69,24 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Ingat Saya (Remember Me) & Dialog Lupa Sandi
+  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("lms_remember_me") === "true";
+    }
+    return false;
+  });
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedUser = localStorage.getItem("lms_saved_username");
+      if (savedUser) {
+        setEmail(savedUser);
+      }
+    }
+  }, []);
 
   // Tema Terang / Gelap (Light / Dark Mode)
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -105,6 +133,17 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setLoginError(null);
+
+    // Simpan identitas jika centang "Ingat saya" aktif
+    if (typeof window !== "undefined") {
+      if (rememberMe) {
+        localStorage.setItem("lms_remember_me", "true");
+        localStorage.setItem("lms_saved_username", email);
+      } else {
+        localStorage.removeItem("lms_remember_me");
+        localStorage.removeItem("lms_saved_username");
+      }
+    }
 
     const result = await MysqlAuthService.authenticateUser(email, password);
     setLoading(false);
@@ -309,15 +348,30 @@ function AuthPage() {
                     </div>
                   </div>
 
-                  {/* Catatan Bantuan Kecil */}
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Guru silakan gunakan NIP, siswa menggunakan NISN resmi dari madrasah.
-                  </p>
+                  {/* Opsi Ingat Saya & Lupa Sandi */}
+                  <div className="flex items-center justify-between pt-0.5">
+                    <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="rounded border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5"
+                      />
+                      <span>Ingat saya di perangkat ini</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotOpen(true)}
+                      className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 font-medium transition-colors cursor-pointer"
+                    >
+                      Lupa sandi?
+                    </button>
+                  </div>
 
                   {/* Tombol Masuk */}
                   <Button
                     type="submit"
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-xl shadow-sm transition-all cursor-pointer"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-xl shadow-sm transition-all cursor-pointer mt-1"
                     disabled={loading}
                   >
                     {loading ? (
@@ -527,12 +581,63 @@ function AuthPage() {
       {/* Footer Sederhana di Bawah Card */}
       <footer className="w-full max-w-md mx-auto text-center py-4 space-y-1">
         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-          © {new Date().getFullYear()} MTs Negeri 2 Cilacap
+          v.1.0 • LMS MTs Negeri 2 Cilacap
         </p>
         <p className="text-[11px] text-slate-400 dark:text-slate-500">
-          Kementerian Agama Republik Indonesia
+          Berstandar Kurikulum Merdeka • Kementerian Agama Republik Indonesia
         </p>
       </footer>
+
+      {/* Dialog Panduan Bantuan Lupa Kata Sandi */}
+      <Dialog open={isForgotOpen} onOpenChange={setIsForgotOpen}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+          <DialogHeader className="space-y-2 text-left">
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+              <KeyRound className="h-5 w-5 text-emerald-600" /> Bantuan Lupa Kata Sandi
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Untuk menjaga privasi dan keamanan data akademik di MTs Negeri 2 Cilacap, pengaturan ulang kata sandi dilakukan secara terpusat oleh Operator Madrasah.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
+            <div className="flex items-start gap-2.5">
+              <Building2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 block">Kunjungi Langsung:</span>
+                <span className="text-slate-500 dark:text-slate-400">Ruang Tata Usaha (TU) atau Ruang IT Komputer MTsN 2 Cilacap.</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <MessageSquare className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 block">Hubungi Operator Madrasah:</span>
+                <span className="text-slate-500 dark:text-slate-400">Sampaikan NISN (siswa) atau NIP (guru) kepada operator madrasah untuk dibuatkan kata sandi baru.</span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsForgotOpen(false)}
+              className="text-xs font-semibold rounded-xl"
+            >
+              Tutup
+            </Button>
+            <a
+              href="https://wa.me/6281234567890?text=Halo%20Operator%20LMS%20MTsN%202%20Cilacap,%20saya%20membutuhkan%20bantuan%20reset%20kata%20sandi%20akun%20saya."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-xs"
+            >
+              <MessageSquare className="h-3.5 w-3.5" /> Hubungi via WhatsApp
+            </a>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

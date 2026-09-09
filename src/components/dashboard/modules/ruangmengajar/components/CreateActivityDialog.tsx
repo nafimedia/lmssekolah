@@ -20,6 +20,7 @@ import {
   FileSpreadsheet,
   Library,
   ArrowLeft,
+  Bookmark,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
@@ -254,14 +255,16 @@ export function CreateActivityForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !instructions.trim()) {
-      return toast.error("Mohon lengkapi judul dan instruksi terlebih dahulu!");
+  const handleSaveActivity = async (isDraft: boolean = false) => {
+    if (!title.trim()) {
+      return toast.error("Mohon isi judul aktivitas terlebih dahulu!");
+    }
+    if (!isDraft && !instructions.trim()) {
+      return toast.error("Mohon lengkapi petunjuk / instruksi aktivitas sebelum menerbitkan!");
     }
 
-    if (type === "QUIZ" && quizQuestions.length === 0) {
-      return toast.error("Kuis Formatif membutuhkan minimal 1 soal!");
+    if (!isDraft && type === "QUIZ" && quizQuestions.length === 0) {
+      return toast.error("Kuis Formatif membutuhkan minimal 1 soal sebelum diterbitkan!");
     }
 
     // Tentukan finalAttachmentUrl: Jika mode upload file lokal, kirim fileBase64
@@ -279,16 +282,18 @@ export function CreateActivityForm({
     const activeUser = MysqlAuthService.getActiveUser();
     const resolvedTeacherName = activeUser?.full_name || "Guru Pengampu";
 
+    const targetStatus = isDraft ? "DRAF" : "AKTIF";
+
     const payload = {
       rombel: activeRombel,
       mapel: activeMapel,
       teacher_name: resolvedTeacherName,
       title: title.trim(),
       type: type,
-      instructions: instructions.trim(),
+      instructions: instructions.trim() || "(Belum ada petunjuk tugas)",
       due_date: dueDate,
       max_score: Number(maxScore) || 100,
-      status: "AKTIF",
+      status: targetStatus,
       attachment_url: finalAttachment,
       submission_type: submissionType,
       quiz_data: type === "QUIZ" ? JSON.stringify(quizQuestions) : "",
@@ -302,7 +307,7 @@ export function CreateActivityForm({
       title: title.trim(),
       type: type,
       dueDate: dueDate,
-      status: "AKTIF",
+      status: targetStatus,
       submittedCount: 0,
       totalStudents: 0,
       attachment_url: finalAttachment.startsWith("data:") ? "/uploads/lkpd/..." : finalAttachment,
@@ -310,7 +315,11 @@ export function CreateActivityForm({
     };
 
     onActivityCreated(created);
-    toast.success(`✅ Aktivitas "${title}" berhasil diterbitkan!`);
+    if (isDraft) {
+      toast.success(`💾 Aktivitas "${title}" berhasil disimpan sebagai draf!`);
+    } else {
+      toast.success(`✅ Aktivitas "${title}" berhasil diterbitkan ke siswa!`);
+    }
     setTitle("");
     setInstructions("");
     setSelectedFile(null);
@@ -318,6 +327,11 @@ export function CreateActivityForm({
     setAttachmentUrl("");
     setSelectedElibraryBook(null);
     onCancel();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleSaveActivity(false);
   };
 
   const isQuestionType = type === "LKPD" || type === "PRAKTIKUM" || type === "TUGAS_MANDIRI";
@@ -361,10 +375,19 @@ export function CreateActivityForm({
                 Batal
               </Button>
               <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="text-xs font-medium gap-1.5 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                onClick={() => handleSaveActivity(true)}
+              >
+                <Bookmark className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> Simpan Draf
+              </Button>
+              <Button
                 type="submit"
                 form="create-activity-form"
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 shadow-xs"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 shadow-xs cursor-pointer"
               >
                 <CheckCircle2 className="h-4 w-4" /> Terbitkan Aktivitas
               </Button>
@@ -822,7 +845,16 @@ export function CreateActivityForm({
               <Button type="button" variant="outline" size="sm" className="text-xs font-medium px-4" onClick={onCancel}>
                 Batal
               </Button>
-              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 px-5 shadow-xs">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="text-xs font-medium gap-1.5 px-4 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                onClick={() => handleSaveActivity(true)}
+              >
+                <Bookmark className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> Simpan Draf
+              </Button>
+              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 px-5 shadow-xs cursor-pointer">
                 <CheckCircle2 className="h-4 w-4" /> Terbitkan Aktivitas Ke Siswa
               </Button>
             </div>

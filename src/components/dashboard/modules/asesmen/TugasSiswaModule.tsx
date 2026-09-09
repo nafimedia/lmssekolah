@@ -157,7 +157,9 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         return teacherRaw || "Guru Pengampu";
       };
 
-      const mappedLkpdAssignments: AssignmentRow[] = (dbLkpd || []).map((l: any) => ({
+      const mappedLkpdAssignments: AssignmentRow[] = (dbLkpd || [])
+        .filter((l: any) => (l.status || "").toUpperCase() !== "DRAF")
+        .map((l: any) => ({
         id: String(l.id),
         title: l.title,
         mapel: l.mapel || "Mata Pelajaran",

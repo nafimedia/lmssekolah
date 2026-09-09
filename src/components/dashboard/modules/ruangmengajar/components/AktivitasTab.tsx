@@ -169,8 +169,14 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                         <><FileText className="h-3 w-3 text-primary" /> {act.type}</>
                       )}
                     </Badge>
-                    <Badge className="bg-emerald-600 text-white font-semibold text-[10px]">
-                      {act.status}
+                    <Badge
+                      className={`text-white font-semibold text-[10px] ${
+                        act.status === "DRAF"
+                          ? "bg-amber-500 hover:bg-amber-600"
+                          : "bg-emerald-600 hover:bg-emerald-700"
+                      }`}
+                    >
+                      {act.status === "DRAF" ? "DRAF" : act.status}
                     </Badge>
                   </div>
 

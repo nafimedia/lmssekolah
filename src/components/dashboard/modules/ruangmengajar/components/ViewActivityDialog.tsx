@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check, Lock, ExternalLink, MessageSquare, Send } from "lucide-react";
+import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check, Lock, ExternalLink, MessageSquare, Send, Star, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
-import { MysqlDataService, LkpdDiscussionRow } from "@/services/mysqlDataService";
+import { MysqlDataService, LkpdDiscussionRow, PeerAssessmentRow } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 
@@ -22,6 +22,7 @@ export interface ActivityDetail {
   submission_type?: string;
   quiz_data?: string;
   questions_data?: string;
+  peer_assessment_enabled?: number | boolean;
 }
 
 interface StudentGradeRow {
@@ -50,6 +51,7 @@ export function ViewActivityDialog({
 }: ViewActivityDialogProps) {
   const [grades, setGrades] = useState<StudentGradeRow[]>([]);
   const [discussions, setDiscussions] = useState<LkpdDiscussionRow[]>([]);
+  const [peerAssessments, setPeerAssessments] = useState<PeerAssessmentRow[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const isAllowed = isSubjectAllowedForUser(activeMapel);
 
@@ -63,9 +65,11 @@ export function ViewActivityDialog({
       MysqlDataService.getLkpdGrades(activity.id),
       MysqlDataService.getUsers(),
       MysqlDataService.getLkpdDiscussions(activity.id),
-    ]).then(([savedGrades, users, discList]) => {
+      MysqlDataService.getPeerAssessments(activity.id),
+    ]).then(([savedGrades, users, discList, peerList]) => {
       if (!isMounted) return;
       if (discList) setDiscussions(discList);
+      if (peerList) setPeerAssessments(peerList);
 
       const siswaList = (users || []).filter((u: any) => u.role === "siswa");
 
@@ -200,6 +204,47 @@ export function ViewActivityDialog({
       parsedLkpdQuestions = [];
     }
   }
+
+  // Group peer assessment by student (evaluatee)
+  const peerAssessmentByStudent = useMemo(() => {
+    const map: Record<string, {
+      evaluations: PeerAssessmentRow[];
+      avgScore: number;
+      avgKeaktifan: number;
+      avgKerjasama: number;
+      avgTanggungJawab: number;
+      avgSikap: number;
+    }> = {};
+
+    for (const pa of peerAssessments) {
+      const key = (pa.evaluatee_nisn || pa.evaluatee_name || "").toLowerCase().trim();
+      if (!map[key]) {
+        map[key] = {
+          evaluations: [],
+          avgScore: 0,
+          avgKeaktifan: 0,
+          avgKerjasama: 0,
+          avgTanggungJawab: 0,
+          avgSikap: 0,
+        };
+      }
+      map[key].evaluations.push(pa);
+    }
+
+    for (const key in map) {
+      const list = map[key].evaluations;
+      const total = list.length;
+      if (total > 0) {
+        map[key].avgKeaktifan = Number((list.reduce((acc, c) => acc + Number(c.score_keaktifan || 0), 0) / total).toFixed(1));
+        map[key].avgKerjasama = Number((list.reduce((acc, c) => acc + Number(c.score_kerjasama || 0), 0) / total).toFixed(1));
+        map[key].avgTanggungJawab = Number((list.reduce((acc, c) => acc + Number(c.score_tanggung_jawab || 0), 0) / total).toFixed(1));
+        map[key].avgSikap = Number((list.reduce((acc, c) => acc + Number(c.score_sikap || 0), 0) / total).toFixed(1));
+        map[key].avgScore = Number((list.reduce((acc, c) => acc + Number(c.average_score || 0), 0) / total).toFixed(2));
+      }
+    }
+
+    return map;
+  }, [peerAssessments]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -349,6 +394,95 @@ export function ViewActivityDialog({
               </Button>
             </form>
           </div>
+
+          {/* Rekapitulasi Penilaian Antarteman (Peer Assessment) */}
+          {(activity.peer_assessment_enabled || activity.type === "TUGAS_KELOMPOK" || peerAssessments.length > 0) && (
+            <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-900 bg-amber-50/30 dark:bg-amber-950/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-amber-900 dark:text-amber-200">
+                      Rekapitulasi Penilaian Antarteman (Peer Assessment)
+                    </h4>
+                    <p className="text-[11px] text-amber-800/80 dark:text-amber-400/80">
+                      Hasil evaluasi rekan satu kelompok/kelas berbasis 4 pilar karakter Kurikulum Merdeka.
+                    </p>
+                  </div>
+                </div>
+                <Badge className="bg-amber-600 text-white font-mono text-[10px]">
+                  {peerAssessments.length} Total Penilaian Masuk
+                </Badge>
+              </div>
+
+              {peerAssessments.length === 0 ? (
+                <div className="p-4 rounded-lg bg-background/80 border border-amber-200 dark:border-amber-900/60 text-center text-xs text-muted-foreground italic">
+                  Belum ada peserta didik yang mengirimkan penilaian antarteman untuk aktivitas ini.
+                </div>
+              ) : (
+                <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
+                  {Object.entries(peerAssessmentByStudent).map(([key, data]) => {
+                    const studentName = data.evaluations[0]?.evaluatee_name || key;
+                    const studentNisn = data.evaluations[0]?.evaluatee_nisn || "-";
+                    return (
+                      <div key={key} className="p-3 rounded-lg border border-border bg-card text-xs space-y-2 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-border/60 pb-2">
+                          <div>
+                            <span className="font-bold text-foreground text-xs">{studentName}</span>
+                            <span className="text-[10px] text-muted-foreground font-mono ml-2">NISN: {studentNisn}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] font-bold text-amber-600 dark:text-amber-400 border-amber-300 gap-1">
+                              <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
+                              {data.avgScore} / 4.0 ({data.evaluations.length} Teman Menilai)
+                            </Badge>
+                            <Badge className="bg-emerald-600 text-white text-[10px] font-mono font-bold">
+                              Konversi: {Math.round((data.avgScore / 4) * 100)} / 100
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Nilai 4 Aspek */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                          <div className="p-1.5 rounded-md bg-muted/40 text-center">
+                            <span className="text-muted-foreground text-[10px] block">Keaktifan</span>
+                            <span className="font-bold text-emerald-600">{data.avgKeaktifan} ★</span>
+                          </div>
+                          <div className="p-1.5 rounded-md bg-muted/40 text-center">
+                            <span className="text-muted-foreground text-[10px] block">Kerjasama</span>
+                            <span className="font-bold text-blue-600">{data.avgKerjasama} ★</span>
+                          </div>
+                          <div className="p-1.5 rounded-md bg-muted/40 text-center">
+                            <span className="text-muted-foreground text-[10px] block">Tanggung Jawab</span>
+                            <span className="font-bold text-amber-600">{data.avgTanggungJawab} ★</span>
+                          </div>
+                          <div className="p-1.5 rounded-md bg-muted/40 text-center">
+                            <span className="text-muted-foreground text-[10px] block">Sikap & Tasamuh</span>
+                            <span className="font-bold text-teal-600">{data.avgSikap} ★</span>
+                          </div>
+                        </div>
+
+                        {/* Catatan Masukan Teman */}
+                        <div className="pt-1 space-y-1">
+                          <span className="text-[10px] font-semibold text-muted-foreground block">Catatan & Masukan Teman:</span>
+                          <div className="space-y-1">
+                            {data.evaluations.filter((ev) => ev.feedback && ev.feedback.trim() !== "").map((ev, fIdx) => (
+                              <div key={fIdx} className="p-1.5 rounded bg-muted/30 text-[11px] text-muted-foreground italic flex items-start gap-1.5">
+                                <span className="font-semibold not-italic text-foreground text-[10px]">Dari {ev.evaluator_name}:</span>
+                                <span>"{ev.feedback}"</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Student Grading Table */}
           <div className="space-y-2">

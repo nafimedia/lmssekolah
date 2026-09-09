@@ -21,6 +21,7 @@ import {
   Library,
   ArrowLeft,
   Bookmark,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
@@ -89,6 +90,7 @@ export function CreateActivityForm({
   const [dueDate, setDueDate] = useState("");
   const [maxScore, setMaxScore] = useState("100");
   const [submissionType, setSubmissionType] = useState("TEXT_AND_FILE");
+  const [peerAssessmentEnabled, setPeerAssessmentEnabled] = useState(false);
 
   // Attachment State (Physical File Upload or URL or E-Library)
   const [uploadMode, setUploadMode] = useState<"FILE" | "URL" | "ELIBRARY">("FILE");
@@ -148,6 +150,9 @@ export function CreateActivityForm({
 
   const handleSelectType = (opt: typeof activityOptions[0]) => {
     setType(opt.id);
+    if (opt.id === "TUGAS_KELOMPOK" || opt.id === "PROYEK_P5") {
+      setPeerAssessmentEnabled(true);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -298,6 +303,7 @@ export function CreateActivityForm({
       submission_type: submissionType,
       quiz_data: type === "QUIZ" ? JSON.stringify(quizQuestions) : "",
       questions_data: questionsDataStr,
+      peer_assessment_enabled: peerAssessmentEnabled ? 1 : 0,
     };
 
     const res = await MysqlDataService.saveLkpdActivity(payload);
@@ -416,6 +422,53 @@ export function CreateActivityForm({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Sakelar Penilaian Antarteman (Peer Assessment) */}
+            <div className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <label htmlFor="toggle-peer-assessment" className="text-xs font-semibold text-foreground cursor-pointer block">
+                      Aktifkan Penilaian Antarteman (Peer Assessment)
+                    </label>
+                    <span className="text-[11px] text-muted-foreground block">
+                      Peserta didik saling menilai keaktifan, kerjasama, tanggung jawab, dan sikap sesama anggota kelompok.
+                    </span>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  id="toggle-peer-assessment"
+                  checked={peerAssessmentEnabled}
+                  onChange={(e) => setPeerAssessmentEnabled(e.target.checked)}
+                  className="rounded border-border text-emerald-600 focus:ring-emerald-500 h-4 w-4 cursor-pointer"
+                />
+              </div>
+
+              {peerAssessmentEnabled && (
+                <div className="pt-2 border-t border-border/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                  <div className="p-2 rounded-lg bg-background border border-border/60">
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400 block">1. Keaktifan</span>
+                    <span className="text-muted-foreground text-[10px]">Inisiatif ide & keaktifan diskusi</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-background border border-border/60">
+                    <span className="font-semibold text-blue-700 dark:text-blue-400 block">2. Kerjasama</span>
+                    <span className="text-muted-foreground text-[10px]">Kekompakan & kontribusi tugas</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-background border border-border/60">
+                    <span className="font-semibold text-amber-700 dark:text-amber-400 block">3. Tanggung Jawab</span>
+                    <span className="text-muted-foreground text-[10px]">Menyelesaikan bagian tepat waktu</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-background border border-border/60">
+                    <span className="font-semibold text-teal-700 dark:text-teal-400 block">4. Sikap & Tasamuh</span>
+                    <span className="text-muted-foreground text-[10px]">Menghargai pendapat teman</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Judul Aktivitas */}

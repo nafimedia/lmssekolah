@@ -223,6 +223,63 @@ export const DOCS_DATA: DocCategory[] = [
         ],
       },
       {
+        id: "siswa-peer-assessment",
+        slug: "siswa-peer-assessment",
+        title: "Penilaian Antarteman (Peer Assessment)",
+        category: "Panduan Siswa",
+        role: "siswa",
+        lead: "Panduan memberikan evaluasi dan apresiasi objektif kepada rekan sekelompok dalam aktivitas tugas kelompok digital.",
+        content: [
+          "Pada tugas kelompok yang mengaktifkan fitur Penilaian Antarteman, siswa berkesempatan memberikan evaluasi dan apresiasi terhadap peran serta anggota kelompoknya.",
+          "Penilaian antarteman bertujuan menumbuhkan budaya refleksi, kejujuran, sportivitas, dan rasa saling menghargai sesuai Profil Pelajar Pancasila dan Profil Pelajar Rahmatan Lil 'Alamin (P5-PPRA).",
+          "Setiap siswa menilai rekannya berdasarkan 4 pilar dimensi utama: (1) Keaktifan & Inisiatif Ide, (2) Kerjasama & Kontribusi Tim, (3) Tanggung Jawab Penyelesaian Tugas, dan (4) Sikap Menghargai Pendapat Rekan.",
+          "Penilaian yang Anda berikan bersifat rahasia antar-siswa untuk menjaga kenyamanan dan objektivitas, namun dapat ditinjau oleh guru pengampu sebagai salah satu komponen asesmen proses.",
+        ],
+        screenshot: {
+          src: "/docs/screenshots/siswa_peer_assessment.png",
+          alt: "Modal Penilaian Antarteman Siswa",
+          caption: "Jendela Penilaian Antarteman: Pemilihan rekan kelompok, pemberian bintang 1–4 per aspek kriteria, dan pesan apresiasi motivasi.",
+        },
+        steps: [
+          {
+            number: 1,
+            title: "Buka Modul 'Tugas & Submisi LKPD'",
+            description: "Pilih menu Tugas pada Ruang Belajar untuk melihat daftar tugas kelompok yang sedang berlangsung.",
+          },
+          {
+            number: 2,
+            title: "Klik Tombol 'Beri Nilai Teman'",
+            description: "Pada baris tugas kelompok yang bertanda lencana 'Penilaian Antarteman Aktif', klik tombol bertanda bintang 'Beri Nilai Teman'.",
+          },
+          {
+            number: 3,
+            title: "Pilih Nama Rekan yang Ingin Dinilai",
+            description: "Pilih nama teman sekelompok dari daftar dropdown yang tersedia.",
+          },
+          {
+            number: 4,
+            title: "Tentukan Rating Bintang (1–4 Bintang)",
+            description: "Berikan bintang 1 (Kurang) sampai 4 (Sangat Baik) pada 4 aspek: Keaktifan, Kerjasama, Tanggung Jawab, dan Sikap.",
+          },
+          {
+            number: 5,
+            title: "Tuliskan Pesan Apresiasi & Kirim",
+            description: "Ketik kalimat masukan atau motivasi yang membangun di kolom umpan balik, lalu klik tombol 'Kirim Penilaian Antarteman'.",
+          },
+        ],
+        callouts: [
+          {
+            type: "tip",
+            title: "Prinsip Kejujuran & Akhlakul Karimah",
+            text: "Berikanlah penilaian secara adil, objektif, dan bertanggung jawab berdasarkan pengamatan nyata selama bekerjasama dalam tim tanpa rasa pilih kasih.",
+          },
+        ],
+        subsections: [
+          { id: "kriteria-peer", title: "4 Dimensi Kriteria Penilaian" },
+          { id: "kerahasiaan-nilai", title: "Kerahasiaan & Umpan Balik" },
+        ],
+      },
+      {
         id: "siswa-cbt",
         slug: "siswa-cbt",
         title: "Ujian Online CBT (Token, Timer & Navigasi Soal)",
@@ -502,6 +559,63 @@ export const DOCS_DATA: DocCategory[] = [
         subsections: [
           { id: "editor-lkpd", title: "Menggunakan Card Editor" },
           { id: "koreksi-jawaban", title: "Menilai Jawaban Siswa" },
+        ],
+      },
+      {
+        id: "guru-peer-assessment",
+        slug: "guru-peer-assessment",
+        title: "Penilaian Antarteman (Peer Assessment) Tugas Kelompok",
+        category: "Panduan Guru",
+        role: "guru",
+        lead: "Aktivasi instrumen penilaian antarteman pada tugas kelompok dan pemantauan rekapitulasi skor 4 pilar sikap secara transparan.",
+        content: [
+          "Kurikulum Merdeka Kemenag mendorong asesmen formatif yang partisipatif, salah satunya melalui Penilaian Antarteman (Peer Assessment) pada penugasan kolaboratif dan proyek kelompok.",
+          "Saat menyusun atau mengedit tugas bertipe 'Kelompok', guru cukup mencentang opsi 'Aktifkan Penilaian Antarteman (Peer Assessment)'. Sistem secara otomatis menyiapkan instrumen 4 dimensi: Keaktifan, Kerjasama, Tanggung Jawab, dan Sikap.",
+          "Hasil penilaian antarteman dihimpun secara otomatis dalam bentuk Rekapitulasi Rata-Rata Bintang (1–4) dan dikonversi langsung ke skala puluhan/ratusan (0–100) lengkap dengan jumlah penilai serta catatan kualitatif antar-siswa.",
+          "Informasi ini memberikan gambaran komprehensif bagi guru untuk menilai kontribusi riil tiap individu di dalam kelompok, bukan hanya hasil produk akhir kelompok.",
+        ],
+        screenshot: {
+          src: "/docs/screenshots/guru_peer_assessment.png",
+          alt: "Rekapitulasi Penilaian Antarteman Guru",
+          caption: "Panel Rekapitulasi Penilaian Antarteman: Konversi skala 0–100, rincian 4 pilar dimensi, jumlah penilai, dan kutipan umpan balik siswa.",
+        },
+        steps: [
+          {
+            number: 1,
+            title: "Buka Tab 'Tugas & LKPD' di Ruang Mengajar",
+            description: "Akses pertemuan KBM yang sedang aktif dan pilih menu Tugas & LKPD.",
+          },
+          {
+            number: 2,
+            title: "Pilih Kategori Tugas 'Diskusi & Kelompok'",
+            description: "Klik 'Buat LKPD Baru' atau klik ikon edit pada tugas yang sudah ada, lalu pilih kategori 'Diskusi & Kelompok'.",
+          },
+          {
+            number: 3,
+            title: "Centang 'Aktifkan Penilaian Antarteman'",
+            description: "Centang kotak opsi Peer Assessment agar tombol penilaian antarteman muncul di aplikasi siswa peserta rombel.",
+          },
+          {
+            number: 4,
+            title: "Buka Detail Jawaban Siswa & Lihat Rekap",
+            description: "Klik 'Lihat Submisi' pada tugas. Di dalam dialog penilaian, buka kartu 'Rekapitulasi Penilaian Antarteman' untuk memantau skor rata-rata tiap siswa.",
+          },
+        ],
+        callouts: [
+          {
+            type: "info",
+            title: "Konversi Nilai Otomatis",
+            text: "Nilai bintang 1 sampai 4 dikonversi secara matematis menjadi rentang nilai 0–100 untuk mempermudah guru menggabungkannya ke dalam nilai formatif rapor.",
+          },
+          {
+            type: "tip",
+            title: "Supervisi Kerjasama Tim",
+            text: "Gunakan catatan umpan balik antarteman untuk mengidentifikasi siswa yang membutuhkan pendampingan khusus dalam bersosialisasi dan bekerja sama.",
+          },
+        ],
+        subsections: [
+          { id: "aktivasi-peer", title: "Cara Mengaktifkan Peer Assessment" },
+          { id: "rekap-guru", title: "Membaca Rekapitulasi & Konversi Nilai" },
         ],
       },
       {

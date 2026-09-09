@@ -3693,6 +3693,26 @@ export interface LkpdActivityRow {
   submission_type?: string;
   quiz_data?: string;
   questions_data?: string;
+  peer_assessment_enabled?: number | boolean;
+  peer_criteria?: string;
+  created_at?: string;
+}
+
+export interface PeerAssessmentRow {
+  id?: string;
+  activity_id: string;
+  rombel: string;
+  mapel: string;
+  evaluator_nisn: string;
+  evaluator_name: string;
+  evaluatee_nisn: string;
+  evaluatee_name: string;
+  score_keaktifan: number;
+  score_kerjasama: number;
+  score_tanggung_jawab: number;
+  score_sikap: number;
+  average_score: number;
+  feedback?: string;
   created_at?: string;
 }
 
@@ -3755,6 +3775,34 @@ async function ensureLkpdSchema(execute: any) {
     if (!colNames.has("questions_data")) {
       await execute("ALTER TABLE lkpd_activities ADD COLUMN questions_data LONGTEXT").catch(() => {});
     }
+    if (!colNames.has("peer_assessment_enabled")) {
+      await execute("ALTER TABLE lkpd_activities ADD COLUMN peer_assessment_enabled TINYINT(1) DEFAULT 0").catch(() => {});
+    }
+    if (!colNames.has("peer_criteria")) {
+      await execute("ALTER TABLE lkpd_activities ADD COLUMN peer_criteria TEXT").catch(() => {});
+    }
+    await execute(`
+      CREATE TABLE IF NOT EXISTS peer_assessments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        activity_id VARCHAR(100) NOT NULL,
+        rombel VARCHAR(100) NOT NULL,
+        mapel VARCHAR(255) NOT NULL,
+        evaluator_nisn VARCHAR(100) NOT NULL,
+        evaluator_name VARCHAR(255) NOT NULL,
+        evaluatee_nisn VARCHAR(100) NOT NULL,
+        evaluatee_name VARCHAR(255) NOT NULL,
+        score_keaktifan INT DEFAULT 4,
+        score_kerjasama INT DEFAULT 4,
+        score_tanggung_jawab INT DEFAULT 4,
+        score_sikap INT DEFAULT 4,
+        average_score DECIMAL(4,2) DEFAULT 4.00,
+        feedback TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX (activity_id),
+        INDEX (evaluator_nisn),
+        INDEX (evaluatee_nisn)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
     await execute(`
       CREATE TABLE IF NOT EXISTS lkpd_discussions (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -3842,8 +3890,8 @@ export const saveLkpdActivityFn = createServerFn({ method: "POST" })
       }
 
       const res: any = await execute(
-        `INSERT INTO lkpd_activities (rombel, mapel, teacher_name, title, type, instructions, due_date, max_score, status, attachment_url, submission_type, quiz_data, questions_data)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO lkpd_activities (rombel, mapel, teacher_name, title, type, instructions, due_date, max_score, status, attachment_url, submission_type, quiz_data, questions_data, peer_assessment_enabled, peer_criteria)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.rombel,
           data.mapel,
@@ -3858,6 +3906,8 @@ export const saveLkpdActivityFn = createServerFn({ method: "POST" })
           data.submission_type || "TEXT_AND_FILE",
           data.quiz_data || "",
           data.questions_data || "",
+          data.peer_assessment_enabled ? 1 : 0,
+          data.peer_criteria || "",
         ]
       );
       return { success: true, id: String(res?.insertId || Date.now()) };
@@ -4051,6 +4101,90 @@ export const postLkpdDiscussionFn = createServerFn({ method: "POST" })
       return { success: true, id: String(res?.insertId || Date.now()) };
     } catch (e) {
       console.error("[postLkpdDiscussionFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const getPeerAssessmentsFn = createServerFn({ method: "POST" })
+  .validator((data: { activity_id: string }) => data)
+  .handler(async ({ data }): Promise<PeerAssessmentRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await ensureLkpdSchema(execute);
+      const rows = await query<PeerAssessmentRow[]>(
+        "SELECT * FROM peer_assessments WHERE activity_id = ? ORDER BY id DESC",
+        [data.activity_id]
+      );
+      return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
+    } catch (e) {
+      console.error("[getPeerAssessmentsFn Error]:", e);
+      return [];
+    }
+  });
+
+export const savePeerAssessmentFn = createServerFn({ method: "POST" })
+  .validator((data: PeerAssessmentRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await ensureLkpdSchema(execute);
+
+      const avg = Number(
+        (
+          (Number(data.score_keaktifan || 4) +
+            Number(data.score_kerjasama || 4) +
+            Number(data.score_tanggung_jawab || 4) +
+            Number(data.score_sikap || 4)) /
+          4
+        ).toFixed(2)
+      );
+
+      const existing = await query<any[]>(
+        "SELECT id FROM peer_assessments WHERE activity_id = ? AND evaluator_nisn = ? AND evaluatee_nisn = ?",
+        [data.activity_id, data.evaluator_nisn, data.evaluatee_nisn]
+      );
+
+      if (existing && existing.length > 0) {
+        await execute(
+          `UPDATE peer_assessments 
+           SET score_keaktifan = ?, score_kerjasama = ?, score_tanggung_jawab = ?, score_sikap = ?, average_score = ?, feedback = ?
+           WHERE id = ?`,
+          [
+            data.score_keaktifan,
+            data.score_kerjasama,
+            data.score_tanggung_jawab,
+            data.score_sikap,
+            avg,
+            data.feedback || "",
+            existing[0].id,
+          ]
+        );
+        return { success: true, id: String(existing[0].id) };
+      } else {
+        const res: any = await execute(
+          `INSERT INTO peer_assessments 
+           (activity_id, rombel, mapel, evaluator_nisn, evaluator_name, evaluatee_nisn, evaluatee_name, score_keaktifan, score_kerjasama, score_tanggung_jawab, score_sikap, average_score, feedback)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            data.activity_id,
+            data.rombel,
+            data.mapel,
+            data.evaluator_nisn,
+            data.evaluator_name,
+            data.evaluatee_nisn,
+            data.evaluatee_name,
+            data.score_keaktifan,
+            data.score_kerjasama,
+            data.score_tanggung_jawab,
+            data.score_sikap,
+            avg,
+            data.feedback || "",
+          ]
+        );
+        return { success: true, id: String(res?.insertId || Date.now()) };
+      }
+    } catch (e) {
+      console.error("[savePeerAssessmentFn Error]:", e);
       return { success: false };
     }
   });

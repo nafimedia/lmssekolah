@@ -95,6 +95,9 @@ import {
   getLkpdDiscussionsFn,
   postLkpdDiscussionFn,
   LkpdDiscussionRow,
+  getPeerAssessmentsFn,
+  savePeerAssessmentFn,
+  PeerAssessmentRow,
   getWaGatewayConfigFn,
   saveWaGatewayConfigFn,
   sendTestWaMessageFn,
@@ -176,6 +179,7 @@ export type {
   PaginatedParams,
   PaginatedResult,
   HealthStatusResponse,
+  PeerAssessmentRow,
 };
 
 import { getPersistedUserProfileOverrides } from "./mysqlAuthService";
@@ -1233,6 +1237,24 @@ export class MysqlDataService {
       return await postLkpdDiscussionFn({ data });
     } catch (e) {
       console.warn("postLkpdDiscussionFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async getPeerAssessments(activityId: string): Promise<PeerAssessmentRow[]> {
+    try {
+      return await getPeerAssessmentsFn({ data: { activity_id: activityId } });
+    } catch (e) {
+      console.warn("getPeerAssessmentsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async savePeerAssessment(data: PeerAssessmentRow): Promise<{ success: boolean; id?: string }> {
+    try {
+      return await savePeerAssessmentFn({ data });
+    } catch (e) {
+      console.warn("savePeerAssessmentFn failed:", e);
       return { success: false };
     }
   }

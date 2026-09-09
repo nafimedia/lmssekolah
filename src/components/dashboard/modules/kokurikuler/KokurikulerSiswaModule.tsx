@@ -112,8 +112,8 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
         const jenjang = cleanRombel.includes("7") || cleanRombel.includes("vii")
           ? "7"
           : cleanRombel.includes("9") || cleanRombel.includes("ix")
-          ? "9"
-          : "8";
+            ? "9"
+            : "8";
 
         const filtered = dbProjects.filter((p) => {
           if (!p.class_name || p.class_name === "Semua" || p.class_name === "Semua Rombel" || p.class_name === "Tingkat Kelas") {
@@ -293,9 +293,7 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
                 </div>
                 <div>
                   <div className="font-bold text-foreground text-sm">Belum Ada Tema Projek P5 Diterbitkan</div>
-                  <p className="text-xs text-muted-foreground max-w-md mx-auto mt-1 leading-relaxed">
-                    Koordinator Projek P5 MTsN 2 Cilacap belum menerbitkan tema projek baru untuk Rombel {studentRombel} di database. Jika ada projek kolaboratif kelompok yang telah selesai, Anda tetap dapat mengunggah dokumen portofolionya.
-                  </p>
+
                 </div>
                 <Button
                   size="sm"

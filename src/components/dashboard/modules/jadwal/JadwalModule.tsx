@@ -149,9 +149,9 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
       {isSiswa ? (
         <StudentHeaderBanner
           title="Jadwal Pelajaran Saya"
-          subtitle="Roster jadwal jam KBM tatap muka & alokasi ruang kelas harian MTsN 2 Cilacap"
+          subtitle="Jadwal jam KBM tatap muka & alokasi ruang kelas harian MTsN 2 Cilacap"
           icon={CalendarClock}
-          statusText="Roster Pelajaran Aktif 2026/2027"
+          statusText="Pelajaran Aktif 2026/2027"
           statusVariant="success"
           actionButtons={
             <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" onClick={() => setIsPrintJadwalOpen(true)}>
@@ -255,11 +255,10 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                     return (
                       <div
                         key={s.id || `${s.hari}-${s.jam}-${s.rombel}`}
-                        className={`flex items-start justify-between gap-2 border-l-4 pl-3 py-2 bg-card rounded-r-lg shadow-2xs group transition ${
-                          isLive
-                            ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-950/25 ring-1 ring-emerald-500/40"
-                            : "border-primary hover:border-primary/80"
-                        }`}
+                        className={`flex items-start justify-between gap-2 border-l-4 pl-3 py-2 bg-card rounded-r-lg shadow-2xs group transition ${isLive
+                          ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-950/25 ring-1 ring-emerald-500/40"
+                          : "border-primary hover:border-primary/80"
+                          }`}
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
@@ -281,31 +280,31 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                           <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.jam}</div>
                         </div>
 
-                      {!isReadOnlyRole && (
-                        <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100 transition">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            onClick={() => handleOpenEdit(s)}
-                            title="Edit Jadwal"
-                          >
-                            <PencilLine className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDelete(s.id, `${s.mapel} (${s.rombel})`)}
-                            title="Hapus Jadwal"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        {!isReadOnlyRole && (
+                          <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100 transition">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              onClick={() => handleOpenEdit(s)}
+                              title="Edit Jadwal"
+                            >
+                              <PencilLine className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDelete(s.id, `${s.mapel} (${s.rombel})`)}
+                              title="Hapus Jadwal"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
             );

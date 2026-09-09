@@ -389,8 +389,8 @@ export function RaporModule({
         avgScore >= 75
           ? "Tuntas (≥75)"
           : avgScore > 0
-          ? "Perlu Bimbingan (<75)"
-          : "Belum Ada Nilai (0 Poin)";
+            ? "Perlu Bimbingan (<75)"
+            : "Belum Ada Nilai (0 Poin)";
 
       return {
         id: s.id || `s_${idx}`,
@@ -547,8 +547,8 @@ export function RaporModule({
         realAvg >= 75
           ? "Tuntas (≥75)"
           : realAvg > 0
-          ? "Perlu Bimbingan (<75)"
-          : "Belum Ada Nilai (0 Poin)";
+            ? "Perlu Bimbingan (<75)"
+            : "Belum Ada Nilai (0 Poin)";
 
       return {
         code: sub.code || `MP-${idx + 1}`,
@@ -592,9 +592,9 @@ export function RaporModule({
     const avgCpPct =
       subjectLegerBreakdown.length > 0
         ? Math.round(
-            subjectLegerBreakdown.reduce((acc, s) => acc + s.progressPct, 0) /
-              subjectLegerBreakdown.length
-          )
+          subjectLegerBreakdown.reduce((acc, s) => acc + s.progressPct, 0) /
+          subjectLegerBreakdown.length
+        )
         : 0;
 
     return {
@@ -723,22 +723,22 @@ export function RaporModule({
       subjectsList.length > 0
         ? subjectsList
         : [
-            { code: "QUR", name: "Al-Qur'an Hadis" },
-            { code: "AA", name: "Akidah Akhlak" },
-            { code: "FIQ", name: "Fikih" },
-            { code: "SKI", name: "Sejarah Kebudayaan Islam" },
-            { code: "PKN", name: "Pendidikan Pancasila" },
-            { code: "BIN", name: "Bahasa Indonesia" },
-            { code: "BAR", name: "Bahasa Arab" },
-            { code: "MTK", name: "Matematika" },
-            { code: "IPA", name: "Ilmu Pengetahuan Alam" },
-            { code: "IPS", name: "Ilmu Pengetahuan Sosial" },
-            { code: "BIG", name: "Bahasa Inggris" },
-            { code: "SBK", name: "Seni Budaya" },
-            { code: "PJK", name: "PJOK" },
-            { code: "TIK", name: "Informatika" },
-            { code: "BJW", name: "Bahasa Jawa" },
-          ];
+          { code: "QUR", name: "Al-Qur'an Hadis" },
+          { code: "AA", name: "Akidah Akhlak" },
+          { code: "FIQ", name: "Fikih" },
+          { code: "SKI", name: "Sejarah Kebudayaan Islam" },
+          { code: "PKN", name: "Pendidikan Pancasila" },
+          { code: "BIN", name: "Bahasa Indonesia" },
+          { code: "BAR", name: "Bahasa Arab" },
+          { code: "MTK", name: "Matematika" },
+          { code: "IPA", name: "Ilmu Pengetahuan Alam" },
+          { code: "IPS", name: "Ilmu Pengetahuan Sosial" },
+          { code: "BIG", name: "Bahasa Inggris" },
+          { code: "SBK", name: "Seni Budaya" },
+          { code: "PJK", name: "PJOK" },
+          { code: "TIK", name: "Informatika" },
+          { code: "BJW", name: "Bahasa Jawa" },
+        ];
 
     // 2. Column Headers for RDM-Ready Leger
     const headers = [
@@ -824,9 +824,9 @@ export function RaporModule({
         const sScore =
           scoredCbts.length > 0
             ? Math.round(
-                scoredCbts.reduce((a: number, curr: any) => a + curr.score, 0) /
-                  scoredCbts.length
-              )
+              scoredCbts.reduce((a: number, curr: any) => a + curr.score, 0) /
+              scoredCbts.length
+            )
             : 0;
 
         // Final Score (NA)
@@ -856,10 +856,10 @@ export function RaporModule({
         avg >= 85
           ? "Sangat Baik. Terus pertahankan prestasi belajar ananda."
           : avg >= 75
-          ? "Baik. Seluruh target capaian pembelajaran telah tuntas."
-          : avg > 0
-          ? "Perlu pendampingan belajar dan penuntasan tugas/asesmen."
-          : "Belum mengikuti rangkaian asesmen semester.";
+            ? "Baik. Seluruh target capaian pembelajaran telah tuntas."
+            : avg > 0
+              ? "Perlu pendampingan belajar dan penuntasan tugas/asesmen."
+              : "Belum mengikuti rangkaian asesmen semester.";
 
       return [
         idx + 1,
@@ -1155,15 +1155,15 @@ export function RaporModule({
             studentMetrics.avgFinalScore >= 75
               ? "Target Ketuntasan Belajar Terpenuhi"
               : studentMetrics.avgFinalScore > 0
-              ? "Perlu Peningkatan / Remedial"
-              : "Belum Ada Rekap Nilai"
+                ? "Perlu Peningkatan / Remedial"
+                : ""
           }
           statusVariant={
             studentMetrics.avgFinalScore >= 75
               ? "success"
               : studentMetrics.avgFinalScore > 0
-              ? "warning"
-              : "neutral"
+                ? "warning"
+                : "neutral"
           }
           actionButtons={
             <Button
@@ -1330,8 +1330,8 @@ export function RaporModule({
                                 m.avg >= 75
                                   ? "text-emerald-600 dark:text-emerald-400 text-sm font-extrabold"
                                   : m.avg > 0
-                                  ? "text-amber-600 text-sm font-extrabold"
-                                  : "text-muted-foreground font-medium"
+                                    ? "text-amber-600 text-sm font-extrabold"
+                                    : "text-muted-foreground font-medium"
                               }
                             >
                               {m.avg}
@@ -1344,8 +1344,8 @@ export function RaporModule({
                                 m.avg >= 75
                                   ? "text-emerald-600 border-emerald-500/30 font-bold bg-emerald-500/5"
                                   : m.avg > 0
-                                  ? "text-amber-600 border-amber-500/30 font-bold bg-amber-500/5"
-                                  : "text-muted-foreground border-border font-medium"
+                                    ? "text-amber-600 border-amber-500/30 font-bold bg-amber-500/5"
+                                    : "text-muted-foreground border-border font-medium"
                               }
                             >
                               {m.kkm}
@@ -1380,8 +1380,8 @@ export function RaporModule({
                             m.avg >= 75
                               ? "text-emerald-600 border-emerald-500/30 font-bold bg-emerald-500/5 text-[10px]"
                               : m.avg > 0
-                              ? "text-amber-600 border-amber-500/30 font-bold bg-amber-500/5 text-[10px]"
-                              : "text-muted-foreground border-border font-medium text-[10px]"
+                                ? "text-amber-600 border-amber-500/30 font-bold bg-amber-500/5 text-[10px]"
+                                : "text-muted-foreground border-border font-medium text-[10px]"
                           }
                         >
                           {m.kkm}
@@ -1404,13 +1404,12 @@ export function RaporModule({
                         <div className="bg-background p-1.5 rounded-lg border border-border/60">
                           <div className="text-[10px] text-muted-foreground">Nilai Akhir</div>
                           <div
-                            className={`font-mono font-extrabold text-xs mt-0.5 ${
-                              m.avg >= 75
+                            className={`font-mono font-extrabold text-xs mt-0.5 ${m.avg >= 75
                                 ? "text-emerald-600 dark:text-emerald-400"
                                 : m.avg > 0
-                                ? "text-amber-600"
-                                : "text-muted-foreground"
-                            }`}
+                                  ? "text-amber-600"
+                                  : "text-muted-foreground"
+                              }`}
                           >
                             {m.avg > 0 ? m.avg : "-"}
                           </div>
@@ -1447,8 +1446,8 @@ export function RaporModule({
                             isOptimal
                               ? "text-xs font-mono font-bold border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
                               : inProgress
-                              ? "text-xs font-mono font-bold border-amber-500/30 text-amber-600 bg-amber-500/5"
-                              : "text-xs font-mono font-medium border-border text-muted-foreground"
+                                ? "text-xs font-mono font-bold border-amber-500/30 text-amber-600 bg-amber-500/5"
+                                : "text-xs font-mono font-medium border-border text-muted-foreground"
                           }
                         >
                           {x.progressPct}% Dicapai
@@ -1459,13 +1458,12 @@ export function RaporModule({
                       <div className="space-y-1.5">
                         <div className="h-2.5 rounded-full bg-muted overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              isOptimal
+                            className={`h-full rounded-full transition-all duration-500 ${isOptimal
                                 ? "bg-emerald-600"
                                 : inProgress
-                                ? "bg-amber-500"
-                                : "bg-muted-foreground/30"
-                            }`}
+                                  ? "bg-amber-500"
+                                  : "bg-muted-foreground/30"
+                              }`}
                             style={{ width: `${x.progressPct}%` }}
                           />
                         </div>
@@ -1485,8 +1483,8 @@ export function RaporModule({
                         {x.progressPct >= 75
                           ? "Sangat baik. Seluruh tugas dan asesmen pada mata pelajaran ini telah diselesaikan dengan optimal."
                           : x.progressPct > 0
-                          ? "Sedang berproses. Terus selesaikan tugas LKPD dan ujian CBT yang diberikan guru."
-                          : "Belum ada aktivitas atau tugas yang dikumpulkan pada mata pelajaran ini."}
+                            ? "Sedang berproses. Terus selesaikan tugas LKPD dan ujian CBT yang diberikan guru."
+                            : "Belum ada aktivitas atau tugas yang dikumpulkan pada mata pelajaran ini."}
                       </div>
                     </CardContent>
                   </Card>
@@ -1824,8 +1822,8 @@ export function RaporModule({
                             s.avgScore >= 75
                               ? "text-emerald-600 border-emerald-500/30 font-bold"
                               : s.avgScore > 0
-                              ? "text-amber-600 border-amber-500/30 font-bold"
-                              : "text-muted-foreground border-border font-medium"
+                                ? "text-amber-600 border-amber-500/30 font-bold"
+                                : "text-muted-foreground border-border font-medium"
                           }
                         >
                           {s.status}

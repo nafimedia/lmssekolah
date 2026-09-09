@@ -168,7 +168,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
       category: "ALERT MANAJEMEN KELAS",
       message: `[NOTIFIKASI WALI KELAS MTsN 2 CILACAP]: Bpk/Ibu ${student.parentName}, disampaikan bahwa ananda ${student.name} (${student.class}) saat ini memiliki rekapitulasi kehadiran ${student.hadirPct}%. Salam hangat dari Wali Kelas ${waliKelasName}.`,
       status: "TERKIRIM",
-    }).catch(() => {});
+    }).catch(() => { });
 
     toast.success(`📱 WA Alert Berhasil Dikirim ke Orang Tua ${student.name} (${student.parentWa})!`);
   };
@@ -231,7 +231,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
         category: "BROADCAST WALI KELAS",
         message: `[PENGUMUMAN WALI KELAS ${selectedClass}]: *${title}*\n\n${content}\n\nHormat kami,\nWali Kelas ${selectedClass}\n${waliKelasName}`,
         status: "TERKIRIM",
-      }).catch(() => {});
+      }).catch(() => { });
     });
     toast.success(`⚡ Broadcast WA Group ${selectedClass} Berhasil Dikirim ke ${classStudents.length} Orang Tua Siswa!`);
   };
@@ -343,7 +343,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                   className="font-bold text-xs gap-1.5"
                   onClick={() => setActiveTab("siswa")}
                 >
-                  <Users className="h-4 w-4" /> Detail Roster ({selectedClass})
+                  <Users className="h-4 w-4" /> Detail ({selectedClass})
                 </Button>
               )}
             </div>
@@ -484,7 +484,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
             </Card>
           </div>
 
-            <div className="flex items-center justify-between border-b border-border pb-2">
+          <div className="flex items-center justify-between border-b border-border pb-2">
             <div className="flex items-center gap-2">
               <Button
                 size="sm"

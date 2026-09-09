@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   FileText,
   Clock,
@@ -49,6 +49,7 @@ import { AssignmentRow, SubmissionRow } from "@/services/mysqlServerFns";
 import { validateUploadedFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
 import { isSameClass } from "@/utils/classNormalization";
+import { normalizeSubjectName, isSameSubject } from "@/utils/subjectNormalization";
 
 interface TugasSiswaModuleProps {
   userProfile?: any;
@@ -60,9 +61,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState<"semua" | "belum" | "dikumpulkan" | "dinilai">("semua");
 
-  // Live session and today schedule states
+  // Live session and class schedule states
   const [liveSession, setLiveSession] = useState<any | null>(null);
   const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
+  const [classSchedules, setClassSchedules] = useState<any[]>([]);
   const [selectedMapelFilter, setSelectedMapelFilter] = useState<string>("SEMUA");
 
   // Selected assignment for detail & submission modal
@@ -178,6 +180,11 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       );
       setTodaySchedules(todaySched || []);
 
+      const allClassSched = (dbJadwal || []).filter((j: any) =>
+        isSameClass(j.rombel || j.class_name || "", studentRombel)
+      );
+      setClassSchedules(allClassSched || []);
+
       const resolveTeacher = (teacherRaw: string | undefined, mapelName: string, rombelName: string) => {
         if (teacherRaw && teacherRaw.trim() !== "" && teacherRaw.trim() !== "Guru Pengampu") {
           return teacherRaw.trim();
@@ -263,22 +270,35 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     return { status: "dikumpulkan", label: "Sudah Dikumpulkan", color: "bg-blue-500/15 text-blue-600 border-blue-500/30", icon: Send };
   };
 
-  const uniqueSubjectsSet = new Set<string>();
-  (todaySchedules || []).forEach((j: any) => {
-    if (j.mapel) uniqueSubjectsSet.add(j.mapel.trim());
-  });
-  (assignments || []).forEach((a: any) => {
-    if (a.mapel) uniqueSubjectsSet.add(a.mapel.trim());
-    if ((a as any).subject_name) uniqueSubjectsSet.add((a as any).subject_name.trim());
-  });
-  const uniqueSubjects = Array.from(uniqueSubjectsSet);
+  const uniqueSubjects = useMemo(() => {
+    const set = new Set<string>();
+    const isExcluded = (m: string) => {
+      const lower = (m || "").toLowerCase().trim();
+      return lower.includes("bimbingan") || lower.includes("konseling") || lower === "bk";
+    };
+
+    (classSchedules || []).forEach((j: any) => {
+      if (j.mapel && !isExcluded(j.mapel)) {
+        set.add(normalizeSubjectName(j.mapel.trim()));
+      }
+    });
+
+    (assignments || []).forEach((a: any) => {
+      const name = a.mapel || (a as any).subject_name;
+      if (name && !isExcluded(name)) {
+        set.add(normalizeSubjectName(name.trim()));
+      }
+    });
+
+    return Array.from(set).sort();
+  }, [classSchedules, assignments]);
 
   // Filter Tasks
   const filteredAssignments = assignments.filter((a) => {
     if (selectedMapelFilter !== "SEMUA") {
-      const aMapel = (a.mapel || (a as any).subject_name || "").toLowerCase().trim();
-      const targetMapel = selectedMapelFilter.toLowerCase().trim();
-      if (!aMapel.includes(targetMapel) && !targetMapel.includes(aMapel)) return false;
+      const aMapel = normalizeSubjectName(a.mapel || (a as any).subject_name || "");
+      const targetMapel = normalizeSubjectName(selectedMapelFilter);
+      if (!isSameSubject(aMapel, targetMapel)) return false;
     }
     const { status } = getTaskStatus(a);
     if (filterTab === "belum") return status === "belum" || status === "draft";

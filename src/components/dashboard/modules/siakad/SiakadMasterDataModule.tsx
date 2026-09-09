@@ -12,7 +12,7 @@ import { EditWaliKelasDialog } from "./components/EditWaliKelasDialog";
 import { TahunAjaranTab } from "./components/TahunAjaranTab";
 import { KktpSkemaTab } from "./components/KktpSkemaTab";
 
-import { isSameClass } from "@/utils/classNormalization";
+import { isSameClass, formatClassName } from "@/utils/classNormalization";
 
 export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any } = {}) {
   const isKamad = activeRole === "kamad";
@@ -88,14 +88,19 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
             return sClass.includes(rCode) || rCode.includes(sClass);
           }).length;
 
+          const rawName = r.name || r.code || "";
+          const displayName = formatClassName(rawName);
+          const gradeBadge = r.grade ? r.grade.replace(/Kelas\s+/i, "Tingkat ") : (rawName.includes("7") ? "Tingkat VII" : rawName.includes("9") ? "Tingkat IX" : "Tingkat VIII");
+
           return {
             id: r.id,
             code: r.code,
-            name: r.name,
-            grade: r.grade || (r.name.includes("7") ? "Kelas VII" : r.name.includes("9") ? "Kelas IX" : "Kelas VIII"),
+            name: displayName,
+            rawName: r.name,
+            grade: gradeBadge,
             waliKelas: r.wali_kelas || r.waliKelas || "Belum Ditentukan",
             studentCount: realStudentCount > 0 ? realStudentCount : (r.siswa_count || r.student_count || 0),
-            room: r.room || `Ruang ${r.name.replace('Rombel ', '')}`,
+            room: r.room || `Ruang ${displayName.replace("Kelas ", "")}`,
           };
         });
         setRombelList(mapped);
@@ -158,27 +163,29 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       return;
     }
     if (!newRombelName.trim()) {
-      toast.error("Nama Rombel wajib diisi!");
+      toast.error("Nama Kelas wajib diisi!");
       return;
     }
 
     try {
+      const cleanName = formatClassName(newRombelName.trim());
+      const cleanCode = cleanName.toLowerCase().replace(/[^a-z0-9]/g, "");
       await MysqlDataService.saveMasterRombel({
-        code: newRombelName.toLowerCase().replace(/\s+/g, ""),
-        name: newRombelName.trim(),
+        code: cleanCode,
+        name: cleanName,
         wali_kelas: newRombelWali || "Belum Ditentukan",
         grade: newRombelGrade,
-        room: `Ruang ${newRombelName}`,
+        room: newRombelRoom.trim() || `Ruang ${cleanName}`,
         siswa_count: 0,
       });
-      toast.success(`Rombel "${newRombelName}" berhasil ditambahkan!`);
+      toast.success(`Kelas "${cleanName}" berhasil ditambahkan!`);
       setIsAddRombelOpen(false);
       setNewRombelName("");
       setNewRombelWali("");
       setNewRombelRoom("");
       loadData();
     } catch (e) {
-      toast.error("Gagal menambahkan Rombel baru.");
+      toast.error("Gagal menambahkan Kelas baru.");
     }
   };
 
@@ -187,14 +194,14 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       toast.error("🔒 Akses dibatasi: Kepala Madrasah berada dalam mode supervisi.");
       return;
     }
-    if (!confirm(`Apakah Anda yakin ingin menghapus Rombel "${rombelItem.name}"?`)) return;
+    if (!confirm(`Apakah Anda yakin ingin menghapus "${rombelItem.name}"?`)) return;
 
     try {
       await MysqlDataService.deleteMasterRombel(rombelItem.id);
-      toast.success(`🗑️ Rombel ${rombelItem.name} berhasil dihapus!`);
+      toast.success(`🗑️ ${rombelItem.name} berhasil dihapus!`);
       loadData();
     } catch (e) {
-      toast.error("Gagal menghapus rombel.");
+      toast.error("Gagal menghapus kelas.");
     }
   };
 
@@ -222,7 +229,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       {/* Tabs Selector */}
       <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80 w-fit flex-wrap">
         {[
-          { id: "pengampu", label: "Daftar Rombel & Wali Kelas", icon: Users },
+          { id: "pengampu", label: "Daftar Kelas & Wali Kelas", icon: Users },
           { id: "tahun_ajaran", label: "Tahun Ajaran & Semester", icon: Calendar },
           { id: "kktp_skema", label: "Kriteria Ketuntasan (KKTP)", icon: ShieldCheck },
         ].map((t) => (
@@ -241,12 +248,12 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         ))}
       </div>
 
-      {/* Tab 1: Daftar Rombel & Wali Kelas */}
+      {/* Tab 1: Daftar Kelas & Wali Kelas */}
       {activeTab === "pengampu" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Daftar Rombongan Belajar (Rombel) MTsN 2 Cilacap:
+              Daftar Kelas & Wali Kelas MTsN 2 Cilacap:
             </div>
             {!isKamad ? (
               <Button
@@ -254,25 +261,25 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs"
                 onClick={() => setIsAddRombelOpen(true)}
               >
-                <Plus className="h-4 w-4" /> Tambah Rombel Baru
+                <Plus className="h-4 w-4" /> Tambah Kelas Baru
               </Button>
             ) : null}
           </div>
 
           {isLoadingRombel ? (
-            <div className="p-8 text-center text-xs text-muted-foreground">Memuat data rombel...</div>
+            <div className="p-8 text-center text-xs text-muted-foreground">Memuat data kelas...</div>
           ) : rombelList.length === 0 ? (
             <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 bg-card">
               <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
-              <div className="font-semibold text-foreground text-sm">Belum Ada Rombel Terdaftar</div>
-              <p>Belum ada kelas atau rombongan belajar terdaftar.</p>
+              <div className="font-semibold text-foreground text-sm">Belum Ada Kelas Terdaftar</div>
+              <p>Belum ada data kelas yang terdaftar di sistem.</p>
               {!isKamad && (
                 <Button
                   size="sm"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs mt-2"
                   onClick={() => setIsAddRombelOpen(true)}
                 >
-                  <Plus className="h-4 w-4" /> Tambah Rombel Pertama
+                  <Plus className="h-4 w-4" /> Tambah Kelas Pertama
                 </Button>
               )}
             </div>
@@ -301,7 +308,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
                           size="sm"
                           variant="ghost"
                           className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/10"
-                          title="Hapus Rombel"
+                          title="Hapus Kelas"
                           onClick={() => handleDeleteRombel(r)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -332,23 +339,23 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       {/* Tab 3: KKTP Skema */}
       {activeTab === "kktp_skema" && <KktpSkemaTab isKamad={isKamad} />}
 
-      {/* Dialog Tambah Rombel Baru */}
+      {/* Modal Tambah Kelas Baru */}
       <Dialog open={isAddRombelOpen} onOpenChange={setIsAddRombelOpen}>
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-md bg-card border-border text-foreground">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-emerald-600 font-bold">
-              <Plus className="h-5 w-5" /> Tambah Rombongan Belajar (Rombel) Baru
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+              <Plus className="h-5 w-5" /> Tambah Kelas Baru
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Masukkan data Rombel baru untuk didaftarkan ke sistem master data madrasah.
+              Masukkan data kelas baru untuk didaftarkan ke sistem master data madrasah.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-3 text-xs">
             <div className="space-y-1.5">
-              <label className="font-bold text-foreground">Nama Rombel *</label>
+              <label className="font-bold text-foreground">Nama Kelas *</label>
               <Input
-                placeholder="Contoh: Rombel 7A, Rombel 8C, Rombel 9I"
+                placeholder="Contoh: Kelas 7A, Kelas 8C, Kelas 9A"
                 value={newRombelName}
                 onChange={(e) => setNewRombelName(e.target.value)}
                 className="h-9 text-xs font-semibold"
@@ -362,9 +369,9 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
                 value={newRombelGrade}
                 onChange={(e) => setNewRombelGrade(e.target.value)}
               >
-                <option value="Kelas VII">Kelas VII (Tingkat 7)</option>
-                <option value="Kelas VIII">Kelas VIII (Tingkat 8)</option>
-                <option value="Kelas IX">Kelas IX (Tingkat 9)</option>
+                <option value="Kelas VII">Tingkat VII (Kelas 7)</option>
+                <option value="Kelas VIII">Tingkat VIII (Kelas 8)</option>
+                <option value="Kelas IX">Tingkat IX (Kelas 9)</option>
               </select>
             </div>
 
@@ -400,7 +407,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
               Batal
             </Button>
             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold" onClick={handleCreateRombel}>
-              Simpan Data Rombel
+              Simpan Data Kelas
             </Button>
           </DialogFooter>
         </DialogContent>

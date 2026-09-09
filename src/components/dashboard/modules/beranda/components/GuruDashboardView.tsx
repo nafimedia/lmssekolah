@@ -167,7 +167,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
               </div>
               <div>
                 {jadwalHariIni.length > 0
-                  ? `Sesi: ${jadwalHariIni.map((j: any) => j.jam).filter(Boolean).join(" · ") || "Sesuai Roster"}`
+                  ? `Sesi: ${jadwalHariIni.map((j: any) => j.jam).filter(Boolean).join(" · ") || "Sesuai"}`
                   : `Jadwal KBM ${currentDayName}: 0 Jam`}
               </div>
             </CardContent>

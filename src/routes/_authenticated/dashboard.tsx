@@ -338,7 +338,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "PORTAL WALI KELAS",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Wali Kelas", group: "Manajemen Kelas" },
-      { key: "kehadiran", label: "Presensi Rombel 8A", group: "Manajemen Kelas" },
+      { key: "kehadiran", label: "Presensi Kelas 8A", group: "Manajemen Kelas" },
       { key: "manajemen_kelas", label: "Manajemen Kelas", group: "Manajemen Kelas" },
       { key: "jadwal", label: "Jadwal Kelas 8A", group: "Manajemen Kelas" },
       { key: "agenda", label: "Agenda & Kalender", group: "Manajemen Kelas" },
@@ -355,7 +355,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "PORTAL WALI KELAS",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Wali Kelas", group: "Manajemen Kelas" },
-      { key: "kehadiran", label: "Presensi Rombel 8A", group: "Manajemen Kelas" },
+      { key: "kehadiran", label: "Presensi Kelas 8A", group: "Manajemen Kelas" },
       { key: "jadwal", label: "Jadwal Kelas 8A", group: "Manajemen Kelas" },
       { key: "agenda", label: "Agenda & Kalender", group: "Manajemen Kelas" },
       { key: "pengumuman", label: "Pengumuman", group: "Manajemen Kelas" },
@@ -632,7 +632,7 @@ function Dashboard() {
   );
 
   const activeUserForSidebar = MysqlAuthService.getActiveUser();
-  const resolvedWaliRombel = resolveWaliKelasRombel(activeUserForSidebar, null, "rombel");
+  const resolvedWaliRombel = resolveWaliKelasRombel(activeUserForSidebar, null, "kelas");
 
   const filteredMenu = roleInfo.allowedMenus
     .filter((item) => isCbtActive || item.key !== "cbt")
@@ -767,11 +767,11 @@ function DashboardContent({
   const allowedKeys = roleInfo.allowedMenus.map((x) => x.key);
 
   const resolvedWaliRombel = useMemo(() => {
-    return resolveWaliKelasRombel(me || userProfile, null, "rombel");
+    return resolveWaliKelasRombel(me || userProfile, null, "kelas");
   }, [me, userProfile]);
 
   const sidebarBadge = (activeRole === "walikelas" || activeRole === "wali_kelas")
-    ? `WALI KELAS ${resolvedWaliRombel.replace("Rombel ", "")}`
+    ? `WALI KELAS ${resolvedWaliRombel.replace("Kelas ", "").replace("Rombel ", "")}`
     : roleInfo.badge;
 
   const filteredMenu = roleInfo.allowedMenus

@@ -35,9 +35,9 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
   const me = MysqlAuthService.getActiveUser();
   const rawClass = me?.class_name;
 
-  const binaanRombel = resolveWaliKelasRombel(me, null, "rombel");
+  const binaanRombel = resolveWaliKelasRombel(me, null, "kelas");
 
-  const defaultRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Rombel 8A");
+  const defaultRombel = isWaliKelas ? binaanRombel : normalizeRombelName(rawClass || "Kelas 8A");
 
   const [activeTab, setActiveTab] = useState<"sesi" | "bank_soal" | "analisis">("sesi");
   const [selectedRombel, setSelectedRombel] = useState<string>(isWaliKelas ? binaanRombel : isExecutive ? "ALL" : defaultRombel);
@@ -151,9 +151,9 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
     };
   }, []);
 
-  // Compute list of dynamic rombel options
+  // Compute list of dynamic class options
   const rombelOptions = useMemo(() => {
-    const set = new Set<string>(["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B"]);
+    const set = new Set<string>(["Kelas 7A", "Kelas 7B", "Kelas 8A", "Kelas 8B", "Kelas 9A", "Kelas 9B"]);
     masterRombels.forEach((r) => {
       if (r.name) set.add(normalizeRombelName(r.name));
       if (r.code) set.add(normalizeRombelName(r.code));
@@ -464,11 +464,11 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
                 <Filter className="h-5 w-5" />
               </div>
               <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Rombel / Mode CBT</label>
+                <label className="text-xs font-bold text-muted-foreground block mb-0.5">Pilih Kelas / Mode CBT</label>
                 {isWaliKelas ? (
                   <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
                     <Building2 className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Rombel Binaan: {binaanRombel}</span>
+                    <span>Kelas Binaan: {binaanRombel}</span>
                   </div>
                 ) : (
                   <select
@@ -478,7 +478,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
                   >
                     {isExecutive && (
                       <option value="ALL" className="font-bold">
-                        ✨ Semua Rombel (Monitoring Eksekutif Kamad & Waka)
+                        ✨ Semua Kelas (Monitoring Eksekutif Kamad & Waka)
                       </option>
                     )}
                     {rombelOptions.map((r) => (

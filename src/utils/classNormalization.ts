@@ -52,13 +52,12 @@ export function isSameClass(classA?: string | null, classB?: string | null): boo
 
 /**
  * Format class string into standard display format:
- * - "rombel": "Rombel 8A"
- * - "kelas": "Kelas VIII A"
+ * - "kelas": "Kelas 8A" (Standar bahasa pengguna di madrasah)
  * - "short": "8A"
  */
 export function formatClassForDisplay(
   raw?: string | null,
-  format: "rombel" | "kelas" | "short" = "rombel"
+  format: "rombel" | "kelas" | "short" = "kelas"
 ): string {
   const code = getClassCode(raw);
   if (!code) return raw || "-";
@@ -66,32 +65,23 @@ export function formatClassForDisplay(
   const gradeNum = code.substring(0, code.length - 1); // e.g. "8"
   const section = code.substring(code.length - 1);    // e.g. "A"
 
-  const romanMap: Record<string, string> = {
-    "7": "VII",
-    "8": "VIII",
-    "9": "IX",
-  };
-
-  const roman = romanMap[gradeNum] || gradeNum;
-
   if (format === "short") return `${gradeNum}${section}`;
-  if (format === "kelas") return `Kelas ${roman} ${section}`;
-  return `Rombel ${gradeNum}${section}`;
+  return `Kelas ${gradeNum}${section}`;
 }
 
 export function normalizeRombelName(rawClass?: string | null): string {
-  return formatClassForDisplay(rawClass, "rombel");
+  return formatClassForDisplay(rawClass, "kelas");
 }
 
 /**
- * Resolves the assigned Rombel for a Wali Kelas based on real database tables / user attributes.
+ * Resolves the assigned Class for a Wali Kelas based on real database tables / user attributes.
  */
 export function resolveWaliKelasRombel(
   user?: { full_name?: string; name?: string; nis_nip?: string; class_name?: string } | null,
   masterRombels?: { code?: string; name?: string; wali_kelas?: string }[] | null,
-  format: "rombel" | "kelas" = "rombel"
+  format: "rombel" | "kelas" = "kelas"
 ): string {
-  if (!user) return format === "kelas" ? "Kelas Binaan" : "Rombel 8A";
+  if (!user) return "Kelas 8A";
 
   // 1. If user has explicit class_name in their profile/account
   if (user.class_name && user.class_name !== "-" && user.class_name.trim() !== "") {
@@ -130,5 +120,5 @@ export function resolveWaliKelasRombel(
   if (cleanTarget.includes("novantya")) return formatClassForDisplay("9A", format);
   if (cleanTarget.includes("indah")) return formatClassForDisplay("9B", format);
 
-  return format === "kelas" ? "Kelas Binaan" : "Rombel 8A";
+  return "Kelas 8A";
 }

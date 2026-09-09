@@ -16,11 +16,19 @@ import {
   ArrowUp,
   ArrowDown,
   ShieldCheck,
+  Download,
+  ChevronDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { exportToExcelXml } from "@/utils/excelExporter";
 
@@ -327,139 +335,154 @@ export function SdmGtkModule({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+    <div className="space-y-4">
+      {/* 1. Header Ringkas (1 Baris Lega) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" /> Manajemen SDM & Akun Madrasah
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Pusat terpadu kepegawaian GTK, monitoring beban mengajar (≥24 JP), layanan cuti, serta manajemen akun & hak akses sistem.
+            Pusat terpadu kepegawaian GTK, beban mengajar (≥24 JP), layanan cuti, dan akun pengguna.
           </p>
           {isKamad && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">
-              🏛️ Mode Pengawasan Eksekutif Kepala Madrasah — Monitoring kepatuhan jam mengajar TPG Kemenag & penugasan akun.
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5 font-semibold">
+              🏛️ Mode Supervisi Kepala Madrasah — Monitoring TPG Kemenag & penugasan akun.
             </p>
           )}
         </div>
-        {activeTab === "daftar" && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10" onClick={handleExportGtkExcel}>
-              <FileSpreadsheet className="h-4 w-4" /> Export Excel Beban GTK
+
+        {/* Action Buttons: Ramping & Satukan Ekspor/Cetak ke Dropdown */}
+        <div className="flex items-center gap-2 shrink-0">
+          {activeTab === "daftar" && (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="h-8 text-xs font-semibold gap-1.5 shadow-2xs">
+                    <Download className="h-3.5 w-3.5 opacity-70" />
+                    <span>Ekspor / Cetak</span>
+                    <ChevronDown className="h-3 w-3 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 text-xs">
+                  <DropdownMenuItem onClick={handleExportGtkExcel} className="cursor-pointer gap-2 font-medium">
+                    <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                    <span>Export Excel Beban GTK</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsPrintOpen(true)} className="cursor-pointer gap-2 font-medium">
+                    <Printer className="h-4 w-4 text-primary" />
+                    <span>Cetak Biodata GTK (PDF)</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {!isKamad && (
+                <Button size="sm" className="h-8 text-xs font-bold gap-1.5 bg-primary text-primary-foreground shadow-2xs" onClick={() => setIsAddOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  <span>Tambah Pegawai</span>
+                </Button>
+              )}
+            </>
+          )}
+          {activeTab === "cuti" && !isKamad && (
+            <Button size="sm" className="h-8 text-xs font-bold gap-1.5 bg-primary text-primary-foreground shadow-2xs" onClick={() => setIsAddLeaveOpen(true)}>
+              <Plus className="h-4 w-4" />
+              <span>Ajukan Cuti Baru</span>
             </Button>
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintOpen(true)}>
-              <Printer className="h-4 w-4" /> Cetak Bio GTK PDF
-            </Button>
-            {!isKamad && (
-              <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddOpen(true)}>
-                <Plus className="h-4 w-4" /> Tambah Pegawai GTK
-              </Button>
-            )}
-          </div>
-        )}
-        {activeTab === "cuti" && !isKamad && (
-          <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddLeaveOpen(true)}>
-            <Plus className="h-4 w-4" /> Ajukan Cuti Baru
-          </Button>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 border-b border-border pb-3">
-        {[
-          { id: "daftar", label: "Kepegawaian & Beban GTK", icon: Users },
-          { id: "cuti", label: "Layanan Cuti & Izin", icon: FileSpreadsheet },
-          { id: "akun", label: "Akun Pengguna & Hak Akses", icon: ShieldCheck },
-        ].map((t) => (
-          <Button
-            key={t.id}
-            size="sm"
-            variant={activeTab === t.id ? "default" : "outline"}
-            className={`text-xs font-bold gap-2 ${activeTab === t.id ? "shadow-xs" : ""}`}
-            onClick={() => setActiveTab(t.id as any)}
-          >
-            <t.icon className="h-4 w-4" />
-            <span>{t.label}</span>
-          </Button>
-        ))}
+      {/* 2. Modern Segmented Tab Bar */}
+      <div className="flex items-center border-b border-border/70 pb-2.5">
+        <div className="bg-muted/60 p-1 rounded-xl border border-border/80 inline-flex items-center gap-1">
+          {[
+            { id: "daftar", label: "Kepegawaian & Beban GTK", icon: Users },
+            { id: "cuti", label: "Layanan Cuti & Izin", icon: FileSpreadsheet },
+            { id: "akun", label: "Akun Pengguna & Hak Akses", icon: ShieldCheck },
+          ].map((t) => {
+            const isActive = activeTab === t.id;
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setActiveTab(t.id as any)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isActive
+                    ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                }`}
+              >
+                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "opacity-60"}`} />
+                <span>{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {activeTab === "daftar" && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">Total Pegawai GTK</div>
-                  <div className="text-xl font-extrabold text-foreground">{gtkList.length} Orang</div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* 3. Compact Metrics Strip (Hanya ~44px, super clean & lega) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border/80 rounded-xl shadow-2xs">
+              <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
+                <Users className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Total GTK</div>
+                <div className="text-sm font-extrabold text-foreground truncate">{gtkList.length} Orang</div>
+              </div>
+            </div>
 
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
-                  <UserCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">Memenuhi Beban (≥24 JP)</div>
-                  <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{countMemenuhi} Guru</div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border/80 rounded-xl shadow-2xs">
+              <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
+                <UserCheck className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">≥24 JP (Tuntas)</div>
+                <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 truncate">{countMemenuhi} Guru</div>
+              </div>
+            </div>
 
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-                  <Award className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">Beban Kurang (&lt;24 JP)</div>
-                  <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{countKurang} Guru</div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border/80 rounded-xl shadow-2xs">
+              <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
+                <Award className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">&lt;24 JP (Kurang)</div>
+                <div className="text-sm font-extrabold text-amber-600 dark:text-amber-400 truncate">{countKurang} Guru</div>
+              </div>
+            </div>
 
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-                  <FileSpreadsheet className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">Layanan Cuti Aktif</div>
-                  <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{leavesList.length} Berkas</div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-card border border-border/80 rounded-xl shadow-2xs">
+              <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
+                <FileSpreadsheet className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Layanan Cuti</div>
+                <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400 truncate">{leavesList.length} Berkas</div>
+              </div>
+            </div>
           </div>
 
-          <Card className="border-border shadow-sm">
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-              <div>
-                <div className="font-bold text-base text-foreground flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" /> Data Induk GTK & Pemenuhan Jam Mengajar
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Daftar guru & pegawai, validasi beban 24 JP sertifikasi Kemenag, dan status kepegawaian.
-                </div>
-              </div>
-
+          {/* 4. Table Card Ramping: Tanpa Judul Ganda, Langsung Toolbar Filter & Tabel */}
+          <Card className="border-border shadow-xs">
+            <div className="p-3 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-2.5 bg-muted/20">
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative flex-1 sm:w-60">
-                  <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
+                <div className="relative flex-1 sm:w-72">
+                  <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-muted-foreground" />
                   <Input
                     placeholder="Cari nama, NIP, email, mapel..."
-                    className="pl-9 h-9 text-xs"
+                    className="pl-8 h-8 text-xs bg-background"
                     value={search}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                   />
                 </div>
 
                 <select
-                  className="h-9 rounded-md border border-border bg-background px-3 text-xs font-bold"
+                  className="h-8 rounded-md border border-border bg-background px-2.5 text-xs font-semibold"
                   value={filterStatus}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value)}
                 >
@@ -470,7 +493,11 @@ export function SdmGtkModule({
                   <option value="kamad">Kepala Madrasah</option>
                 </select>
               </div>
-            </CardHeader>
+
+              <div className="text-xs text-muted-foreground font-medium self-end sm:self-center">
+                Menampilkan <strong className="text-foreground">{filteredGtk.length}</strong> pegawai
+              </div>
+            </div>
 
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-xs min-w-[950px]">
@@ -601,22 +628,18 @@ export function SdmGtkModule({
       )}
 
       {activeTab === "cuti" && (
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-            <div>
-              <div className="font-bold text-base text-foreground flex items-center gap-2">
-                <FileSpreadsheet className="h-4 w-4 text-amber-600" /> Layanan Cuti & Surat Izin GTK
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Rekapitulasi berkas pengajuan cuti tahunan, sakit, dan izin dinas tenaga pendidik.
-              </div>
+        <Card className="border-border shadow-xs">
+          <div className="p-3 border-b border-border flex items-center justify-between bg-muted/20">
+            <div className="text-xs font-bold text-foreground flex items-center gap-2">
+              <FileSpreadsheet className="h-4 w-4 text-purple-600" />
+              <span>Daftar Pengajuan Cuti & Surat Izin GTK ({leavesList.length} Berkas)</span>
             </div>
             {!isKamad && (
-              <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground" onClick={() => setIsAddLeaveOpen(true)}>
-                <Plus className="h-4 w-4" /> Ajukan Cuti Baru
+              <Button size="sm" className="h-7 text-xs font-bold bg-primary text-primary-foreground gap-1 shadow-2xs" onClick={() => setIsAddLeaveOpen(true)}>
+                <Plus className="h-3.5 w-3.5" /> Ajukan Cuti Baru
               </Button>
             )}
-          </CardHeader>
+          </div>
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-xs">
               <thead className="bg-muted/60 text-left border-b border-border font-bold text-muted-foreground">

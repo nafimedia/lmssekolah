@@ -140,6 +140,9 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
     const cleanMapel = activeMapel.trim();
     const sessionId = `sess_${cleanRombel.replace(/\s+/g, "_")}_${cleanMapel.replace(/\s+/g, "_")}`;
 
+    const isAdminRole = me?.role === "admin" || me?.role === "superadmin" || me?.role === "admin_akademik" || me?.role === "kamad" || me?.role === "waka";
+    const guruName = !isAdminRole && me?.full_name ? me.full_name : "Guru Pengampu";
+
     if (!isSessionLive && !sessionCompleted) {
       setIsSessionLive(true);
       toast.success(`🟢 Sesi KBM ${activeRombel} (${activeMapel}) RESMI DIMULAI! Selamat mengajar!`);
@@ -147,7 +150,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
         id: sessionId,
         rombel: cleanRombel,
         mapel: cleanMapel,
-        guru_name: me?.full_name || "Guru Pengampu",
+        guru_name: guruName,
         status: "SEDANG_BERLANGSUNG",
         date_str: todayStr,
       });
@@ -159,7 +162,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
         id: sessionId,
         rombel: cleanRombel,
         mapel: cleanMapel,
-        guru_name: me?.full_name || "Guru Pengampu",
+        guru_name: guruName,
         status: "SELESAI",
         date_str: todayStr,
       });
@@ -171,7 +174,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
         id: sessionId,
         rombel: cleanRombel,
         mapel: cleanMapel,
-        guru_name: me?.full_name || "Guru Pengampu",
+        guru_name: guruName,
         status: "SEDANG_BERLANGSUNG",
         date_str: todayStr,
       });

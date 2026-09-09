@@ -136,8 +136,11 @@ export function MonitoringKbmLiveModule() {
 
         // Verify if session date matches today's date
         const sessDate = sess.date_str || "";
-        const isTodaySession = sessDate === todayStr || !sessDate;
-        const isLiveToday = sess.status === "SEDANG_BERLANGSUNG" && isTodaySession;
+        const isTodaySession = sessDate === todayStr;
+        // Abaikan sesi dari hari-hari sebelumnya agar tidak menimpa jadwal hari ini
+        if (!isTodaySession) return;
+
+        const isLiveToday = sess.status === "SEDANG_BERLANGSUNG";
 
         // Find students in this rombel
         const rombelStudents = studentUsers.filter((u: any) => {

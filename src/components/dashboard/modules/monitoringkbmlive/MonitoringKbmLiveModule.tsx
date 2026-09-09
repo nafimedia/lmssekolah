@@ -124,7 +124,7 @@ export function MonitoringKbmLiveModule() {
 
       // Today's schedule
       const todaySchedules = (scheduleList || []).filter((s: any) => s.hari === activeDay || s.hari === "Kamis");
-      
+
       const rombelMap: Record<string, LiveRombelSession> = {};
 
       // 1. Process active sessions started by teachers
@@ -281,7 +281,7 @@ export function MonitoringKbmLiveModule() {
             <Activity className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Pemantauan KBM Langsung
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Supervisi waktu-nyata pembelajaran tatap muka di kelas dan kepatuhan pengisian jurnal mengajar guru.
+            Supervisi real time pembelajaran tatap muka di kelas.
           </p>
         </div>
 
@@ -304,11 +304,10 @@ export function MonitoringKbmLiveModule() {
           <button
             type="button"
             onClick={() => setViewMode("live")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-              viewMode === "live"
-                ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-            }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${viewMode === "live"
+              ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+              }`}
           >
             <Activity className={`h-3.5 w-3.5 ${viewMode === "live" ? "text-emerald-600" : "opacity-60"}`} />
             <span>Sesi KBM Live ({activeSessionsCount})</span>
@@ -316,11 +315,10 @@ export function MonitoringKbmLiveModule() {
           <button
             type="button"
             onClick={() => setViewMode("jurnal")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-              viewMode === "jurnal"
-                ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-            }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${viewMode === "jurnal"
+              ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+              }`}
           >
             <ClipboardCheck className={`h-3.5 w-3.5 ${viewMode === "jurnal" ? "text-purple-600" : "opacity-60"}`} />
             <span>Checklist Jurnal Guru ({journalCompliance.filledCount}/{journalCompliance.totalScheduled})</span>
@@ -391,11 +389,10 @@ export function MonitoringKbmLiveModule() {
               return (
                 <div
                   key={session.id}
-                  className={`p-3.5 rounded-xl border transition-all bg-card shadow-2xs flex flex-col justify-between gap-2.5 ${
-                    isLive
-                      ? "border-emerald-500/50 bg-emerald-500/[0.02] ring-1 ring-emerald-500/20"
-                      : "border-border/80 hover:border-border"
-                  }`}
+                  className={`p-3.5 rounded-xl border transition-all bg-card shadow-2xs flex flex-col justify-between gap-2.5 ${isLive
+                    ? "border-emerald-500/50 bg-emerald-500/[0.02] ring-1 ring-emerald-500/20"
+                    : "border-border/80 hover:border-border"
+                    }`}
                 >
                   {/* Baris Atas: Kelas & Mapel + Status Pill */}
                   <div className="flex items-center justify-between gap-2">

@@ -33,15 +33,17 @@ export interface RombelExecutiveItem {
 }
 
 export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
-  const [activeTab, setActiveTab] = useState<"siswa" | "pengumuman" | "rekap_rombel">("siswa");
-
   const me = MysqlAuthService.getActiveUser();
   const waliKelasName = me?.full_name || userProfile?.name || "";
   const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik";
 
+  const [activeTab, setActiveTab] = useState<"siswa" | "pengumuman" | "rekap_rombel">(
+    isExecutive ? "rekap_rombel" : "siswa"
+  );
+
   const resolvedWaliClass = useMemo(() => {
     if (isExecutive) return "Semua";
-    return resolveWaliKelasRombel(me || userProfile, null, "rombel");
+    return resolveWaliKelasRombel(me || userProfile, null, "kelas");
   }, [userProfile, me, isExecutive]);
 
   const [selectedClass, setSelectedClass] = useState(resolvedWaliClass);
@@ -116,9 +118,10 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
         const mapped = rombelRows.map((r: any) => {
           const studentInClass = siswaList.filter((s: any) => isSameClass(s.class_name || s.class, r.name));
           const realCount = studentInClass.length > 0 ? studentInClass.length : (r.siswa_count || 0);
+          const classNameFormatted = normalizeRombelName(r.name);
           return {
             id: r.code || r.id || r.name,
-            name: r.name,
+            name: classNameFormatted,
             grade: r.grade || (r.name.includes("7") ? "Kelas VII" : r.name.includes("9") ? "Kelas IX" : "Kelas VIII"),
             wali: r.wali_kelas || "Belum Ditentukan",
             count: realCount,
@@ -238,7 +241,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
 
   const totalHadir = classStudents.filter((s) => s.hadirPct >= 90).length;
 
-  const totalRombelAktif = dbRombels.length;
+  const totalClassesCount = dbRombels.length;
   const waliTerisiCount = dbRombels.filter((r) => r.wali && r.wali !== "Belum Ditentukan" && r.wali !== "-").length;
   const avgHadirPct = dbRombels.length > 0 ? (dbRombels.reduce((acc, r) => acc + r.hadirPct, 0) / dbRombels.length).toFixed(1) : "0.0";
   const avgRaporPct = dbRombels.length > 0 ? (dbRombels.reduce((acc, r) => acc + r.progressRapor, 0) / dbRombels.length).toFixed(1) : "0.0";
@@ -246,112 +249,114 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
   const executiveRoleLabel = activeRole === "waka" ? "Waka" : activeRole === "admin" || activeRole === "admin_akademik" ? "Administrator" : "Kepala Madrasah";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {isExecutive ? (
         <>
-          <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <div>
-                <h3 className="font-extrabold text-sm text-foreground">
-                  🏛️ Supervisi Eksekutif {executiveRoleLabel}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Supervisi terpadu {totalRombelAktif} Rombel MTsN 2 Cilacap: Kehadiran siswa, kelengkapan Wali Kelas, & progres rapor.
-                </p>
-              </div>
+          {/* 1. Header Ringkas & Lega */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Supervisi Manajemen Kelas
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Monitoring terpadu {totalClassesCount} Kelas MTsN 2 Cilacap: Kehadiran siswa, kelengkapan Wali Kelas, & progres rapor.
+              </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-background hover:bg-emerald-500/10"
-              onClick={() => setIsPrintDataKelasOpen(true)}
-            >
-              <Printer className="h-3.5 w-3.5" /> Cetak Rekapitulasi Rombel PDF
-            </Button>
-          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
-                  <Users className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">Total Rombel Aktif</div>
-                  <div className="text-xl font-extrabold text-foreground">{totalRombelAktif} Rombel</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <CardContent className="p-0 col-span-1">
-              <Card className="border-border bg-card shadow-2xs h-full">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
-                    <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground font-medium">Rata-rata Presensi</div>
-                    <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{avgHadirPct}%</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </CardContent>
-
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-                  <Megaphone className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">Kelengkapan Wali Kelas</div>
-                  <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{waliTerisiCount} / {totalRombelAktif} Rombel</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
-                  <ShieldCheck className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">Progres Rapor Terinput</div>
-                  <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">{avgRaporPct}% Tuntas</div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 size="sm"
-                variant={activeTab === "rekap_rombel" ? "default" : "outline"}
-                className="font-bold text-xs gap-1.5"
+                variant="outline"
+                className="h-8 text-xs font-semibold gap-1.5 border-border hover:bg-muted shadow-2xs"
+                onClick={() => setIsPrintDataKelasOpen(true)}
+              >
+                <Printer className="h-3.5 w-3.5 text-emerald-600" /> Cetak Rekapitulasi Kelas (PDF)
+              </Button>
+            </div>
+          </div>
+
+          {/* 2. Compact Metric Strip (~42px high) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+              <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
+                <Users className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Kelas Aktif</p>
+                <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{totalClassesCount} Kelas</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+              <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Rata-rata Presensi</p>
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{avgHadirPct}%</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+              <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                <Megaphone className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Kelengkapan Wali Kelas</p>
+                <p className="text-sm font-bold text-amber-600 dark:text-amber-400 leading-tight mt-0.5">{waliTerisiCount} / {totalClassesCount} Kelas</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+              <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0">
+                <ShieldCheck className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Progres Rapor</p>
+                <p className="text-sm font-bold text-purple-600 dark:text-purple-400 leading-tight mt-0.5">{avgRaporPct}% Tuntas</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Segmented Tab Switcher & Filter Kelas */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+            <div className="inline-flex items-center bg-muted/60 p-1 rounded-xl border border-border/80 text-xs shadow-2xs">
+              <button
+                type="button"
                 onClick={() => {
                   setActiveTab("rekap_rombel");
                   setSelectedClass("Semua");
                 }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "rekap_rombel"
+                    ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                }`}
               >
-                <ShieldCheck className="h-4 w-4" /> Matriks 6 Rombel Terpadu
-              </Button>
+                <ShieldCheck className={`h-3.5 w-3.5 ${activeTab === "rekap_rombel" ? "text-emerald-600" : "opacity-60"}`} />
+                <span>Matriks {totalClassesCount} Kelas Terpadu</span>
+              </button>
+
               {selectedClass !== "Semua" && (
-                <Button
-                  size="sm"
-                  variant={activeTab === "siswa" ? "default" : "outline"}
-                  className="font-bold text-xs gap-1.5"
+                <button
+                  type="button"
                   onClick={() => setActiveTab("siswa")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeTab === "siswa"
+                      ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                  }`}
                 >
-                  <Users className="h-4 w-4" /> Detail ({selectedClass})
-                </Button>
+                  <Users className={`h-3.5 w-3.5 ${activeTab === "siswa" ? "text-blue-600" : "opacity-60"}`} />
+                  <span>Detail Siswa ({selectedClass})</span>
+                </button>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">Filter Rombel:</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Filter Kelas:</span>
               <select
-                className="h-9 rounded-md border border-input bg-background px-3 text-xs font-bold shadow-2xs cursor-pointer"
+                className="h-8 rounded-lg border border-border bg-card px-2.5 text-xs font-semibold shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 value={selectedClass}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -363,7 +368,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                   }
                 }}
               >
-                <option value="Semua">✨ Semua Rombel (Matriks Terpadu)</option>
+                <option value="Semua">Semua Kelas (Matriks Terpadu)</option>
                 {dbRombels.map((r) => (
                   <option key={r.id} value={r.name}>
                     {r.name} ({r.wali})
@@ -378,37 +383,39 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               <CardContent className="p-0">
                 {isLoadingRombels ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
-                    Memuat data rombel...
+                    Memuat data kelas...
                   </div>
                 ) : dbRombels.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
-                    Belum ada rombel terdaftar.
+                    Belum ada kelas terdaftar.
                   </div>
                 ) : (
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-muted/60 text-muted-foreground font-bold border-b border-border">
-                      <tr>
-                        <th className="p-3">Nama Rombel</th>
-                        <th className="p-3">Tingkat Kelas</th>
-                        <th className="p-3">Wali Kelas Penanggung Jawab</th>
-                        <th className="p-3 text-center">Jumlah Siswa</th>
-                        <th className="p-3 text-center">% Presensi Hari Ini</th>
-                        <th className="p-3 text-center">Progres Rapor</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {dbRombels.map((rombel) => (
-                        <tr key={rombel.id} className="hover:bg-muted/30 transition">
-                          <td className="p-3 font-bold text-foreground">{rombel.name}</td>
-                          <td className="p-3 font-medium text-muted-foreground">{rombel.grade}</td>
-                          <td className="p-3 font-semibold text-emerald-600 dark:text-emerald-400">{rombel.wali}</td>
-                          <td className="p-3 text-center font-mono font-bold">{rombel.count} Siswa</td>
-                          <td className="p-3 text-center font-mono font-bold text-emerald-500">{rombel.hadirPct}%</td>
-                          <td className="p-3 text-center font-mono font-bold text-blue-500">{rombel.progressRapor}% Terinput</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-muted/60 text-muted-foreground font-bold border-b border-border">
+                        <tr>
+                          <th className="p-3">Nama Kelas</th>
+                          <th className="p-3">Tingkat</th>
+                          <th className="p-3">Wali Kelas Penanggung Jawab</th>
+                          <th className="p-3 text-center">Jumlah Siswa</th>
+                          <th className="p-3 text-center">% Presensi Hari Ini</th>
+                          <th className="p-3 text-center">Progres Rapor</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {dbRombels.map((rombel) => (
+                          <tr key={rombel.id} className="hover:bg-muted/30 transition">
+                            <td className="p-3 font-bold text-foreground">{rombel.name}</td>
+                            <td className="p-3 font-medium text-muted-foreground">{rombel.grade}</td>
+                            <td className="p-3 font-semibold text-emerald-600 dark:text-emerald-400">{rombel.wali}</td>
+                            <td className="p-3 text-center font-mono font-bold">{rombel.count} Siswa</td>
+                            <td className="p-3 text-center font-mono font-bold text-emerald-500">{rombel.hadirPct}%</td>
+                            <td className="p-3 text-center font-mono font-bold text-blue-500">{rombel.progressRapor}% Terinput</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -427,86 +434,103 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
         </>
       ) : (
         <>
-          <SectionHeader
-            title={`Manajemen Kelas ${selectedClass}`}
-            sub="Portal bimbingan siswa, presensi kelas, dan pengumuman internal."
-          />
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 font-bold">
-                  <Users className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <span className="text-[10px] text-muted-foreground font-semibold block">Total Anggota Kelas</span>
-                  <span className="text-lg font-black text-foreground">{classStudents.length} Siswa</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0 font-bold">
-                  <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <span className="text-[10px] text-muted-foreground font-semibold block">Presensi Hari Ini</span>
-                  <span className="text-lg font-black text-foreground">0% Hadir</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0 font-bold">
-                  <Megaphone className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <span className="text-[10px] text-muted-foreground font-semibold block">Pengumuman Aktif</span>
-                  <span className="text-lg font-black text-foreground">{announcements.length} Berita</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card shadow-2xs">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 grid place-items-center shrink-0 font-bold">
-                  <ShieldCheck className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <span className="text-[10px] text-muted-foreground font-semibold block">Wali Kelas Pengampu</span>
-                  <span className="text-xs font-bold text-foreground truncate block max-w-[120px]" title={activeWaliKelasName}>
-                    {activeWaliKelasName}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="flex items-center justify-between border-b border-border pb-2">
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant={activeTab === "siswa" ? "default" : "ghost"}
-                className="font-bold text-xs gap-1.5"
-                onClick={() => setActiveTab("siswa")}
-              >
-                <Users className="h-4 w-4" /> Daftar Siswa ({classStudents.length})
-              </Button>
-              <Button
-                size="sm"
-                variant={activeTab === "pengumuman" ? "default" : "ghost"}
-                className="font-bold text-xs gap-1.5"
-                onClick={() => setActiveTab("pengumuman")}
-              >
-                <Megaphone className="h-4 w-4" /> Pengumuman Internal
-              </Button>
+          {/* Header untuk Wali Kelas */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Manajemen {selectedClass}
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Portal bimbingan siswa, presensi kelas, dan pengumuman internal.
+              </p>
             </div>
 
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold" onClick={() => setIsPrintDataKelasOpen(true)}>
-              <Printer className="h-3.5 w-3.5" /> Cetak Data Kelas PDF
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs font-semibold gap-1.5 border-border hover:bg-muted shadow-2xs"
+                onClick={() => setIsPrintDataKelasOpen(true)}
+              >
+                <Printer className="h-3.5 w-3.5 text-emerald-600" /> Cetak Data Kelas (PDF)
+              </Button>
+            </div>
+          </div>
+
+          {/* Compact Metric Strip untuk Wali Kelas */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+              <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
+                <Users className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Anggota Kelas</p>
+                <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{classStudents.length} Siswa</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+              <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Presensi Hari Ini</p>
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">0% Hadir</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+              <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                <Megaphone className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Pengumuman Aktif</p>
+                <p className="text-sm font-bold text-amber-600 dark:text-amber-400 leading-tight mt-0.5">{announcements.length} Berita</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+              <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0">
+                <ShieldCheck className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium leading-none">Wali Kelas</p>
+                <p className="text-xs font-bold text-foreground truncate leading-tight mt-0.5" title={activeWaliKelasName}>
+                  {activeWaliKelasName || "-"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Segmented Control untuk Wali Kelas */}
+          <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+            <div className="inline-flex items-center bg-muted/60 p-1 rounded-xl border border-border/80 text-xs shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setActiveTab("siswa")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "siswa"
+                    ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                }`}
+              >
+                <Users className={`h-3.5 w-3.5 ${activeTab === "siswa" ? "text-emerald-600" : "opacity-60"}`} />
+                <span>Daftar Siswa ({classStudents.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("pengumuman")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "pengumuman"
+                    ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                }`}
+              >
+                <Megaphone className={`h-3.5 w-3.5 ${activeTab === "pengumuman" ? "text-amber-600" : "opacity-60"}`} />
+                <span>Pengumuman Internal ({announcements.length})</span>
+              </button>
+            </div>
           </div>
 
           {activeTab === "siswa" && (
@@ -529,7 +553,6 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
           )}
         </>
       )}
-
       <CetakSuratDialog
         isOpen={isSuratOpen}
         onOpenChange={setIsSuratOpen}

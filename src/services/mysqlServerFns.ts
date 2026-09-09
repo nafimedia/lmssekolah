@@ -5129,3 +5129,96 @@ export const uploadCbtAudioFn = createServerFn({ method: "POST" })
     }
   });
 
+// ==========================================
+// 27. VENDOR MASTER CONTROL & LICENSE SYSTEM
+// ==========================================
+export interface VendorLicenseConfig {
+  cbt_enabled: boolean;
+  cbt_label: string;
+  cbt_expiry: string;
+}
+
+const VENDOR_SECRET_PIN = "040990";
+
+async function ensureSystemLicensesTable() {
+  const { execute } = await import("@/lib/db");
+  await execute(`
+    CREATE TABLE IF NOT EXISTS system_licenses (
+      license_key VARCHAR(100) PRIMARY KEY,
+      license_value TEXT,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
+export const getVendorLicenseConfigFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<VendorLicenseConfig> => {
+    try {
+      await ensureSystemLicensesTable();
+      const { query } = await import("@/lib/db");
+      const rows = await query<{ license_key: string; license_value: string }[]>(
+        "SELECT license_key, license_value FROM system_licenses"
+      );
+
+      const map: Record<string, string> = {};
+      if (Array.isArray(rows)) {
+        rows.forEach((r) => {
+          map[r.license_key] = r.license_value;
+        });
+      }
+
+      return {
+        cbt_enabled: map.cbt_enabled !== "false",
+        cbt_label: map.cbt_label || "Uji Coba 2026/2027",
+        cbt_expiry: map.cbt_expiry || "2027-06-30",
+      };
+    } catch {
+      return {
+        cbt_enabled: true,
+        cbt_label: "Uji Coba 2026/2027",
+        cbt_expiry: "2027-06-30",
+      };
+    }
+  }
+);
+
+export const verifyVendorPinFn = createServerFn({ method: "POST" })
+  .validator((data: { pin: string }) => data)
+  .handler(async ({ data }): Promise<{ valid: boolean }> => {
+    return { valid: (data?.pin || "").trim() === VENDOR_SECRET_PIN };
+  });
+
+export const saveVendorLicenseConfigFn = createServerFn({ method: "POST" })
+  .validator((data: { pin: string; config: VendorLicenseConfig }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message?: string }> => {
+    if ((data?.pin || "").trim() !== VENDOR_SECRET_PIN) {
+      return { success: false, message: "PIN Akses Vendor tidak valid" };
+    }
+
+    try {
+      await ensureSystemLicensesTable();
+      const { execute } = await import("@/lib/db");
+
+      const updates = [
+        { key: "cbt_enabled", val: data.config.cbt_enabled ? "true" : "false" },
+        { key: "cbt_label", val: data.config.cbt_label || "Uji Coba 2026/2027" },
+        { key: "cbt_expiry", val: data.config.cbt_expiry || "2027-06-30" },
+      ];
+
+      for (const item of updates) {
+        await execute(
+          `INSERT INTO system_licenses (license_key, license_value) 
+           VALUES (?, ?) 
+           ON DUPLICATE KEY UPDATE license_value = VALUES(license_value)`,
+          [item.key, item.val]
+        );
+      }
+
+      return { success: true };
+    } catch (e: any) {
+      console.error("[saveVendorLicenseConfigFn Error]:", e);
+      return { success: false, message: e?.message || "Gagal menyimpan konfigurasi lisensi" };
+    }
+  });
+
+

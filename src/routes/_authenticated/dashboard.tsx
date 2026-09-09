@@ -13,6 +13,7 @@ import { isSubjectAllowedForUser, filterSubjectsForUser, getTeacherAssignedSubje
 import { resolveWaliKelasRombel } from "@/utils/classNormalization";
 import { useEffect, useState, useMemo, Fragment, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
+import { getVendorLicenseConfigFn } from "@/services/mysqlServerFns";
 
 // Code-Splitting Lazy Loaded Heavy Modules:
 const ProfilModule = lazy(() => import("@/components/dashboard/modules/profil/ProfilModule").then((m) => ({ default: m.ProfilModule })));
@@ -613,13 +614,28 @@ function Dashboard() {
     refetchInterval: 5000,
   });
 
+  // Vendor Master License Config (Controls CBT module on/off & trial badge)
+  const { data: vendorLicense } = useQuery({
+    queryKey: ["vendor_license_config"],
+    queryFn: async () => {
+      return await getVendorLicenseConfigFn();
+    },
+    staleTime: 1000 * 30,
+  });
+
+  const isCbtActive = vendorLicense?.cbt_enabled ?? true;
+
   const roleInfo = ROLE_PERMISSIONS[activeRole] || ROLE_PERMISSIONS.siswa;
-  const allowedKeys = useMemo(() => roleInfo.allowedMenus.map((x) => x.key), [roleInfo]);
+  const allowedKeys = useMemo(
+    () => roleInfo.allowedMenus.filter((x) => isCbtActive || x.key !== "cbt").map((x) => x.key),
+    [roleInfo, isCbtActive]
+  );
 
   const activeUserForSidebar = MysqlAuthService.getActiveUser();
   const resolvedWaliRombel = resolveWaliKelasRombel(activeUserForSidebar, null, "rombel");
 
   const filteredMenu = roleInfo.allowedMenus
+    .filter((item) => isCbtActive || item.key !== "cbt")
     .map((item) => {
       const base = MENU.find((m) => m.key === item.key);
       if (!base) return null;
@@ -649,7 +665,9 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const keys = roleInfo.allowedMenus.map((x) => x.key);
+    const keys = roleInfo.allowedMenus
+      .filter((x) => isCbtActive || x.key !== "cbt")
+      .map((x) => x.key);
     if (!keys.includes(active)) {
       if ((active === "ruang_mengajar" || active === "modul_ajar") && keys.includes("mapel")) {
         setActive("mapel");
@@ -661,7 +679,7 @@ function Dashboard() {
       }
       setActive("beranda");
     }
-  }, [activeRole, active, roleInfo]);
+  }, [activeRole, active, roleInfo, isCbtActive]);
 
   const isSuperAdmin = me?.role === "admin" || me?.email?.toLowerCase() === "admin@mail.com" || me?.role === "superadmin";
 
@@ -713,6 +731,8 @@ function Dashboard() {
         handleSignOut={handleSignOut}
         isWaModalOpen={isWaModalOpen}
         setIsWaModalOpen={setIsWaModalOpen}
+        isCbtActive={isCbtActive}
+        vendorLicense={vendorLicense}
       />
     </SidebarProvider>
   );
@@ -735,6 +755,8 @@ function DashboardContent({
   handleSignOut,
   isWaModalOpen,
   setIsWaModalOpen,
+  isCbtActive = true,
+  vendorLicense,
 }: any) {
   const { setOpenMobile } = useSidebar();
 
@@ -753,6 +775,7 @@ function DashboardContent({
     : roleInfo.badge;
 
   const filteredMenu = roleInfo.allowedMenus
+    .filter((item) => isCbtActive || item.key !== "cbt")
     .map((item) => {
       const base = MENU.find((m) => m.key === item.key);
       if (!base) return null;
@@ -1057,7 +1080,19 @@ function DashboardContent({
               {active === "asesmen" && <PusatAsesmenModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "tugas" && <PusatAsesmenModule activeRole={activeRole} initialTab="individu" userProfile={userProfile} />}
               {active === "quiz" && <PusatAsesmenModule activeRole={activeRole} initialTab="kuis" userProfile={userProfile} />}
-              {active === "cbt" && <CBTModule userRole={activeRole} studentName={userProfile?.name || me?.full_name} />}
+              {active === "cbt" && (
+                isCbtActive ? (
+                  <CBTModule
+                    userRole={activeRole}
+                    studentName={userProfile?.name || me?.full_name}
+                    trialBadge={vendorLicense?.cbt_label}
+                  />
+                ) : (
+                  <div className="p-12 text-center text-muted-foreground border border-dashed rounded-2xl bg-card">
+                    Fitur CBT tidak aktif dalam paket layanan madrasah.
+                  </div>
+                )
+              )}
               {(active === "tahfidz" || active === "laporan_tahfidz" || active === "tahfidz_report") && (
                 activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik" ? (
                   <LaporanTahfidzEksekutif activeRole={activeRole} userProfile={userProfile} />

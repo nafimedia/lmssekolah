@@ -20,11 +20,13 @@ import { MysqlAuthService } from "@/services/mysqlAuthService";
 interface CBTModuleProps {
   userRole?: string;
   studentName?: string;
+  trialBadge?: string;
 }
 
 export const CBTModule: React.FC<CBTModuleProps> = ({
   userRole = "siswa",
   studentName = "Siswa Madrasah",
+  trialBadge,
 }) => {
   const isExecutive = userRole === "kamad" || userRole === "waka" || userRole === "admin" || userRole === "kepala_madrasah" || userRole === "admin_akademik";
   const isGuruRole = userRole === "guru" || (userRole || "").includes("guru");
@@ -418,19 +420,26 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
           title="CBT Ujian Online Saya"
           subtitle="Pelaksanaan ujian berbasis komputer, latihan soal mandiri, dan hasil evaluasi belajar"
           icon={MonitorCheck}
-          statusText="Sistem Ujian Aktif"
-          statusVariant="success"
+          statusText={trialBadge || "Uji Coba 2026/2027"}
+          statusVariant="neutral"
         />
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground">
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground flex-wrap">
               <MonitorCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              {isWaliKelas
-                ? `Monitoring CBT Engine - ${binaanRombel}`
-                : selectedRombel === "ALL"
-                  ? "Monitoring CBT Engine & Assessment Center (Seluruh Kelas)"
-                  : `Monitoring CBT Engine - ${selectedRombel}`}
+              <span>
+                {isWaliKelas
+                  ? `Monitoring CBT Engine - ${binaanRombel}`
+                  : selectedRombel === "ALL"
+                    ? "Monitoring CBT Engine & Assessment Center (Seluruh Kelas)"
+                    : `Monitoring CBT Engine - ${selectedRombel}`}
+              </span>
+              {trialBadge && (
+                <Badge variant="outline" className="text-[11px] font-semibold text-muted-foreground border-border bg-muted/40 font-mono">
+                  {trialBadge}
+                </Badge>
+              )}
             </h1>
           </div>
           <div className="flex gap-2">

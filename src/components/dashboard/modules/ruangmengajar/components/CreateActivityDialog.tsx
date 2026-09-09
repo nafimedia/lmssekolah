@@ -237,6 +237,7 @@ export function CreateActivityForm({
     if (!file) return;
 
     try {
+      const { parseQuizExcelFile } = await import("@/utils/quizExcelHelper");
       const parsed = await parseQuizExcelFile(file);
       if (parsed.length === 0) {
         return toast.error("Tidak ada soal yang valid ditemukan pada berkas Excel.");
@@ -705,7 +706,14 @@ export function CreateActivityForm({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => downloadQuizTemplateExcel()}
+                      onClick={async () => {
+                        try {
+                          const { downloadQuizTemplateExcel } = await import("@/utils/quizExcelHelper");
+                          downloadQuizTemplateExcel();
+                        } catch (err) {
+                          toast.error("Gagal mengunduh template Excel");
+                        }
+                      }}
                       className="text-xs font-medium gap-1 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 h-7"
                       title="Unduh format spreadsheet Excel resmi MTsN 2 Cilacap"
                     >

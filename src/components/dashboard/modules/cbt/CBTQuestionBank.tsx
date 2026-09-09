@@ -126,13 +126,14 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
 
     try {
       setImporting(true);
+      const { parseQuizExcelFile } = await import("@/utils/quizExcelHelper");
       const parsed = await parseQuizExcelFile(selectedExcelFile);
       if (parsed.length === 0) {
         return toast.error("Tidak ada data butir soal yang valid dalam berkas Excel.");
       }
 
       const activeUser = MysqlAuthService.getActiveUser();
-      parsed.forEach((item, index) => {
+      parsed.forEach((item: any, index: number) => {
         const newQuestion: CBTQuestion = {
           id: `cbt_q_${Date.now()}_${index}`,
           questionText: item.question,
@@ -475,7 +476,14 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => downloadQuizTemplateExcel("Template_Bank_Soal_CBT_MTsN2.xlsx")}
+              onClick={async () => {
+                try {
+                  const { downloadQuizTemplateExcel } = await import("@/utils/quizExcelHelper");
+                  downloadQuizTemplateExcel("Template_Bank_Soal_CBT_MTsN2.xlsx");
+                } catch (err) {
+                  toast.error("Gagal mengunduh template Excel CBT");
+                }
+              }}
               className="w-full text-xs gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10"
             >
               <Download className="h-3.5 w-3.5" /> Unduh Format Template Excel (.xlsx)

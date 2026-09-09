@@ -371,6 +371,7 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Guru", group: "Utama" },
       { key: "ruang_mengajar", label: "Ruang Mengajar KBM Live", group: "Ruang Mengajar" },
+      { key: "cbt", label: "CBT & Bank Soal", group: "Penilaian & Asesmen" },
       { key: "perangkat_pembelajaran", label: "Perangkat Guru (RPP & ATP)", group: "Administrasi & Kurikulum" },
       { key: "nilai", label: "Rekap Nilai & Leger Rapor", group: "Penilaian & Rapor" },
       { key: "jadwal", label: "Jadwal Mengajar Saya", group: "Informasi & Referensi" },

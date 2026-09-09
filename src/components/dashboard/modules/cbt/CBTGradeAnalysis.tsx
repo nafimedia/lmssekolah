@@ -70,6 +70,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   const [viewMode, setViewMode] = useState<"nilai" | "butir_soal">("nilai");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedRombel, setSelectedRombel] = useState<string>("all");
   const [selectedStudent, setSelectedStudent] = useState<CBTGradeAnalysisItem | null>(null);
   const [isRemedialModalOpen, setIsRemedialModalOpen] = useState(false);
   const [isEnrichmentModalOpen, setIsEnrichmentModalOpen] = useState(false);
@@ -101,9 +102,23 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
     }
   };
 
-  // Filter & Sort Grades by Role Scope
-  const filteredGrades = grades.filter((g) => {
-    // Siswa only sees their own grade
+  // Dynamic Rombel List from Real Grade Records
+  const availableRombels = React.useMemo(() => {
+    const set = new Set<string>();
+    grades.forEach((g) => {
+      if (g.classRombel) set.add(g.classRombel);
+    });
+    return Array.from(set).sort();
+  }, [grades]);
+
+  // Grades filtered by selected rombel
+  const rombelFilteredGrades = React.useMemo(() => {
+    if (selectedRombel === "all") return grades;
+    return grades.filter((g) => g.classRombel === selectedRombel);
+  }, [grades, selectedRombel]);
+
+  // Filter & Sort Grades by Role Scope & Search Term
+  const filteredGrades = rombelFilteredGrades.filter((g) => {
     if (isSiswa) {
       return g.name.toLowerCase().includes(studentName.toLowerCase());
     }
@@ -148,15 +163,66 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
     });
   }, [filteredGrades, sortColumn, sortDir]);
 
-  const totalStudents = grades.length;
-  const passedStudents = grades.filter((g) => g.status === "Lulus KKM").length;
-  const remedialStudents = grades.filter((g) => g.status === "Remedial").length;
-  const passPercentage = totalStudents > 0 ? Math.round((passedStudents / totalStudents) * 100) : 0;
-  const avgScore =
-    totalStudents > 0
-      ? Math.round(grades.reduce((acc, curr) => acc + curr.totalScore, 0) / totalStudents)
-      : 0;
+  // Descriptive Statistics (100% Real Database Calculations)
+  const stats = React.useMemo(() => {
+    const total = rombelFilteredGrades.length;
+    if (total === 0) {
+      return {
+        total: 0,
+        passed: 0,
+        remedial: 0,
+        passPct: 0,
+        avg: 0,
+        max: 0,
+        min: 0,
+        median: 0,
+        stdDev: 0,
+        isClassicalPassed: false,
+      };
+    }
 
+    const scores = rombelFilteredGrades.map((g) => g.totalScore);
+    const passed = rombelFilteredGrades.filter((g) => g.status === "Lulus KKM").length;
+    const remedial = rombelFilteredGrades.filter((g) => g.status === "Remedial" || g.status === "Perlu Dikoreksi").length;
+    const passPct = Math.round((passed / total) * 100);
+    const isClassicalPassed = passPct >= 85;
+
+    const sum = scores.reduce((acc, s) => acc + s, 0);
+    const avg = +(sum / total).toFixed(1);
+    const max = Math.max(...scores);
+    const min = Math.min(...scores);
+
+    const sortedScores = [...scores].sort((a, b) => a - b);
+    const mid = Math.floor(sortedScores.length / 2);
+    const median =
+      sortedScores.length % 2 !== 0
+        ? sortedScores[mid]
+        : +((sortedScores[mid - 1] + sortedScores[mid]) / 2).toFixed(1);
+
+    const variance = scores.reduce((acc, s) => acc + Math.pow(s - avg, 2), 0) / total;
+    const stdDev = +Math.sqrt(variance).toFixed(2);
+
+    return {
+      total,
+      passed,
+      remedial,
+      passPct,
+      avg,
+      max,
+      min,
+      median,
+      stdDev,
+      isClassicalPassed,
+    };
+  }, [rombelFilteredGrades]);
+
+  const totalStudents = stats.total;
+  const passedStudents = stats.passed;
+  const remedialStudents = stats.remedial;
+  const passPercentage = stats.passPct;
+  const avgScore = stats.avg;
+
+  // Real Item Analysis (Psychometrics & Distractor Efficiency based on student_answers JSON)
   const itemAnalysisList = React.useMemo(() => {
     const list =
       questions && questions.length > 0
@@ -171,48 +237,154 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             difficulty: (i % 3 === 0 ? "Mudah" : i % 3 === 1 ? "Sedang" : "Sukar") as any,
           }));
 
-    const totalPeserta = grades.length;
+    const totalPeserta = rombelFilteredGrades.length;
+
+    // Helper to find student answer for a specific question
+    const findStudentAnswer = (studentAnswersRaw: string | undefined, q: CBTQuestion, qIndex: number) => {
+      if (!studentAnswersRaw) return null;
+      try {
+        const parsed = typeof studentAnswersRaw === "string" ? JSON.parse(studentAnswersRaw) : studentAnswersRaw;
+        if (!parsed) return null;
+
+        if (parsed[qIndex]) {
+          const item = parsed[qIndex];
+          if (item && (String(item.questionId) === String(q.id) || item.questionText === q.questionText)) {
+            return item;
+          }
+        }
+
+        const values = Object.values(parsed);
+        const match = values.find(
+          (item: any) =>
+            item && (String(item.questionId) === String(q.id) || item.questionText === q.questionText)
+        );
+        if (match) return match;
+
+        if (parsed[qIndex]) return parsed[qIndex];
+        return null;
+      } catch {
+        return null;
+      }
+    };
+
+    // Sort students by totalScore descending for upper and lower group division
+    const sortedStudents = [...rombelFilteredGrades].sort((a, b) => b.totalScore - a.totalScore);
+    const nUpper = Math.ceil(totalPeserta / 2);
+    const nLower = totalPeserta - nUpper;
+    const upperStudents = sortedStudents.slice(0, nUpper);
+    const lowerStudents = sortedStudents.slice(nUpper);
 
     return list.map((q, idx) => {
       let correctCount = 0;
+      const optionCounts: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, Benar: 0, Salah: 0 };
+      let upperCorrect = 0;
+      let lowerCorrect = 0;
+
       if (totalPeserta > 0) {
-        const factor = 0.55 + ((idx * 7) % 35) / 100;
-        correctCount = Math.min(
-          totalPeserta,
-          Math.max(1, Math.round(passedStudents * 0.9 + (totalPeserta - passedStudents) * (factor - 0.3)))
-        );
+        upperStudents.forEach((student) => {
+          const ans = findStudentAnswer(student.studentAnswers, q, idx);
+          if (ans) {
+            if (ans.isCorrect || (q.questionType === "essay" && Number(ans.score) > 0)) {
+              upperCorrect++;
+              correctCount++;
+            }
+            const chosen = String(ans.studentAnswer || "").trim();
+            if (optionCounts[chosen] !== undefined) {
+              optionCounts[chosen]++;
+            }
+          }
+        });
+
+        lowerStudents.forEach((student) => {
+          const ans = findStudentAnswer(student.studentAnswers, q, idx);
+          if (ans) {
+            if (ans.isCorrect || (q.questionType === "essay" && Number(ans.score) > 0)) {
+              lowerCorrect++;
+              correctCount++;
+            }
+            const chosen = String(ans.studentAnswer || "").trim();
+            if (optionCounts[chosen] !== undefined) {
+              optionCounts[chosen]++;
+            }
+          }
+        });
       }
 
-      const pVal = totalPeserta > 0 ? +(correctCount / totalPeserta).toFixed(2) : 0.75;
+      // Tingkat Kesukaran (P)
+      const pVal = totalPeserta > 0 ? +(correctCount / totalPeserta).toFixed(2) : 0;
       const pct = Math.round(pVal * 100);
 
       let kesukaran = "Sedang";
       let kesukaranColor = "bg-blue-500/10 text-blue-600 border-blue-300 dark:border-blue-800";
-      if (pct >= 70) {
+      if (totalPeserta === 0) {
+        kesukaran = "Belum Ada Data";
+        kesukaranColor = "bg-muted text-muted-foreground border-border";
+      } else if (pVal >= 0.70) {
         kesukaran = "Mudah";
         kesukaranColor = "bg-emerald-500/10 text-emerald-600 border-emerald-300 dark:border-emerald-800";
-      } else if (pct < 30) {
+      } else if (pVal < 0.30) {
         kesukaran = "Sukar";
         kesukaranColor = "bg-rose-500/10 text-rose-600 border-rose-300 dark:border-rose-800";
       }
 
+      // Daya Pembeda (D)
+      let dayaBeda = 0;
+      let dayaBedaLabel = "-";
       let rekomendasi = "Diterima (Baik)";
       let rekColor = "text-emerald-600";
-      if (pct > 85) {
-        rekomendasi = "Perlu Revisi (Terlalu Mudah)";
-        rekColor = "text-amber-600";
-      } else if (pct < 30) {
-        rekomendasi = "Perlu Pembahasan / Revisi";
-        rekColor = "text-rose-600";
+
+      if (totalPeserta >= 2 && nLower > 0 && nUpper > 0) {
+        const pUpper = upperCorrect / nUpper;
+        const pLower = lowerCorrect / nLower;
+        dayaBeda = +(pUpper - pLower).toFixed(2);
+
+        if (dayaBeda >= 0.40) {
+          dayaBedaLabel = `${dayaBeda} (Sangat Baik)`;
+          rekomendasi = "Diterima (Sangat Baik)";
+          rekColor = "text-emerald-600";
+        } else if (dayaBeda >= 0.30) {
+          dayaBedaLabel = `${dayaBeda} (Baik)`;
+          rekomendasi = "Diterima (Baik)";
+          rekColor = "text-blue-600";
+        } else if (dayaBeda >= 0.20) {
+          dayaBedaLabel = `${dayaBeda} (Cukup)`;
+          rekomendasi = "Perlu Revisi Sedang";
+          rekColor = "text-amber-600";
+        } else {
+          dayaBedaLabel = `${dayaBeda} (Jelek)`;
+          rekomendasi = "Perlu Dibuang / Ditulis Ulang";
+          rekColor = "text-rose-600";
+        }
+      } else if (totalPeserta === 1) {
+        dayaBedaLabel = "Perlu ≥2 Siswa";
+        rekomendasi = "Menunggu Data Tambahan";
+        rekColor = "text-muted-foreground";
+      } else {
+        dayaBedaLabel = "0.00";
+        rekomendasi = "Belum Ada Pengerjaan";
+        rekColor = "text-muted-foreground";
       }
 
-      const dayaBeda = Math.max(0.22, +(0.3 + ((idx * 3) % 40) / 100).toFixed(2));
+      // Distractor breakdown for PG
+      const distractors = ["A", "B", "C", "D"].map((opt) => {
+        const count = optionCounts[opt] || 0;
+        const distPct = totalPeserta > 0 ? Math.round((count / totalPeserta) * 100) : 0;
+        const isKey = (q.correctOption || "A").toUpperCase() === opt;
+        const isEffective = isKey || distPct >= 5;
+        return {
+          option: opt,
+          count,
+          pct: distPct,
+          isKey,
+          isEffective,
+        };
+      });
 
       return {
         no: idx + 1,
         id: q.id,
         pertanyaan: q.questionText || (q as any).question || `Butir Soal #${idx + 1}`,
-        tipe: q.questionType === "essay" ? "Essay" : "Pilihan Ganda",
+        tipe: q.questionType === "essay" ? "Essay" : q.questionType === "benar_salah" ? "Benar/Salah" : "Pilihan Ganda",
         kunci: q.correctOption || "A",
         totalPeserta,
         correctCount,
@@ -221,11 +393,13 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
         kesukaran,
         kesukaranColor,
         dayaBeda,
+        dayaBedaLabel,
         rekomendasi,
         rekColor,
+        distractors,
       };
     });
-  }, [questions, grades, passedStudents]);
+  }, [questions, rombelFilteredGrades]);
 
   const mudahCount = itemAnalysisList.filter((x) => x.kesukaran === "Mudah").length;
   const sedangCount = itemAnalysisList.filter((x) => x.kesukaran === "Sedang").length;
@@ -257,23 +431,37 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
       "Benar",
       "Salah",
       "% Benar (Tingkat Ketercapaian)",
-      "Tingkat Kesukaran",
-      "Daya Pembeda",
+      "Tingkat Kesukaran (P)",
+      "Daya Pembeda (D)",
+      "Pilihan A (%)",
+      "Pilihan B (%)",
+      "Pilihan C (%)",
+      "Pilihan D (%)",
       "Status Rekomendasi",
     ];
-    const rows = itemAnalysisList.map((item) => [
-      item.no,
-      item.tipe,
-      item.pertanyaan,
-      item.kunci,
-      item.totalPeserta,
-      item.correctCount,
-      item.incorrectCount,
-      `${item.pct}%`,
-      item.kesukaran,
-      item.dayaBeda,
-      item.rekomendasi,
-    ]);
+    const rows = itemAnalysisList.map((item) => {
+      const distA = item.distractors?.find((d) => d.option === "A")?.pct ?? "-";
+      const distB = item.distractors?.find((d) => d.option === "B")?.pct ?? "-";
+      const distC = item.distractors?.find((d) => d.option === "C")?.pct ?? "-";
+      const distD = item.distractors?.find((d) => d.option === "D")?.pct ?? "-";
+      return [
+        item.no,
+        item.tipe,
+        item.pertanyaan,
+        item.kunci,
+        item.totalPeserta,
+        item.correctCount,
+        item.incorrectCount,
+        `${item.pct}%`,
+        item.kesukaran,
+        item.dayaBedaLabel,
+        `${distA}%`,
+        `${distB}%`,
+        `${distC}%`,
+        `${distD}%`,
+        item.rekomendasi,
+      ];
+    });
     exportToExcelXml("Analisis_Butir_Soal_CBT", "Analisis_Soal", headers, rows);
     toast.success("File Excel Analisis Butir Soal Berhasil Diunduh!");
   };
@@ -419,6 +607,23 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Rombel Filter Dropdown */}
+          <div className="flex items-center gap-1.5 bg-card px-2.5 py-1 rounded-lg border border-border">
+            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+            <select
+              value={selectedRombel}
+              onChange={(e) => setSelectedRombel(e.target.value)}
+              className="bg-transparent text-xs font-bold text-foreground focus:outline-none cursor-pointer"
+            >
+              <option value="all">Semua Rombel ({grades.length} Siswa)</option>
+              {availableRombels.map((r) => (
+                <option key={r} value={r}>
+                  {r} ({grades.filter((g) => g.classRombel === r).length} Siswa)
+                </option>
+              ))}
+            </select>
+          </div>
+
           {canManage && remedialStudents > 0 && onCreateRemedialExam && (
             <Button
               size="sm"
@@ -451,13 +656,16 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
 
       {viewMode === "nilai" && (
         <>
-          {/* Summary KPI Cards for Teachers & Executives */}
+          {/* Summary KPI Cards for Teachers & Executives (Real Descriptive Statistics) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-border bg-card">
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Total Peserta CBT</p>
-                  <h3 className="text-2xl font-bold text-foreground mt-0.5">{totalStudents} Siswa</h3>
+                  <h3 className="text-2xl font-bold text-foreground mt-0.5">{stats.total} Siswa</h3>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {selectedRombel === "all" ? "Seluruh Rombel Terdaftar" : selectedRombel}
+                  </p>
                 </div>
                 <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
                   <Users className="h-5 w-5" />
@@ -468,10 +676,13 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             <Card className="border-border bg-card">
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Persentase Lulus KKM (≥75)</p>
+                  <p className="text-xs text-muted-foreground font-medium">Ketuntasan Klasikal (≥75)</p>
                   <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                    {passPercentage}% ({passedStudents} Siswa)
+                    {stats.passPct}% ({stats.passed} Siswa)
                   </h3>
+                  <p className={`text-[10px] font-semibold mt-1 ${stats.isClassicalPassed ? "text-emerald-600" : "text-amber-600"}`}>
+                    {stats.isClassicalPassed ? "✓ Memenuhi Standar (≥85%)" : "⚠ Belum Tuntas (Target 85%)"}
+                  </p>
                 </div>
                 <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
                   <CheckCircle2 className="h-5 w-5" />
@@ -482,10 +693,13 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             <Card className="border-border bg-card">
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Siswa Perlu Remedial (&lt;75)</p>
+                  <p className="text-xs text-muted-foreground font-medium">Siswa Perlu Remedial</p>
                   <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
-                    {remedialStudents} Siswa
+                    {stats.remedial} Siswa
                   </h3>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Skor Terendah: {stats.min} | Tertinggi: {stats.max}
+                  </p>
                 </div>
                 <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
                   <Zap className="h-5 w-5" />
@@ -496,8 +710,11 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             <Card className="border-border bg-card">
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Rata-Rata Nilai Rombel</p>
-                  <h3 className="text-2xl font-bold text-primary mt-0.5">{avgScore} / 100</h3>
+                  <p className="text-xs text-muted-foreground font-medium">Rata-Rata & Sebaran Nilai</p>
+                  <h3 className="text-2xl font-bold text-primary mt-0.5">{stats.avg} / 100</h3>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Median: {stats.median} | Standar Deviasi σ: {stats.stdDev}
+                  </p>
                 </div>
                 <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold">
                   <BarChart3 className="h-5 w-5" />
@@ -780,10 +997,10 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                 <th className="p-3 text-center">Tipe</th>
                 <th className="p-3 text-center w-16">Kunci</th>
                 <th className="p-3 text-center">Jml Benar</th>
-                <th className="p-3 text-center">Daya Serap (%)</th>
-                <th className="p-3 text-center">Tingkat Kesukaran</th>
-                <th className="p-3 text-center">Daya Pembeda</th>
-                <th className="p-3 text-right pr-4">Status Butir Soal</th>
+                <th className="p-3 text-center">Tingkat Kesukaran (P)</th>
+                <th className="p-3 text-center">Daya Pembeda (D)</th>
+                <th className="p-3 text-center">Sebaran Pengecoh (Distractor A-D)</th>
+                <th className="p-3 text-right pr-4">Status / Rekomendasi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -808,16 +1025,43 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                   <td className="p-3 text-center font-mono font-semibold">
                     {item.correctCount} / {item.totalPeserta}
                   </td>
-                  <td className="p-3 text-center font-mono font-extrabold text-foreground">
-                    {item.pct}%
-                  </td>
                   <td className="p-3 text-center">
-                    <Badge variant="outline" className={`text-[10px] font-bold ${item.kesukaranColor}`}>
-                      {item.kesukaran}
-                    </Badge>
+                    <div className="space-y-0.5">
+                      <span className="font-mono font-extrabold text-xs text-foreground">{item.pct}%</span>
+                      <div>
+                        <Badge variant="outline" className={`text-[10px] font-bold ${item.kesukaranColor}`}>
+                          {item.kesukaran}
+                        </Badge>
+                      </div>
+                    </div>
                   </td>
                   <td className="p-3 text-center font-mono text-muted-foreground font-semibold">
-                    {item.dayaBeda}
+                    <span className="font-bold text-xs text-foreground">{item.dayaBedaLabel}</span>
+                  </td>
+                  <td className="p-3 text-center">
+                    {item.tipe === "Pilihan Ganda" && item.distractors ? (
+                      <div className="flex items-center justify-center gap-1 flex-wrap max-w-[200px] mx-auto">
+                        {item.distractors.map((d) => (
+                          <span
+                            key={d.option}
+                            title={`Opsi ${d.option}: ${d.count} siswa (${d.pct}%) ${
+                              d.isKey ? "— Kunci Jawaban Benar" : d.isEffective ? "— Pengecoh Efektif" : "— Kurang Berfungsi"
+                            }`}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${
+                              d.isKey
+                                ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-bold"
+                                : d.count > 0
+                                ? "bg-muted/60 text-muted-foreground border-border font-medium"
+                                : "bg-rose-500/10 text-rose-500 border-rose-300/30 opacity-70"
+                            }`}
+                          >
+                            {d.option}:{d.pct}%
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">-</span>
+                    )}
                   </td>
                   <td className="p-3 text-right pr-4">
                     <span className={`font-bold text-[11px] ${item.rekColor}`}>

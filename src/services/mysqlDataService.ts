@@ -60,6 +60,8 @@ import {
   deleteCbtResultFn,
   gradeCbtEssayFn,
   uploadCbtImageFn,
+  uploadCbtAudioFn,
+  batchInsertCbtQuestionsFn,
   getKktpConfigFn,
   saveKktpConfigFn,
   getAssignmentsFn,
@@ -713,6 +715,24 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("uploadCbtImageFn failed:", e);
       return { success: false, imageUrl: "" };
+    }
+  }
+
+  static async uploadCbtAudio(filename: string, dataUrl: string): Promise<{ success: boolean; audioUrl: string }> {
+    try {
+      return await uploadCbtAudioFn({ data: { filename, dataUrl } });
+    } catch (e) {
+      console.warn("uploadCbtAudioFn failed:", e);
+      return { success: false, audioUrl: "" };
+    }
+  }
+
+  static async batchInsertCbtQuestions(examId: number | string, questions: CbtQuestionDbRow[]): Promise<{ success: boolean; insertedCount: number }> {
+    try {
+      return await batchInsertCbtQuestionsFn({ data: { examId, questions } });
+    } catch (e) {
+      console.warn("batchInsertCbtQuestionsFn failed:", e);
+      return { success: false, insertedCount: 0 };
     }
   }
 

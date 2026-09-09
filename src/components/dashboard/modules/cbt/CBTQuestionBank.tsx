@@ -27,6 +27,7 @@ import {
   Edit3,
   FileCheck,
   X,
+  Volume2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTQuestion, QuestionType } from "@/types/cbt";
@@ -67,6 +68,8 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
   const [qDifficulty, setQDifficulty] = useState<"Mudah" | "Sedang" | "Sukar">("Sedang");
   const [qImageUrl, setQImageUrl] = useState("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [qAudioUrl, setQAudioUrl] = useState("");
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [forceArabicMode, setForceArabicMode] = useState(false);
 
   const isCurrentArabic = forceArabicMode || isArabicText(qText) || qMapel.toLowerCase().includes("arab");
@@ -114,6 +117,35 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      return toast.error("Ukuran berkas audio maksimal 15 MB!");
+    }
+
+    setIsUploadingAudio(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      try {
+        const res = await MysqlDataService.uploadCbtAudio(file.name, dataUrl);
+        if (res.success && res.audioUrl) {
+          setQAudioUrl(res.audioUrl);
+          toast.success("Audio soal (Istima'/Listening) berhasil diunggah ke server disk!");
+        } else {
+          toast.error("Gagal mengunggah berkas audio.");
+        }
+      } catch {
+        toast.error("Terjadi kendala saat menyimpan audio.");
+      } finally {
+        setIsUploadingAudio(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!qText.trim()) {
@@ -141,6 +173,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
       questionType: qType,
       questionText: qText.trim(),
       imageUrl: qImageUrl || undefined,
+      audioUrl: qAudioUrl || undefined,
       options: finalOptions,
       correctOption: finalKey,
       points: parseInt(qPoints, 10) || 5,
@@ -160,6 +193,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
     setOptC("");
     setOptD("");
     setQImageUrl("");
+    setQAudioUrl("");
     setForceArabicMode(false);
     setCorrectKey("A");
   };
@@ -174,8 +208,8 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
 
     try {
       setImporting(true);
-      const { parseQuizExcelFile } = await import("@/utils/quizExcelHelper");
-      const parsed = await parseQuizExcelFile(selectedExcelFile);
+      const { parseCbtExcelFile } = await import("@/utils/quizExcelHelper");
+      const parsed = await parseCbtExcelFile(selectedExcelFile);
       if (parsed.length === 0) {
         return toast.error("Tidak ada data butir soal yang valid dalam berkas Excel.");
       }
@@ -185,7 +219,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
         const newQuestion: CBTQuestion = {
           id: `cbt_q_${Date.now()}_${index}`,
           questionText: item.question,
-          questionType: "pg",
+          questionType: item.questionType || "pg",
           mapel: qMapel,
           options: {
             A: item.optionA,
@@ -194,7 +228,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
             D: item.optionD,
           },
           correctOption: item.keyAnswer,
-          points: 5,
+          points: item.points || 5,
           difficulty: "Sedang",
           author: activeUser?.full_name || "Guru Pengampu",
         };
@@ -325,6 +359,19 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                         alt="Ilustrasi Soal"
                         className="max-h-48 max-w-full rounded-lg border border-border object-contain bg-muted/20"
                       />
+                    </div>
+                  )}
+
+                  {/* Question Audio if uploaded */}
+                  {q.audioUrl && (
+                    <div className="pt-2">
+                      <div className="flex flex-wrap items-center gap-2.5 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300">
+                        <div className="flex items-center gap-1.5 font-semibold text-xs">
+                          <Volume2 className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                          <span>Audio Soal (Istima' / Listening):</span>
+                        </div>
+                        <audio controls src={q.audioUrl} className="h-8 max-w-full sm:ml-auto" />
+                      </div>
                     </div>
                   )}
 
@@ -499,6 +546,42 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                     className="text-xs max-w-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-emerald-50 dark:file:bg-emerald-950 file:text-emerald-700 dark:file:text-emerald-300"
                   />
                   {isUploadingImage && <span className="text-xs text-muted-foreground">Mengunggah...</span>}
+                </div>
+              )}
+            </div>
+
+            {/* Audio Pendukung Soal (Istima' Bahasa Arab / Listening Bahasa Inggris) */}
+            <div className="space-y-1.5 p-3 rounded-lg border border-blue-500/30 bg-blue-50/10 dark:bg-blue-950/10">
+              <Label className="text-xs font-semibold flex items-center justify-between text-blue-700 dark:text-blue-300">
+                <span className="flex items-center gap-1.5">
+                  <Volume2 className="h-3.5 w-3.5" />
+                  <span>Audio Soal (Istima' Bahasa Arab / Listening Bahasa Inggris)</span>
+                </span>
+                <span className="text-[10px] text-muted-foreground">MP3 / WAV Maks 15MB</span>
+              </Label>
+              {qAudioUrl ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <audio controls src={qAudioUrl} className="h-8 max-w-sm" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setQAudioUrl("")}
+                    className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                  >
+                    Hapus Audio
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 pt-1">
+                  <Input
+                    type="file"
+                    accept="audio/*"
+                    onChange={handleAudioUpload}
+                    disabled={isUploadingAudio}
+                    className="text-xs max-w-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300"
+                  />
+                  {isUploadingAudio && <span className="text-xs text-muted-foreground">Mengunggah audio...</span>}
                 </div>
               )}
             </div>
@@ -698,15 +781,15 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               size="sm"
               onClick={async () => {
                 try {
-                  const { downloadQuizTemplateExcel } = await import("@/utils/quizExcelHelper");
-                  downloadQuizTemplateExcel("Template_Bank_Soal_CBT_MTsN2.xlsx");
+                  const { downloadCbtTemplateExcel } = await import("@/utils/quizExcelHelper");
+                  downloadCbtTemplateExcel("Template_Bank_Soal_CBT_MTsN2.xlsx");
                 } catch (err) {
                   toast.error("Gagal mengunduh template Excel CBT");
                 }
               }}
               className="w-full text-xs gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10"
             >
-              <Download className="h-3.5 w-3.5" /> Unduh Format Template Excel (.xlsx)
+              <Download className="h-3.5 w-3.5" /> Unduh Format Template Excel Bank Soal (.xlsx)
             </Button>
           </div>
 

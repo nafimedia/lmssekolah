@@ -77,6 +77,7 @@ export interface CbtResultRow {
   essay_score?: number;
   status: string;
   student_answers?: string;
+  violations_count?: number;
   submitted_at?: string;
   created_at?: string;
 }
@@ -1507,6 +1508,7 @@ export interface CbtQuestionDbRow {
   question_type?: "pg" | "benar_salah" | "essay" | "isian" | string;
   question_text: string;
   image_url?: string;
+  audio_url?: string;
   option_a?: string;
   option_b?: string;
   option_c?: string;
@@ -1521,6 +1523,7 @@ export const getCbtQuestionsFn = createServerFn({ method: "GET" }).handler(
       const { query, execute } = await import("@/lib/db");
       await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
       await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
+      await execute("ALTER TABLE cbt_questions ADD COLUMN audio_url VARCHAR(500) DEFAULT NULL").catch(() => {});
 
       return await query<CbtQuestionDbRow[]>("SELECT * FROM cbt_questions ORDER BY id DESC");
     } catch {
@@ -1536,16 +1539,18 @@ export const saveCbtQuestionFn = createServerFn({ method: "POST" })
       const { execute } = await import("@/lib/db");
       await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
       await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
+      await execute("ALTER TABLE cbt_questions ADD COLUMN audio_url VARCHAR(500) DEFAULT NULL").catch(() => {});
 
       const examId = data.exam_id || 1;
       const res = await execute(
-        `INSERT INTO cbt_questions (exam_id, question_text, question_type, image_url, option_a, option_b, option_c, option_d, correct_option, points) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO cbt_questions (exam_id, question_text, question_type, image_url, audio_url, option_a, option_b, option_c, option_d, correct_option, points) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           examId,
           data.question_text,
           data.question_type || "pg",
           data.image_url || null,
+          data.audio_url || null,
           data.option_a || "",
           data.option_b || "",
           data.option_c || "",
@@ -1558,6 +1563,44 @@ export const saveCbtQuestionFn = createServerFn({ method: "POST" })
     } catch (err: any) {
       console.warn("saveCbtQuestionFn error:", err);
       return { success: false };
+    }
+  });
+
+export const batchInsertCbtQuestionsFn = createServerFn({ method: "POST" })
+  .validator((data: { examId: number | string; questions: CbtQuestionDbRow[] }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; insertedCount: number }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
+      await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
+      await execute("ALTER TABLE cbt_questions ADD COLUMN audio_url VARCHAR(500) DEFAULT NULL").catch(() => {});
+
+      let count = 0;
+      for (const q of data.questions) {
+        if (!q.question_text || !q.question_text.trim()) continue;
+        await execute(
+          `INSERT INTO cbt_questions (exam_id, question_text, question_type, image_url, audio_url, option_a, option_b, option_c, option_d, correct_option, points) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            data.examId || 1,
+            q.question_text.trim(),
+            q.question_type || "pg",
+            q.image_url || null,
+            q.audio_url || null,
+            q.option_a || "",
+            q.option_b || "",
+            q.option_c || "",
+            q.option_d || "",
+            q.correct_option || "A",
+            q.points || 5,
+          ]
+        );
+        count++;
+      }
+      return { success: true, insertedCount: count };
+    } catch (err: any) {
+      console.warn("batchInsertCbtQuestionsFn error:", err);
+      return { success: false, insertedCount: 0 };
     }
   });
 
@@ -2516,6 +2559,7 @@ export const getCbtResultsFn = createServerFn({ method: "GET" }).handler(
       `);
       await execute("ALTER TABLE cbt_exam_results ADD COLUMN essay_score DECIMAL(5,2) DEFAULT 0").catch(() => {});
       await execute("ALTER TABLE cbt_exam_results ADD COLUMN student_answers LONGTEXT").catch(() => {});
+      await execute("ALTER TABLE cbt_exam_results ADD COLUMN violations_count INT DEFAULT 0").catch(() => {});
 
       return await query<CbtResultRow[]>("SELECT * FROM cbt_exam_results ORDER BY id DESC");
     } catch (e) {
@@ -2544,16 +2588,18 @@ export const saveCbtResultFn = createServerFn({ method: "POST" })
           essay_score DECIMAL(5,2) DEFAULT 0,
           status VARCHAR(50) DEFAULT 'Selesai',
           student_answers LONGTEXT,
+          violations_count INT DEFAULT 0,
           submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
       await execute("ALTER TABLE cbt_exam_results ADD COLUMN essay_score DECIMAL(5,2) DEFAULT 0").catch(() => {});
       await execute("ALTER TABLE cbt_exam_results ADD COLUMN student_answers LONGTEXT").catch(() => {});
+      await execute("ALTER TABLE cbt_exam_results ADD COLUMN violations_count INT DEFAULT 0").catch(() => {});
 
       const res: any = await execute(
-        `INSERT INTO cbt_exam_results (exam_id, exam_title, user_id, student_name, rombel, score, total_correct, total_questions, essay_score, status, student_answers)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO cbt_exam_results (exam_id, exam_title, user_id, student_name, rombel, score, total_correct, total_questions, essay_score, status, student_answers, violations_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.exam_id,
           data.exam_title || "",
@@ -2566,6 +2612,7 @@ export const saveCbtResultFn = createServerFn({ method: "POST" })
           data.essay_score || 0,
           data.status || "Selesai",
           data.student_answers || null,
+          data.violations_count || 0,
         ]
       );
       return { success: true, id: String(res.insertId || "") };
@@ -5043,6 +5090,41 @@ export const uploadCbtImageFn = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[uploadCbtImageFn Error]:", e);
       return { success: false, imageUrl: "" };
+    }
+  });
+
+// 38. UPLOAD AUDIO SOAL CBT KE FILE SERVER (DISK STORAGE)
+export const uploadCbtAudioFn = createServerFn({ method: "POST" })
+  .validator((data: { filename: string; dataUrl: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; audioUrl: string }> => {
+    try {
+      if (!data.dataUrl || !data.dataUrl.startsWith("data:")) {
+        return { success: false, audioUrl: "" };
+      }
+      const fs = await import("fs");
+      const path = await import("path");
+      const uploadDir = path.join(process.cwd(), "public", "uploads", "cbt", "audio");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      let ext = "mp3";
+      if (data.dataUrl.includes("audio/wav")) ext = "wav";
+      else if (data.dataUrl.includes("audio/ogg")) ext = "ogg";
+      else if (data.dataUrl.includes("audio/m4a") || data.dataUrl.includes("audio/mp4")) ext = "m4a";
+
+      const base64Data = data.dataUrl.split(";base64,").pop();
+      if (!base64Data) return { success: false, audioUrl: "" };
+
+      const cleanName = (data.filename || "audio").replace(/[^a-zA-Z0-9_-]/g, "_");
+      const uniqueFileName = `audio_${cleanName}_${Date.now()}.${ext}`;
+      const physicalPath = path.join(uploadDir, uniqueFileName);
+      fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
+      const finalUrl = `/uploads/cbt/audio/${uniqueFileName}`;
+      return { success: true, audioUrl: finalUrl };
+    } catch (e) {
+      console.error("[uploadCbtAudioFn Error]:", e);
+      return { success: false, audioUrl: "" };
     }
   });
 

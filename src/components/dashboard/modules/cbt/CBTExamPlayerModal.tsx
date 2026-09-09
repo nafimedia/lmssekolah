@@ -30,6 +30,7 @@ import {
   Minimize2,
   Wifi,
   WifiOff,
+  Volume2,
 } from "lucide-react";
 import { CBTExam, CBTQuestion } from "@/types/cbt";
 import { isArabicText } from "@/utils/arabicHelper";
@@ -58,6 +59,7 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
   const [violationCount, setViolationCount] = useState(0);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(60 * 60); // Default 60 mins
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
+  const [audioPlays, setAudioPlays] = useState<Record<string, number>>({});
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
@@ -110,10 +112,10 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
   // Initialize Timer and Recover Draft / Reset State when exam opens
   useEffect(() => {
     if (isOpen && exam) {
-      // Check if a saved local draft exists for this exam
+      // Check if a saved local draft exists for this exam (localStorage or sessionStorage)
       if (draftStorageKey) {
         try {
-          const savedDraft = sessionStorage.getItem(draftStorageKey);
+          const savedDraft = localStorage.getItem(draftStorageKey) || sessionStorage.getItem(draftStorageKey);
           if (savedDraft) {
             const parsed = JSON.parse(savedDraft);
             if (parsed.userAnswers && Object.keys(parsed.userAnswers).length > 0) {
@@ -125,7 +127,11 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
               if (typeof parsed.currentIndex === "number") {
                 setCurrentIndex(parsed.currentIndex);
               }
-              setViolationCount(0);
+              if (typeof parsed.violationCount === "number") {
+                setViolationCount(parsed.violationCount);
+              } else {
+                setViolationCount(0);
+              }
               toast.info("💾 Draft jawaban sebelumnya berhasil dipulihkan secara otomatis.");
               if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});
@@ -150,24 +156,24 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     }
   }, [isOpen, exam, draftStorageKey]);
 
-  // Real-Time Auto-Save Draft to SessionStorage
+  // Real-Time Auto-Save Draft to localStorage & sessionStorage
   useEffect(() => {
     if (!isOpen || !draftStorageKey || Object.keys(userAnswers).length === 0) return;
     try {
-      sessionStorage.setItem(
-        draftStorageKey,
-        JSON.stringify({
-          userAnswers,
-          raguState,
-          currentIndex,
-          timeLeftSeconds,
-          updatedAt: new Date().toISOString(),
-        })
-      );
+      const payload = JSON.stringify({
+        userAnswers,
+        raguState,
+        currentIndex,
+        timeLeftSeconds,
+        violationCount,
+        updatedAt: new Date().toISOString(),
+      });
+      sessionStorage.setItem(draftStorageKey, payload);
+      localStorage.setItem(draftStorageKey, payload);
     } catch (e) {
       console.warn("Gagal menyimpan auto-save draft CBT:", e);
     }
-  }, [isOpen, draftStorageKey, userAnswers, raguState, currentIndex, timeLeftSeconds]);
+  }, [isOpen, draftStorageKey, userAnswers, raguState, currentIndex, timeLeftSeconds, violationCount]);
 
   // Real-Time Countdown Timer Ticker
   useEffect(() => {
@@ -383,6 +389,7 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
         essay_score: 0,
         status: results.status,
         student_answers: JSON.stringify(results.detailedAnswers),
+        violations_count: results.violationCount || 0,
       });
     } catch (e) {
       console.warn("Gagal menyimpan hasil CBT ke MySQL:", e);
@@ -393,6 +400,7 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     if (draftStorageKey) {
       try {
         sessionStorage.removeItem(draftStorageKey);
+        localStorage.removeItem(draftStorageKey);
       } catch {}
     }
   };
@@ -542,6 +550,35 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
                         alt="Ilustrasi Soal"
                         className="max-h-60 max-w-full rounded-xl border border-border object-contain bg-muted/20 shadow-xs"
                       />
+                    </div>
+                  )}
+
+                  {/* Question Audio if available (Istima' / Listening) */}
+                  {currentQ.audioUrl && (
+                    <div className="py-2">
+                      <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300">
+                        <div className="flex items-center gap-2 font-semibold text-xs">
+                          <Volume2 className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span>Audio Soal (Istima' / Listening):</span>
+                        </div>
+                        <audio
+                          controls
+                          controlsList="nodownload"
+                          src={currentQ.audioUrl}
+                          className="h-8 max-w-full sm:ml-auto"
+                          onPlay={() => {
+                            setAudioPlays((prev) => ({
+                              ...prev,
+                              [currentQ.id]: (prev[currentQ.id] || 0) + 1,
+                            }));
+                          }}
+                        />
+                        {audioPlays[currentQ.id] ? (
+                          <span className="text-[11px] font-bold bg-blue-500/20 px-2 py-0.5 rounded-full text-blue-800 dark:text-blue-200">
+                            Diputar: {audioPlays[currentQ.id]}x
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   )}
 

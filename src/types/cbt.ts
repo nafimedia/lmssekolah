@@ -29,6 +29,7 @@ export interface CBTQuestion {
   questionType: QuestionType;
   questionText: string;
   imageUrl?: string;
+  audioUrl?: string;
   options: {
     A: string;
     B: string;
@@ -72,5 +73,6 @@ export interface CBTGradeAnalysisItem {
   status: "Lulus KKM" | "Remedial" | "Perlu Dikoreksi";
   kkm: number;
   studentAnswers?: string; // JSON string of per-question answers
+  violationsCount?: number;
   lastAttemptDate?: string;
 }

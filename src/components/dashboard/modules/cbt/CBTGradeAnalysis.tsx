@@ -32,6 +32,8 @@ import {
   ArrowUp,
   ArrowDown,
   Edit3,
+  Printer,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTGradeAnalysisItem, CBTQuestion } from "@/types/cbt";
@@ -72,6 +74,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   const [isRemedialModalOpen, setIsRemedialModalOpen] = useState(false);
   const [isEnrichmentModalOpen, setIsEnrichmentModalOpen] = useState(false);
   const [isEssayModalOpen, setIsEssayModalOpen] = useState(false);
+  const [isBeritaAcaraOpen, setIsBeritaAcaraOpen] = useState(false);
   const [gradingStudent, setGradingStudent] = useState<CBTGradeAnalysisItem | null>(null);
   const [essayScores, setEssayScores] = useState<Record<string, number>>({});
   const [parsedEssayList, setParsedEssayList] = useState<any[]>([]);
@@ -429,6 +432,15 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
           <Button
             size="sm"
             variant="outline"
+            onClick={() => setIsBeritaAcaraOpen(true)}
+            className="gap-1.5 font-bold text-xs border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 shadow-2xs"
+          >
+            <Printer className="h-4 w-4" /> Cetak Berita Acara CBT
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
             onClick={viewMode === "nilai" ? handleExportGradesExcel : handleExportItemAnalysisExcel}
             className="gap-1.5 font-bold text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-2xs"
           >
@@ -604,18 +616,25 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                       <span className="font-extrabold text-sm text-foreground">{g.totalScore}</span>
                     </td>
                     <td className="p-3">
-                      <Badge
-                        variant={isPassed ? "default" : isPendingEssay ? "outline" : "destructive"}
-                        className={`text-[11px] font-bold ${
-                          isPassed
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-300 dark:border-emerald-800"
-                            : isPendingEssay
-                            ? "bg-blue-500/10 text-blue-600 border-blue-300 dark:border-blue-800"
-                            : "bg-amber-500/10 text-amber-600 border-amber-300 dark:border-amber-800"
-                        }`}
-                      >
-                        {isPassed ? "✓ Lulus KKM" : isPendingEssay ? "✍️ Perlu Koreksi" : "⚠ Remedial"}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge
+                          variant={isPassed ? "default" : isPendingEssay ? "outline" : "destructive"}
+                          className={`text-[11px] font-bold ${
+                            isPassed
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-300 dark:border-emerald-800"
+                              : isPendingEssay
+                              ? "bg-blue-500/10 text-blue-600 border-blue-300 dark:border-blue-800"
+                              : "bg-amber-500/10 text-amber-600 border-amber-300 dark:border-amber-800"
+                          }`}
+                        >
+                          {isPassed ? "✓ Lulus KKM" : isPendingEssay ? "✍️ Perlu Koreksi" : "⚠ Remedial"}
+                        </Badge>
+                        {g.violationsCount && g.violationsCount > 0 ? (
+                          <Badge variant="outline" className="text-[10px] font-semibold text-red-600 bg-red-500/10 border-red-300">
+                            ⚠️ {g.violationsCount}x tab
+                          </Badge>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="p-3 text-right pr-4">
                       {isPendingEssay ? (
@@ -1000,6 +1019,144 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 shadow-xs"
             >
               <CheckCircle2 className="h-4 w-4" /> Simpan Nilai Essay
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Official Berita Acara & Daftar Hadir Modal */}
+      <Dialog open={isBeritaAcaraOpen} onOpenChange={setIsBeritaAcaraOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-base font-bold flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  Pratinjau Berita Acara & Rekapitulasi Resmi CBT
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Format dokumen resmi pelaksanaan Ujian CBT MTs Negeri 2 Cilacap siap cetak (Kemenag).
+                </DialogDescription>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => window.print()}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+              >
+                <Printer className="h-4 w-4" /> Cetak / Unduh PDF
+              </Button>
+            </div>
+          </DialogHeader>
+
+          {/* Printable Document Sheet */}
+          <div className="p-6 bg-white text-black dark:bg-zinc-950 dark:text-zinc-100 rounded-lg border text-xs space-y-4 print:p-0 print:border-none">
+            {/* Kop Surat Resmi Madrasah */}
+            <div className="text-center space-y-0.5 border-b-2 border-black dark:border-white pb-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h4>
+              <h3 className="text-sm font-bold uppercase tracking-wider">KANTOR KEMENTERIAN AGAMA KABUPATEN CILACAP</h3>
+              <h2 className="text-base font-extrabold uppercase tracking-wide">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</h2>
+              <p className="text-[10px] text-zinc-600 dark:text-zinc-400">
+                Jl. Kemerdekaan Barat No. 1 Kesugihan, Cilacap, Jawa Tengah 53274 | Website: mtsn2cilacap.sch.id
+              </p>
+            </div>
+
+            {/* Title */}
+            <div className="text-center pt-2 space-y-1">
+              <h3 className="text-sm font-bold uppercase tracking-wide underline underline-offset-4">
+                BERITA ACARA & DAFTAR NILAI CBT ASESMEN MADRASAH
+              </h3>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                Tahun Ajaran 2026/2027 — Semester Genap
+              </p>
+            </div>
+
+            {/* Exam Meta Info */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900 border text-[11px]">
+              <div>
+                <span className="font-semibold text-zinc-500">Mata Pelajaran:</span>{" "}
+                <span className="font-bold">{grades[0]?.subjectName || "Mata Pelajaran Ujian"}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-zinc-500">Kelas / Rombel:</span>{" "}
+                <span className="font-bold">{grades[0]?.classRombel || "Semua Rombel"}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-zinc-500">KKM / Kriteria Ketuntasan:</span>{" "}
+                <span className="font-bold">75</span>
+              </div>
+              <div>
+                <span className="font-semibold text-zinc-500">Total Peserta Mengerjakan:</span>{" "}
+                <span className="font-bold">{totalStudents} Siswa ({passedStudents} Tuntas, {remedialStudents} Remedial)</span>
+              </div>
+            </div>
+
+            {/* Table of Grades */}
+            <table className="w-full border-collapse border border-zinc-300 dark:border-zinc-700 text-[11px]">
+              <thead>
+                <tr className="bg-zinc-100 dark:bg-zinc-800 text-left">
+                  <th className="border border-zinc-300 dark:border-zinc-700 p-2 text-center w-8">No</th>
+                  <th className="border border-zinc-300 dark:border-zinc-700 p-2 text-center w-20">NIS</th>
+                  <th className="border border-zinc-300 dark:border-zinc-700 p-2">Nama Peserta Didik</th>
+                  <th className="border border-zinc-300 dark:border-zinc-700 p-2 text-center w-16">Nilai PG</th>
+                  <th className="border border-zinc-300 dark:border-zinc-700 p-2 text-center w-16">Nilai Essay</th>
+                  <th className="border border-zinc-300 dark:border-zinc-700 p-2 text-center w-16">Nilai Akhir</th>
+                  <th className="border border-zinc-300 dark:border-zinc-700 p-2 text-center w-24">Status</th>
+                  <th className="border border-zinc-300 dark:border-zinc-700 p-2 text-center w-24">Integritas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedGrades.map((item, idx) => (
+                  <tr key={item.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center">{idx + 1}</td>
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center font-mono">{item.nis}</td>
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 font-medium">{item.name}</td>
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center">{item.pgScore}</td>
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center">{item.essayScore}</td>
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center font-bold">{item.totalScore}</td>
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center font-semibold">
+                      {item.status}
+                    </td>
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center text-[10px]">
+                      {item.violationsCount && item.violationsCount > 0 ? (
+                        <span className="text-red-600 font-semibold">{item.violationsCount}x tab</span>
+                      ) : (
+                        <span className="text-emerald-600 font-medium">Tertib</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Signature Block */}
+            <div className="pt-6 grid grid-cols-2 gap-8 text-center text-[11px]">
+              <div>
+                <p className="text-zinc-500">Mengetahui,</p>
+                <p className="font-bold">Kepala MTs Negeri 2 Cilacap</p>
+                <div className="h-16" />
+                <p className="font-bold underline">H. DRS. SUGENG WARDOYO, M.Pd.I</p>
+                <p className="text-zinc-500">NIP. 197005121997031002</p>
+              </div>
+              <div>
+                <p className="text-zinc-500">Cilacap, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+                <p className="font-bold">Guru Pengampu / Proktor CBT</p>
+                <div className="h-16" />
+                <p className="font-bold underline">GURU MATA PELAJARAN</p>
+                <p className="text-zinc-500">NIP. -</p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setIsBeritaAcaraOpen(false)} className="text-xs">
+              Tutup
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => window.print()}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5"
+            >
+              <Printer className="h-4 w-4" /> Cetak Berita Acara
             </Button>
           </DialogFooter>
         </DialogContent>

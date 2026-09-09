@@ -78,6 +78,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
             questionType: (q.question_type || "pg") as any,
             questionText: q.question_text || "",
             imageUrl: q.image_url || undefined,
+            audioUrl: q.audio_url || undefined,
             options: {
               A: q.option_a || "",
               B: q.option_b || "",
@@ -132,6 +133,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
             status: (r.status || (r.score >= 75 ? "Lulus KKM" : "Remedial")) as any,
             kkm: 75,
             studentAnswers: r.student_answers,
+            violationsCount: Number(r.violations_count || 0),
           }));
           setGradeAnalysis(mapped);
         } else {
@@ -245,6 +247,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         question_text: newQ.questionText,
         question_type: newQ.questionType || "pg",
         image_url: newQ.imageUrl,
+        audio_url: newQ.audioUrl,
         option_a: newQ.options.A || "",
         option_b: newQ.options.B || "",
         option_c: newQ.options.C || "",

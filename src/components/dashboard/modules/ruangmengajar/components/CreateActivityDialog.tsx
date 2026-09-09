@@ -24,7 +24,6 @@ import {
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
-import { downloadQuizTemplateExcel, parseQuizExcelFile } from "@/utils/quizExcelHelper";
 import { PickElibraryDialog, ElibraryBookItem } from "./PickElibraryDialog";
 
 export type ActivityTypeOption =

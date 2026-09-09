@@ -162,6 +162,102 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body suppressHydrationWarning>
+        {/* Instant Pre-Hydration Loader (Menghilangkan White Screen Saat Pertama Kali Membuka) */}
+        <div
+          id="pre-hydration-loader"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#ffffff",
+            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            transition: "opacity 0.25s ease-out, visibility 0.25s",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "16px",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: "56px",
+                height: "56px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: "50%",
+                  border: "3px solid #e2e8f0",
+                  borderTopColor: "#059669",
+                  animation: "lms-loader-spin 0.75s linear infinite",
+                }}
+              />
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#059669"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                <path d="M6 6h10" />
+                <path d="M6 10h10" />
+              </svg>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+              <span
+                style={{
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  color: "#0f172a",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                LMS MTs Negeri 2 Cilacap
+              </span>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: "#64748b",
+                  fontWeight: 500,
+                }}
+              >
+                Memuat portal pembelajaran digital...
+              </span>
+            </div>
+          </div>
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+                @keyframes lms-loader-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                @media (prefers-color-scheme: dark) {
+                  #pre-hydration-loader { background-color: #090d16 !important; }
+                  #pre-hydration-loader span:first-child { color: #f8fafc !important; }
+                  #pre-hydration-loader span:last-child { color: #94a3b8 !important; }
+                }
+              `,
+            }}
+          />
+        </div>
+
         {children}
         <Scripts />
       </body>
@@ -176,6 +272,18 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
+    // Sembunyikan pre-hydration splash loader secara mulus begitu React mount
+    if (typeof window !== "undefined") {
+      const loader = document.getElementById("pre-hydration-loader");
+      if (loader) {
+        loader.style.opacity = "0";
+        loader.style.visibility = "hidden";
+        setTimeout(() => {
+          loader.remove();
+        }, 300);
+      }
+    }
+
     // Register Service Worker for PWA
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker

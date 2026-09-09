@@ -1,6 +1,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import zlib from "node:zlib";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -73,6 +74,20 @@ const server = http.createServer(async (req, res) => {
   if (filePath.startsWith(clientDir) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
+    const acceptEncoding = (req.headers["accept-encoding"] || "").toLowerCase();
+    const isCompressible = /\.(js|mjs|css|json|html|svg|txt|xml)$/i.test(ext);
+
+    if (isCompressible && acceptEncoding.includes("gzip")) {
+      res.writeHead(200, {
+        "Content-Type": contentType,
+        "Content-Encoding": "gzip",
+        "Vary": "Accept-Encoding",
+        "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
+      });
+      fs.createReadStream(filePath).pipe(zlib.createGzip({ level: 6 })).pipe(res);
+      return;
+    }
+
     res.writeHead(200, {
       "Content-Type": contentType,
       "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=31536000, immutable",

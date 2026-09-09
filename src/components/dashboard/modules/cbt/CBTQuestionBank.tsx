@@ -31,7 +31,6 @@ import {
 import { toast } from "sonner";
 import { CBTQuestion, QuestionType } from "@/types/cbt";
 import { filterSubjectsForUser, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
-import { downloadQuizTemplateExcel, parseQuizExcelFile } from "@/utils/quizExcelHelper";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 
 interface CBTQuestionBankProps {

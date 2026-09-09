@@ -83,21 +83,18 @@ export function EditJadwalDialog({ editingJadwal, isOpen, onOpenChange, onUpdate
             </div>
 
             <div>
-              <Label className="text-xs font-semibold">Nama Rombel</Label>
+              <Label className="text-xs font-semibold">Nama Kelas</Label>
               <select
                 className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                value={editingJadwal.rombel || "Rombel 8A"}
+                value={editingJadwal.rombel || "Kelas 8A"}
                 onChange={(e) => setEditingJadwal({ ...editingJadwal, rombel: e.target.value })}
               >
-                <option value="Rombel 7A">Rombel 7A</option>
-                <option value="Rombel 7B">Rombel 7B</option>
-                <option value="Rombel 7C">Rombel 7C</option>
-                <option value="Rombel 8A">Rombel 8A</option>
-                <option value="Rombel 8B">Rombel 8B</option>
-                <option value="Rombel 8C">Rombel 8C</option>
-                <option value="Rombel 9A">Rombel 9A</option>
-                <option value="Rombel 9B">Rombel 9B</option>
-                <option value="Rombel 9C">Rombel 9C</option>
+                <option value="Kelas 7A">Kelas 7A</option>
+                <option value="Kelas 7B">Kelas 7B</option>
+                <option value="Kelas 8A">Kelas 8A</option>
+                <option value="Kelas 8B">Kelas 8B</option>
+                <option value="Kelas 9A">Kelas 9A</option>
+                <option value="Kelas 9B">Kelas 9B</option>
               </select>
             </div>
           </div>

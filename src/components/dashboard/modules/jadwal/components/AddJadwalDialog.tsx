@@ -25,7 +25,7 @@ export function AddJadwalDialog({ isOpen, onOpenChange, onAddJadwal }: AddJadwal
   const [jam, setJam] = useState("07.30 - 08.15");
   const [mapel, setMapel] = useState("Matematika");
   const [inputTingkat, setInputTingkat] = useState("Kelas VIII");
-  const [inputRombel, setInputRombel] = useState("Rombel 8A");
+  const [inputRombel, setInputRombel] = useState("Kelas 8A");
   const [guru, setGuru] = useState("");
   const [teachers, setTeachers] = useState<any[]>([]);
 
@@ -76,16 +76,14 @@ export function AddJadwalDialog({ isOpen, onOpenChange, onAddJadwal }: AddJadwal
             </div>
 
             <div>
-              <Label className="text-xs font-semibold">Nama Rombel</Label>
+              <Label className="text-xs font-semibold">Nama Kelas</Label>
               <select className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs mt-1 font-semibold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none" value={inputRombel} onChange={(e) => setInputRombel(e.target.value)}>
-                <option value="Rombel 7A">Rombel 7A</option>
-                <option value="Rombel 7B">Rombel 7B</option>
-                <option value="Rombel 7C">Rombel 7C</option>
-                <option value="Rombel 8A">Rombel 8A</option>
-                <option value="Rombel 8B">Rombel 8B</option>
-                <option value="Rombel 8C">Rombel 8C</option>
-                <option value="Rombel 9A">Rombel 9A</option>
-                <option value="Rombel 9C">Rombel 9C</option>
+                <option value="Kelas 7A">Kelas 7A</option>
+                <option value="Kelas 7B">Kelas 7B</option>
+                <option value="Kelas 8A">Kelas 8A</option>
+                <option value="Kelas 8B">Kelas 8B</option>
+                <option value="Kelas 9A">Kelas 9A</option>
+                <option value="Kelas 9B">Kelas 9B</option>
               </select>
             </div>
           </div>

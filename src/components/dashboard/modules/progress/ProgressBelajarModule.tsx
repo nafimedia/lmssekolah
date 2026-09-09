@@ -101,7 +101,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
         });
 
         // Build list of rombels
-        const defaultRombelSet = new Set<string>(["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B"]);
+        const defaultRombelSet = new Set<string>(["Kelas 7A", "Kelas 7B", "Kelas 8A", "Kelas 8B", "Kelas 9A", "Kelas 9B"]);
         if (masterRombels && masterRombels.length > 0) {
           masterRombels.forEach((r: any) => {
             if (r.name) defaultRombelSet.add(normalizeRombelName(r.name));

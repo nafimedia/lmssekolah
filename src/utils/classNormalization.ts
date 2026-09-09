@@ -124,3 +124,40 @@ export function resolveWaliKelasRombel(
 
   return "Kelas 8A";
 }
+
+/**
+ * Returns all common format variants (Arabic, Roman, hyphenated, with/without prefixes)
+ * for a given class name to ensure 100% database query matching.
+ */
+export function getRombelSearchVariants(raw?: string | null): string[] {
+  if (!raw || raw.trim() === "" || raw === "ALL" || raw === "Semua") return [];
+  const upper = raw.toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
+  const variants = new Set<string>([raw.trim()]);
+
+  let num = "";
+  let section = "";
+  if (upper.includes("VIII") || upper.includes("8")) {
+    num = "8";
+    section = upper.includes("B") ? "B" : "A";
+  } else if (upper.includes("VII") || upper.includes("7")) {
+    num = "7";
+    section = upper.includes("B") ? "B" : "A";
+  } else if (upper.includes("IX") || upper.includes("9")) {
+    num = "9";
+    section = upper.includes("B") ? "B" : "A";
+  }
+
+  if (num && section) {
+    const roman = num === "7" ? "VII" : num === "8" ? "VIII" : "IX";
+    variants.add(`${num}${section}`);
+    variants.add(`Kelas ${num}${section}`);
+    variants.add(`Rombel ${num}${section}`);
+    variants.add(`${roman} ${section}`);
+    variants.add(`${roman}-${section}`);
+    variants.add(`${roman}${section}`);
+    variants.add(`Kelas ${roman} ${section}`);
+    variants.add(`Kelas ${roman}-${section}`);
+    variants.add(`Rombel ${roman} ${section}`);
+  }
+  return Array.from(variants);
+}

@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { exportToExcelXml } from "@/utils/excelExporter";
+import { isSameClass } from "@/utils/classNormalization";
 import { toast } from "sonner";
 
 export interface LiveRombelSession {
@@ -143,16 +144,14 @@ export function MonitoringKbmLiveModule() {
         const isLiveToday = sess.status === "SEDANG_BERLANGSUNG";
 
         // Find students in this rombel
-        const rombelStudents = studentUsers.filter((u: any) => {
-          const cls = (u.class_name || u.class || "").toUpperCase().replace(/\s+/g, "");
-          return cls.includes(normKey) || normKey.includes(cls);
-        });
+        const rombelStudents = studentUsers.filter((u: any) =>
+          isSameClass(u.class_name || u.class, normalizedRombel)
+        );
 
         // Find attendance records
-        const rombelAttendances = (attendances || []).filter((a: any) => {
-          const cls = (a.class_name || "").toUpperCase().replace(/\s+/g, "");
-          return cls.includes(normKey) || normKey.includes(cls);
-        });
+        const rombelAttendances = (attendances || []).filter((a: any) =>
+          isSameClass(a.class_name, normalizedRombel)
+        );
 
         const hadir = rombelAttendances.filter((a: any) => a.status?.toLowerCase() === "hadir").length;
         const sakit = rombelAttendances.filter((a: any) => a.status?.toLowerCase() === "sakit").length;
@@ -184,12 +183,10 @@ export function MonitoringKbmLiveModule() {
         const rawRombel = sch.rombel || sch.kelas;
         if (!rawRombel) return;
         const normalizedRombel = normalizeRombelName(rawRombel);
-        const normKey = normalizedRombel.toUpperCase().replace(/\s+/g, "");
         if (!rombelMap[normalizedRombel]) {
-          const schStudents = studentUsers.filter((u: any) => {
-            const cls = (u.class_name || u.class || "").toUpperCase().replace(/\s+/g, "");
-            return cls.includes(normKey) || normKey.includes(cls);
-          });
+          const schStudents = studentUsers.filter((u: any) =>
+            isSameClass(u.class_name || u.class, normalizedRombel)
+          );
 
           rombelMap[normalizedRombel] = {
             id: `sch_${idx}`,

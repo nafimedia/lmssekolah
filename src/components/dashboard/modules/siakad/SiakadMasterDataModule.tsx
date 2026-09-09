@@ -82,11 +82,9 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       if (dbRombels && dbRombels.length > 0) {
         const siswaUsers = (users || []).filter((u: any) => u.role === "siswa");
         const mapped = dbRombels.map((r: any) => {
-          const rCode = (r.code || r.name || "").toUpperCase().replace(/ROMBEL/i, "").trim();
-          const realStudentCount = siswaUsers.filter((s: any) => {
-            const sClass = (s.class_name || "").toUpperCase().replace("-", "").trim();
-            return sClass.includes(rCode) || rCode.includes(sClass);
-          }).length;
+          const realStudentCount = siswaUsers.filter((s: any) =>
+            isSameClass(s.class_name || s.class, r.name || r.code)
+          ).length;
 
           const rawName = r.name || r.code || "";
           const displayName = formatClassName(rawName);

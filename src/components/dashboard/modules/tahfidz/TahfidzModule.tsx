@@ -198,7 +198,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
 
   // Compute list of dynamic rombel options
   const rombelOptions = useMemo(() => {
-    const set = new Set<string>(["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B"]);
+    const set = new Set<string>(["Kelas 7A", "Kelas 7B", "Kelas 8A", "Kelas 8B", "Kelas 9A", "Kelas 9B"]);
     masterRombels.forEach((r) => {
       if (r.name) set.add(normalizeRombelName(r.name));
       if (r.code) set.add(normalizeRombelName(r.code));

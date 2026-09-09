@@ -3555,9 +3555,16 @@ export const getKbmPresensiFn = createServerFn({ method: "POST" })
       let sql = `SELECT * FROM kbm_presensi WHERE 1=1`;
       const params: any[] = [];
       if (data.rombel && data.rombel !== "ALL") {
-        const cleanRombel = data.rombel.replace("Rombel", "").replace("Kelas", "").replace("-", "").trim();
-        sql += ` AND (rombel = ? OR rombel LIKE ? OR rombel LIKE ?)`;
-        params.push(data.rombel, `%${cleanRombel}%`, `%${data.rombel}%`);
+        const { getRombelSearchVariants } = await import("@/utils/classNormalization");
+        const variants = getRombelSearchVariants(data.rombel);
+        if (variants.length > 0) {
+          const placeholders = variants.map(() => "?").join(", ");
+          sql += ` AND rombel IN (${placeholders})`;
+          params.push(...variants);
+        } else {
+          sql += ` AND rombel = ?`;
+          params.push(data.rombel);
+        }
       }
       if (data.mapel && data.mapel !== "ALL") {
         sql += ` AND mapel = ?`;
@@ -3682,9 +3689,16 @@ export const getDailyPresensiRombelFn = createServerFn({ method: "POST" })
       let sql = `SELECT * FROM daily_presensi WHERE 1=1`;
       const params: any[] = [];
       if (data.rombel && data.rombel !== "ALL") {
-        const cleanRombel = data.rombel.replace("Rombel", "").replace("Kelas", "").replace("-", "").trim();
-        sql += ` AND (rombel = ? OR rombel LIKE ? OR rombel LIKE ?)`;
-        params.push(data.rombel, `%${cleanRombel}%`, `%${data.rombel}%`);
+        const { getRombelSearchVariants } = await import("@/utils/classNormalization");
+        const variants = getRombelSearchVariants(data.rombel);
+        if (variants.length > 0) {
+          const placeholders = variants.map(() => "?").join(", ");
+          sql += ` AND rombel IN (${placeholders})`;
+          params.push(...variants);
+        } else {
+          sql += ` AND rombel = ?`;
+          params.push(data.rombel);
+        }
       }
       if (data.date_str) {
         const parts = data.date_str.split("-");
@@ -3779,10 +3793,21 @@ export const getStudentKbmNotesFn = createServerFn({ method: "POST" })
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
-      const rows = await query<StudentKbmNoteRow[]>(
-        "SELECT * FROM student_kbm_notes WHERE rombel = ? AND mapel = ? ORDER BY id DESC",
-        [data.rombel, data.mapel]
-      );
+      const { getRombelSearchVariants } = await import("@/utils/classNormalization");
+      const variants = getRombelSearchVariants(data.rombel);
+      let rows: StudentKbmNoteRow[];
+      if (variants.length > 0) {
+        const placeholders = variants.map(() => "?").join(", ");
+        rows = await query<StudentKbmNoteRow[]>(
+          `SELECT * FROM student_kbm_notes WHERE rombel IN (${placeholders}) AND mapel = ? ORDER BY id DESC`,
+          [...variants, data.mapel]
+        );
+      } else {
+        rows = await query<StudentKbmNoteRow[]>(
+          "SELECT * FROM student_kbm_notes WHERE rombel = ? AND mapel = ? ORDER BY id DESC",
+          [data.rombel, data.mapel]
+        );
+      }
       return (rows || []).map((r) => ({ ...r, id: String(r.id) }));
     } catch (e) {
       console.error("[getStudentKbmNotesFn Error]:", e);

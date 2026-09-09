@@ -121,7 +121,7 @@ function AuthPage() {
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regShowPassword, setRegShowPassword] = useState(false);
-  const [className, setClassName] = useState("Rombel 8A");
+  const [className, setClassName] = useState("Kelas 8A");
   const [subjectSpecialty, setSubjectSpecialty] = useState("Matematika");
 
   const redirectUser = (role: string) => {
@@ -465,13 +465,13 @@ function AuthPage() {
                   {/* Kelas (Siswa) atau Mapel (Guru) */}
                   {regRole === "siswa" ? (
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Kelas / Rombel</Label>
+                      <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Kelas Siswa</Label>
                       <Select value={className} onValueChange={setClassName}>
                         <SelectTrigger className="text-xs py-2 bg-slate-50/50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl">
-                          <SelectValue placeholder="Pilih Rombel" />
+                          <SelectValue placeholder="Pilih Kelas" />
                         </SelectTrigger>
                         <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                          {["Rombel 7A", "Rombel 7B", "Rombel 8A", "Rombel 8B", "Rombel 9A", "Rombel 9B"].map((cls) => (
+                          {["Kelas 7A", "Kelas 7B", "Kelas 8A", "Kelas 8B", "Kelas 9A", "Kelas 9B"].map((cls) => (
                             <SelectItem key={cls} value={cls} className="text-xs">
                               {cls}
                             </SelectItem>

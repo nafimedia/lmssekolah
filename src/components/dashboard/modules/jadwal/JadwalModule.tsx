@@ -12,7 +12,7 @@ import { EditJadwalDialog } from "./components/EditJadwalDialog";
 import { PrintJadwalDialog } from "./components/PrintJadwalDialog";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 
-import { isSameClass, formatClassForDisplay, resolveWaliKelasRombel } from "@/utils/classNormalization";
+import { isSameClass, formatClassForDisplay, resolveWaliKelasRombel, normalizeRombelName } from "@/utils/classNormalization";
 
 export function JadwalModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
@@ -25,9 +25,9 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
   const resolvedInitialRombel = useMemo(() => {
     if (isSiswa) {
       const raw = userProfile?.class_name || (me as any)?.class_name || "VIII-A";
-      return formatClassForDisplay(raw, "rombel");
+      return formatClassForDisplay(raw, "kelas");
     }
-    return resolveWaliKelasRombel(me || userProfile, null, "rombel");
+    return resolveWaliKelasRombel(me || userProfile, null, "kelas");
   }, [isSiswa, userProfile, me]);
 
   const resolvedInitialGrade = useMemo(() => {
@@ -161,7 +161,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
       {!isRestrictedRole ? (
         <div className="p-3.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 shadow-2xs">
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <span className="text-xs font-bold text-muted-foreground shrink-0">Filter Rombel / Kelas:</span>
+            <span className="text-xs font-bold text-muted-foreground shrink-0">Filter Kelas:</span>
             <select
               className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer hover:border-primary/50 transition shrink-0 min-w-[220px]"
               value={filterRombel}
@@ -174,18 +174,18 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                 else if (val === "Semua") setFilterKelas("Semua");
               }}
             >
-              <option value="Semua">Semua Rombel (Seluruh Tingkat)</option>
-              <option value="Rombel 7A">Rombel 7A (Kelas VII)</option>
-              <option value="Rombel 7B">Rombel 7B (Kelas VII)</option>
-              <option value="Rombel 8A">Rombel 8A (Kelas VIII)</option>
-              <option value="Rombel 8B">Rombel 8B (Kelas VIII)</option>
-              <option value="Rombel 9A">Rombel 9A (Kelas IX)</option>
-              <option value="Rombel 9B">Rombel 9B (Kelas IX)</option>
+              <option value="Semua">Semua Kelas</option>
+              <option value="Kelas 7A">Kelas 7A</option>
+              <option value="Kelas 7B">Kelas 7B</option>
+              <option value="Kelas 8A">Kelas 8A</option>
+              <option value="Kelas 8B">Kelas 8B</option>
+              <option value="Kelas 9A">Kelas 9A</option>
+              <option value="Kelas 9B">Kelas 9B</option>
             </select>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-            <span>📍 Menampilkan: <strong className="underline decoration-emerald-500 font-bold">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</strong> ({filterKelas === "Semua" ? "Seluruh Tingkat" : filterKelas})</span>
+            <span>📍 Menampilkan: <strong className="underline decoration-emerald-500 font-bold">{filterRombel === "Semua" ? "Seluruh Kelas" : filterRombel}</strong></span>
             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs font-mono font-semibold shrink-0">
               {jadwalList.length} Sesi Pelajaran
             </Badge>
@@ -195,7 +195,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
         <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 mb-6 shadow-2xs">
           <div className="flex items-center gap-2.5 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
             <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>Jadwal Pelajaran <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{resolvedInitialRombel} ({resolvedInitialGrade})</strong></span>
+            <span>Jadwal Pelajaran <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{resolvedInitialRombel}</strong></span>
           </div>
         </div>
       )}
@@ -234,11 +234,8 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-xs text-foreground truncate">{s.mapel}</div>
                         <div className="flex items-center gap-1.5 my-1 flex-wrap">
-                          <Badge variant="secondary" className="text-[9px] font-bold bg-muted text-foreground border-border">
-                            🏛️ {s.tingkat}
-                          </Badge>
                           <Badge className="text-[9px] font-bold bg-primary/15 text-primary border-primary/20">
-                            🏫 {s.rombel}
+                            🏫 {normalizeRombelName(s.rombel)}
                           </Badge>
                         </div>
                         <div className="text-[11px] text-muted-foreground truncate">

@@ -29,6 +29,7 @@ import {
 } from "@/services/mysqlServerFns";
 
 export const Route = createFileRoute("/sys-vendor")({
+  ssr: false,
   component: SysVendorComponent,
 });
 

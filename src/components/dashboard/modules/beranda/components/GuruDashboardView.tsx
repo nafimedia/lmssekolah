@@ -121,7 +121,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
             Dashboard Guru Pengampu
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Selamat Datang, <span className="font-medium text-foreground">{userName}</span> · Pengampu {activeSubjectName} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime} WIB)
+            Selamat Datang, <span className="font-medium text-foreground">{userName}</span> · Pengampu {activeSubjectName} · {currentDayName}, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ({formattedTime})
           </p>
         </div>
 

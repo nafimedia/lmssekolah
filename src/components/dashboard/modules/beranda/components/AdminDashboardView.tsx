@@ -21,7 +21,7 @@ export function AdminDashboardView({ userName, role, stats, currentDayName, form
             <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Dashboard Eksekutif & Statistik Madrasah
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Selamat Datang, {userName} ({role.toUpperCase()}) · {currentDayName}, {formattedTime} WIB
+            Selamat Datang, {userName} ({role.toUpperCase()}) · {currentDayName}, {formattedTime}
           </p>
         </div>
 

@@ -167,6 +167,7 @@ import {
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
+  ssr: false,
   component: Dashboard,
 });
 

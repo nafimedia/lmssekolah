@@ -114,7 +114,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
     <div className="space-y-4 text-slate-800 dark:text-slate-200 font-sans">
       <StudentHeaderBanner
         title={`Ruang Belajar — ${userName}`}
-        subtitle={`Portal akademik siswa MTsN 2 Cilacap • ${currentDayName}, ${formattedTime} WIB`}
+        subtitle={`Portal akademik siswa MTsN 2 Cilacap • ${currentDayName}, ${formattedTime}`}
         icon={GraduationCap}
         studentNisn={siswaNisn}
         statusText={statusText}

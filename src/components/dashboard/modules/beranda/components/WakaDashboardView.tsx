@@ -101,7 +101,7 @@ export function WakaDashboardView({
             <Building2 className="h-5 w-5 text-primary" /> Portal Dashboard Waka Kurikulum
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Selamat Datang, <span className="font-medium text-foreground">{userName}</span> (WAKA KURIKULUM) · {currentDayName}, {formattedTime} WIB
+            Selamat Datang, <span className="font-medium text-foreground">{userName}</span> (WAKA KURIKULUM) · {currentDayName}, {formattedTime}
           </p>
         </div>
 

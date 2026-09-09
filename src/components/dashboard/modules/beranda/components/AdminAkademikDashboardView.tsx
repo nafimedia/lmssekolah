@@ -80,7 +80,7 @@ export function AdminAkademikDashboardView({
             <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Portal Dashboard Admin Akademik
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Selamat Datang, <span className="font-medium text-foreground">{userName}</span> (ADMIN AKADEMIK) · {currentDayName}, {formattedTime} WIB
+            Selamat Datang, <span className="font-medium text-foreground">{userName}</span> (ADMIN AKADEMIK) · {currentDayName}, {formattedTime}
           </p>
         </div>
 

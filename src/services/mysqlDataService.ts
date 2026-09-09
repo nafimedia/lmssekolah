@@ -35,8 +35,10 @@ import {
   saveWaLogFn,
   getCbtExamsFn,
   saveCbtExamFn,
+  deleteCbtExamFn,
   getCbtQuestionsFn,
   saveCbtQuestionFn,
+  deleteCbtQuestionFn,
   getMaterialsFn,
   getMaterialsPaginatedFn,
   saveMaterialFn,
@@ -56,6 +58,8 @@ import {
   getCbtResultsFn,
   saveCbtResultFn,
   deleteCbtResultFn,
+  gradeCbtEssayFn,
+  uploadCbtImageFn,
   getKktpConfigFn,
   saveKktpConfigFn,
   getAssignmentsFn,
@@ -655,11 +659,21 @@ export class MysqlDataService {
     }
   }
 
-  static async saveCbtExam(data: CbtExamRow): Promise<boolean> {
+  static async saveCbtExam(data: CbtExamRow): Promise<{ success: boolean; id?: number }> {
     try {
       return await saveCbtExamFn({ data });
     } catch (e) {
       console.warn("saveCbtExamFn failed:", e);
+      return { success: false };
+    }
+  }
+
+  static async deleteCbtExam(id: number | string): Promise<boolean> {
+    try {
+      const res = await deleteCbtExamFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteCbtExamFn failed:", e);
       return false;
     }
   }
@@ -680,6 +694,25 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("saveCbtQuestionFn failed:", e);
       return { success: false };
+    }
+  }
+
+  static async deleteCbtQuestion(id: number | string): Promise<boolean> {
+    try {
+      const res = await deleteCbtQuestionFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteCbtQuestionFn failed:", e);
+      return false;
+    }
+  }
+
+  static async uploadCbtImage(filename: string, dataUrl: string): Promise<{ success: boolean; imageUrl: string }> {
+    try {
+      return await uploadCbtImageFn({ data: { filename, dataUrl } });
+    } catch (e) {
+      console.warn("uploadCbtImageFn failed:", e);
+      return { success: false, imageUrl: "" };
     }
   }
 
@@ -904,6 +937,22 @@ export class MysqlDataService {
       return res.success;
     } catch (e) {
       console.warn("deleteCbtResultFn failed:", e);
+      return false;
+    }
+  }
+
+  static async gradeCbtEssay(data: {
+    result_id: string | number;
+    essay_score: number;
+    total_score: number;
+    status: string;
+    student_answers: string;
+  }): Promise<boolean> {
+    try {
+      const res = await gradeCbtEssayFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("gradeCbtEssayFn failed:", e);
       return false;
     }
   }

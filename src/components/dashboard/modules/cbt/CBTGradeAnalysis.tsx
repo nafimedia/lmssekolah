@@ -31,16 +31,26 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Edit3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTGradeAnalysisItem, CBTQuestion } from "@/types/cbt";
 import { exportToExcelXml } from "@/utils/excelExporter";
+import { isArabicText } from "@/utils/arabicHelper";
 
 interface CBTGradeAnalysisProps {
   grades: CBTGradeAnalysisItem[];
   questions?: CBTQuestion[];
   userRole?: string;
   studentName?: string;
+  onGradeEssay?: (
+    resultId: string,
+    essayScore: number,
+    totalScore: number,
+    status: "Lulus KKM" | "Remedial",
+    studentAnswers: string
+  ) => void;
+  onCreateRemedialExam?: () => void;
   onSendRemedial?: (studentId: string, studentName: string) => void;
   onSendEnrichment?: (studentId: string, studentName: string) => void;
 }
@@ -50,6 +60,8 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   questions = [],
   userRole = "guru",
   studentName = "ALIYA QIARA ABDULLAH",
+  onGradeEssay,
+  onCreateRemedialExam,
   onSendRemedial,
   onSendEnrichment,
 }) => {
@@ -59,6 +71,10 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   const [selectedStudent, setSelectedStudent] = useState<CBTGradeAnalysisItem | null>(null);
   const [isRemedialModalOpen, setIsRemedialModalOpen] = useState(false);
   const [isEnrichmentModalOpen, setIsEnrichmentModalOpen] = useState(false);
+  const [isEssayModalOpen, setIsEssayModalOpen] = useState(false);
+  const [gradingStudent, setGradingStudent] = useState<CBTGradeAnalysisItem | null>(null);
+  const [essayScores, setEssayScores] = useState<Record<string, number>>({});
+  const [parsedEssayList, setParsedEssayList] = useState<any[]>([]);
 
   // Remedial & Enrichment Form State
   const [remedialNote, setRemedialNote] = useState("Kerjakan Ujian Susulan / LKPD Remedial Bab 1");
@@ -68,6 +84,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   const isWaliKelas = userRole === "walikelas" || userRole === "wali_kelas";
   const isGuru = userRole === "guru";
   const isExecutive = userRole === "kamad" || userRole === "waka" || userRole === "admin" || userRole === "admin_akademik";
+  const canManage = isGuru || isExecutive;
 
   const [sortColumn, setSortColumn] = useState<string>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -398,14 +415,26 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
           </button>
         </div>
 
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={viewMode === "nilai" ? handleExportGradesExcel : handleExportItemAnalysisExcel}
-          className="gap-1.5 font-bold text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-2xs"
-        >
-          <FileSpreadsheet className="h-4 w-4" /> {viewMode === "nilai" ? "Export Excel Nilai CBT" : "Export Excel Analisis Soal"}
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {canManage && remedialStudents > 0 && onCreateRemedialExam && (
+            <Button
+              size="sm"
+              onClick={onCreateRemedialExam}
+              className="gap-1.5 font-bold text-xs bg-amber-600 hover:bg-amber-700 text-white shadow-xs"
+            >
+              <Zap className="h-4 w-4" /> 1-Klik Buat Sesi Remedial ({remedialStudents} Siswa)
+            </Button>
+          )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={viewMode === "nilai" ? handleExportGradesExcel : handleExportItemAnalysisExcel}
+            className="gap-1.5 font-bold text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-2xs"
+          >
+            <FileSpreadsheet className="h-4 w-4" /> {viewMode === "nilai" ? "Export Excel Nilai CBT" : "Export Excel Analisis Soal"}
+          </Button>
+        </div>
       </div>
 
       {viewMode === "nilai" && (
@@ -562,6 +591,8 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             <tbody className="divide-y divide-border">
               {sortedGrades.map((g) => {
                 const isPassed = g.status === "Lulus KKM";
+                const isPendingEssay = g.status === "Perlu Dikoreksi";
+
                 return (
                   <tr key={g.id} className="hover:bg-muted/30 transition-colors">
                     <td className="p-3 pl-4 font-bold text-foreground">{g.name}</td>
@@ -574,18 +605,48 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                     </td>
                     <td className="p-3">
                       <Badge
-                        variant={isPassed ? "default" : "destructive"}
+                        variant={isPassed ? "default" : isPendingEssay ? "outline" : "destructive"}
                         className={`text-[11px] font-bold ${
                           isPassed
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-300 dark:border-emerald-800"
+                            : isPendingEssay
+                            ? "bg-blue-500/10 text-blue-600 border-blue-300 dark:border-blue-800"
                             : "bg-amber-500/10 text-amber-600 border-amber-300 dark:border-amber-800"
                         }`}
                       >
-                        {isPassed ? "✓ Lulus KKM" : "⚠ Remedial"}
+                        {isPassed ? "✓ Lulus KKM" : isPendingEssay ? "✍️ Perlu Koreksi" : "⚠ Remedial"}
                       </Badge>
                     </td>
                     <td className="p-3 text-right pr-4">
-                      {isPassed ? (
+                      {isPendingEssay ? (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setGradingStudent(g);
+                            try {
+                              const answers = g.studentAnswers ? JSON.parse(g.studentAnswers) : {};
+                              const list = Object.entries(answers)
+                                .filter(([_, val]: any) => val.questionType === "essay")
+                                .map(([key, val]: any) => ({
+                                  key,
+                                  ...val,
+                                }));
+                              setParsedEssayList(list);
+                              const initialScores: Record<string, number> = {};
+                              list.forEach((item: any) => {
+                                initialScores[item.key] = item.score || 0;
+                              });
+                              setEssayScores(initialScores);
+                            } catch {
+                              setParsedEssayList([]);
+                            }
+                            setIsEssayModalOpen(true);
+                          }}
+                          className="gap-1 text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white h-7 px-2.5 shadow-xs"
+                        >
+                          <Edit3 className="h-3 w-3" /> Koreksi Essay
+                        </Button>
+                      ) : isPassed ? (
                         <Button
                           size="sm"
                           variant="outline"
@@ -822,6 +883,125 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Essay Grading Modal for Teachers */}
+      <Dialog open={isEssayModalOpen} onOpenChange={setIsEssayModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Edit3 className="h-5 w-5 text-blue-600" /> Koreksi Soal Essay / Uraian Siswa
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
+              Siswa: <span className="font-bold text-foreground">{gradingStudent?.name}</span> ({gradingStudent?.classRombel}) • Nilai PG Sementara: {gradingStudent?.pgScore}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3">
+            {parsedEssayList.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">Tidak ada butir soal essay yang perlu dikoreksi.</p>
+            ) : (
+              parsedEssayList.map((item, idx) => {
+                const isAnsAr = isArabicText(item.studentAnswer);
+                const isQAr = isArabicText(item.questionText);
+                return (
+                  <div key={item.key || idx} className="p-4 rounded-xl border border-border bg-card space-y-3 shadow-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge variant="outline" className="text-xs font-bold">
+                        Butir Essay #{idx + 1}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground font-semibold">
+                        Poin Maks: {item.maxPoints || 10}
+                      </span>
+                    </div>
+
+                    <div
+                      dir={isQAr ? "rtl" : "ltr"}
+                      className={`text-foreground ${isQAr ? "font-arabic text-lg font-bold" : "text-xs font-semibold"}`}
+                    >
+                      {item.questionText}
+                    </div>
+
+                    {/* Student Answer */}
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-bold text-muted-foreground block">Jawaban Siswa:</span>
+                      <div
+                        dir={isAnsAr ? "rtl" : "ltr"}
+                        className={`p-3 rounded-lg border bg-muted/30 border-border text-foreground leading-relaxed ${
+                          isAnsAr ? "font-arabic text-lg leading-loose text-right" : "text-xs"
+                        }`}
+                      >
+                        {item.studentAnswer || <span className="italic text-muted-foreground">(Siswa tidak mengisi jawaban)</span>}
+                      </div>
+                    </div>
+
+                    {/* Teacher Score Input */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                      <Label className="text-xs font-semibold">Beri Skor Poin:</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={item.maxPoints || 10}
+                        value={essayScores[item.key] ?? 0}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setEssayScores((prev) => ({
+                            ...prev,
+                            [item.key]: val,
+                          }));
+                        }}
+                        className="w-24 h-8 text-xs text-center font-bold"
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsEssayModalOpen(false)} className="text-xs">
+              Batal
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                if (!gradingStudent) return;
+                const totalEssay = Object.values(essayScores).reduce((a, b) => a + Number(b), 0);
+                const finalTotal = gradingStudent.pgScore + totalEssay;
+                const finalStatus = finalTotal >= (gradingStudent.kkm || 75) ? "Lulus KKM" : "Remedial";
+
+                // update studentAnswers JSON
+                let answersObj: any = {};
+                try {
+                  answersObj = gradingStudent.studentAnswers ? JSON.parse(gradingStudent.studentAnswers) : {};
+                } catch {}
+                parsedEssayList.forEach((item) => {
+                  if (answersObj[item.key]) {
+                    answersObj[item.key].score = essayScores[item.key] || 0;
+                    answersObj[item.key].graded = true;
+                  }
+                });
+
+                onGradeEssay?.(
+                  gradingStudent.id,
+                  totalEssay,
+                  finalTotal,
+                  finalStatus,
+                  JSON.stringify(answersObj)
+                );
+                toast.success("✅ Nilai Essay Berhasil Disimpan & Dikalkulasi!", {
+                  description: `Total Nilai Akhir: ${finalTotal}/100 (${finalStatus})`,
+                });
+                setIsEssayModalOpen(false);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+            >
+              <CheckCircle2 className="h-4 w-4" /> Simpan Nilai Essay
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

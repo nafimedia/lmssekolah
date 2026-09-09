@@ -32,17 +32,21 @@ import { toast } from "sonner";
 import { CBTQuestion, QuestionType } from "@/types/cbt";
 import { filterSubjectsForUser, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { MysqlDataService } from "@/services/mysqlDataService";
+import { isArabicText } from "@/utils/arabicHelper";
 
 interface CBTQuestionBankProps {
   questions: CBTQuestion[];
   userRole?: string;
   onAddQuestion?: (question: CBTQuestion) => void;
+  onDeleteQuestion?: (questionId: string) => void;
 }
 
 export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
   questions,
   userRole = "guru",
   onAddQuestion,
+  onDeleteQuestion,
 }) => {
   const allowedMapels = filterSubjectsForUser(ALL_SCHOOL_SUBJECTS);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,9 +62,14 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
   const [optB, setOptB] = useState("");
   const [optC, setOptC] = useState("");
   const [optD, setOptD] = useState("");
-  const [correctKey, setCorrectKey] = useState<"A" | "B" | "C" | "D">("A");
+  const [correctKey, setCorrectKey] = useState<string>("A");
   const [qPoints, setQPoints] = useState("5");
   const [qDifficulty, setQDifficulty] = useState<"Mudah" | "Sedang" | "Sukar">("Sedang");
+  const [qImageUrl, setQImageUrl] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [forceArabicMode, setForceArabicMode] = useState(false);
+
+  const isCurrentArabic = forceArabicMode || isArabicText(qText) || qMapel.toLowerCase().includes("arab");
 
   const isSiswa = userRole === "siswa";
   const isWaliKelas = userRole === "walikelas" || userRole === "wali_kelas";
@@ -76,6 +85,35 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
     return matchesSearch && matchesType;
   });
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error("Ukuran berkas gambar maksimal 5 MB!");
+    }
+
+    setIsUploadingImage(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      try {
+        const res = await MysqlDataService.uploadCbtImage(file.name, dataUrl);
+        if (res.success && res.imageUrl) {
+          setQImageUrl(res.imageUrl);
+          toast.success("Gambar soal berhasil diunggah ke server disk!");
+        } else {
+          toast.error("Gagal mengunggah berkas gambar.");
+        }
+      } catch {
+        toast.error("Terjadi kendala saat menyimpan gambar.");
+      } finally {
+        setIsUploadingImage(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!qText.trim()) {
@@ -86,18 +124,25 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
       return toast.error("Semua opsi pilihan jawaban (A, B, C, D) harus diisi!");
     }
 
+    let finalOptions = { A: optA.trim(), B: optB.trim(), C: optC.trim(), D: optD.trim() };
+    let finalKey = correctKey;
+
+    if (qType === "benar_salah") {
+      finalOptions = { A: "Benar", B: "Salah", C: "", D: "" };
+      finalKey = correctKey === "Salah" ? "Salah" : "Benar";
+    } else if (qType === "essay") {
+      finalOptions = { A: "", B: "", C: "", D: "" };
+      finalKey = "Koreksi Manual Guru";
+    }
+
     const activeUser = MysqlAuthService.getActiveUser();
     const newQuestion: CBTQuestion = {
       id: String(Date.now()),
       questionType: qType,
       questionText: qText.trim(),
-      options: {
-        A: optA.trim(),
-        B: optB.trim(),
-        C: optC.trim(),
-        D: optD.trim(),
-      },
-      correctOption: correctKey,
+      imageUrl: qImageUrl || undefined,
+      options: finalOptions,
+      correctOption: finalKey,
       points: parseInt(qPoints, 10) || 5,
       difficulty: qDifficulty,
       mapel: qMapel || allowedMapels[0] || "Matematika",
@@ -114,6 +159,9 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
     setOptB("");
     setOptC("");
     setOptD("");
+    setQImageUrl("");
+    setForceArabicMode(false);
+    setCorrectKey("A");
   };
 
   const [selectedExcelFile, setSelectedExcelFile] = useState<File | null>(null);
@@ -207,8 +255,8 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
           >
             <option value="all">Semua Tipe Soal</option>
             <option value="pg">Pilihan Ganda</option>
+            <option value="benar_salah">Benar / Salah</option>
             <option value="essay">Essay / Uraian</option>
-            <option value="isian">Isian Singkat</option>
           </select>
         </div>
 
@@ -226,7 +274,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
             <Button
               size="sm"
               onClick={() => setIsAddModalOpen(true)}
-              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
             >
               <Plus className="h-4 w-4" /> Tambah Soal Manual
             </Button>
@@ -236,102 +284,243 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
 
       {/* Question Items List */}
       <div className="space-y-3">
-        {filteredQuestions.map((q, idx) => (
-          <Card key={q.id} className="border-border bg-card hover:border-emerald-500/50 transition-all">
-            <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start justify-between gap-4">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="text-[11px] font-bold">
-                    Soal #{idx + 1}
-                  </Badge>
-                  <Badge
-                    variant="secondary"
-                    className="text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:border-emerald-800"
+        {filteredQuestions.map((q, idx) => {
+          const isQArabic = isArabicText(q.questionText);
+          return (
+            <Card key={q.id} className="border-border bg-card hover:border-emerald-500/50 transition-all shadow-xs">
+              <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="text-[11px] font-bold">
+                      Soal #{idx + 1}
+                    </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:border-emerald-800"
+                    >
+                      {q.questionType === "pg"
+                        ? "Pilihan Ganda"
+                        : q.questionType === "benar_salah"
+                        ? "Benar / Salah"
+                        : "Essay / Uraian"}
+                    </Badge>
+                    {isQArabic && (
+                      <Badge variant="outline" className="text-[10px] font-semibold border-amber-500/40 text-amber-600 dark:text-amber-400">
+                        🇸🇦 Teks Bahasa Arab
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-[11px]">
+                      Tingkat: {q.difficulty || "Sedang"}
+                    </Badge>
+                    <Badge variant="secondary" className="text-[11px] font-mono">
+                      Bobot: {q.points || 5} Poin
+                    </Badge>
+                  </div>
+
+                  {/* Question Image if uploaded */}
+                  {q.imageUrl && (
+                    <div className="pt-2">
+                      <img
+                        src={q.imageUrl}
+                        alt="Ilustrasi Soal"
+                        className="max-h-48 max-w-full rounded-lg border border-border object-contain bg-muted/20"
+                      />
+                    </div>
+                  )}
+
+                  <div
+                    dir={isQArabic ? "rtl" : "ltr"}
+                    className={`pt-1 text-foreground ${
+                      isQArabic
+                        ? "font-arabic text-xl leading-loose font-bold"
+                        : "text-sm sm:text-base font-semibold leading-relaxed"
+                    }`}
                   >
-                    {q.questionType === "pg" ? "Pilihan Ganda" : q.questionType === "essay" ? "Essay" : "Isian"}
-                  </Badge>
-                  <Badge variant="outline" className="text-[11px]">
-                    Tingkat: {q.difficulty || "Sedang"}
-                  </Badge>
-                  <Badge variant="secondary" className="text-[11px] font-mono">
-                    Bobot: {q.points || 5} Poin
-                  </Badge>
-                </div>
+                    {q.questionText}
+                  </div>
 
-                <div className="text-sm sm:text-base font-semibold text-foreground leading-relaxed pt-1">
-                  {q.questionText}
-                </div>
-
-                {/* Display Options for Multiple Choice */}
-                {q.questionType === "pg" && q.options && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs">
-                    {(["A", "B", "C", "D"] as const).map((key) => {
-                      const isCorrect = q.correctOption === key;
-                      return (
-                        <div
-                          key={key}
-                          className={`p-2.5 rounded-lg border flex items-center gap-2 ${
-                            isCorrect
-                              ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-700 dark:text-emerald-300 font-medium"
-                              : "bg-muted/30 border-border text-muted-foreground"
-                          }`}
-                        >
-                          <span
-                            className={`h-5 w-5 rounded font-bold text-[11px] flex items-center justify-center ${
-                              isCorrect ? "bg-emerald-600 text-white" : "bg-muted border"
+                  {/* Display Options for Multiple Choice */}
+                  {q.questionType === "pg" && q.options && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs">
+                      {(["A", "B", "C", "D"] as const).map((key) => {
+                        const isCorrect = q.correctOption === key;
+                        const optText = q.options[key] || "";
+                        const isOptArabic = isArabicText(optText);
+                        return (
+                          <div
+                            key={key}
+                            dir={isOptArabic ? "rtl" : "ltr"}
+                            className={`p-2.5 rounded-lg border flex items-center gap-2 ${
+                              isCorrect
+                                ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-700 dark:text-emerald-300 font-medium"
+                                : "bg-muted/30 border-border text-muted-foreground"
                             }`}
                           >
-                            {key}
-                          </span>
-                          <span className="truncate">{q.options[key]}</span>
-                        </div>
-                      );
-                    })}
+                            <span
+                              className={`h-5 w-5 rounded font-bold text-[11px] flex items-center justify-center shrink-0 ${
+                                isCorrect ? "bg-emerald-600 text-white" : "bg-muted border"
+                              }`}
+                            >
+                              {key}
+                            </span>
+                            <span className={`truncate ${isOptArabic ? "font-arabic text-sm" : ""}`}>{optText}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Display for Benar / Salah */}
+                  {q.questionType === "benar_salah" && (
+                    <div className="flex items-center gap-2 pt-2 text-xs">
+                      {["Benar", "Salah"].map((val) => {
+                        const isCorrect = q.correctOption === val;
+                        return (
+                          <div
+                            key={val}
+                            className={`px-3 py-1.5 rounded-lg border font-semibold flex items-center gap-1.5 ${
+                              isCorrect
+                                ? "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-300"
+                                : "bg-muted/20 border-border text-muted-foreground"
+                            }`}
+                          >
+                            {isCorrect && <Check className="h-3.5 w-3.5 text-emerald-600" />}
+                            <span>{val}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Display for Essay */}
+                  {q.questionType === "essay" && (
+                    <div className="pt-2 text-xs text-muted-foreground flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] border-blue-500/40 text-blue-600 dark:text-blue-400">
+                        ✍️ Koreksi Manual Guru
+                      </Badge>
+                      <span>Jawaban siswa akan dikoreksi dan dinilai secara manual oleh guru pengampu.</span>
+                    </div>
+                  )}
+                </div>
+
+                {canManageBank && (
+                  <div className="flex sm:flex-col gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm(`Hapus butir soal #${idx + 1}?`)) {
+                          onDeleteQuestion?.(q.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
-              </div>
-
-              {canManageBank && (
-                <div className="flex sm:flex-col gap-2 shrink-0">
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info("Edit Soal")}>
-                    <Edit3 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => toast.success("Soal Dihapus!")}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Add Question Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto bg-background border-border">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background border-border">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
-              <Brain className="h-5 w-5 text-emerald-600" /> Tambah Butir Soal CBT
-            </DialogTitle>
+            <div className="flex items-center justify-between gap-2 pr-6">
+              <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+                <Brain className="h-5 w-5 text-emerald-600" /> Tambah Butir Soal CBT
+              </DialogTitle>
+              <Button
+                type="button"
+                variant={forceArabicMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setForceArabicMode(!forceArabicMode)}
+                className={`h-7 px-2.5 text-[11px] font-semibold gap-1 ${
+                  forceArabicMode ? "bg-amber-600 hover:bg-amber-700 text-white" : "border-amber-500/40 text-amber-600"
+                }`}
+              >
+                🇸🇦 {forceArabicMode ? "Mode Arab Aktif" : "Mode Arab (Khat Naskh)"}
+              </Button>
+            </div>
             <DialogDescription className="text-xs text-muted-foreground pt-1">
-              Input pertanyaan, opsi jawaban, kunci jawaban, dan bobot poin.
+              Mendukung soal Pilihan Ganda, Benar/Salah, Essay, dan penulisan teks Bahasa Arab dengan harakat rapi.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleAddSubmit} className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">Teks Pertanyaan / Soal</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Teks Pertanyaan / Butir Soal</Label>
+                {isCurrentArabic && (
+                  <span className="text-[11px] text-amber-600 font-semibold font-arabic">
+                    الخط العربي (Amiri Naskh) • Rata Kanan
+                  </span>
+                )}
+              </div>
               <textarea
                 rows={3}
-                placeholder="Tuliskan soal ujian secara jelas..."
+                dir={isCurrentArabic ? "rtl" : "ltr"}
+                placeholder={isCurrentArabic ? "اكتب السؤال هنا بالتفصيل..." : "Tuliskan butir soal secara lengkap dan jelas..."}
                 value={qText}
                 onChange={(e) => setQText(e.target.value)}
-                className="w-full p-3 rounded-lg border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className={`w-full p-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
+                  isCurrentArabic ? "font-arabic text-base leading-loose text-right" : "text-xs"
+                }`}
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
+            {/* Gambar Pendukung Soal (File Server / Disk) */}
+            <div className="space-y-1.5 p-3 rounded-lg border border-border bg-muted/20">
+              <Label className="text-xs font-semibold flex items-center justify-between">
+                <span>Gambar / Ilustrasi Pendukung Soal (Opsional)</span>
+                <span className="text-[10px] text-muted-foreground">Disimpan di Disk Server</span>
+              </Label>
+              {qImageUrl ? (
+                <div className="relative inline-block mt-2">
+                  <img src={qImageUrl} alt="Preview" className="h-32 rounded-md object-contain border bg-background" />
+                  <button
+                    type="button"
+                    onClick={() => setQImageUrl("")}
+                    className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 shadow-sm hover:opacity-90"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 pt-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={isUploadingImage}
+                    className="text-xs max-w-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-emerald-50 dark:file:bg-emerald-950 file:text-emerald-700 dark:file:text-emerald-300"
+                  />
+                  {isUploadingImage && <span className="text-xs text-muted-foreground">Mengunggah...</span>}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Mata Pelajaran</Label>
+                <select
+                  value={qMapel}
+                  onChange={(e) => setQMapel(e.target.value)}
+                  className="w-full h-9 px-3 rounded-md border border-input bg-background text-xs"
+                >
+                  {allowedMapels.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                  <option value="Bahasa Arab">Bahasa Arab</option>
+                  <option value="Al-Qur'an Hadits">Al-Qur'an Hadits</option>
+                  <option value="Fiqih">Fiqih</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Tipe Soal</Label>
                 <select
                   value={qType}
@@ -339,12 +528,12 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                   className="w-full h-9 px-3 rounded-md border border-input bg-background text-xs"
                 >
                   <option value="pg">Pilihan Ganda</option>
+                  <option value="benar_salah">Benar / Salah</option>
                   <option value="essay">Essay / Uraian</option>
-                  <option value="isian">Isian Singkat</option>
                 </select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Tingkat Kesulitan</Label>
                 <select
                   value={qDifficulty}
@@ -357,24 +546,28 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                 </select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Bobot Poin</Label>
                 <Input
                   type="number"
                   value={qPoints}
                   onChange={(e) => setQPoints(e.target.value)}
-                  className="text-xs"
+                  className="text-xs h-9"
                 />
               </div>
             </div>
 
-            {/* Options Input (Only for PG) */}
+            {/* Options Input for Pilihan Ganda */}
             {qType === "pg" && (
               <div className="space-y-3 pt-2 border-t border-border">
-                <Label className="text-xs font-semibold text-foreground">Opsi Jawaban & Kunci Jawaban</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-foreground">Opsi Jawaban & Kunci Jawaban</Label>
+                  <span className="text-[11px] text-muted-foreground">*Klik huruf A/B/C/D untuk menetapkan Kunci Benar</span>
+                </div>
                 {(["A", "B", "C", "D"] as const).map((key) => {
                   const stateVal = key === "A" ? optA : key === "B" ? optB : key === "C" ? optC : optD;
                   const setStateFn = key === "A" ? setOptA : key === "B" ? setOptB : key === "C" ? setOptC : setOptD;
+                  const isOptAr = isArabicText(stateVal) || isCurrentArabic;
 
                   return (
                     <div key={key} className="flex items-center gap-2">
@@ -383,24 +576,51 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                         onClick={() => setCorrectKey(key)}
                         className={`h-9 w-9 rounded-lg font-bold text-xs flex items-center justify-center transition-colors shrink-0 ${
                           correctKey === key
-                            ? "bg-emerald-600 text-white ring-2 ring-emerald-500"
+                            ? "bg-emerald-600 text-white ring-2 ring-emerald-500 shadow-xs"
                             : "bg-muted text-muted-foreground border hover:bg-accent"
                         }`}
                       >
                         {key}
                       </button>
                       <Input
+                        dir={isOptAr ? "rtl" : "ltr"}
                         placeholder={`Teks pilihan jawaban ${key}...`}
                         value={stateVal}
                         onChange={(e) => setStateFn(e.target.value)}
-                        className="text-xs"
+                        className={`text-xs h-9 ${isOptAr ? "font-arabic text-sm text-right" : ""}`}
                       />
                     </div>
                   );
                 })}
-                <p className="text-[11px] text-muted-foreground">
-                  *Klik tombol huruf (A/B/C/D) untuk menentukan Kunci Jawaban Benar.
-                </p>
+              </div>
+            )}
+
+            {/* Options Input for Benar / Salah */}
+            {qType === "benar_salah" && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <Label className="text-xs font-semibold text-foreground">Kunci Jawaban Yang Benar:</Label>
+                <div className="flex gap-3">
+                  {["Benar", "Salah"].map((val) => (
+                    <Button
+                      key={val}
+                      type="button"
+                      variant={correctKey === val ? "default" : "outline"}
+                      onClick={() => setCorrectKey(val)}
+                      className={`flex-1 font-bold text-xs h-10 ${
+                        correctKey === val ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+                      }`}
+                    >
+                      {val}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Essay Info */}
+            {qType === "essay" && (
+              <div className="p-3 rounded-lg border border-blue-500/30 bg-blue-50/20 dark:bg-blue-950/20 text-xs text-blue-700 dark:text-blue-300">
+                💡 <strong>Catatan Soal Uraian:</strong> Jawaban essay siswa akan tersimpan ke database dan muncul di halaman <strong>Analisis Nilai & Koreksi Essay</strong> untuk diberi nilai manual oleh guru.
               </div>
             )}
 
@@ -408,7 +628,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               <Button type="button" variant="outline" size="sm" onClick={() => setIsAddModalOpen(false)} className="text-xs">
                 Batal
               </Button>
-              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5">
+              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs">
                 <Sparkles className="h-4 w-4" /> Simpan Ke Bank Soal
               </Button>
             </DialogFooter>

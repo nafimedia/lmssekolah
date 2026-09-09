@@ -74,7 +74,9 @@ export interface CbtResultRow {
   score: number;
   total_correct: number;
   total_questions: number;
+  essay_score?: number;
   status: string;
+  student_answers?: string;
   submitted_at?: string;
   created_at?: string;
 }
@@ -471,12 +473,23 @@ export interface CbtExamRow {
   token: string;
   duration_minutes: number;
   passing_score: number;
+  class_name?: string;
+  randomize_questions?: number;
+  randomize_options?: number;
+  question_limit?: number;
+  is_remedial?: number;
+  parent_exam_id?: number | null;
+  start_time?: string;
+  end_time?: string;
+  created_at?: string;
 }
 
 export interface CbtQuestionRow {
   id?: number;
   exam_id: number;
   question_text: string;
+  question_type?: string;
+  image_url?: string;
   option_a: string;
   option_b: string;
   option_c: string;
@@ -1421,7 +1434,16 @@ export const saveWaLogFn = createServerFn({ method: "POST" })
 export const getCbtExamsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<CbtExamRow[]> => {
     try {
-      const { query } = await import("@/lib/db");
+      const { query, execute } = await import("@/lib/db");
+      await execute("ALTER TABLE cbt_exams ADD COLUMN class_name VARCHAR(100) DEFAULT 'Semua Kelas'").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_questions TINYINT(1) DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_options TINYINT(1) DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN question_limit INT DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN is_remedial TINYINT(1) DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN parent_exam_id INT DEFAULT NULL").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN start_time DATETIME DEFAULT NULL").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN end_time DATETIME DEFAULT NULL").catch(() => {});
+
       return await query<CbtExamRow[]>("SELECT * FROM cbt_exams ORDER BY id DESC");
     } catch {
       return [];
@@ -1431,23 +1453,60 @@ export const getCbtExamsFn = createServerFn({ method: "GET" }).handler(
 
 export const saveCbtExamFn = createServerFn({ method: "POST" })
   .validator((data: CbtExamRow) => data)
-  .handler(async ({ data }): Promise<boolean> => {
+  .handler(async ({ data }): Promise<{ success: boolean; id?: number }> => {
     try {
       const { execute } = await import("@/lib/db");
-      await execute(
-        "INSERT INTO cbt_exams (title, subject_name, token, duration_minutes, passing_score) VALUES (?, ?, ?, ?, ?)",
-        [data.title, data.subject_name, data.token, data.duration_minutes, data.passing_score]
+      await execute("ALTER TABLE cbt_exams ADD COLUMN class_name VARCHAR(100) DEFAULT 'Semua Kelas'").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_questions TINYINT(1) DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN randomize_options TINYINT(1) DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN question_limit INT DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN is_remedial TINYINT(1) DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN parent_exam_id INT DEFAULT NULL").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN start_time DATETIME DEFAULT NULL").catch(() => {});
+      await execute("ALTER TABLE cbt_exams ADD COLUMN end_time DATETIME DEFAULT NULL").catch(() => {});
+
+      const res: any = await execute(
+        `INSERT INTO cbt_exams (title, subject_name, token, duration_minutes, passing_score, class_name, randomize_questions, randomize_options, question_limit, is_remedial, parent_exam_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.title,
+          data.subject_name,
+          data.token,
+          data.duration_minutes || 60,
+          data.passing_score || 75,
+          data.class_name || "Semua Kelas",
+          data.randomize_questions ? 1 : 0,
+          data.randomize_options ? 1 : 0,
+          data.question_limit || 0,
+          data.is_remedial ? 1 : 0,
+          data.parent_exam_id || null,
+        ]
       );
-      return true;
+      return { success: true, id: res?.insertId };
+    } catch (err: any) {
+      console.warn("saveCbtExamFn error:", err);
+      return { success: false };
+    }
+  });
+
+export const deleteCbtExamFn = createServerFn({ method: "POST" })
+  .validator((data: { id: number | string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM cbt_exams WHERE id = ?", [data.id]);
+      return { success: true };
     } catch {
-      return false;
+      return { success: false };
     }
   });
 
 export interface CbtQuestionDbRow {
   id?: number | string;
   exam_id?: number | string;
+  question_type?: "pg" | "benar_salah" | "essay" | "isian" | string;
   question_text: string;
+  image_url?: string;
   option_a?: string;
   option_b?: string;
   option_c?: string;
@@ -1459,7 +1518,10 @@ export interface CbtQuestionDbRow {
 export const getCbtQuestionsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<CbtQuestionDbRow[]> => {
     try {
-      const { query } = await import("@/lib/db");
+      const { query, execute } = await import("@/lib/db");
+      await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
+      await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
+
       return await query<CbtQuestionDbRow[]>("SELECT * FROM cbt_questions ORDER BY id DESC");
     } catch {
       return [];
@@ -1472,12 +1534,18 @@ export const saveCbtQuestionFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ success: boolean; id?: number | string }> => {
     try {
       const { execute } = await import("@/lib/db");
+      await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
+      await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
+
       const examId = data.exam_id || 1;
       const res = await execute(
-        "INSERT INTO cbt_questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_option, points) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        `INSERT INTO cbt_questions (exam_id, question_text, question_type, image_url, option_a, option_b, option_c, option_d, correct_option, points) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           examId,
           data.question_text,
+          data.question_type || "pg",
+          data.image_url || null,
           data.option_a || "",
           data.option_b || "",
           data.option_c || "",
@@ -1489,6 +1557,18 @@ export const saveCbtQuestionFn = createServerFn({ method: "POST" })
       return { success: true, id: (res as any)?.insertId };
     } catch (err: any) {
       console.warn("saveCbtQuestionFn error:", err);
+      return { success: false };
+    }
+  });
+
+export const deleteCbtQuestionFn = createServerFn({ method: "POST" })
+  .validator((data: { id: number | string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM cbt_questions WHERE id = ?", [data.id]);
+      return { success: true };
+    } catch {
       return { success: false };
     }
   });
@@ -2427,11 +2507,16 @@ export const getCbtResultsFn = createServerFn({ method: "GET" }).handler(
           score DECIMAL(5,2) DEFAULT 0,
           total_correct INT DEFAULT 0,
           total_questions INT DEFAULT 0,
+          essay_score DECIMAL(5,2) DEFAULT 0,
           status VARCHAR(50) DEFAULT 'Selesai',
+          student_answers LONGTEXT,
           submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
+      await execute("ALTER TABLE cbt_exam_results ADD COLUMN essay_score DECIMAL(5,2) DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exam_results ADD COLUMN student_answers LONGTEXT").catch(() => {});
+
       return await query<CbtResultRow[]>("SELECT * FROM cbt_exam_results ORDER BY id DESC");
     } catch (e) {
       console.error("[getCbtResultsFn Error]:", e);
@@ -2456,15 +2541,19 @@ export const saveCbtResultFn = createServerFn({ method: "POST" })
           score DECIMAL(5,2) DEFAULT 0,
           total_correct INT DEFAULT 0,
           total_questions INT DEFAULT 0,
+          essay_score DECIMAL(5,2) DEFAULT 0,
           status VARCHAR(50) DEFAULT 'Selesai',
+          student_answers LONGTEXT,
           submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
+      await execute("ALTER TABLE cbt_exam_results ADD COLUMN essay_score DECIMAL(5,2) DEFAULT 0").catch(() => {});
+      await execute("ALTER TABLE cbt_exam_results ADD COLUMN student_answers LONGTEXT").catch(() => {});
 
       const res: any = await execute(
-        `INSERT INTO cbt_exam_results (exam_id, exam_title, user_id, student_name, rombel, score, total_correct, total_questions, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO cbt_exam_results (exam_id, exam_title, user_id, student_name, rombel, score, total_correct, total_questions, essay_score, status, student_answers)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.exam_id,
           data.exam_title || "",
@@ -2474,12 +2563,32 @@ export const saveCbtResultFn = createServerFn({ method: "POST" })
           data.score || 0,
           data.total_correct || 0,
           data.total_questions || 0,
+          data.essay_score || 0,
           data.status || "Selesai",
+          data.student_answers || null,
         ]
       );
       return { success: true, id: String(res.insertId || "") };
     } catch (e) {
       console.error("[saveCbtResultFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const gradeCbtEssayFn = createServerFn({ method: "POST" })
+  .validator((data: { result_id: string | number; essay_score: number; total_score: number; status: string; student_answers: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(
+        `UPDATE cbt_exam_results 
+         SET essay_score = ?, score = ?, status = ?, student_answers = ? 
+         WHERE id = ?`,
+        [data.essay_score, data.total_score, data.status, data.student_answers, data.result_id]
+      );
+      return { success: true };
+    } catch (e) {
+      console.error("[gradeCbtEssayFn Error]:", e);
       return { success: false };
     }
   });
@@ -4905,3 +5014,35 @@ export const removeUserAvatarFn = createServerFn({ method: "POST" })
       return { success: false };
     }
   });
+
+// 37. UPLOAD GAMBAR SOAL CBT KE FILE SERVER (DISK STORAGE)
+export const uploadCbtImageFn = createServerFn({ method: "POST" })
+  .validator((data: { filename: string; dataUrl: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; imageUrl: string }> => {
+    try {
+      if (!data.dataUrl || !data.dataUrl.startsWith("data:")) {
+        return { success: false, imageUrl: "" };
+      }
+      const fs = await import("fs");
+      const path = await import("path");
+      const uploadDir = path.join(process.cwd(), "public", "uploads", "cbt");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const ext = data.dataUrl.includes("image/png") ? "png" : data.dataUrl.includes("image/webp") ? "webp" : "jpg";
+      const base64Data = data.dataUrl.split(";base64,").pop();
+      if (!base64Data) return { success: false, imageUrl: "" };
+
+      const cleanName = (data.filename || "soal").replace(/[^a-zA-Z0-9_-]/g, "_");
+      const uniqueFileName = `cbt_${cleanName}_${Date.now()}.${ext}`;
+      const physicalPath = path.join(uploadDir, uniqueFileName);
+      fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
+      const finalUrl = `/uploads/cbt/${uniqueFileName}`;
+      return { success: true, imageUrl: finalUrl };
+    } catch (e) {
+      console.error("[uploadCbtImageFn Error]:", e);
+      return { success: false, imageUrl: "" };
+    }
+  });
+

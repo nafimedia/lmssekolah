@@ -75,15 +75,16 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
           const mappedQ: CBTQuestion[] = dbQuestions.map((q: any) => ({
             id: String(q.id),
             examId: String(q.exam_id || "1"),
-            questionType: "pg",
+            questionType: (q.question_type || "pg") as any,
             questionText: q.question_text || "",
+            imageUrl: q.image_url || undefined,
             options: {
               A: q.option_a || "",
               B: q.option_b || "",
               C: q.option_c || "",
               D: q.option_d || "",
             },
-            correctOption: (q.correct_option || "A") as "A" | "B" | "C" | "D",
+            correctOption: q.correct_option || "A",
             points: Number(q.points) || 5,
             difficulty: "Sedang",
             author: me?.full_name || "Guru Pengampu",
@@ -100,12 +101,17 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
             title: e.title,
             mapel: e.subject_name || "Mata Pelajaran",
             kelas: normalizeRombelName(e.class_name || "Rombel 8A"),
-            durasi: String(e.duration_minutes || 90),
-            durationMinutes: e.duration_minutes || 90,
+            durasi: String(e.duration_minutes || 60),
+            durationMinutes: e.duration_minutes || 60,
             soalCount: e.total_questions || 20,
             token: e.token || "MTS2-CBT",
             passingScore: e.passing_score || 75,
             status: (e.status || "Dibuka") as any,
+            randomizeQuestions: Boolean(e.randomize_questions),
+            randomizeOptions: Boolean(e.randomize_options),
+            questionLimit: Number(e.question_limit || 0),
+            isRemedial: Boolean(e.is_remedial),
+            parentExamId: e.parent_exam_id || null,
           }));
           setExams(mapped);
         } else {
@@ -115,15 +121,17 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         if (dbResults && dbResults.length > 0) {
           const mapped = dbResults.map((r: any) => ({
             id: String(r.id),
+            examId: String(r.exam_id || "1"),
             name: r.student_name || "Siswa",
-            nis: r.student_nis || "-",
-            classRombel: normalizeRombelName(r.class_name || "Rombel 8A"),
+            nis: r.student_nis || r.nis || "-",
+            classRombel: normalizeRombelName(r.rombel || r.class_name || "Rombel 8A"),
             subjectName: r.subject_name || "Mata Pelajaran",
-            pgScore: r.score || 0,
-            essayScore: 0,
-            totalScore: r.score || 0,
-            status: (r.score >= 75 ? "Lulus KKM" : "Remedial") as "Lulus KKM" | "Remedial",
+            pgScore: Number(r.score || 0) - Number(r.essay_score || 0),
+            essayScore: Number(r.essay_score || 0),
+            totalScore: Number(r.score || 0),
+            status: (r.status || (r.score >= 75 ? "Lulus KKM" : "Remedial")) as any,
             kkm: 75,
+            studentAnswers: r.student_answers,
           }));
           setGradeAnalysis(mapped);
         } else {
@@ -182,60 +190,163 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
     setIsPlayerOpen(true);
   };
 
-  const handleCreateExam = (newExam: Partial<CBTExam>) => {
-    setExams((prev) => [newExam as CBTExam, ...prev]);
+  const handleCreateExam = async (newExam: Partial<CBTExam>) => {
+    try {
+      const res = await MysqlDataService.saveCbtExam({
+        title: newExam.title || "Ujian CBT Baru",
+        subject_name: newExam.mapel || "Matematika",
+        token: (newExam.token || "MTS2-NEW").toUpperCase(),
+        duration_minutes: newExam.durationMinutes || 60,
+        passing_score: newExam.passingScore || 75,
+        class_name: newExam.kelas || "Semua Kelas",
+        randomize_questions: newExam.randomizeQuestions ? 1 : 0,
+        randomize_options: newExam.randomizeOptions ? 1 : 0,
+        question_limit: newExam.questionLimit || 0,
+        is_remedial: newExam.isRemedial ? 1 : 0,
+        parent_exam_id: newExam.parentExamId || null,
+      });
+
+      const examObj: CBTExam = {
+        id: String(res.id || Date.now()),
+        title: newExam.title || "Ujian CBT Baru",
+        mapel: newExam.mapel || "Matematika",
+        kelas: normalizeRombelName(newExam.kelas || "Semua Kelas"),
+        token: (newExam.token || "MTS2-NEW").toUpperCase(),
+        durationMinutes: newExam.durationMinutes || 60,
+        passingScore: newExam.passingScore || 75,
+        soalCount: 20,
+        status: "Dibuka",
+        randomizeQuestions: newExam.randomizeQuestions,
+        randomizeOptions: newExam.randomizeOptions,
+        questionLimit: newExam.questionLimit,
+        isRemedial: newExam.isRemedial,
+      };
+
+      setExams((prev) => [examObj, ...prev]);
+    } catch (e) {
+      console.warn("Gagal menyimpan ujian CBT ke MySQL:", e);
+    }
+  };
+
+  const handleDeleteExam = async (examId: string) => {
+    try {
+      await MysqlDataService.deleteCbtExam(examId);
+      setExams((prev) => prev.filter((e) => e.id !== examId));
+      toast.success("Sesi ujian CBT berhasil dihapus.");
+    } catch (e) {
+      console.warn("Gagal menghapus ujian CBT:", e);
+    }
   };
 
   const handleAddQuestion = async (newQ: CBTQuestion) => {
-    setQuestions((prev) => [newQ, ...prev]);
     try {
-      await MysqlDataService.saveCbtQuestion({
-        exam_id: Number(newQ.examId) || 1,
+      const res = await MysqlDataService.saveCbtQuestion({
+        exam_id: Number(newQ.examId) || (activeExam?.id ? Number(activeExam.id) : 1),
         question_text: newQ.questionText,
-        option_a: newQ.options.A,
-        option_b: newQ.options.B,
-        option_c: newQ.options.C,
-        option_d: newQ.options.D,
+        question_type: newQ.questionType || "pg",
+        image_url: newQ.imageUrl,
+        option_a: newQ.options.A || "",
+        option_b: newQ.options.B || "",
+        option_c: newQ.options.C || "",
+        option_d: newQ.options.D || "",
         correct_option: newQ.correctOption,
         points: newQ.points,
       });
+      const savedQ = { ...newQ, id: String(res.id || newQ.id) };
+      setQuestions((prev) => [savedQ, ...prev]);
     } catch (err) {
       console.warn("Gagal menyimpan butir soal CBT ke MySQL:", err);
     }
   };
 
-  const handleExamComplete = (result: { scorePg: number; totalScore: number; violationCount: number }) => {
-    const isPassed = result.totalScore >= 75;
-    setGradeAnalysis((prev) => {
-      const exists = prev.some((g) => g.name === studentName);
-      if (exists) {
-        return prev.map((g) =>
-          g.name === studentName
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      await MysqlDataService.deleteCbtQuestion(questionId);
+      setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+      toast.success("Butir soal berhasil dihapus dari Bank Soal.");
+    } catch (err) {
+      console.warn("Gagal menghapus butir soal:", err);
+    }
+  };
+
+  const handleGradeEssay = async (
+    resultId: string,
+    essayScore: number,
+    totalScore: number,
+    status: "Lulus KKM" | "Remedial",
+    studentAnswers: string
+  ) => {
+    try {
+      await MysqlDataService.gradeCbtEssay({
+        result_id: resultId,
+        essay_score: essayScore,
+        total_score: totalScore,
+        status,
+        student_answers: studentAnswers,
+      });
+
+      setGradeAnalysis((prev) =>
+        prev.map((g) =>
+          g.id === resultId
             ? {
-              ...g,
-              pgScore: result.scorePg,
-              totalScore: result.totalScore,
-              status: isPassed ? "Lulus KKM" : "Remedial",
-            }
+                ...g,
+                essayScore,
+                totalScore,
+                status,
+                studentAnswers,
+              }
             : g
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: String(Date.now()),
-          name: studentName,
-          nis: "2026099",
-          classRombel: "Rombel 8B",
-          subjectName: activeExam?.mapel || "Matematika",
-          pgScore: result.scorePg,
-          essayScore: 0,
-          totalScore: result.totalScore,
-          status: isPassed ? "Lulus KKM" : "Remedial",
-          kkm: 75,
-        },
-      ];
+        )
+      );
+    } catch (e) {
+      console.warn("Gagal mengupdate nilai essay:", e);
+    }
+  };
+
+  const handleCreateRemedialExam = async () => {
+    const parentExam = exams[0];
+    if (!parentExam) return toast.error("Belum ada ujian induk yang dapat diremedialkan.");
+
+    const remToken = `${parentExam.token.replace(/-REM.*$/, "")}-REM`;
+    await handleCreateExam({
+      title: `[REMEDIAL] ${parentExam.title.replace(/^\[REMEDIAL\]\s*/, "")}`,
+      mapel: parentExam.mapel,
+      kelas: parentExam.kelas,
+      token: remToken,
+      durationMinutes: parentExam.durationMinutes,
+      passingScore: parentExam.passingScore,
+      randomizeQuestions: true,
+      randomizeOptions: true,
+      questionLimit: parentExam.questionLimit,
+      isRemedial: true,
+      parentExamId: Number(parentExam.id) || null,
     });
+    toast.success(`⚡ Sesi Remedial Berhasil Dibuat! Token: ${remToken}`);
+  };
+
+  const handleExamComplete = (result: { scorePg: number; totalScore: number; violationCount: number }) => {
+    // Refresh results from DB
+    MysqlDataService.getCbtResults()
+      .then((dbResults) => {
+        if (dbResults && dbResults.length > 0) {
+          const mapped = dbResults.map((r: any) => ({
+            id: String(r.id),
+            examId: String(r.exam_id || "1"),
+            name: r.student_name || "Siswa",
+            nis: r.student_nis || r.nis || "-",
+            classRombel: normalizeRombelName(r.rombel || r.class_name || "Rombel 8A"),
+            subjectName: r.subject_name || "Mata Pelajaran",
+            pgScore: Number(r.score || 0) - Number(r.essay_score || 0),
+            essayScore: Number(r.essay_score || 0),
+            totalScore: Number(r.score || 0),
+            status: (r.status || (r.score >= 75 ? "Lulus KKM" : "Remedial")) as any,
+            kkm: 75,
+            studentAnswers: r.student_answers,
+          }));
+          setGradeAnalysis(mapped);
+        }
+      })
+      .catch(() => {});
   };
 
   const getRoleLabel = () => {
@@ -480,6 +591,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
           userRole={userRole}
           onStartExam={handleStartExam}
           onCreateExam={handleCreateExam}
+          onDeleteExam={handleDeleteExam}
         />
       )}
 
@@ -488,6 +600,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
           questions={visibleQuestions}
           userRole={userRole}
           onAddQuestion={handleAddQuestion}
+          onDeleteQuestion={handleDeleteQuestion}
         />
       )}
 
@@ -497,6 +610,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
           questions={visibleQuestions}
           userRole={userRole}
           studentName={studentName}
+          onGradeEssay={handleGradeEssay}
+          onCreateRemedialExam={handleCreateRemedialExam}
         />
       )}
 

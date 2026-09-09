@@ -32,6 +32,8 @@ import {
   WifiOff,
 } from "lucide-react";
 import { CBTExam, CBTQuestion } from "@/types/cbt";
+import { isArabicText } from "@/utils/arabicHelper";
+import { normalizeRombelName } from "@/utils/classNormalization";
 
 interface CBTExamPlayerModalProps {
   isOpen: boolean;
@@ -230,7 +232,18 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     };
   }, [isOpen]);
 
-  const activeQuestions = questions && questions.length > 0 ? questions : [];
+  // Memoize and prepare active questions (support randomization & question limits)
+  const activeQuestions = useMemo(() => {
+    if (!questions || questions.length === 0) return [];
+    let list = [...questions];
+    if (exam?.randomizeQuestions) {
+      list = [...list].sort(() => 0.5 - Math.random());
+    }
+    if (exam?.questionLimit && exam.questionLimit > 0 && exam.questionLimit < list.length) {
+      list = list.slice(0, exam.questionLimit);
+    }
+    return list;
+  }, [questions, exam?.id, exam?.randomizeQuestions, exam?.questionLimit]);
 
   if (!isOpen || !exam) return null;
 
@@ -283,36 +296,93 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
 
   const calculateResults = () => {
     let scorePg = 0;
+    let correctCount = 0;
+    let hasEssay = false;
+    const detailedAnswers: Record<number, any> = {};
+
     activeQuestions.forEach((q, idx) => {
-      if (userAnswers[idx] === q.correctOption) {
-        scorePg += q.points || 5;
+      const ans = userAnswers[idx] || "";
+      let isCorrect = false;
+
+      if (q.questionType === "essay") {
+        hasEssay = true;
+        detailedAnswers[idx] = {
+          questionId: q.id,
+          questionText: q.questionText,
+          questionType: "essay",
+          studentAnswer: ans,
+          score: 0,
+          maxPoints: q.points || 10,
+          graded: false,
+        };
+      } else if (q.questionType === "benar_salah") {
+        isCorrect = ans.trim().toLowerCase() === (q.correctOption || "Benar").trim().toLowerCase();
+        if (isCorrect) {
+          scorePg += q.points || 5;
+          correctCount++;
+        }
+        detailedAnswers[idx] = {
+          questionId: q.id,
+          questionText: q.questionText,
+          questionType: "benar_salah",
+          studentAnswer: ans,
+          correctOption: q.correctOption,
+          isCorrect,
+          score: isCorrect ? (q.points || 5) : 0,
+        };
+      } else {
+        // PG
+        isCorrect = ans.trim().toUpperCase() === (q.correctOption || "A").trim().toUpperCase();
+        if (isCorrect) {
+          scorePg += q.points || 5;
+          correctCount++;
+        }
+        detailedAnswers[idx] = {
+          questionId: q.id,
+          questionText: q.questionText,
+          questionType: "pg",
+          studentAnswer: ans,
+          correctOption: q.correctOption,
+          isCorrect,
+          score: isCorrect ? (q.points || 5) : 0,
+        };
       }
     });
+
+    const passingScore = exam?.passingScore || 75;
+    let status: "Lulus KKM" | "Remedial" | "Perlu Dikoreksi" = "Remedial";
+    if (hasEssay) {
+      status = "Perlu Dikoreksi";
+    } else {
+      status = scorePg >= passingScore ? "Lulus KKM" : "Remedial";
+    }
+
     return {
       scorePg,
       totalScore: scorePg,
       violationCount,
+      correctCount,
+      hasEssay,
+      detailedAnswers,
+      status,
     };
   };
 
-  const saveCbtResultToDb = async (results: { scorePg: number; totalScore: number; violationCount: number }) => {
+  const saveCbtResultToDb = async (results: ReturnType<typeof calculateResults>) => {
     try {
       const me = MysqlAuthService.getActiveUser();
-      let correctCount = 0;
-      activeQuestions.forEach((q, idx) => {
-        if (userAnswers[idx] === q.correctOption) correctCount++;
-      });
-
       await MysqlDataService.saveCbtResult({
-        exam_id: exam.id || "cbt-exam-1",
+        exam_id: String(exam.id || "cbt-exam-1"),
         exam_title: exam.title,
-        user_id: me?.id || "usr-siswa-1",
+        user_id: String(me?.id || "usr-siswa-1"),
         student_name: me?.full_name || studentName,
-        rombel: (me as any)?.class_name || "VIII A",
+        rombel: normalizeRombelName(me?.class_name || "Rombel 8A"),
         score: results.totalScore,
-        total_correct: correctCount,
+        total_correct: results.correctCount,
         total_questions: activeQuestions.length,
-        status: results.totalScore >= (exam.passingScore || 75) ? "LULUS" : "REMEDIAL",
+        essay_score: 0,
+        status: results.status,
+        student_answers: JSON.stringify(results.detailedAnswers),
       });
     } catch (e) {
       console.warn("Gagal menyimpan hasil CBT ke MySQL:", e);
@@ -340,9 +410,17 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
     const results = calculateResults();
     await saveCbtResultToDb(results);
     clearDraft();
-    toast.success("✅ Ujian CBT Berhasil Dikumpulkan!", {
-      description: `Nilai Anda: ${results.totalScore}/100 (${results.totalScore >= (exam.passingScore || 75) ? "LULUS KKM" : "REMEDIAL"})`,
-    });
+
+    if (results.hasEssay) {
+      toast.success("✅ Ujian CBT Berhasil Dikumpulkan!", {
+        description: "Jawaban Essay Anda akan dikoreksi dan dinilai manual oleh Guru Pengampu.",
+      });
+    } else {
+      toast.success("✅ Ujian CBT Berhasil Dikumpulkan!", {
+        description: `Skor Anda: ${results.totalScore}/100 (${results.status})`,
+      });
+    }
+
     onExamComplete(results);
     onClose();
   };
@@ -456,41 +534,118 @@ export const CBTExamPlayerModal: React.FC<CBTExamPlayerModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Question Text */}
-                  <div className="text-base sm:text-lg font-medium text-foreground leading-relaxed">
-                    {currentQ.questionText}
-                  </div>
+                  {/* Question Illustration Image if available */}
+                  {currentQ.imageUrl && (
+                    <div className="py-2">
+                      <img
+                        src={currentQ.imageUrl}
+                        alt="Ilustrasi Soal"
+                        className="max-h-60 max-w-full rounded-xl border border-border object-contain bg-muted/20 shadow-xs"
+                      />
+                    </div>
+                  )}
 
-                  {/* Multiple Choice Options */}
+                  {/* Question Text with Arabic Khat Naskh support */}
+                  {(() => {
+                    const isAr = isArabicText(currentQ.questionText);
+                    return (
+                      <div
+                        dir={isAr ? "rtl" : "ltr"}
+                        className={`pt-1 text-foreground ${
+                          isAr
+                            ? "font-arabic text-xl sm:text-2xl leading-loose font-bold text-right"
+                            : "text-base sm:text-lg font-medium leading-relaxed"
+                        }`}
+                      >
+                        {currentQ.questionText}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Multiple Choice Options (PG) */}
                   {currentQ.questionType === "pg" && currentQ.options && (
                     <div className="space-y-2.5 pt-2">
                       {(["A", "B", "C", "D"] as const).map((key) => {
                         const isSelected = userAnswers[currentIndex] === key;
+                        const optText = currentQ.options[key] || "";
+                        const isOptAr = isArabicText(optText);
+
                         return (
                           <div
                             key={key}
+                            dir={isOptAr ? "rtl" : "ltr"}
                             onClick={() => handleSelectOption(key)}
                             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center gap-3.5 ${
                               isSelected
-                                ? "bg-emerald-500/10 border-emerald-500 text-foreground ring-1 ring-emerald-500/50 shadow-sm"
+                                ? "bg-emerald-500/10 border-emerald-500 text-foreground ring-2 ring-emerald-500/50 shadow-sm"
                                 : "border-border bg-card hover:bg-accent/50 text-muted-foreground hover:text-foreground"
                             }`}
                           >
                             <div
-                              className={`h-7 w-7 rounded-lg font-bold text-xs flex items-center justify-center transition-colors ${
+                              className={`h-8 w-8 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 transition-colors ${
                                 isSelected
-                                  ? "bg-emerald-600 text-white"
+                                  ? "bg-emerald-600 text-white shadow-xs"
                                   : "bg-muted text-muted-foreground border border-border"
                               }`}
                             >
                               {key}
                             </div>
-                            <div className="text-sm sm:text-base font-normal flex-1">
-                              {currentQ.options[key]}
+                            <div className={`flex-1 ${isOptAr ? "font-arabic text-lg font-medium text-right leading-loose" : "text-sm sm:text-base"}`}>
+                              {optText}
                             </div>
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+
+                  {/* Benar / Salah Options */}
+                  {currentQ.questionType === "benar_salah" && (
+                    <div className="grid grid-cols-2 gap-4 pt-3">
+                      {["Benar", "Salah"].map((val) => {
+                        const isSelected = userAnswers[currentIndex] === val;
+                        return (
+                          <div
+                            key={val}
+                            onClick={() => handleSelectOption(val)}
+                            className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center gap-2 font-bold text-base ${
+                              isSelected
+                                ? "bg-emerald-500/10 border-emerald-600 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30"
+                                : "border-border bg-card hover:bg-accent text-foreground"
+                            }`}
+                          >
+                            {isSelected && <CheckCircle2 className="h-5 w-5 text-emerald-600" />}
+                            <span>{val}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Essay Input Textarea */}
+                  {currentQ.questionType === "essay" && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="font-semibold">Tuliskan Jawaban Uraian Anda:</span>
+                        {isArabicText(userAnswers[currentIndex] || "") && (
+                          <span className="text-amber-600 font-semibold font-arabic">الكتابة بالعربية (Khat Naskh)</span>
+                        )}
+                      </div>
+                      <textarea
+                        rows={6}
+                        dir={isArabicText(userAnswers[currentIndex] || "") ? "rtl" : "ltr"}
+                        placeholder="Tuliskan uraian jawaban Anda di sini..."
+                        value={userAnswers[currentIndex] || ""}
+                        onChange={(e) => handleSelectOption(e.target.value)}
+                        className={`w-full p-4 rounded-xl border border-input bg-card focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
+                          isArabicText(userAnswers[currentIndex] || "")
+                            ? "font-arabic text-lg leading-loose text-right"
+                            : "text-sm leading-relaxed"
+                        }`}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        *Jawaban essay tersimpan otomatis dan akan dikoreksi langsung oleh guru pengampu mata pelajaran.
+                      </p>
                     </div>
                   )}
                 </div>

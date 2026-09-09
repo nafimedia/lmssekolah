@@ -39,6 +39,7 @@ interface CBTLiveSessionProps {
   userRole?: string;
   onStartExam: (exam: CBTExam) => void;
   onCreateExam?: (newExam: Partial<CBTExam>) => void;
+  onDeleteExam?: (examId: string) => void;
 }
 
 export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
@@ -46,6 +47,7 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
   userRole = "siswa",
   onStartExam,
   onCreateExam,
+  onDeleteExam,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedExam, setSelectedExam] = useState<CBTExam | null>(null);
@@ -75,10 +77,13 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
   // New Exam Form State
   const [newTitle, setNewTitle] = useState("");
   const [newMapel, setNewMapel] = useState("Matematika");
-  const [newKelas, setNewKelas] = useState("VIII A");
+  const [newKelas, setNewKelas] = useState("Semua Kelas");
   const [newDurasi, setNewDurasi] = useState("60");
   const [newToken, setNewToken] = useState("MTS2-NEW");
   const [newPassingScore, setNewPassingScore] = useState("75");
+  const [newRandomizeQuestions, setNewRandomizeQuestions] = useState(true);
+  const [newRandomizeOptions, setNewRandomizeOptions] = useState(true);
+  const [newQuestionLimit, setNewQuestionLimit] = useState("0");
 
   const isWaliKelas = userRole === "walikelas" || userRole === "wali_kelas";
   const me = MysqlAuthService.getActiveUser();
@@ -147,11 +152,15 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
       passingScore: parseInt(newPassingScore, 10) || 75,
       soalCount: 20,
       status: "Dibuka",
+      randomizeQuestions: newRandomizeQuestions,
+      randomizeOptions: newRandomizeOptions,
+      questionLimit: parseInt(newQuestionLimit, 10) || 0,
+      isRemedial: false,
     };
 
     onCreateExam?.(created);
     toast.success("✅ Sesi Ujian CBT Baru Berhasil Diterbitkan!", {
-      description: `Token Resmi: ${created.token} (${created.kelas})`,
+      description: `Token: ${created.token} | Rombel: ${created.kelas}`,
     });
     setIsCreateModalOpen(false);
   };
@@ -261,16 +270,24 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
               className="hover:shadow-md transition-all border-border bg-card overflow-hidden flex flex-col justify-between"
             >
               <CardHeader className="p-4 pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <Badge
-                    variant={exam.status === "Dibuka" ? "default" : "secondary"}
-                    className={`text-[11px] font-bold ${exam.status === "Dibuka"
-                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-300 dark:border-emerald-800"
-                      : ""
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Badge
+                      variant={exam.status === "Dibuka" ? "default" : "secondary"}
+                      className={`text-[11px] font-bold ${
+                        exam.status === "Dibuka"
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-300 dark:border-emerald-800"
+                          : ""
                       }`}
-                  >
-                    {exam.status === "Dibuka" ? "🟢 Live Sesi" : exam.status}
-                  </Badge>
+                    >
+                      {exam.status === "Dibuka" ? "🟢 Live Sesi" : exam.status}
+                    </Badge>
+                    {exam.isRemedial && (
+                      <Badge className="bg-amber-600 text-white font-bold text-[10px]">
+                        REMEDIAL
+                      </Badge>
+                    )}
+                  </div>
                   <Badge variant="outline" className="text-[11px] font-mono font-bold">
                     Token: {exam.token}
                   </Badge>
@@ -282,6 +299,25 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
                 <CardDescription className="text-xs text-muted-foreground">
                   Mapel: <span className="font-semibold text-foreground">{exam.mapel}</span> | Kelas: {exam.kelas}
                 </CardDescription>
+
+                {/* Badges for Randomize & Limits */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                  {exam.randomizeQuestions && (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                      🔀 Acak Soal
+                    </Badge>
+                  )}
+                  {exam.randomizeOptions && (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                      🔀 Acak Opsi
+                    </Badge>
+                  )}
+                  {Boolean(exam.questionLimit && exam.questionLimit > 0) && (
+                    <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30">
+                      🎯 {exam.questionLimit} Soal
+                    </Badge>
+                  )}
+                </div>
               </CardHeader>
 
               <CardContent className="p-4 pt-0 space-y-4">
@@ -323,10 +359,15 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
                       </Button>
                       <Button
                         size="sm"
-                        className="flex-1 font-bold text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => toast.info(`Memantau Proctor Live CBT: ${exam.title}`)}
+                        variant="ghost"
+                        className="h-9 px-2.5 text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          if (confirm(`Hapus sesi ujian CBT: ${exam.title}?`)) {
+                            onDeleteExam?.(exam.id);
+                          }
+                        }}
                       >
-                        <Users className="h-3.5 w-3.5" /> Proctor Live
+                        <RotateCcw className="h-4 w-4" />
                       </Button>
                     </div>
                   )}
@@ -451,11 +492,51 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
               </div>
             </div>
 
+            {/* Pengaturan Acak & Batas Soal (Roadmap CBT MTsN 2 Cilacap) */}
+            <div className="space-y-3 p-3 rounded-lg border border-border bg-muted/20">
+              <Label className="text-xs font-semibold text-foreground block">
+                Pengaturan Keamanan & Randomisasi
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newRandomizeQuestions}
+                    onChange={(e) => setNewRandomizeQuestions(e.target.checked)}
+                    className="h-4 w-4 rounded border-input text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span>Acak Urutan Soal Siswa</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newRandomizeOptions}
+                    onChange={(e) => setNewRandomizeOptions(e.target.checked)}
+                    className="h-4 w-4 rounded border-input text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span>Acak Pilihan Jawaban (A-D)</span>
+                </label>
+              </div>
+
+              <div className="pt-2 flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground">Batas Jumlah Soal Acak:</span>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={newQuestionLimit}
+                    onChange={(e) => setNewQuestionLimit(e.target.value)}
+                    className="w-20 h-8 text-xs text-center font-bold"
+                  />
+                  <span className="text-[11px] text-muted-foreground">(0 = Ambil Semua)</span>
+                </div>
+              </div>
+            </div>
+
             <DialogFooter className="gap-2 pt-2">
               <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateModalOpen(false)} className="text-xs">
                 Batal
               </Button>
-              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5">
+              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs">
                 <Sparkles className="h-4 w-4" /> Terbitkan Sesi Ujian
               </Button>
             </DialogFooter>

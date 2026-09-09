@@ -1,4 +1,4 @@
-export type QuestionType = "pg" | "essay" | "isian";
+export type QuestionType = "pg" | "benar_salah" | "essay" | "isian";
 export type ExamStatus = "Draft" | "Terjadwal" | "Dibuka" | "Selesai";
 export type StudentExamStatus = "Sedang Mengerjakan" | "Selesai" | "Dikunci System";
 export type QuestionDifficulty = "Mudah" | "Sedang" | "Sukar";
@@ -16,6 +16,9 @@ export interface CBTExam {
   durasi?: string;
   randomizeQuestions?: boolean;
   randomizeOptions?: boolean;
+  questionLimit?: number;
+  isRemedial?: boolean;
+  parentExamId?: number | null;
   dateStart?: string;
   dateEnd?: string;
 }
@@ -25,13 +28,14 @@ export interface CBTQuestion {
   examId?: string;
   questionType: QuestionType;
   questionText: string;
+  imageUrl?: string;
   options: {
     A: string;
     B: string;
-    C: string;
-    D: string;
+    C?: string;
+    D?: string;
   };
-  correctOption: "A" | "B" | "C" | "D";
+  correctOption: string; // "A" | "B" | "C" | "D" | "Benar" | "Salah"
   points: number;
   difficulty: QuestionDifficulty;
   author?: string;
@@ -57,6 +61,7 @@ export interface CBTStudentExam {
 
 export interface CBTGradeAnalysisItem {
   id: string;
+  examId?: string;
   name: string;
   nis: string;
   classRombel: string;
@@ -64,7 +69,8 @@ export interface CBTGradeAnalysisItem {
   pgScore: number;
   essayScore: number;
   totalScore: number;
-  status: "Lulus KKM" | "Remedial";
+  status: "Lulus KKM" | "Remedial" | "Perlu Dikoreksi";
   kkm: number;
+  studentAnswers?: string; // JSON string of per-question answers
   lastAttemptDate?: string;
 }

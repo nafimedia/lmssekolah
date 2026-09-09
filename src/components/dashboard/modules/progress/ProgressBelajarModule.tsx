@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
-import { isSameClass, normalizeRombelName, resolveWaliKelasRombel } from "@/utils/classNormalization";
+import { isSameClass, normalizeRombelName, resolveWaliKelasRombel, formatClassName } from "@/utils/classNormalization";
 
 function SectionHeader({ title }: { title: string; sub?: string }) {
   return (
@@ -157,9 +157,15 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
 
         setRombelListOptions(Array.from(defaultRombelSet).sort());
 
-        // Process real subjects breakdown
+        // Process real subjects breakdown (excluding non-academic subjects like BK)
         if (subjects && subjects.length > 0) {
-          const mappedSubj = subjects.map((sub: any) => {
+          const academicSubjects = subjects.filter((sub: any) => {
+            const n = (sub.subject_name || sub.name || "").toLowerCase().trim();
+            const c = (sub.code || "").toLowerCase().trim();
+            return !n.includes("bimbingan") && !n.includes("konseling") && c !== "pgb-01";
+          });
+
+          const mappedSubj = academicSubjects.map((sub: any) => {
             const mapelName = (sub.subject_name || sub.name || "").toLowerCase().trim();
 
             const subMatches = (subs || []).filter((s) => {
@@ -335,10 +341,10 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
       <SectionHeader
         title={
           isWaliKelas
-            ? `Monitoring Progress Belajar ${binaanRombel}`
+            ? `Monitoring Progress Belajar ${formatClassName(binaanRombel)}`
             : selectedRombel === "ALL"
-            ? "Monitoring Progress Belajar Seluruh Rombel"
-            : `Monitoring Progress Belajar ${selectedRombel}`
+            ? "Monitoring Progress Belajar Seluruh Kelas"
+            : `Monitoring Progress Belajar ${formatClassName(selectedRombel)}`
         }
         sub={
           isExecutive
@@ -348,7 +354,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
       />
 
       <div className="space-y-6">
-        {/* Rombel Filter & Control Bar */}
+        {/* Kelas Filter & Control Bar */}
         <Card className="border-border shadow-xs bg-card p-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-3 w-full md:w-auto">
@@ -356,11 +362,11 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
                 <Filter className="h-5 w-5" />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-0.5">Pilih Rombel / Mode Monitoring</label>
+                <label className="text-xs font-medium text-muted-foreground block mb-0.5">Pilih Kelas / Mode Monitoring</label>
                 {isWaliKelas ? (
                   <div className="h-9 px-3 rounded-md border border-emerald-500/50 bg-emerald-500/10 flex items-center gap-2 font-semibold text-xs text-emerald-700 dark:text-emerald-300">
                     <Building2 className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Rombel Binaan: {binaanRombel}</span>
+                    <span>Kelas Binaan: {formatClassName(binaanRombel)}</span>
                   </div>
                 ) : (
                   <select
@@ -370,7 +376,7 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
                   >
                     {isExecutive && (
                       <option value="ALL" className="font-bold">
-                        ✨ Semua Rombel (Monitoring Eksekutif Kamad)
+                        ✨ Semua Kelas (Monitoring Eksekutif Kamad)
                       </option>
                     )}
                     {rombelListOptions.map((r) => (

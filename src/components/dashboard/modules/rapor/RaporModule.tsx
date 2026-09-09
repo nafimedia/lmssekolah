@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
-import { isSameClass, normalizeRombelName, resolveWaliKelasRombel } from "@/utils/classNormalization";
+import { isSameClass, normalizeRombelName, resolveWaliKelasRombel, formatClassName } from "@/utils/classNormalization";
 import { isSameSubject, normalizeSubjectName } from "@/utils/subjectNormalization";
 import { exportToExcelXml } from "@/utils/excelExporter";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
@@ -270,15 +270,23 @@ export function RaporModule({
     return map;
   }, [cbtExamsList]);
 
-  // Canonical list of 15 Madrasah subjects (Kemenag standard)
+  // Canonical list of Madrasah subjects (Kemenag standard, excluding non-academic counseling BK)
   const canonicalSubjects = useMemo(() => {
+    const isExcluded = (name: string, code: string) => {
+      const n = (name || "").toLowerCase();
+      const c = (code || "").toLowerCase();
+      return n.includes("bimbingan") || n.includes("konseling") || c === "pgb-01";
+    };
+
     if (subjectsList && subjectsList.length > 0) {
-      return subjectsList.map((s: any) => ({
-        id: s.id,
-        code: s.code || `MP-${s.id}`,
-        name: s.name || s.subject_name,
-        teacher: s.teacher_name || s.teacher || "Guru Pengampu",
-      }));
+      return subjectsList
+        .filter((s: any) => !isExcluded(s.name || s.subject_name || "", s.code || ""))
+        .map((s: any) => ({
+          id: s.id,
+          code: s.code || `MP-${s.id}`,
+          name: s.name || s.subject_name,
+          teacher: s.teacher_name || s.teacher || "Guru Pengampu",
+        }));
     }
     return [
       { id: 1, code: "AGM-01", name: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I" },
@@ -295,7 +303,6 @@ export function RaporModule({
       { id: 12, code: "UMM-07", name: "Pendidikan Jasmani, Olahraga dan Kesehatan", teacher: "NUR ROCHMAN SHODIQ, S.Pd.I" },
       { id: 13, code: "UMM-08", name: "Prakarya dan Seni Budaya", teacher: "ISNAENI HASANAH, S.Pd.I" },
       { id: 14, code: "MLK-01", name: "Bahasa Jawa", teacher: "RINDANG FARIHA IDANA, S.Pd" },
-      { id: 15, code: "PGB-01", name: "Bimbingan dan Konseling", teacher: "ASROR HIDAYAT, S.Pd" },
     ];
   }, [subjectsList]);
 
@@ -1142,7 +1149,7 @@ export function RaporModule({
       <div className="space-y-6">
         <StudentHeaderBanner
           title="Rekap Nilai & Progress Belajar"
-          subtitle={`Transkrip nilai asesmen dan capaian pembelajaran ${targetStudent?.rombel || defaultRombel}`}
+          subtitle={`Transkrip nilai asesmen dan capaian pembelajaran ${formatClassName(targetStudent?.rombel || defaultRombel)}`}
           icon={Award}
           statusText={
             studentMetrics.avgFinalScore >= 75

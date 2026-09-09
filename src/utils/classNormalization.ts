@@ -73,6 +73,8 @@ export function normalizeRombelName(rawClass?: string | null): string {
   return formatClassForDisplay(rawClass, "kelas");
 }
 
+export const formatClassName = normalizeRombelName;
+
 /**
  * Resolves the assigned Class for a Wali Kelas based on real database tables / user attributes.
  */

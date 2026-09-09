@@ -1420,10 +1420,54 @@ export const saveWaLogFn = createServerFn({ method: "POST" })
   .validator((data: WaLogRow) => data)
   .handler(async ({ data }): Promise<boolean> => {
     try {
-      const { execute } = await import("@/lib/db");
+      const { query, execute } = await import("@/lib/db");
+      let finalStatus = data.status || "TERCATAT 📋";
+
+      // Cek apakah ada konfigurasi WA Gateway aktif untuk real auto-dispatch
+      try {
+        const rows = await query<any[]>("SELECT * FROM wa_gateway_config ORDER BY id DESC LIMIT 1");
+        if (rows && rows.length > 0 && rows[0].api_token && data.phone) {
+          const cfg = rows[0];
+          const cat = (data.category || "").toUpperCase();
+          const isCategoryActive =
+            (cat.includes("ABSENSI") && cfg.is_presensi_active) ||
+            (cat.includes("TAHFIDZ") && cfg.is_tahfidz_active) ||
+            (cat.includes("PENGUMUMAN") && cfg.is_pengumuman_active) ||
+            (cat.includes("RAPOR") && cfg.is_rapor_active) ||
+            cat.includes("UJI COBA") ||
+            cat.includes("WARNING");
+
+          if (isCategoryActive) {
+            const dispatchRes = await dispatchWaViaProvider(data.phone, data.message, {
+              id: String(cfg.id),
+              provider: cfg.provider || "flowkirim",
+              api_token: cfg.api_token,
+              sender_phone: cfg.sender_phone,
+              api_url: cfg.api_url,
+              is_presensi_active: Boolean(cfg.is_presensi_active),
+              is_tahfidz_active: Boolean(cfg.is_tahfidz_active),
+              is_pengumuman_active: Boolean(cfg.is_pengumuman_active),
+              is_rapor_active: Boolean(cfg.is_rapor_active),
+              template_presensi: cfg.template_presensi,
+              template_tahfidz: cfg.template_tahfidz,
+              template_pengumuman: cfg.template_pengumuman,
+              template_rapor: cfg.template_rapor,
+            });
+
+            if (dispatchRes.success) {
+              finalStatus = `TERKIRIM (${(cfg.provider || "FLOWKIRIM").toUpperCase()}) 🟢`;
+            } else {
+              finalStatus = `GAGAL: ${dispatchRes.message.slice(0, 45)} 🔴`;
+            }
+          }
+        }
+      } catch (errDispatch) {
+        console.warn("[saveWaLogFn auto-dispatch error]:", errDispatch);
+      }
+
       await execute(
         "INSERT INTO wa_gateway_logs (parent_name, phone, student_name, category, message, status) VALUES (?, ?, ?, ?, ?, ?)",
-        [data.parent_name, data.phone, data.student_name, data.category, data.message, data.status || "GATEWAY SENT 🟢"]
+        [data.parent_name, data.phone, data.student_name, data.category, data.message, finalStatus]
       );
       return true;
     } catch {
@@ -4372,12 +4416,13 @@ export const savePeerAssessmentFn = createServerFn({ method: "POST" })
   });
 
 // ============================================================================
+// ============================================================================
 // 32. WA GATEWAY CONFIGURATION & AUTO-DISPATCH SYSTEM
 // ============================================================================
 
 export interface WaGatewayConfigRow {
   id?: string;
-  provider: "fonnte" | "wablas" | "whacenter" | "custom";
+  provider: "flowkirim" | "fonnte" | "wablas" | "whacenter" | "custom";
   api_token: string;
   sender_phone: string;
   api_url?: string;
@@ -4392,13 +4437,201 @@ export interface WaGatewayConfigRow {
   updated_at?: string;
 }
 
+export function formatWaPhoneNumber(phone: string): string {
+  let cleaned = (phone || "").replace(/[^0-9]/g, "");
+  if (cleaned.startsWith("08")) {
+    cleaned = "62" + cleaned.slice(1);
+  } else if (cleaned.startsWith("8")) {
+    cleaned = "62" + cleaned;
+  } else if (!cleaned.startsWith("62") && cleaned.length >= 8) {
+    cleaned = "62" + cleaned;
+  }
+  return cleaned;
+}
+
+let hasMigratedWaGatewaySchema = false;
+async function ensureWaGatewaySchemaMigrated() {
+  if (hasMigratedWaGatewaySchema) return;
+  try {
+    const { execute } = await import("@/lib/db");
+    await execute(`
+      CREATE TABLE IF NOT EXISTS wa_gateway_config (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        provider VARCHAR(50) DEFAULT 'flowkirim',
+        api_token TEXT,
+        sender_phone VARCHAR(50) DEFAULT '0812-3456-7890',
+        api_url VARCHAR(255) DEFAULT 'https://api.flowkirim.com/v1/messages',
+        is_presensi_active TINYINT(1) DEFAULT 0,
+        is_tahfidz_active TINYINT(1) DEFAULT 0,
+        is_pengumuman_active TINYINT(1) DEFAULT 0,
+        is_rapor_active TINYINT(1) DEFAULT 0,
+        template_presensi TEXT,
+        template_tahfidz TEXT,
+        template_pengumuman TEXT,
+        template_rapor TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `).catch(() => {});
+
+    await execute("ALTER TABLE wa_gateway_config ADD COLUMN template_presensi TEXT").catch(() => {});
+    await execute("ALTER TABLE wa_gateway_config ADD COLUMN template_tahfidz TEXT").catch(() => {});
+    await execute("ALTER TABLE wa_gateway_config ADD COLUMN template_pengumuman TEXT").catch(() => {});
+    await execute("ALTER TABLE wa_gateway_config ADD COLUMN template_rapor TEXT").catch(() => {});
+    await execute("ALTER TABLE wa_gateway_config ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP").catch(() => {});
+    hasMigratedWaGatewaySchema = true;
+  } catch {
+    // ignore
+  }
+}
+
+export async function dispatchWaViaProvider(
+  phone: string,
+  message: string,
+  cfg?: WaGatewayConfigRow
+): Promise<{ success: boolean; message: string; response?: any }> {
+  try {
+    let activeCfg = cfg;
+    if (!activeCfg || !activeCfg.api_token) {
+      const { query } = await import("@/lib/db");
+      const rows = await query<any[]>("SELECT * FROM wa_gateway_config ORDER BY id DESC LIMIT 1");
+      if (rows && rows.length > 0) {
+        const r = rows[0];
+        activeCfg = {
+          id: String(r.id),
+          provider: r.provider || "flowkirim",
+          api_token: r.api_token || "",
+          sender_phone: r.sender_phone || "",
+          api_url: r.api_url || "https://api.flowkirim.com/v1/messages",
+          is_presensi_active: Boolean(r.is_presensi_active),
+          is_tahfidz_active: Boolean(r.is_tahfidz_active),
+          is_pengumuman_active: Boolean(r.is_pengumuman_active),
+          is_rapor_active: Boolean(r.is_rapor_active),
+          template_presensi: r.template_presensi || "",
+          template_tahfidz: r.template_tahfidz || "",
+          template_pengumuman: r.template_pengumuman || "",
+          template_rapor: r.template_rapor || "",
+        };
+      }
+    }
+
+    const token = (activeCfg?.api_token || process.env.FLOWKIRIM_TOKEN || process.env.FONNTE_TOKEN || "").trim();
+    if (!token) {
+      return { success: false, message: "API Token / Key belum diisi pada Pengaturan WA Gateway!" };
+    }
+
+    const target = formatWaPhoneNumber(phone);
+    if (!target || target.length < 9) {
+      return { success: false, message: `Nomor tujuan WA tidak valid: '${phone}'` };
+    }
+
+    const provider = activeCfg?.provider || "flowkirim";
+    let apiUrl = (activeCfg?.api_url || "").trim();
+
+    let resData: any = {};
+    let fetchRes: Response;
+
+    if (provider === "flowkirim") {
+      if (!apiUrl) apiUrl = "https://api.flowkirim.com/v1/messages";
+      const authHeader = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+      fetchRes = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          to: target,
+          message: message,
+        }),
+      });
+      resData = await fetchRes.json().catch(() => ({ statusText: fetchRes.statusText }));
+    } else if (provider === "fonnte") {
+      if (!apiUrl) apiUrl = "https://api.fonnte.com/send";
+      const params = new URLSearchParams();
+      params.append("target", target);
+      params.append("message", message);
+      fetchRes = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+        },
+        body: params,
+      });
+      resData = await fetchRes.json().catch(() => ({ statusText: fetchRes.statusText }));
+    } else if (provider === "wablas") {
+      if (!apiUrl) apiUrl = "https://kudus.wablas.com/api/send-message";
+      fetchRes = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone: target, message: message }),
+      });
+      resData = await fetchRes.json().catch(() => ({ statusText: fetchRes.statusText }));
+    } else if (provider === "whacenter") {
+      if (!apiUrl) apiUrl = "https://whacenter.com/api/send";
+      const params = new URLSearchParams();
+      params.append("device_id", token);
+      params.append("number", target);
+      params.append("message", message);
+      fetchRes = await fetch(apiUrl, {
+        method: "POST",
+        body: params,
+      });
+      resData = await fetchRes.json().catch(() => ({ statusText: fetchRes.statusText }));
+    } else {
+      // Custom REST API Endpoint
+      if (!apiUrl) {
+        return { success: false, message: "URL endpoint untuk custom provider belum diisi!" };
+      }
+      const authHeader = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+      fetchRes = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ to: target, phone: target, message: message }),
+      });
+      resData = await fetchRes.json().catch(() => ({ statusText: fetchRes.statusText }));
+    }
+
+    if (fetchRes.ok) {
+      return {
+        success: true,
+        message: `Pesan berhasil dikirim via provider ${provider.toUpperCase()} ke nomor ${target}`,
+        response: resData,
+      };
+    } else {
+      const errDetail =
+        resData?.message ||
+        resData?.error ||
+        resData?.detail ||
+        resData?.statusText ||
+        `HTTP Status ${fetchRes.status}`;
+      return {
+        success: false,
+        message: `Provider ${provider.toUpperCase()} menolak kiriman (${errDetail})`,
+        response: resData,
+      };
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      message: `Gagal menghubungkan ke provider WA: ${err?.message || err}`,
+    };
+  }
+}
+
 export const getWaGatewayConfigFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<WaGatewayConfigRow> => {
     const defaultConfig: WaGatewayConfigRow = {
-      provider: "fonnte",
+      provider: "flowkirim",
       api_token: "",
       sender_phone: "0812-3456-7890",
-      api_url: "https://api.fonnte.com/send",
+      api_url: "https://api.flowkirim.com/v1/messages",
       is_presensi_active: false,
       is_tahfidz_active: false,
       is_pengumuman_active: false,
@@ -4410,35 +4643,17 @@ export const getWaGatewayConfigFn = createServerFn({ method: "GET" }).handler(
     };
 
     try {
-      const { query, execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS wa_gateway_config (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          provider VARCHAR(50) DEFAULT 'fonnte',
-          api_token TEXT,
-          sender_phone VARCHAR(50) DEFAULT '0812-3456-7890',
-          api_url VARCHAR(255) DEFAULT 'https://api.fonnte.com/send',
-          is_presensi_active TINYINT(1) DEFAULT 0,
-          is_tahfidz_active TINYINT(1) DEFAULT 0,
-          is_pengumuman_active TINYINT(1) DEFAULT 0,
-          is_rapor_active TINYINT(1) DEFAULT 0,
-          template_presensi TEXT,
-          template_tahfidz TEXT,
-          template_pengumuman TEXT,
-          template_rapor TEXT,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
+      await ensureWaGatewaySchemaMigrated();
+      const { query } = await import("@/lib/db");
       const rows = await query<any[]>("SELECT * FROM wa_gateway_config ORDER BY id DESC LIMIT 1");
       if (rows && rows.length > 0) {
         const r = rows[0];
         return {
           id: String(r.id),
-          provider: r.provider || "fonnte",
+          provider: r.provider || "flowkirim",
           api_token: r.api_token || "",
           sender_phone: r.sender_phone || "0812-3456-7890",
-          api_url: r.api_url || "https://api.fonnte.com/send",
+          api_url: r.api_url || "https://api.flowkirim.com/v1/messages",
           is_presensi_active: Boolean(r.is_presensi_active),
           is_tahfidz_active: Boolean(r.is_tahfidz_active),
           is_pengumuman_active: Boolean(r.is_pengumuman_active),
@@ -4461,26 +4676,9 @@ export const saveWaGatewayConfigFn = createServerFn({ method: "POST" })
   .validator((data: { config: WaGatewayConfigRow }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     try {
+      await ensureWaGatewaySchemaMigrated();
       const { execute } = await import("@/lib/db");
       const c = data.config;
-      await execute(`
-        CREATE TABLE IF NOT EXISTS wa_gateway_config (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          provider VARCHAR(50) DEFAULT 'fonnte',
-          api_token TEXT,
-          sender_phone VARCHAR(50) DEFAULT '0812-3456-7890',
-          api_url VARCHAR(255) DEFAULT 'https://api.fonnte.com/send',
-          is_presensi_active TINYINT(1) DEFAULT 1,
-          is_tahfidz_active TINYINT(1) DEFAULT 1,
-          is_pengumuman_active TINYINT(1) DEFAULT 0,
-          is_rapor_active TINYINT(1) DEFAULT 1,
-          template_presensi TEXT,
-          template_tahfidz TEXT,
-          template_pengumuman TEXT,
-          template_rapor TEXT,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
 
       await execute(
         `INSERT INTO wa_gateway_config (
@@ -4489,10 +4687,10 @@ export const saveWaGatewayConfigFn = createServerFn({ method: "POST" })
           template_presensi, template_tahfidz, template_pengumuman, template_rapor
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          c.provider || "fonnte",
+          c.provider || "flowkirim",
           c.api_token || "",
           c.sender_phone || "",
-          c.api_url || "https://api.fonnte.com/send",
+          c.api_url || "https://api.flowkirim.com/v1/messages",
           c.is_presensi_active ? 1 : 0,
           c.is_tahfidz_active ? 1 : 0,
           c.is_pengumuman_active ? 1 : 0,
@@ -4514,80 +4712,28 @@ export const sendTestWaMessageFn = createServerFn({ method: "POST" })
   .validator((data: { target: string; message: string; config?: WaGatewayConfigRow }) => data)
   .handler(async ({ data }): Promise<{ success: boolean; message: string; response?: any }> => {
     try {
-      const { query, execute } = await import("@/lib/db");
-      let cfg = data.config;
-      if (!cfg || !cfg.api_token) {
-        const rows = await query<any[]>("SELECT * FROM wa_gateway_config ORDER BY id DESC LIMIT 1");
-        if (rows && rows.length > 0) {
-          const r = rows[0];
-          cfg = {
-            provider: r.provider || "fonnte",
-            api_token: r.api_token || "",
-            sender_phone: r.sender_phone || "",
-            api_url: r.api_url || "https://api.fonnte.com/send",
-            is_presensi_active: Boolean(r.is_presensi_active),
-            is_tahfidz_active: Boolean(r.is_tahfidz_active),
-            is_pengumuman_active: Boolean(r.is_pengumuman_active),
-            is_rapor_active: Boolean(r.is_rapor_active),
-            template_presensi: r.template_presensi || "",
-            template_tahfidz: r.template_tahfidz || "",
-            template_pengumuman: r.template_pengumuman || "",
-          };
-        }
-      }
+      const { execute } = await import("@/lib/db");
+      const res = await dispatchWaViaProvider(data.target, data.message, data.config);
 
-      const token = cfg?.api_token || process.env.FONNTE_TOKEN || "";
-      if (!token) {
-        return { success: false, message: "API Token / Key belum diisi pada Konfigurasi WA Gateway!" };
-      }
-
-      const provider = cfg?.provider || "fonnte";
-      let apiUrl = cfg?.api_url || "https://api.fonnte.com/send";
-      if (provider === "wablas") {
-        apiUrl = "https://kudus.wablas.com/api/send-message";
-      } else if (provider === "whacenter") {
-        apiUrl = "https://whacenter.com/api/send";
-      }
-
-      let resData: any = {};
-      if (provider === "fonnte" || provider === "custom") {
-        const params = new URLSearchParams();
-        params.append("target", data.target);
-        params.append("message", data.message);
-
-        const res = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            Authorization: token,
-          },
-          body: params,
-        });
-        resData = await res.json().catch(() => ({ status: res.status }));
-      } else if (provider === "wablas") {
-        const res = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ phone: data.target, message: data.message }),
-        });
-        resData = await res.json().catch(() => ({ status: res.status }));
-      }
-
-      // Log message dispatch to DB wa_logs
+      // Simpan riwayat test ke wa_gateway_logs
       try {
-        await execute(`
-          INSERT INTO wa_logs (parent_name, student_name, category, message, phone, status)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `, ["Pengujian UI", data.target, "Uji Coba System", data.message, data.target, "TERKIRIM"]);
-      } catch (e) {}
+        await execute(
+          `INSERT INTO wa_gateway_logs (parent_name, phone, student_name, category, message, status)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            "Pengujian WA Gateway",
+            data.target,
+            "Penerima Uji Coba",
+            "UJI COBA",
+            data.message,
+            res.success ? "TERKIRIM (TEST) 🟢" : `GAGAL (TEST) 🔴: ${res.message.slice(0, 50)}`,
+          ]
+        );
+      } catch (e) {
+        console.warn("[sendTestWaMessageFn log error]:", e);
+      }
 
-      return {
-        success: true,
-        message: `Pesan uji coba berhasil dikirimkan via provider ${provider.toUpperCase()}!`,
-        response: resData,
-      };
+      return res;
     } catch (e: any) {
       console.error("[sendTestWaMessageFn Error]:", e);
       return { success: false, message: `Gagal mengirim WA: ${e?.message || e}` };

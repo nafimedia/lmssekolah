@@ -1335,10 +1335,10 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("getWaGatewayConfigFn failed:", e);
       return {
-        provider: "fonnte",
+        provider: "flowkirim",
         api_token: "",
         sender_phone: "0812-3456-7890",
-        api_url: "https://api.fonnte.com/send",
+        api_url: "https://api.flowkirim.com/v1/messages",
         is_presensi_active: true,
         is_tahfidz_active: true,
         is_pengumuman_active: false,

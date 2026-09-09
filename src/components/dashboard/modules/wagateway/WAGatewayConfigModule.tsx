@@ -28,10 +28,10 @@ import { toast } from "sonner";
 
 export function WAGatewayConfigModule() {
   const [config, setConfig] = useState<WaGatewayConfigRow>({
-    provider: "fonnte",
+    provider: "flowkirim",
     api_token: "",
     sender_phone: "",
-    api_url: "https://api.fonnte.com/send",
+    api_url: "https://api.flowkirim.com/v1/messages",
     is_presensi_active: true,
     is_tahfidz_active: true,
     is_pengumuman_active: false,
@@ -159,13 +159,16 @@ export function WAGatewayConfigModule() {
                   value={config.provider}
                   onChange={(e) => {
                     const p = e.target.value as any;
-                    let defaultUrl = "https://api.fonnte.com/send";
-                    if (p === "wablas") defaultUrl = "https://kudus.wablas.com/api/send-message";
+                    let defaultUrl = "https://api.flowkirim.com/v1/messages";
+                    if (p === "fonnte") defaultUrl = "https://api.fonnte.com/send";
+                    else if (p === "wablas") defaultUrl = "https://kudus.wablas.com/api/send-message";
                     else if (p === "whacenter") defaultUrl = "https://whacenter.com/api/send";
+                    else if (p === "custom") defaultUrl = "";
                     setConfig({ ...config, provider: p, api_url: defaultUrl });
                   }}
                 >
-                  <option value="fonnte">Fonnte.com (Disarankan — Flat Rate Rp 50rb/bln)</option>
+                  <option value="flowkirim">FlowKirim.com (Disarankan — Tier Free / Pro Rp 35rb/bln)</option>
+                  <option value="fonnte">Fonnte.com (Flat Rate Rp 50rb/bln)</option>
                   <option value="wablas">Wablas.com (Wablas Server API)</option>
                   <option value="whacenter">Whacenter.com API</option>
                   <option value="custom">Custom REST API Endpoint</option>
@@ -193,7 +196,18 @@ export function WAGatewayConfigModule() {
                   </Button>
                 </div>
                 <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                  <HelpCircle className="h-3 w-3 text-primary shrink-0" /> Token rahasia didapatkan dari dashboard provider (misal: Fonnte Dashboard).
+                  <HelpCircle className="h-3 w-3 text-primary shrink-0" />
+                  {config.provider === "flowkirim" ? (
+                    <span>
+                      Dapatkan API Key di dashboard{" "}
+                      <a href="https://flowkirim.com" target="_blank" rel="noreferrer" className="text-emerald-600 dark:text-emerald-400 font-bold underline">
+                        flowkirim.com
+                      </a>{" "}
+                      setelah scan QR perangkat WhatsApp.
+                    </span>
+                  ) : (
+                    <span>Token rahasia didapatkan dari dashboard provider (misal: Fonnte / Wablas).</span>
+                  )}
                 </p>
               </div>
 

@@ -4433,6 +4433,77 @@ export const savePeerAssessmentFn = createServerFn({ method: "POST" })
     }
   });
 
+export const saveBulkPeerAssessmentsFn = createServerFn({ method: "POST" })
+  .validator((data: { assessments: PeerAssessmentRow[] }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; count: number }> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await ensureLkpdSchema(execute);
+
+      let savedCount = 0;
+      for (const item of data.assessments || []) {
+        if (!item.activity_id || !item.evaluatee_nisn) continue;
+        const avg = Number(
+          (
+            (Number(item.score_keaktifan || 4) +
+              Number(item.score_kerjasama || 4) +
+              Number(item.score_tanggung_jawab || 4) +
+              Number(item.score_sikap || 4)) /
+            4
+          ).toFixed(2)
+        );
+
+        const existing = await query<any[]>(
+          "SELECT id FROM peer_assessments WHERE activity_id = ? AND evaluator_nisn = ? AND evaluatee_nisn = ?",
+          [item.activity_id, item.evaluator_nisn, item.evaluatee_nisn]
+        );
+
+        if (existing && existing.length > 0) {
+          await execute(
+            `UPDATE peer_assessments 
+             SET score_keaktifan = ?, score_kerjasama = ?, score_tanggung_jawab = ?, score_sikap = ?, average_score = ?, feedback = ?
+             WHERE id = ?`,
+            [
+              item.score_keaktifan,
+              item.score_kerjasama,
+              item.score_tanggung_jawab,
+              item.score_sikap,
+              avg,
+              item.feedback || "",
+              existing[0].id,
+            ]
+          );
+        } else {
+          await execute(
+            `INSERT INTO peer_assessments 
+             (activity_id, rombel, mapel, evaluator_nisn, evaluator_name, evaluatee_nisn, evaluatee_name, score_keaktifan, score_kerjasama, score_tanggung_jawab, score_sikap, average_score, feedback)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              item.activity_id,
+              item.rombel || "",
+              item.mapel || "",
+              item.evaluator_nisn,
+              item.evaluator_name,
+              item.evaluatee_nisn,
+              item.evaluatee_name,
+              item.score_keaktifan,
+              item.score_kerjasama,
+              item.score_tanggung_jawab,
+              item.score_sikap,
+              avg,
+              item.feedback || "",
+            ]
+          );
+        }
+        savedCount++;
+      }
+      return { success: true, count: savedCount };
+    } catch (e) {
+      console.error("[saveBulkPeerAssessmentsFn Error]:", e);
+      return { success: false, count: 0 };
+    }
+  });
+
 // ============================================================================
 // ============================================================================
 // 32. WA GATEWAY CONFIGURATION & AUTO-DISPATCH SYSTEM

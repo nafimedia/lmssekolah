@@ -103,6 +103,7 @@ import {
   LkpdDiscussionRow,
   getPeerAssessmentsFn,
   savePeerAssessmentFn,
+  saveBulkPeerAssessmentsFn,
   PeerAssessmentRow,
   getWaGatewayConfigFn,
   saveWaGatewayConfigFn,
@@ -1325,6 +1326,15 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("savePeerAssessmentFn failed:", e);
       return { success: false };
+    }
+  }
+
+  static async saveBulkPeerAssessments(assessments: PeerAssessmentRow[]): Promise<{ success: boolean; count: number }> {
+    try {
+      return await saveBulkPeerAssessmentsFn({ data: { assessments } });
+    } catch (e) {
+      console.warn("saveBulkPeerAssessmentsFn failed:", e);
+      return { success: false, count: 0 };
     }
   }
 

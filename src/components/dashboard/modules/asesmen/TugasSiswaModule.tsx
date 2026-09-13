@@ -64,6 +64,7 @@ import { validateUploadedFile } from "@/lib/fileValidation";
 import { toast } from "sonner";
 import { isSameClass } from "@/utils/classNormalization";
 import { normalizeSubjectName, isSameSubject } from "@/utils/subjectNormalization";
+import { getDeadlineStatus } from "@/utils/deadlineHelper";
 
 interface TugasSiswaModuleProps {
   userProfile?: any;
@@ -224,7 +225,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         rombel: l.rombel || studentRombel,
         subject_name: l.mapel || "Mata Pelajaran",
         class_name: l.rombel || studentRombel,
-        due_date: l.due_date || "Hari ini",
+        due_date: l.due_date || "Sesuai Jadwal KBM",
         max_score: l.max_score || 100,
         description: l.instructions || "Kerjakan tugas / LKPD ini sesuai petunjuk guru.",
         type: l.type || "LKPD Digital",
@@ -233,6 +234,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         attachment_url: l.attachment_url,
         questions_data: l.questions_data,
         quiz_data: l.quiz_data,
+        created_at: l.created_at,
       }));
 
       const lkpdIds = new Set(mappedLkpdAssignments.map((a) => a.id));
@@ -744,10 +746,18 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                   <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-primary" /> Petunjuk & Bahan Rujukan Guru
                   </CardTitle>
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5 text-amber-500" />
-                    Deadline: <span className="font-bold text-foreground">{selectedAssignment.due_date || "Hari ini"}</span>
-                  </div>
+                  {(() => {
+                    const dl = getDeadlineStatus(selectedAssignment.due_date, (selectedAssignment as any).created_at);
+                    return (
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono">
+                        <Clock className={`h-3.5 w-3.5 ${dl.isOverdue ? "text-rose-500" : dl.isToday ? "text-amber-500" : "text-muted-foreground"}`} />
+                        <span className="text-muted-foreground">Deadline:</span>
+                        <span className={dl.textColor}>
+                          {dl.isOverdue ? `Terlewat (${dl.displayText})` : dl.displayText}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
@@ -1782,10 +1792,17 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                       </div>
 
                       <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
-                        <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
-                          <Clock className="h-3 w-3 text-amber-500" />
-                          <span>{a.due_date || "Hari ini"}</span>
-                        </div>
+                        {(() => {
+                          const dl = getDeadlineStatus(a.due_date, (a as any).created_at);
+                          return (
+                            <div className="flex items-center gap-1 text-[11px] font-mono">
+                              <Clock className={`h-3 w-3 ${dl.isOverdue ? "text-rose-500" : dl.isToday ? "text-amber-500" : "text-muted-foreground"}`} />
+                              <span className={dl.textColor}>
+                                {dl.isOverdue ? `Terlewat: ${dl.displayText}` : dl.displayText}
+                              </span>
+                            </div>
+                          );
+                        })()}
                         <div>
                           {taskState.status === "belum" && (
                             <Button size="sm" className="h-7 text-xs font-bold bg-primary text-primary-foreground shadow-xs px-3" onClick={() => handleOpenDetail(a)}>
@@ -1851,10 +1868,15 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                         </td>
 
                         <td className="p-3.5 text-center font-mono">
-                          <Badge variant="outline" className="gap-1 border-border font-mono text-[11px]">
-                            <Clock className="h-3 w-3 text-amber-500" />
-                            {a.due_date || "25 Agustus 2026"}
-                          </Badge>
+                          {(() => {
+                            const dl = getDeadlineStatus(a.due_date, (a as any).created_at);
+                            return (
+                              <Badge variant="outline" className={`gap-1 font-mono text-[11px] ${dl.badgeClass}`}>
+                                <Clock className={`h-3 w-3 ${dl.isOverdue ? "text-rose-500" : dl.isToday ? "text-amber-500" : "text-muted-foreground"}`} />
+                                {dl.isOverdue ? `Terlewat: ${dl.displayText}` : dl.displayText}
+                              </Badge>
+                            );
+                          })()}
                         </td>
 
                         <td className="p-3.5 text-center">

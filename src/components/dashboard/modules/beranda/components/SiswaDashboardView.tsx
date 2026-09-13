@@ -21,6 +21,7 @@ import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
+import { getDeadlineStatus } from "@/utils/deadlineHelper";
 
 interface SiswaDashboardViewProps {
   userName: string;
@@ -346,9 +347,19 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                     <div className="font-bold text-sm text-foreground truncate">
                       {task.title}
                     </div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                      <span>Batas Pengumpulan: <strong className="text-foreground">{task.due_date || task.deadline || "Hari ini"}</strong></span>
-                    </div>
+                    {(() => {
+                      const dl = getDeadlineStatus(task.due_date || task.deadline, task.created_at);
+                      return (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                          <span>Batas Pengumpulan:</span>
+                          <span className={dl.textColor}>
+                            {dl.isOverdue && <span className="font-bold mr-1">⚠️ Terlewat:</span>}
+                            {dl.isToday && <span className="font-bold mr-1">⏳ Hari ini:</span>}
+                            {dl.displayText}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                   <Button
                     size="sm"

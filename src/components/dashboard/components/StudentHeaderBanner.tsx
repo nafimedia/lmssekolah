@@ -39,35 +39,36 @@ export function StudentHeaderBanner({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 sm:pb-4 mb-3 sm:mb-5 border-b border-border/70 font-sans">
-      <div className="space-y-0.5">
+    <div className="flex flex-row items-center justify-between gap-2.5 pb-2.5 sm:pb-4 mb-3 sm:mb-5 border-b border-border/70 font-sans">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+          <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
             <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${iconColorClass}`} />
           </div>
-          <h1 className="text-base sm:text-xl font-bold tracking-tight text-foreground flex items-center gap-1.5">
+          <h1 className="text-sm sm:text-xl font-bold tracking-tight text-foreground truncate">
             {title}
           </h1>
           {studentClass && studentClass.trim() !== "" && (
-            <Badge className="bg-emerald-600 text-white font-bold text-[10px] sm:text-xs px-2 py-0.5 shadow-2xs gap-1">
+            <Badge className="bg-emerald-600 text-white font-bold text-[10px] sm:text-xs px-2 py-0.5 shadow-2xs gap-1 shrink-0">
               <GraduationCap className="h-3 w-3" /> {studentClass}
             </Badge>
           )}
           {studentNisn && (
-            <Badge variant="outline" className="font-mono font-semibold text-[10px] sm:text-xs border-border py-0 px-1.5">
+            <Badge variant="outline" className="font-mono font-semibold text-[10px] sm:text-xs border-border py-0 px-1.5 shrink-0 hidden xs:inline-flex">
               NISN: {studentNisn}
             </Badge>
           )}
         </div>
         {subtitle && (
-          <p className="text-[11px] text-muted-foreground truncate hidden sm:block">{subtitle}</p>
+          <p className="text-[11px] text-muted-foreground truncate hidden sm:block mt-0.5">{subtitle}</p>
         )}
       </div>
 
-      <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+      <div className="flex items-center gap-2 shrink-0">
         {statusText && (
-          <Badge className={`text-[10px] sm:text-xs px-2.5 py-0.5 font-semibold flex items-center gap-1.5 ${getStatusBadgeStyle()}`}>
-            <Sparkles className="h-3 w-3" /> {statusText}
+          <Badge className={`text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 font-semibold flex items-center gap-1 shrink-0 ${getStatusBadgeStyle()}`}>
+            <Sparkles className="h-3 w-3 shrink-0" />
+            <span className="truncate max-w-[130px] sm:max-w-none">{statusText}</span>
           </Badge>
         )}
         {actionButtons}

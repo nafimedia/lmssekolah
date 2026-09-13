@@ -583,14 +583,14 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       )}
 
       {/* Tabs Sub-Nav Navigation (Segmented Pill Style) */}
-      <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 h-9 w-fit flex-wrap">
+      <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 overflow-x-auto max-w-full no-scrollbar shrink-0">
         {navTabs.map((t) => (
           <Button
             key={t.id}
             size="sm"
             variant={activeTab === t.id ? "default" : "ghost"}
             onClick={() => setActiveTab(t.id as any)}
-            className={`h-7 px-2.5 rounded-lg text-xs font-bold gap-1.5 ${
+            className={`h-7 px-2.5 rounded-lg text-xs font-bold gap-1.5 whitespace-nowrap shrink-0 ${
               activeTab === t.id
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -604,28 +604,30 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
 
       {/* Selector Filter Data Juz 1 - 30 Dropdown */}
       {(activeTab === "dashboard" || activeTab === "progress" || activeTab === "riwayat") && (
-        <div className="flex items-center gap-3 border-b border-border pb-3 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-border pb-3">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <BookOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span className="text-xs font-bold text-foreground">Filter Data Juz:</span>
           </div>
-          <select
-            className="h-9 min-w-[200px] rounded-lg border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-xs cursor-pointer"
-            value={selectedJuz}
-            onChange={(e) => setSelectedJuz(e.target.value)}
-          >
-            <option value="Semua Juz">✨ Semua Juz (Juz 1 s.d. 30)</option>
-            {Array.from({ length: 30 }, (_, i) => `Juz ${i + 1}`).map((j) => (
-              <option key={j} value={j}>
-                📖 {j}
-              </option>
-            ))}
-          </select>
-          {selectedJuz !== "Semua Juz" && (
-            <Badge variant="secondary" className="text-[11px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-              Menampilkan {selectedJuz}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            <select
+              className="h-8 sm:h-9 flex-1 sm:flex-initial sm:min-w-[200px] rounded-lg border border-emerald-500/40 bg-background px-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-xs cursor-pointer"
+              value={selectedJuz}
+              onChange={(e) => setSelectedJuz(e.target.value)}
+            >
+              <option value="Semua Juz">✨ Semua Juz (Juz 1 s.d. 30)</option>
+              {Array.from({ length: 30 }, (_, i) => `Juz ${i + 1}`).map((j) => (
+                <option key={j} value={j}>
+                  📖 {j}
+                </option>
+              ))}
+            </select>
+            {selectedJuz !== "Semua Juz" && (
+              <Badge variant="secondary" className="text-[10px] sm:text-[11px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+                Menampilkan {selectedJuz}
+              </Badge>
+            )}
+          </div>
         </div>
       )}
 
@@ -634,7 +636,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
         <div className="space-y-6">
           {/* Target Overview Card */}
           <Card className="border-border shadow-xs bg-gradient-to-r from-emerald-500/10 via-card to-card">
-            <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <CardContent className="p-3.5 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left">
                 <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2 justify-center sm:justify-start">
                   <span>Program Pembinaan Tahfidz MTsN 2 Cilacap</span>
@@ -644,13 +646,10 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                     </Badge>
                   )}
                 </div>
-                <div className="text-xl font-bold text-foreground">
+                <div className="text-lg sm:text-xl font-bold text-foreground">
                   {selectedJuz === "Semua Juz"
                     ? "Target & Capaian Hafalan Al-Qur'an"
                     : `Capaian & Evaluasi Setoran ${selectedJuz}`}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Pantau hafalan baru (ziyadah) dan pengulangan (muroja'ah) peserta didik di sini.
                 </div>
               </div>
 

@@ -546,11 +546,11 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
       )}
 
       {/* Sub-Tabs Navigation (Segmented Pill Style) */}
-      <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 h-9 w-fit">
+      <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 overflow-x-auto max-w-full no-scrollbar shrink-0">
         <Button
           size="sm"
           variant={activeTab === "sesi" ? "default" : "ghost"}
-          className={`gap-1.5 text-xs font-bold h-7 px-3 rounded-lg ${activeTab === "sesi" ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
+          className={`gap-1.5 text-xs font-bold h-7 px-3 rounded-lg whitespace-nowrap shrink-0 ${activeTab === "sesi" ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setActiveTab("sesi")}
         >
           <MonitorCheck className="h-3.5 w-3.5" /> 1. Sesi Ujian Live CBT
@@ -559,7 +559,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
           <Button
             size="sm"
             variant={activeTab === "bank_soal" ? "default" : "ghost"}
-            className={`gap-1.5 text-xs font-bold h-7 px-3 rounded-lg ${activeTab === "bank_soal" ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
+            className={`gap-1.5 text-xs font-bold h-7 px-3 rounded-lg whitespace-nowrap shrink-0 ${activeTab === "bank_soal" ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
             onClick={() => setActiveTab("bank_soal")}
           >
             <Brain className="h-3.5 w-3.5" /> 2. Bank Soal
@@ -568,7 +568,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         <Button
           size="sm"
           variant={activeTab === "analisis" ? "default" : "ghost"}
-          className={`gap-1.5 text-xs font-bold h-7 px-3 rounded-lg ${activeTab === "analisis" ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
+          className={`gap-1.5 text-xs font-bold h-7 px-3 rounded-lg whitespace-nowrap shrink-0 ${activeTab === "analisis" ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setActiveTab("analisis")}
         >
           <BarChart3 className="h-3.5 w-3.5" /> {userRole === "siswa" ? "2. Riwayat Nilai CBT Saya" : "3. Analisis KKM & Remedial"}

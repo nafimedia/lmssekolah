@@ -1722,12 +1722,12 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
           </div>
 
           {/* Filter Mapel Dropdown */}
-          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-            <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Mapel:</span>
+          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0">
+            <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Filter Mapel:</span>
             <select
               value={selectedMapelFilter}
               onChange={(e) => setSelectedMapelFilter(e.target.value)}
-              className="h-8 rounded-lg border border-border bg-background px-2.5 text-xs font-bold text-primary shadow-2xs cursor-pointer"
+              className="h-8 flex-1 sm:flex-initial sm:min-w-[180px] rounded-lg border border-border bg-background px-2.5 text-xs font-bold text-primary shadow-2xs cursor-pointer"
             >
               <option value="SEMUA">Semua Mapel ({uniqueSubjects.length})</option>
               {uniqueSubjects.map((sub: string) => (
@@ -1756,12 +1756,12 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
           ) : (
             <>
               {/* Tampilan Kartu Mobile-First (Tampil di Layar HP) */}
-              <div className="md:hidden divide-y divide-border">
+              <div className="md:hidden p-3 space-y-2.5">
                 {filteredAssignments.map((a) => {
                   const taskState = getTaskStatus(a);
                   const sub = mySubmissionsMap.get(String(a.id));
                   return (
-                    <div key={a.id} className="p-3.5 space-y-2.5 hover:bg-muted/20 transition">
+                    <div key={a.id} className="p-3.5 rounded-xl border border-border bg-muted/20 hover:border-primary/50 transition shadow-2xs space-y-2.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap mb-1">
@@ -1782,7 +1782,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                         </Badge>
                       </div>
 
-                      <div className="flex items-center justify-between gap-2 pt-1">
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
                         <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
                           <Clock className="h-3 w-3 text-amber-500" />
                           <span>{a.due_date || "Hari ini"}</span>

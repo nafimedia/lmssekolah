@@ -209,15 +209,16 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           <Card className="border-slate-200 dark:border-slate-800 shadow-xs">
-            <CardHeader className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <CalendarClock className="h-4 w-4 text-emerald-600" /> Agenda KBM & Jadwal Mengajar Hari Ini ({currentDayName})
+            <CardHeader className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex flex-row items-center justify-between gap-2">
+              <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2 min-w-0 truncate">
+                <CalendarClock className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="truncate">Agenda KBM & Jadwal ({currentDayName})</span>
               </CardTitle>
-              <Button size="sm" variant="ghost" className="text-xs font-bold text-emerald-600 gap-1" onClick={() => setActiveTab?.("jadwal")}>
-                Lihat Jadwal <ArrowRight className="h-3.5 w-3.5" />
+              <Button size="sm" variant="ghost" className="h-7 text-xs font-bold text-emerald-600 gap-1 px-2 shrink-0 hover:bg-emerald-500/10" onClick={() => setActiveTab?.("jadwal")}>
+                <span className="hidden sm:inline">Lihat Jadwal</span><span className="sm:hidden">Jadwal</span> <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </CardHeader>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-3 sm:p-4 space-y-2.5">
               {jadwalHariIni.length === 0 ? (
                 <div className="p-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-2">
                   <div className="text-2xl">☕</div>
@@ -227,12 +228,12 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
                 </div>
               ) : (
                 jadwalHariIni.map((j, idx) => (
-                  <div key={idx} className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{j.mapel || j.subject_name || activeSubjectName} ({j.rombel})</div>
-                      <div className="text-xs text-slate-500 font-mono mt-0.5">⏰ {j.jam || j.jam_ke || "Jam ke-1 & 2"} · 📍 Ruang {j.ruang || j.room || j.rombel}</div>
+                  <div key={idx} className="p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">{j.mapel || j.subject_name || activeSubjectName} ({j.rombel})</div>
+                      <div className="text-[11px] sm:text-xs text-slate-500 font-mono mt-0.5 truncate">⏰ {j.jam || j.jam_ke || "Jam ke-1 & 2"} · 📍 Ruang {j.ruang || j.room || j.rombel}</div>
                     </div>
-                    <Badge className={j.status === "AKTIF" ? "bg-emerald-600 text-white font-bold text-xs" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-xs"}>
+                    <Badge className={`shrink-0 ${j.status === "AKTIF" ? "bg-emerald-600 text-white font-bold text-[10px] sm:text-xs" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px] sm:text-xs"}`}>
                       {j.status || "Terjadwal"}
                     </Badge>
                   </div>

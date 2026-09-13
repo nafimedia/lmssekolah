@@ -12,7 +12,7 @@ interface KbmHeaderBannerProps {
   activeRombel: string;
   activeMapel: string;
   activeTab?: string;
-  onSelectTab?: (tab: "jurnal" | "presensi" | "materi" | "aktivitas" | "catatan_siswa" | "riwayat") => void;
+  onSelectTab?: (tab: "jurnal" | "presensi" | "materi" | "aktivitas" | "riwayat") => void;
   onStartSession?: () => void;
   onProgressChange?: (progress: { isPresensiDone: boolean; isJurnalDone: boolean; presensiCountStr: string }) => void;
 }
@@ -27,6 +27,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
   const [presensiCountStr, setPresensiCountStr] = useState("0 Siswa");
 
   const [isScheduledToday, setIsScheduledToday] = useState(true);
+  const [scheduleTimeStr, setScheduleTimeStr] = useState<string>("");
 
   const todayStr = new Date().toISOString().split("T")[0];
 
@@ -85,16 +86,35 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
       }
 
       if (schedules && schedules.length > 0) {
-        const hasSched = schedules.some((j: any) => {
+        const matchedSched = schedules.find((j: any) => {
           const isDayMatch = (j.hari || "").toLowerCase().trim() === activeDay.toLowerCase().trim();
           const isRombelMatch = isSameClass(j.rombel || j.kelas || "", activeRombel.trim());
           const isMapelMatch = (j.mapel || "").toLowerCase().trim() === activeMapel.trim().toLowerCase();
           const isGuruMatch = isTeacherMatch(j.guru || j.teacher_name || "");
           return isDayMatch && isRombelMatch && isMapelMatch && isGuruMatch;
         });
-        setIsScheduledToday(hasSched);
+
+        if (matchedSched) {
+          setIsScheduledToday(true);
+          setScheduleTimeStr(matchedSched.jam || matchedSched.jam_ke || "");
+        } else {
+          const anyRombelSched = schedules.find((j: any) => {
+            const isDayMatch = (j.hari || "").toLowerCase().trim() === activeDay.toLowerCase().trim();
+            const isRombelMatch = isSameClass(j.rombel || j.kelas || "", activeRombel.trim());
+            const isMapelMatch = (j.mapel || "").toLowerCase().trim() === activeMapel.trim().toLowerCase();
+            return isDayMatch && isRombelMatch && isMapelMatch;
+          });
+          if (anyRombelSched) {
+            setIsScheduledToday(true);
+            setScheduleTimeStr(anyRombelSched.jam || anyRombelSched.jam_ke || "");
+          } else {
+            setIsScheduledToday(false);
+            setScheduleTimeStr("");
+          }
+        }
       } else {
         setIsScheduledToday(true);
+        setScheduleTimeStr("");
       }
     });
 
@@ -222,10 +242,20 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
             <h2 className="text-lg sm:text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
               <DoorOpen className="h-5 w-5 text-primary" /> {activeRombel} — {activeMapel}
             </h2>
-            <p className="text-xs text-muted-foreground font-medium">
-              {isScheduledToday
-                ? "30 Siswa Terdaftar · Sesi KBM Tatap Muka Resmi · Kurikulum Merdeka MTsN 2 Cilacap"
-                : `Mata pelajaran ${activeMapel} (${activeRombel}) tidak memiliki jadwal KBM terdaftar pada hari ${currentDayName} ini.`}
+            <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 flex-wrap">
+              <span>{activeRombel}</span>
+              <span>—</span>
+              <span>{activeMapel}</span>
+              <span>—</span>
+              {isScheduledToday ? (
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  Hari ini Pukul {scheduleTimeStr ? (scheduleTimeStr.toLowerCase().startsWith("pukul") ? scheduleTimeStr.replace(/pukul/i, "").trim() : scheduleTimeStr) : "07.30 - 08.50"}
+                </span>
+              ) : (
+                <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                  Tidak Ada Jadwal Hari Ini
+                </span>
+              )}
             </p>
           </div>
 

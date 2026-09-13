@@ -10,7 +10,6 @@ import {
   Building2,
   CheckCircle2,
   UserCheck,
-  ClipboardList,
   History,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -25,7 +24,6 @@ import { JurnalMengajarTab } from "./components/JurnalMengajarTab";
 import { PresensiTab } from "./components/PresensiTab";
 import { MateriTab } from "./components/MateriTab";
 import { AktivitasTab } from "./components/AktivitasTab";
-import { CatatanSiswaTab } from "./components/CatatanSiswaTab";
 import { RiwayatKbmSection } from "./components/RiwayatKbmSection";
 import { TambahJurnalDialog } from "./components/TambahJurnalDialog";
 
@@ -33,11 +31,12 @@ import { isSameClass } from "@/utils/classNormalization";
 
 export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isKamad = activeRole === "kamad";
-  const [activeTab, setActiveTab] = useState<"jurnal" | "presensi" | "materi" | "aktivitas" | "catatan_siswa" | "riwayat">(() => {
+  const [activeTab, setActiveTab] = useState<"jurnal" | "presensi" | "materi" | "aktivitas" | "riwayat">(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const sub = params.get("subtab") as any;
-      if (sub && ["jurnal", "presensi", "materi", "aktivitas", "catatan_siswa", "riwayat"].includes(sub)) {
+      if (sub === "catatan_siswa") return "jurnal";
+      if (sub && ["jurnal", "presensi", "materi", "aktivitas", "riwayat"].includes(sub)) {
         return sub;
       }
     }
@@ -257,13 +256,12 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
           },
           {
             id: "jurnal",
-            label: "Jurnal",
+            label: "Jurnal Mengajar",
             icon: BookOpen,
             badge: kbmProgress.isJurnalDone ? "✓ Terisi" : null,
           },
           { id: "materi", label: "Materi", icon: Video },
           { id: "aktivitas", label: "Tugas & LKPD", icon: FileText },
-          { id: "catatan_siswa", label: "Catatan", icon: ClipboardList },
           { id: "riwayat", label: "Riwayat", icon: History },
         ].map((t) => (
           <button
@@ -318,10 +316,6 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
 
       {activeTab === "aktivitas" && (
         <AktivitasTab activeRombel={activeRombel} activeMapel={activeMapel} />
-      )}
-
-      {activeTab === "catatan_siswa" && (
-        <CatatanSiswaTab activeRombel={activeRombel} activeMapel={activeMapel} />
       )}
 
       {activeTab === "riwayat" && (

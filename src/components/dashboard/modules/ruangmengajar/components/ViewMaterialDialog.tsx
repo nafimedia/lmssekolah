@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Video, FileText, Library, ExternalLink, Download, Sparkles, CheckCircle2, Eye, RefreshCw } from "lucide-react";
+import { BookOpen, Video, FileText, Library, ExternalLink, Download, Sparkles, CheckCircle2, Eye, RefreshCw, Music, Image as ImageIcon, Globe } from "lucide-react";
 import { toast } from "sonner";
 
 export interface MaterialDetail {
   id: string;
   title: string;
-  type: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | string;
+  type: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | "AUDIO" | "GAMBAR" | "URL" | string;
   chapter: string;
   source: string;
   content?: string;
@@ -23,6 +23,13 @@ interface ViewMaterialDialogProps {
   material: MaterialDetail | null;
   activeRombel: string;
   activeMapel: string;
+}
+
+function getYouTubeEmbedUrl(url: string): string | null {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : null;
 }
 
 export function ViewMaterialDialog({
@@ -43,6 +50,12 @@ export function ViewMaterialDialog({
   if (!material) return null;
 
   const targetUrl = material.file_url || material.url || "";
+  const typeStr = (material.type || "").toUpperCase();
+
+  const isAudio = typeStr.includes("AUDIO") || targetUrl.endsWith(".mp3") || targetUrl.endsWith(".wav") || targetUrl.endsWith(".m4a");
+  const isImage = typeStr.includes("GAMBAR") || targetUrl.match(/\.(png|jpg|jpeg|webp)$/i);
+  const isUrl = typeStr.includes("URL") || (targetUrl.startsWith("http") && !targetUrl.includes("/uploads/"));
+  const ytEmbed = isUrl ? getYouTubeEmbedUrl(targetUrl) : null;
   const isPdfOrDoc = Boolean(
     targetUrl &&
       (targetUrl.toLowerCase().includes(".pdf") ||
@@ -57,7 +70,10 @@ export function ViewMaterialDialog({
         <DialogHeader className="border-b border-border pb-3">
           <div className="flex items-center gap-2 mb-1">
             <Badge variant="outline" className="text-[10px] font-semibold gap-1">
-              {material.type === "MODUL_AJAR" && <FileText className="h-3 w-3 text-emerald-600" />}
+              {isAudio && <Music className="h-3 w-3 text-amber-600" />}
+              {isImage && <ImageIcon className="h-3 w-3 text-purple-600" />}
+              {isUrl && <Globe className="h-3 w-3 text-sky-600" />}
+              {material.type === "MODUL_AJAR" && !isAudio && !isImage && !isUrl && <FileText className="h-3 w-3 text-emerald-600" />}
               {material.type === "VIDEO" && <Video className="h-3 w-3 text-blue-600" />}
               {material.type === "SLIDE_PPT" && <BookOpen className="h-3 w-3 text-amber-600" />}
               {material.type === "EBOOK" && <Library className="h-3 w-3 text-purple-600" />}
@@ -78,8 +94,119 @@ export function ViewMaterialDialog({
         </DialogHeader>
 
         <div className="py-3 space-y-4">
-          {/* Video Player */}
-          {material.type === "VIDEO" ? (
+          {/* 1. AUDIO PLAYER */}
+          {isAudio ? (
+            <div className="p-5 sm:p-6 rounded-2xl border border-amber-300 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0 shadow-xs">
+                  <Music className="h-6 w-6 animate-pulse" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-bold text-sm text-foreground truncate">{material.title}</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Audio Pembelajaran KBM ({activeMapel}) · Ruang {activeRombel}
+                  </p>
+                </div>
+              </div>
+
+              {targetUrl ? (
+                <div className="bg-background/80 p-3 rounded-xl border border-border/80 shadow-xs space-y-2">
+                  <audio controls className="w-full h-10 rounded-md" src={targetUrl}>
+                    Browser tidak mendukung pemutar audio langsung.
+                  </audio>
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    Gunakan pemutar di atas untuk mendengarkan bacaan tartil, makharijul huruf, atau materi listening.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-rose-500">Berkas audio belum diunggah.</p>
+              )}
+
+              {targetUrl && (
+                <div className="flex justify-end gap-2 pt-1">
+                  <a
+                    href={targetUrl}
+                    download={`${material.title}.mp3`}
+                    className="inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-muted h-8 px-3 text-xs font-semibold gap-1.5"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Unduh Audio (MP3)
+                  </a>
+                </div>
+              )}
+            </div>
+          ) : isImage ? (
+            /* 2. IMAGE VIEWER */
+            <div className="space-y-3">
+              <div className="rounded-xl border border-border bg-slate-900/90 overflow-hidden flex items-center justify-center p-3">
+                <img
+                  src={targetUrl}
+                  alt={material.title}
+                  className="max-h-[480px] max-w-full object-contain rounded-lg shadow-md"
+                />
+              </div>
+              <div className="flex justify-between items-center text-xs text-muted-foreground px-1">
+                <span>Media Gambar / Infografis KBM</span>
+                {targetUrl && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs font-semibold gap-1"
+                    onClick={() => window.open(targetUrl, "_blank")}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Buka Layar Penuh
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : isUrl ? (
+            /* 3. URL / YOUTUBE VIEWER */
+            ytEmbed ? (
+              <div className="space-y-3">
+                <div className="aspect-video w-full rounded-xl border border-border bg-slate-900 overflow-hidden shadow-inner">
+                  <iframe
+                    src={ytEmbed}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={material.title}
+                  />
+                </div>
+                <div className="flex justify-between items-center text-xs text-muted-foreground px-1">
+                  <span>Video Pembelajaran YouTube</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs font-semibold gap-1"
+                    onClick={() => window.open(targetUrl, "_blank")}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Buka di YouTube
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 rounded-2xl border border-sky-300 dark:border-sky-900/60 bg-sky-50/40 dark:bg-sky-950/20 text-center space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-sky-500/15 text-sky-600 mx-auto flex items-center justify-center shadow-xs">
+                  <Globe className="h-7 w-7" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-foreground">{material.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1 break-all max-w-md mx-auto">
+                    {targetUrl}
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <Button
+                    size="sm"
+                    className="bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs gap-1.5"
+                    onClick={() => window.open(targetUrl, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4" /> Buka Tautan Sumber Belajar
+                  </Button>
+                </div>
+              </div>
+            )
+          ) : material.type === "VIDEO" ? (
+            /* 4. VIDEO */
             <div className="space-y-3">
               <div className="aspect-video w-full rounded-xl bg-slate-900 flex flex-col items-center justify-center text-white p-6 relative overflow-hidden shadow-inner">
                 <Video className="h-16 w-16 text-blue-400 mb-2 animate-bounce" />
@@ -100,7 +227,7 @@ export function ViewMaterialDialog({
               </div>
             </div>
           ) : material.type === "SLIDE_PPT" ? (
-            /* Slide PPT */
+            /* 5. SLIDE PPT */
             <div className="p-5 sm:p-6 rounded-xl border border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold text-sm">
                 <BookOpen className="h-5 w-5" /> Slide Presentasi Kurikulum Merdeka (PPTX)

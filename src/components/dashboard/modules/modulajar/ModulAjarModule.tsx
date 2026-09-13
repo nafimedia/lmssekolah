@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { toast } from "sonner";
-import { FileText, Upload, Eye, Download, Trash2 } from "lucide-react";
+import { FileText, Upload, Eye, Download, Trash2, Music, Image as ImageIcon, Globe, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-import { UploadModulDialog } from "./components/UploadModulDialog";
+import { UploadModulDialog, UploadModulPayload } from "./components/UploadModulDialog";
 import { PreviewModulDialog } from "./components/PreviewModulDialog";
 import { DeleteModulDialog } from "./components/DeleteModulDialog";
 
@@ -44,6 +44,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           title: m.title,
           mapel: m.subject_name || "Mata Pelajaran",
           jenjang: m.class_name || "Kelas VIII",
+          type: m.type || "DOKUMEN",
           teacher: m.uploaded_by || m.teacher_name || "Guru Pengampu",
           size: m.size || "3.5 MB",
           date: m.created_at ? new Date(m.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Terbaru",
@@ -71,14 +72,20 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     const fileName = m.file_name || `${m.title}.pdf`;
     const title = m.title;
 
-    if (fileUrl && (fileUrl.startsWith("data:") || fileUrl.startsWith("blob:") || fileUrl.startsWith("http") || fileUrl.startsWith("/uploads"))) {
+    if (m.type === "URL" || (fileUrl && (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")))) {
+      window.open(fileUrl, "_blank");
+      toast.success(`🌐 Membuka tautan pembelajaran "${title}"...`);
+      return;
+    }
+
+    if (fileUrl && (fileUrl.startsWith("data:") || fileUrl.startsWith("blob:") || fileUrl.startsWith("/uploads"))) {
       const a = document.createElement("a");
       a.href = fileUrl;
       a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      toast.success(`📄 Berkas PDF "${title}" berhasil diunduh!`);
+      toast.success(`💾 Berkas "${title}" berhasil diunduh!`);
       return;
     }
 
@@ -134,10 +141,20 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     }
   };
 
-  const handleUploadSubmit = async (data: { title: string; mapel: string; jenjang: string; file: File | null; dataUrl: string }) => {
-    const calcSize = data.file ? `${(data.file.size / (1024 * 1024)).toFixed(1)} MB` : "3.8 MB";
-    const fileUrlToSave = data.dataUrl || "";
+  const handleUploadSubmit = async (data: UploadModulPayload) => {
+    const isUrl = data.jenisBahan === "URL";
+    const calcSize = isUrl ? "Link Web" : data.file ? `${(data.file.size / (1024 * 1024)).toFixed(1)} MB` : "2.5 MB";
+    const fileUrlToSave = isUrl ? (data.externalUrl || "") : (data.dataUrl || "");
     const newId = "mod_" + Date.now();
+
+    let ext = "pdf";
+    if (data.file?.name?.includes(".")) {
+      ext = data.file.name.split(".").pop() || "pdf";
+    } else if (data.jenisBahan === "AUDIO") {
+      ext = "mp3";
+    } else if (data.jenisBahan === "GAMBAR") {
+      ext = "png";
+    }
 
     try {
       const res = await MysqlDataService.saveMaterial({
@@ -145,17 +162,17 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         title: data.title.trim(),
         subject_name: data.mapel,
         class_name: data.jenjang,
-        type: "Modul Ajar",
+        type: data.jenisBahan,
         status: "Menunggu Verifikasi Waka",
         uploaded_by: currentTeacherName || "Guru Pengampu",
         teacher_name: currentTeacherName || "Guru Pengampu",
-        file_url: fileUrlToSave || ("/uploads/" + newId + ".pdf"),
-        filename: data.file?.name || `${data.title}.pdf`,
+        file_url: fileUrlToSave || (isUrl ? "" : `/uploads/${newId}.${ext}`),
+        filename: data.file?.name || (isUrl ? "Tautan Pembelajaran" : `${data.title}.${ext}`),
         size: calcSize,
       } as any);
 
       if (res === false) {
-        toast.error("Gagal mengunggah Modul Ajar ke database.");
+        toast.error("Gagal mengunggah Bahan Ajar ke database.");
         return;
       }
 
@@ -211,11 +228,14 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         </div>
       )}
 
-      {/* Horizontal Compact Metric Strip (~42px) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
-        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
-          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-            <FileText className="h-3.5 w-3.5" />
+      {/* Quick Metrics Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div
+          className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs cursor-pointer hover:border-emerald-500/50 transition-colors"
+          onClick={() => setSelectedStatusFilter("semua")}
+        >
+          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold">📚</span>
           </div>
           <div className="min-w-0">
             <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Bahan Ajar</p>
@@ -228,7 +248,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           onClick={() => setSelectedStatusFilter("pending")}
         >
           <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <span className="text-xs">⏳</span>
+            <span className="text-xs font-bold">⏳</span>
           </div>
           <div className="min-w-0">
             <p className="text-[10px] text-muted-foreground font-medium leading-none">Menunggu Verifikasi</p>
@@ -307,79 +327,113 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         </Card>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
-          {filteredModul.map((m) => (
-            <Card key={m.id} className="border-border hover:border-emerald-500/50 transition shadow-xs flex flex-col justify-between">
-              <CardContent className="p-4 flex items-start gap-3">
-                <div className="h-12 w-12 rounded-xl bg-emerald-500/15 text-emerald-600 grid place-items-center shrink-0 font-bold text-xl">
-                  📄
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 border-emerald-500/30">
-                      {m.jenjang} • {m.mapel}
-                    </Badge>
-                    <Badge className={m.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-[10px] font-bold" : "bg-amber-500 text-white text-[10px] font-bold"}>
-                      {m.status === "Terverifikasi Waka" ? "✓ Terverifikasi Waka" : "⏳ Perlu Verifikasi"}
-                    </Badge>
-                  </div>
-                  <div className="font-bold text-sm text-foreground mt-1.5 leading-snug line-clamp-2">{m.title}</div>
-                  <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-between gap-2 flex-wrap">
-                    <span>Penyusun: <strong className="text-foreground font-semibold">{m.teacher}</strong></span>
-                    <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">💾 {m.size}</span>
-                  </div>
-                </div>
-              </CardContent>
+          {filteredModul.map((m) => {
+            const typeStr = (m.type || "").toUpperCase();
+            const isAudio = typeStr.includes("AUDIO") || m.file_name?.endsWith(".mp3") || m.file_url?.endsWith(".mp3");
+            const isImage = typeStr.includes("GAMBAR") || m.file_url?.match(/\.(png|jpg|jpeg|webp)$/i);
+            const isUrl = typeStr.includes("URL") || m.file_url?.startsWith("http");
 
-              <div className="px-4 pb-3 pt-2.5 border-t border-border/80 flex items-center justify-between flex-wrap gap-2 bg-muted/20">
-                <div className="flex items-center gap-1.5 flex-wrap flex-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 px-2.5 gap-1"
-                    onClick={() => setPreviewModul(m)}
+            return (
+              <Card key={m.id} className="border-border hover:border-emerald-500/50 transition shadow-xs flex flex-col justify-between">
+                <CardContent className="p-4 flex items-start gap-3">
+                  <div
+                    className={`h-12 w-12 rounded-xl grid place-items-center shrink-0 font-bold text-xl ${
+                      isAudio
+                        ? "bg-amber-500/15 text-amber-600"
+                        : isImage
+                        ? "bg-purple-500/15 text-purple-600"
+                        : isUrl
+                        ? "bg-sky-500/15 text-sky-600"
+                        : "bg-emerald-500/15 text-emerald-600"
+                    }`}
                   >
-                    <Eye className="h-3.5 w-3.5" /> Pratinjau
-                  </Button>
+                    {isAudio ? "🎵" : isImage ? "🖼️" : isUrl ? "🔗" : "📄"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 border-emerald-500/30">
+                          {m.jenjang} • {m.mapel}
+                        </Badge>
+                        <Badge variant="secondary" className="text-[10px] font-semibold">
+                          {m.type || "Dokumen"}
+                        </Badge>
+                      </div>
+                      <Badge className={m.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-[10px] font-bold" : "bg-amber-500 text-white text-[10px] font-bold"}>
+                        {m.status === "Terverifikasi Waka" ? "✓ Terverifikasi Waka" : "⏳ Perlu Verifikasi"}
+                      </Badge>
+                    </div>
+                    <div className="font-bold text-sm text-foreground mt-1.5 leading-snug line-clamp-2">{m.title}</div>
+                    <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-between gap-2 flex-wrap">
+                      <span>Penyusun: <strong className="text-foreground font-semibold">{m.teacher}</strong></span>
+                      <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">
+                        {isUrl ? "🔗 Link Web" : `💾 ${m.size}`}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
 
-                  {isWakaOrAdmin && (
+                <div className="px-4 pb-3 pt-2.5 border-t border-border/80 flex items-center justify-between flex-wrap gap-2 bg-muted/20">
+                  <div className="flex items-center gap-1.5 flex-wrap flex-1">
                     <Button
                       size="sm"
                       variant="outline"
-                      className={`h-7 text-xs font-semibold px-2.5 ${
-                        m.status === "Terverifikasi Waka"
-                          ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
-                          : "bg-emerald-600 text-white hover:bg-emerald-700 font-semibold shadow-xs"
-                      }`}
-                      onClick={() => handleToggleVerification(m.id, m.status, m.title)}
+                      className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 px-2.5 gap-1"
+                      onClick={() => setPreviewModul(m)}
                     >
-                      {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan"}
+                      <Eye className="h-3.5 w-3.5" /> Pratinjau
+                    </Button>
+
+                    {isWakaOrAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`h-7 text-xs font-semibold px-2.5 ${
+                          m.status === "Terverifikasi Waka"
+                            ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
+                            : "bg-emerald-600 text-white hover:bg-emerald-700 font-semibold shadow-xs"
+                        }`}
+                        onClick={() => handleToggleVerification(m.id, m.status, m.title)}
+                      >
+                        {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan"}
+                      </Button>
+                    )}
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={`h-7 text-xs font-bold px-2.5 gap-1 ${
+                        isUrl ? "text-sky-600 hover:bg-sky-500/10" : "text-emerald-600 hover:bg-emerald-500/10"
+                      }`}
+                      onClick={() => handleDownloadModulPdf(m)}
+                    >
+                      {isUrl ? (
+                        <>
+                          <ExternalLink className="h-3.5 w-3.5" /> Buka Link
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-3.5 w-3.5" /> Unduh Berkas
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {(isWakaOrAdmin || isGuru) && !isKamad && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/15 hover:text-rose-700 border border-rose-500/30 rounded-lg shrink-0"
+                      onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
+                      title="Hapus Bahan Ajar"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   )}
-
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 px-2.5 gap-1"
-                    onClick={() => handleDownloadModulPdf(m)}
-                  >
-                    <Download className="h-3.5 w-3.5" /> Unduh PDF
-                  </Button>
                 </div>
-
-                {(isWakaOrAdmin || isGuru) && !isKamad && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/15 hover:text-rose-700 border border-rose-500/30 rounded-lg shrink-0"
-                    onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
-                    title="Hapus Modul Ajar"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 

@@ -2111,13 +2111,29 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           }
           const base64Data = finalFileUrl.split(";base64,").pop();
           if (base64Data) {
-            const rawFileName = data.filename || `${data.title || data.id}.pdf`;
+            // Deteksi ekstensi file asli
+            let defaultExt = "pdf";
+            if (finalFileUrl.startsWith("data:audio/")) {
+              defaultExt = "mp3";
+            } else if (finalFileUrl.startsWith("data:image/png")) {
+              defaultExt = "png";
+            } else if (finalFileUrl.startsWith("data:image/jpeg") || finalFileUrl.startsWith("data:image/jpg")) {
+              defaultExt = "jpg";
+            } else if (finalFileUrl.startsWith("data:image/webp")) {
+              defaultExt = "webp";
+            } else if (finalFileUrl.startsWith("data:application/vnd.openxmlformats-officedocument.presentationml.presentation")) {
+              defaultExt = "pptx";
+            } else if (finalFileUrl.startsWith("data:application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
+              defaultExt = "docx";
+            }
+
+            const rawFileName = data.filename || `${data.title || data.id}.${defaultExt}`;
             const cleanFileName = rawFileName.replace(/[^a-zA-Z0-9_.-]/g, "_");
             const uniqueFileName = `${Date.now()}_${cleanFileName}`;
             const physicalPath = path.join(uploadDir, uniqueFileName);
             fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
             finalFileUrl = `/uploads/modul_ajar/${uniqueFileName}`;
-            console.log(`[saveMaterialFn] Physical PDF saved to: ${physicalPath}`);
+            console.log(`[saveMaterialFn] Physical file saved to: ${physicalPath}`);
           }
         } catch (fsErr) {
           console.warn("[saveMaterialFn Physical File Save Warning]:", fsErr);
@@ -2139,10 +2155,10 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           data.title,
           data.subject_name,
           data.class_name,
-          data.type || "Bahan Ajar",
+          data.type || "Dokumen",
           (data as any).status || "Menunggu Verifikasi Waka",
-          data.size || "2.5 MB",
-          data.filename,
+          data.size || (finalFileUrl?.startsWith("http") ? "Link Web" : "2.5 MB"),
+          data.filename || (finalFileUrl?.startsWith("http") ? "Tautan Pembelajaran" : `${data.title}.pdf`),
           finalFileUrl,
           data.uploaded_by || "Guru Pengampu",
         ]

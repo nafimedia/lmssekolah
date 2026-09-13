@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { BookOpen, Video, FileText, Plus, Check, Eye, Library, Upload } from "lucide-react";
+import { BookOpen, Video, FileText, Plus, Check, Eye, Library, Upload, Music, Image as ImageIcon, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,13 +7,13 @@ import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { ViewMaterialDialog, MaterialDetail } from "./ViewMaterialDialog";
-import { UploadModulDialog } from "@/components/dashboard/modules/modulajar/components/UploadModulDialog";
+import { UploadModulDialog, UploadModulPayload } from "@/components/dashboard/modules/modulajar/components/UploadModulDialog";
 import { PickElibraryDialog, ElibraryBookItem } from "./PickElibraryDialog";
 
 export interface TeachingMaterialItem {
   id: string;
   title: string;
-  type: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK";
+  type: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | "AUDIO" | "GAMBAR" | "URL";
   chapter: string;
   source: string;
   file_url?: string;
@@ -47,22 +47,35 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
         const sourceItems = filtered.length > 0 ? filtered : dbItems;
 
         setMaterials(
-          sourceItems.map((item, idx) => ({
-            id: String(item.id || idx),
-            title: item.title,
-            type: ((item.type || "").toUpperCase().includes("VIDEO")
-              ? "VIDEO"
-              : (item.type || "").toUpperCase().includes("PPT")
-              ? "SLIDE_PPT"
-              : (item.type || "").toUpperCase().includes("EBOOK")
-              ? "EBOOK"
-              : "MODUL_AJAR") as any,
-            chapter: item.class_name || "Materi KBM",
-            source: item.subject_name || activeMapel || "Media Pembelajaran LMS",
-            file_url: item.file_url,
-            uploaded_by: item.uploaded_by,
-            selectedForToday: true,
-          }))
+          sourceItems.map((item, idx) => {
+            const rawType = (item.type || "").toUpperCase();
+            let parsedType: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | "AUDIO" | "GAMBAR" | "URL" = "MODUL_AJAR";
+
+            if (rawType.includes("AUDIO") || item.filename?.endsWith(".mp3") || item.file_url?.endsWith(".mp3")) {
+              parsedType = "AUDIO";
+            } else if (rawType.includes("GAMBAR") || item.file_url?.match(/\.(png|jpg|jpeg|webp)$/i)) {
+              parsedType = "GAMBAR";
+            } else if (rawType.includes("URL") || item.file_url?.startsWith("http")) {
+              parsedType = "URL";
+            } else if (rawType.includes("VIDEO")) {
+              parsedType = "VIDEO";
+            } else if (rawType.includes("PPT")) {
+              parsedType = "SLIDE_PPT";
+            } else if (rawType.includes("EBOOK")) {
+              parsedType = "EBOOK";
+            }
+
+            return {
+              id: String(item.id || idx),
+              title: item.title,
+              type: parsedType,
+              chapter: item.class_name || "Materi KBM",
+              source: item.subject_name || activeMapel || "Media Pembelajaran LMS",
+              file_url: item.file_url,
+              uploaded_by: item.uploaded_by,
+              selectedForToday: true,
+            };
+          })
         );
       } else {
         setMaterials([]);
@@ -77,14 +90,24 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
     loadMaterials();
   }, [loadMaterials]);
 
-  const handleUploadModul = async (data: { title: string; mapel: string; jenjang: string; file: File | null; dataUrl: string }) => {
+  const handleUploadModul = async (data: UploadModulPayload) => {
     if (!data.title.trim()) {
       toast.error("Judul Bahan Ajar wajib diisi!");
       return;
     }
 
+    const isUrl = data.jenisBahan === "URL";
     const newId = "mat_" + Date.now();
-    const fileUrlToSave = data.dataUrl || ("/uploads/" + newId + ".pdf");
+    let ext = "pdf";
+    if (data.file?.name?.includes(".")) {
+      ext = data.file.name.split(".").pop() || "pdf";
+    } else if (data.jenisBahan === "AUDIO") {
+      ext = "mp3";
+    } else if (data.jenisBahan === "GAMBAR") {
+      ext = "png";
+    }
+
+    const fileUrlToSave = isUrl ? (data.externalUrl || "") : (data.dataUrl || `/uploads/${newId}.${ext}`);
 
     const activeUser = MysqlAuthService.getActiveUser();
     const currentTeacherName = activeUser?.full_name || "Guru Pengampu";
@@ -95,13 +118,13 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
         title: data.title.trim(),
         subject_name: data.mapel || activeMapel,
         class_name: activeRombel || data.jenjang,
-        type: "Modul Ajar",
+        type: data.jenisBahan,
         status: "Aktif",
         uploaded_by: currentTeacherName,
         teacher_name: currentTeacherName,
-        file_url: fileUrlToSave || ("/uploads/" + newId + ".pdf"),
-        filename: data.file?.name || `${data.title}.pdf`,
-        size: data.file ? `${(data.file.size / 1024).toFixed(0)} KB` : "1.2 MB",
+        file_url: fileUrlToSave,
+        filename: data.file?.name || (isUrl ? "Tautan Pembelajaran" : `${data.title}.${ext}`),
+        size: isUrl ? "Link Web" : data.file ? `${(data.file.size / 1024).toFixed(0)} KB` : "1.2 MB",
       } as any);
 
       if (res === false) {
@@ -109,7 +132,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
         return;
       }
 
-      toast.success(`Bahan Ajar "${data.title}" berhasil diunggah dan siap digunakan di ${activeRombel}!`);
+      toast.success(`Bahan Ajar "${data.title}" berhasil disimpan dan siap digunakan di ${activeRombel}!`);
       await loadMaterials();
     } catch (err) {
       console.warn("Save material DB warning:", err);
@@ -260,6 +283,9 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                       {m.type === "VIDEO" && <Video className="h-4 w-4 text-blue-600" />}
                       {m.type === "SLIDE_PPT" && <BookOpen className="h-4 w-4 text-amber-600" />}
                       {m.type === "EBOOK" && <Library className="h-4 w-4 text-purple-600" />}
+                      {m.type === "AUDIO" && <Music className="h-4 w-4 text-amber-600" />}
+                      {m.type === "GAMBAR" && <ImageIcon className="h-4 w-4 text-purple-600" />}
+                      {m.type === "URL" && <Globe className="h-4 w-4 text-sky-600" />}
                     </div>
 
                     <div className="min-w-0 flex-1">

@@ -250,10 +250,14 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                           onClick={() => handleOpenViewActivity(act)}
                         >
                           <PencilLine className="h-3 w-3" />
-                          {act.type === "TUGAS_KELOMPOK"
+                          {act.type === "TUGAS_KELOMPOK" || act.type === "PROYEK_P5"
                             ? "Kelola"
                             : act.type === "QUIZ"
                             ? "Nilai Kuis"
+                            : act.type === "HAFALAN"
+                            ? "Nilai Hafalan"
+                            : act.type === "PRAKTIKUM"
+                            ? "Nilai Praktikum"
                             : "Nilai LKPD"}
                         </Button>
                         <Button

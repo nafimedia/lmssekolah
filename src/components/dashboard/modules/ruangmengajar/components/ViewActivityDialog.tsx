@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check, Lock, ExternalLink, MessageSquare, Send, Star, ChevronDown, ChevronUp } from "lucide-react";
+import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check, Lock, ExternalLink, MessageSquare, Send, Star, ChevronDown, ChevronUp, FlaskConical, BookOpen, Target, PenTool } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService, LkpdDiscussionRow, PeerAssessmentRow } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
@@ -181,7 +181,7 @@ export function ViewActivityDialog({
     }));
 
     await MysqlDataService.saveLkpdGradesBatch(activity.id, dbGrades);
-    toast.success(`✅ Nilai LKPD "${activity.title}" berhasil disimpan & tersinkronisasi ke Penilaian Kelas!`);
+    toast.success(`✅ Nilai "${activity.title}" berhasil disimpan & tersinkronisasi ke Penilaian Kelas!`);
     onOpenChange(false);
   };
 
@@ -255,8 +255,26 @@ export function ViewActivityDialog({
               <Badge variant="outline" className="text-[10px] font-semibold gap-1">
                 {activity.type === "LKPD" && <FileText className="h-3 w-3 text-emerald-600" />}
                 {activity.type === "TUGAS_KELOMPOK" && <Users className="h-3 w-3 text-blue-600" />}
+                {activity.type === "TUGAS_MANDIRI" && <PenTool className="h-3 w-3 text-emerald-600" />}
                 {activity.type === "QUIZ" && <Brain className="h-3 w-3 text-purple-600" />}
-                {activity.type}
+                {activity.type === "PRAKTIKUM" && <FlaskConical className="h-3 w-3 text-teal-600" />}
+                {activity.type === "PROYEK_P5" && <Target className="h-3 w-3 text-rose-600" />}
+                {activity.type === "HAFALAN" && <BookOpen className="h-3 w-3 text-indigo-600" />}
+                {activity.type === "LKPD"
+                  ? "📄 LKPD Digital"
+                  : activity.type === "TUGAS_KELOMPOK"
+                  ? "👥 Diskusi Kelompok"
+                  : activity.type === "TUGAS_MANDIRI"
+                  ? "✍️ Tugas Mandiri"
+                  : activity.type === "QUIZ"
+                  ? "⚡ Kuis Formatif"
+                  : activity.type === "PRAKTIKUM"
+                  ? "🔬 Praktikum & Lab"
+                  : activity.type === "PROYEK_P5"
+                  ? "🎯 Proyek Kokurikuler"
+                  : activity.type === "HAFALAN"
+                  ? "📖 Setoran Hafalan"
+                  : activity.type}
               </Badge>
               <span className="text-xs text-muted-foreground font-mono">
                 {activeMapel} · {activeRombel}
@@ -305,7 +323,14 @@ export function ViewActivityDialog({
             <div className="p-4 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                  <FileText className="h-4 w-4 text-emerald-600" /> Lembar Butir Pertanyaan / Tugas Terstruktur ({parsedLkpdQuestions.length} Butir Soal)
+                  <FileText className="h-4 w-4 text-emerald-600" />
+                  {activity.type === "PRAKTIKUM"
+                    ? `Lembar Langkah & Pengamatan Praktikum (${parsedLkpdQuestions.length} Butir Soal)`
+                    : activity.type === "HAFALAN"
+                    ? `Target Ayat & Butir Setoran Hafalan (${parsedLkpdQuestions.length} Butir)`
+                    : activity.type === "PROYEK_P5"
+                    ? `Tahapan & Lembar Kerja Proyek (${parsedLkpdQuestions.length} Butir)`
+                    : `Lembar Butir Pertanyaan / Tugas Terstruktur (${parsedLkpdQuestions.length} Butir Soal)`}
                 </h4>
                 <Badge variant="outline" className="text-[10px] font-bold border-emerald-400 text-emerald-700 dark:text-emerald-300">
                   Total {parsedLkpdQuestions.reduce((acc, q) => acc + (Number(q.points) || 0), 0)} Poin

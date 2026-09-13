@@ -168,27 +168,27 @@ export function CreateActivityForm({
     },
     {
       id: "QUIZ",
-      label: "⚡ Kuis Formatif (Belum Aktif)",
+      label: "⚡ Kuis Formatif",
       color: "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300",
-      disabled: true,
+      disabled: false,
     },
     {
       id: "PRAKTIKUM",
-      label: "🔬 Praktikum & Lab (Belum Aktif)",
+      label: "🔬 Praktikum & Lab",
       color: "border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-950/30 dark:text-teal-300",
-      disabled: true,
+      disabled: false,
     },
     {
       id: "PROYEK_P5",
-      label: "🎯 Proyek Kokurikuler (Belum Aktif)",
+      label: "🎯 Proyek Kokurikuler",
       color: "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
-      disabled: true,
+      disabled: false,
     },
     {
       id: "HAFALAN",
-      label: "📖 Setoran Hafalan (Belum Aktif)",
+      label: "📖 Setoran Hafalan",
       color: "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300",
-      disabled: true,
+      disabled: false,
     },
   ];
 
@@ -327,8 +327,8 @@ export function CreateActivityForm({
       finalAttachment = attachmentUrl.trim();
     }
 
-    // Format questions_data jika tipe LKPD / Praktikum / Tugas Mandiri
-    const isQuestionType = type === "LKPD" || type === "PRAKTIKUM" || type === "TUGAS_MANDIRI";
+    // Format questions_data jika tipe LKPD / Praktikum / Tugas Mandiri / Proyek / Hafalan
+    const isQuestionType = type === "LKPD" || type === "PRAKTIKUM" || type === "TUGAS_MANDIRI" || type === "PROYEK_P5" || type === "HAFALAN";
     const questionsDataStr = isQuestionType && lkpdQuestions.length > 0 ? JSON.stringify(lkpdQuestions) : "";
 
     const activeUser = MysqlAuthService.getActiveUser();
@@ -410,7 +410,12 @@ export function CreateActivityForm({
     await handleSaveActivity(false);
   };
 
-  const isQuestionType = type === "LKPD" || type === "PRAKTIKUM" || type === "TUGAS_MANDIRI";
+  const isQuestionType =
+    type === "LKPD" ||
+    type === "PRAKTIKUM" ||
+    type === "TUGAS_MANDIRI" ||
+    type === "PROYEK_P5" ||
+    type === "HAFALAN";
 
   return (
     <>
@@ -480,22 +485,18 @@ export function CreateActivityForm({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-medium text-foreground block">Kategori Aktivitas:</label>
-                <span className="text-[11px] text-muted-foreground">Kategori bertanda "Belum Aktif" sedang disiapkan</span>
+                <span className="text-[11px] text-muted-foreground">Pilih jenis instrumen aktivitas pembelajaran</span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {activityOptions.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
-                    disabled={opt.disabled}
                     onClick={() => handleSelectType(opt)}
-                    title={opt.disabled ? "Kategori ini belum aktif" : opt.label}
-                    className={`px-3 py-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 ${
-                      opt.disabled
-                        ? "opacity-45 bg-muted/40 border-dashed border-border text-muted-foreground cursor-not-allowed select-none"
-                        : type === opt.id
+                    className={`px-3 py-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                      type === opt.id
                         ? "bg-emerald-600 text-white border-emerald-600 font-semibold shadow-2xs"
-                        : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted font-medium cursor-pointer"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
                     }`}
                   >
                     <span>{opt.label}</span>
@@ -800,7 +801,14 @@ export function CreateActivityForm({
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                      <ListOrdered className="h-4 w-4 text-emerald-600" /> Lembar Butir Pertanyaan / Tugas Terstruktur ({lkpdQuestions.length} Butir)
+                      <ListOrdered className="h-4 w-4 text-emerald-600" />
+                      {type === "PRAKTIKUM"
+                        ? `Lembar Langkah & Pengamatan Praktikum (${lkpdQuestions.length} Butir)`
+                        : type === "HAFALAN"
+                        ? `Target Ayat & Butir Setoran Hafalan (${lkpdQuestions.length} Butir)`
+                        : type === "PROYEK_P5"
+                        ? `Tahapan & Lembar Kerja Proyek (${lkpdQuestions.length} Butir)`
+                        : `Lembar Butir Pertanyaan / Tugas Terstruktur (${lkpdQuestions.length} Butir)`}
                     </span>
                     <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
                       Siswa akan menjawab pertanyaan-pertanyaan ini satu per satu secara terstruktur di layar mereka.

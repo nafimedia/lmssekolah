@@ -834,7 +834,14 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                 <CardHeader className="p-4 pb-3 border-b border-emerald-200 dark:border-emerald-900 bg-emerald-100/40 dark:bg-emerald-950/30">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-emerald-600" /> Lembar Butir Soal Terstruktur LKPD ({parsedQuestions.length} Butir)
+                      <FileText className="h-4 w-4 text-emerald-600" />
+                      {selectedAssignment.type === "PRAKTIKUM"
+                        ? `Lembar Langkah & Pengamatan Praktikum (${parsedQuestions.length} Butir)`
+                        : selectedAssignment.type === "HAFALAN"
+                        ? `Target Ayat & Butir Setoran Hafalan (${parsedQuestions.length} Butir)`
+                        : selectedAssignment.type === "PROYEK_P5"
+                        ? `Tahapan & Lembar Kerja Proyek (${parsedQuestions.length} Butir)`
+                        : `Lembar Butir Soal Terstruktur (${parsedQuestions.length} Butir)`}
                     </CardTitle>
                     <Badge variant="outline" className="text-[10px] font-bold border-emerald-400 text-emerald-700 dark:text-emerald-300">
                       Total {parsedQuestions.reduce((acc: number, q: any) => acc + (Number(q.points) || 0), 0)} Poin
@@ -1419,10 +1426,23 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               <Card className="border-border shadow-md">
                 <CardHeader className="p-4 pb-3 border-b border-border bg-muted/20">
                   <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
-                    <FileCheck2 className="h-4 w-4 text-primary" /> Lembar Jawaban & Submisi Siswa
+                    <FileCheck2 className="h-4 w-4 text-primary" />
+                    {selectedAssignment.type === "HAFALAN"
+                      ? "Lembar Konfirmasi & Setoran Hafalan"
+                      : selectedAssignment.type === "PRAKTIKUM"
+                      ? "Lembar Laporan Praktikum & Dokumen Uji"
+                      : selectedAssignment.type === "PROYEK_P5"
+                      ? "Lembar Laporan & Artefak Proyek"
+                      : "Lembar Jawaban & Submisi Siswa"}
                   </CardTitle>
                   <CardDescription className="text-[11px]">
-                    Ketikkan jawaban tugas Anda di bawah, atau lampirkan berkas dokumen jawaban.
+                    {selectedAssignment.type === "HAFALAN"
+                      ? "Tuliskan catatan setoran ayat dan lampirkan rekaman audio/video hafalan atau tautan Drive."
+                      : selectedAssignment.type === "PRAKTIKUM"
+                      ? "Ketikkan hasil pengamatan/analisis praktikum atau unggah berkas laporan praktikum."
+                      : selectedAssignment.type === "PROYEK_P5"
+                      ? "Ketikkan ringkasan kemajuan proyek atau lampirkan berkas dokumentasi/artefak karya."
+                      : "Ketikkan jawaban tugas Anda di bawah, atau lampirkan berkas dokumen jawaban."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">

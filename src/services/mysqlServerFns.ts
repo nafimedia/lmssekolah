@@ -512,7 +512,19 @@ export interface MaterialRow {
   uploaded_by?: string;
   teacher_name?: string;
   status?: string;
+  sequence_order?: number;
+  access_mode?: "GURU_KONTROL" | "SISWA_MANDIRI" | string;
+  content_text?: string;
   created_at?: string;
+}
+
+export interface StudentMaterialCompletionRow {
+  id: string;
+  material_id: string;
+  student_id?: string;
+  student_nisn: string;
+  student_name?: string;
+  completed_at?: string;
 }
 
 export interface HafalanRow {
@@ -2067,11 +2079,26 @@ export const getMaterialsFn = createServerFn({ method: "GET" }).handler(
           filename VARCHAR(255) NOT NULL,
           file_url LONGTEXT,
           uploaded_by VARCHAR(255),
+          sequence_order INT DEFAULT 1,
+          access_mode VARCHAR(30) DEFAULT 'GURU_KONTROL',
+          content_text LONGTEXT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
 
-      const rows = await query<MaterialRow[]>("SELECT id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by, created_at FROM materials ORDER BY created_at DESC");
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN sequence_order INT DEFAULT 1");
+      } catch (e) {}
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN access_mode VARCHAR(30) DEFAULT 'GURU_KONTROL'");
+      } catch (e) {}
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN content_text LONGTEXT NULL");
+      } catch (e) {}
+
+      const rows = await query<MaterialRow[]>(
+        "SELECT id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by, sequence_order, access_mode, content_text, created_at FROM materials ORDER BY sequence_order ASC, created_at DESC"
+      );
       return rows || [];
     } catch (e) {
       console.error("[getMaterialsFn Error]:", e);
@@ -2097,9 +2124,22 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           filename VARCHAR(255) NOT NULL,
           file_url LONGTEXT,
           uploaded_by VARCHAR(255),
+          sequence_order INT DEFAULT 1,
+          access_mode VARCHAR(30) DEFAULT 'GURU_KONTROL',
+          content_text LONGTEXT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
+
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN sequence_order INT DEFAULT 1");
+      } catch (e) {}
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN access_mode VARCHAR(30) DEFAULT 'GURU_KONTROL'");
+      } catch (e) {}
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN content_text LONGTEXT NULL");
+      } catch (e) {}
 
       let finalFileUrl = data.file_url || null;
 
@@ -2143,15 +2183,18 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
       }
 
       await execute(
-        `INSERT INTO materials (id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO materials (id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by, sequence_order, access_mode, content_text)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            title = VALUES(title),
            type = VALUES(type),
            status = VALUES(status),
            size = VALUES(size),
            filename = VALUES(filename),
-           file_url = VALUES(file_url)`,
+           file_url = VALUES(file_url),
+           sequence_order = VALUES(sequence_order),
+           access_mode = VALUES(access_mode),
+           content_text = VALUES(content_text)`,
         [
           data.id,
           data.title,
@@ -2163,6 +2206,9 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           data.filename || (finalFileUrl?.startsWith("http") ? "Tautan Pembelajaran" : `${data.title}.pdf`),
           finalFileUrl,
           data.uploaded_by || "Guru Pengampu",
+          data.sequence_order || 1,
+          data.access_mode || "GURU_KONTROL",
+          data.content_text || null,
         ]
       );
       return { success: true };
@@ -2216,6 +2262,80 @@ export const deleteMaterialFn = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[deleteMaterialFn Error]:", e);
       return { success: false };
+    }
+  });
+
+export const markMaterialCompletedFn = createServerFn({ method: "POST" })
+  .validator((data: { material_id: string; student_id?: string; student_nisn: string; student_name?: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS student_material_completions (
+          id VARCHAR(64) PRIMARY KEY,
+          material_id VARCHAR(64) NOT NULL,
+          student_id VARCHAR(64) NULL,
+          student_nisn VARCHAR(50) NOT NULL,
+          student_name VARCHAR(255) NULL,
+          completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_mat_student (material_id, student_nisn)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      const id = `smc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      await execute(
+        `INSERT INTO student_material_completions (id, material_id, student_id, student_nisn, student_name)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE completed_at = CURRENT_TIMESTAMP`,
+        [id, data.material_id, data.student_id || null, data.student_nisn, data.student_name || "Siswa"]
+      );
+      return { success: true };
+    } catch (e: any) {
+      console.error("[markMaterialCompletedFn Error]:", e);
+      return { success: false, message: e?.message || "Gagal menandai selesai materi" };
+    }
+  });
+
+export const getMaterialCompletionsFn = createServerFn({ method: "POST" })
+  .validator((data: { material_id?: string; student_nisn?: string }) => data)
+  .handler(async ({ data }): Promise<StudentMaterialCompletionRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS student_material_completions (
+          id VARCHAR(64) PRIMARY KEY,
+          material_id VARCHAR(64) NOT NULL,
+          student_id VARCHAR(64) NULL,
+          student_nisn VARCHAR(50) NOT NULL,
+          student_name VARCHAR(255) NULL,
+          completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_mat_student (material_id, student_nisn)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      if (data.material_id && data.student_nisn) {
+        return await query<StudentMaterialCompletionRow[]>(
+          "SELECT * FROM student_material_completions WHERE material_id = ? AND student_nisn = ?",
+          [data.material_id, data.student_nisn]
+        );
+      } else if (data.material_id) {
+        return await query<StudentMaterialCompletionRow[]>(
+          "SELECT * FROM student_material_completions WHERE material_id = ? ORDER BY completed_at DESC",
+          [data.material_id]
+        );
+      } else if (data.student_nisn) {
+        return await query<StudentMaterialCompletionRow[]>(
+          "SELECT * FROM student_material_completions WHERE student_nisn = ? ORDER BY completed_at DESC",
+          [data.student_nisn]
+        );
+      } else {
+        return await query<StudentMaterialCompletionRow[]>(
+          "SELECT * FROM student_material_completions ORDER BY completed_at DESC"
+        );
+      }
+    } catch (e) {
+      console.error("[getMaterialCompletionsFn Error]:", e);
+      return [];
     }
   });
 

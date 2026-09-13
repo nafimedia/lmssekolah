@@ -385,6 +385,7 @@ const ROLE_PERMISSIONS: Record<
     badge: "RUANG BELAJAR SISWA",
     allowedMenus: [
       { key: "beranda", label: "Dashboard Siswa", group: "Ruang Belajar" },
+      { key: "modul_ajar", label: "Materi & Bahan Ajar", group: "Ruang Belajar" },
       { key: "jadwal", label: "Jadwal Pelajaran", group: "Ruang Belajar" },
       { key: "tugas", label: "Tugas dan LKPD", group: "Ruang Belajar" },
       { key: "cbt", label: "CBT Ujian Online", group: "Ruang Belajar" },

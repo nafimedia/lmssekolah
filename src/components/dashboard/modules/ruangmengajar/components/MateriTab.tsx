@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { BookOpen, Video, FileText, Plus, Check, Eye, Library, Upload, Music, Image as ImageIcon, Globe, Lock, Unlock } from "lucide-react";
+import { BookOpen, Video, FileText, Plus, Check, Eye, Library, Upload, Music, Image as ImageIcon, Globe, Lock, Unlock, FileEdit, CheckCircle2, ListOrdered, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,17 @@ import { PickElibraryDialog, ElibraryBookItem } from "./PickElibraryDialog";
 export interface TeachingMaterialItem {
   id: string;
   title: string;
-  type: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | "AUDIO" | "GAMBAR" | "URL";
+  type: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | "AUDIO" | "GAMBAR" | "URL" | "TEKS";
   chapter: string;
   source: string;
   file_url?: string;
   uploaded_by?: string;
   selectedForToday: boolean;
   status?: string;
+  sequence_order?: number;
+  access_mode?: "GURU_KONTROL" | "SISWA_MANDIRI" | string;
+  content_text?: string;
+  completionCount?: number;
 }
 
 interface MateriTabProps {
@@ -36,7 +40,11 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
 
   const loadMaterials = useCallback(async () => {
     try {
-      const dbItems = await MysqlDataService.getMaterials();
+      const [dbItems, allCompletions] = await Promise.all([
+        MysqlDataService.getMaterials(),
+        MysqlDataService.getMaterialCompletions().catch(() => []),
+      ]);
+
       if (dbItems && dbItems.length > 0) {
         const cleanActiveMapel = activeMapel.toLowerCase().trim();
         const filtered = dbItems.filter((item) => {
@@ -47,41 +55,49 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
 
         const sourceItems = filtered.length > 0 ? filtered : dbItems;
 
-        setMaterials(
-          sourceItems.map((item, idx) => {
-            const rawType = (item.type || "").toUpperCase();
-            let parsedType: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | "AUDIO" | "GAMBAR" | "URL" = "MODUL_AJAR";
+        const formatted = sourceItems.map((item, idx) => {
+          const rawType = (item.type || "").toUpperCase();
+          let parsedType: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | "AUDIO" | "GAMBAR" | "URL" | "TEKS" = "MODUL_AJAR";
 
-            if (rawType.includes("AUDIO") || item.filename?.endsWith(".mp3") || item.file_url?.endsWith(".mp3")) {
-              parsedType = "AUDIO";
-            } else if (rawType.includes("GAMBAR") || item.file_url?.match(/\.(png|jpg|jpeg|webp)$/i)) {
-              parsedType = "GAMBAR";
-            } else if (rawType.includes("URL") || item.file_url?.startsWith("http")) {
-              parsedType = "URL";
-            } else if (rawType.includes("VIDEO")) {
-              parsedType = "VIDEO";
-            } else if (rawType.includes("PPT")) {
-              parsedType = "SLIDE_PPT";
-            } else if (rawType.includes("EBOOK")) {
-              parsedType = "EBOOK";
-            }
+          if (rawType.includes("AUDIO") || item.filename?.endsWith(".mp3") || item.file_url?.endsWith(".mp3")) {
+            parsedType = "AUDIO";
+          } else if (rawType.includes("TEKS")) {
+            parsedType = "TEKS";
+          } else if (rawType.includes("GAMBAR") || item.file_url?.match(/\.(png|jpg|jpeg|webp)$/i)) {
+            parsedType = "GAMBAR";
+          } else if (rawType.includes("URL") || item.file_url?.startsWith("http")) {
+            parsedType = "URL";
+          } else if (rawType.includes("VIDEO")) {
+            parsedType = "VIDEO";
+          } else if (rawType.includes("PPT")) {
+            parsedType = "SLIDE_PPT";
+          } else if (rawType.includes("EBOOK")) {
+            parsedType = "EBOOK";
+          }
 
-            const rawStatus = (item.status || "Aktif").trim();
-            const isUnlocked = rawStatus.toLowerCase() !== "terkunci" && rawStatus.toLowerCase() !== "sembunyi";
+          const rawStatus = (item.status || "Aktif").trim();
+          const isUnlocked = rawStatus.toLowerCase() !== "terkunci" && rawStatus.toLowerCase() !== "sembunyi";
+          const doneCount = (allCompletions || []).filter((c: any) => String(c.material_id) === String(item.id)).length;
 
-            return {
-              id: String(item.id || idx),
-              title: item.title,
-              type: parsedType,
-              chapter: item.class_name || "Materi KBM",
-              source: item.subject_name || activeMapel || "Media Pembelajaran LMS",
-              file_url: item.file_url,
-              uploaded_by: item.uploaded_by,
-              selectedForToday: isUnlocked,
-              status: isUnlocked ? "Aktif" : "Terkunci",
-            };
-          })
-        );
+          return {
+            id: String(item.id || idx),
+            title: item.title,
+            type: parsedType,
+            chapter: item.class_name || "Materi KBM",
+            source: item.subject_name || activeMapel || "Media Pembelajaran LMS",
+            file_url: item.file_url,
+            uploaded_by: item.uploaded_by,
+            selectedForToday: isUnlocked,
+            status: isUnlocked ? "Aktif" : "Terkunci",
+            sequence_order: Number(item.sequence_order) || idx + 1,
+            access_mode: (item.access_mode as any) || "GURU_KONTROL",
+            content_text: item.content_text,
+            completionCount: doneCount,
+          };
+        });
+
+        formatted.sort((a, b) => (a.sequence_order || 1) - (b.sequence_order || 1));
+        setMaterials(formatted);
       } else {
         setMaterials([]);
       }
@@ -102,6 +118,8 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
     }
 
     const isUrl = data.jenisBahan === "URL";
+    const isVideo = data.jenisBahan === "VIDEO";
+    const isTeks = data.jenisBahan === "TEKS";
     const newId = "mat_" + Date.now();
     let ext = "pdf";
     if (data.file?.name?.includes(".")) {
@@ -110,9 +128,16 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
       ext = "mp3";
     } else if (data.jenisBahan === "GAMBAR") {
       ext = "png";
+    } else if (data.jenisBahan === "VIDEO") {
+      ext = "mp4";
     }
 
-    const fileUrlToSave = isUrl ? (data.externalUrl || "") : (data.dataUrl || `/uploads/${newId}.${ext}`);
+    const fileUrlToSave =
+      isUrl || (isVideo && data.externalUrl)
+        ? (data.externalUrl || "")
+        : isTeks
+        ? ""
+        : (data.dataUrl || `/uploads/${newId}.${ext}`);
 
     const activeUser = MysqlAuthService.getActiveUser();
     const currentTeacherName = activeUser?.full_name || "Guru Pengampu";
@@ -128,8 +153,11 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
         uploaded_by: currentTeacherName,
         teacher_name: currentTeacherName,
         file_url: fileUrlToSave,
-        filename: data.file?.name || (isUrl ? "Tautan Pembelajaran" : `${data.title}.${ext}`),
-        size: isUrl ? "Link Web" : data.file ? `${(data.file.size / 1024).toFixed(0)} KB` : "1.2 MB",
+        filename: data.file?.name || (isUrl ? "Tautan Pembelajaran" : isTeks ? "Catatan Rangkuman KBM" : `${data.title}.${ext}`),
+        size: isUrl ? "Link Web" : isTeks ? `${data.content_text?.length || 0} Karakter` : data.file ? `${(data.file.size / 1024).toFixed(0)} KB` : "1.2 MB",
+        sequence_order: data.sequence_order || 1,
+        access_mode: data.access_mode || "GURU_KONTROL",
+        content_text: data.content_text || null,
       } as any);
 
       if (res === false) {
@@ -137,7 +165,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
         return;
       }
 
-      toast.success(`Bahan Ajar "${data.title}" berhasil disimpan dan siap digunakan di ${activeRombel}!`);
+      toast.success(`Bahan Ajar "${data.title}" berhasil disimpan (Urutan #${data.sequence_order || 1})!`);
       await loadMaterials();
     } catch (err) {
       console.warn("Save material DB warning:", err);
@@ -302,6 +330,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                     <div className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
                       {m.type === "MODUL_AJAR" && <FileText className="h-4 w-4 text-emerald-600" />}
                       {m.type === "VIDEO" && <Video className="h-4 w-4 text-blue-600" />}
+                      {m.type === "TEKS" && <FileEdit className="h-4 w-4 text-purple-600" />}
                       {m.type === "SLIDE_PPT" && <BookOpen className="h-4 w-4 text-amber-600" />}
                       {m.type === "EBOOK" && <Library className="h-4 w-4 text-purple-600" />}
                       {m.type === "AUDIO" && <Music className="h-4 w-4 text-amber-600" />}
@@ -310,7 +339,28 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-xs text-foreground truncate">{m.title}</h4>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0 border-emerald-500/40 text-emerald-700 dark:text-emerald-300">
+                          #{m.sequence_order || 1}
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className={`text-[9px] px-1.5 py-0 font-medium ${
+                            m.access_mode === "SISWA_MANDIRI"
+                              ? "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
+                              : "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                          }`}
+                        >
+                          {m.access_mode === "SISWA_MANDIRI" ? "🏡 Mandiri (PR)" : "🏫 Tatap Muka"}
+                        </Badge>
+                        {m.access_mode === "SISWA_MANDIRI" && (
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-emerald-400 text-emerald-600 flex items-center gap-0.5">
+                            <CheckCircle2 className="h-2.5 w-2.5" />
+                            {m.completionCount || 0} Selesai
+                          </Badge>
+                        )}
+                      </div>
+                      <h4 className="font-bold text-xs text-foreground truncate mt-0.5">{m.title}</h4>
                       <p className="text-[10px] text-muted-foreground truncate mt-0.5">{m.source} · {m.chapter}</p>
                     </div>
                   </div>
@@ -323,7 +373,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                         : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
                     }`}
                   >
-                    {m.selectedForToday ? "🔓 Terbuka Siswa" : "🔒 Terkunci / Sembunyi"}
+                    {m.selectedForToday ? "🔓 Terbuka" : "🔒 Terkunci (Hidden)"}
                   </Badge>
                 </div>
 

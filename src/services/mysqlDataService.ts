@@ -44,6 +44,8 @@ import {
   saveMaterialFn,
   updateMaterialStatusFn,
   deleteMaterialFn,
+  markMaterialCompletedFn,
+  getMaterialCompletionsFn,
   getHafalanFn,
   saveHafalanFn,
   getElibraryBooksFn,
@@ -138,6 +140,7 @@ import {
   UserAchievementRow,
   AnnouncementRow,
   AgendaRow,
+  StudentMaterialCompletionRow,
   AttendanceRow,
   JurnalMengajarRow,
   KbmPresensiRow,
@@ -189,6 +192,7 @@ export type {
   PaginatedResult,
   HealthStatusResponse,
   PeerAssessmentRow,
+  StudentMaterialCompletionRow,
 };
 
 import { getPersistedUserProfileOverrides } from "./mysqlAuthService";
@@ -776,6 +780,33 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("deleteMaterialFn failed:", e);
       return false;
+    }
+  }
+
+  static async markMaterialCompleted(data: {
+    material_id: string;
+    student_id?: string;
+    student_nisn: string;
+    student_name?: string;
+  }): Promise<boolean> {
+    try {
+      const res = await markMaterialCompletedFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("markMaterialCompletedFn failed:", e);
+      return false;
+    }
+  }
+
+  static async getMaterialCompletions(
+    material_id?: string,
+    student_nisn?: string
+  ): Promise<StudentMaterialCompletionRow[]> {
+    try {
+      return await getMaterialCompletionsFn({ data: { material_id, student_nisn } });
+    } catch (e) {
+      console.warn("getMaterialCompletionsFn failed:", e);
+      return [];
     }
   }
 

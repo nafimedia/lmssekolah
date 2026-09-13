@@ -467,22 +467,14 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         </CardHeader>
         <CardContent className="p-4">
           {myBadges.length === 0 ? (
-            <div className="p-5 text-center rounded-xl bg-amber-50/40 dark:bg-amber-950/20 border border-amber-500/20 flex flex-col items-center justify-center gap-2">
-              <Medal className="h-7 w-7 text-amber-500/80" />
-              <div className="text-xs font-bold text-amber-900 dark:text-amber-300">
-                Lencana Langsung Diaktifkan untuk Keperluan Lomba & Prestasi
+            <div className="p-6 text-center rounded-xl border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-1.5">
+              <Medal className="h-7 w-7 text-muted-foreground/40" />
+              <div className="text-xs font-bold text-foreground">
+                Belum Ada Lencana Prestasi
               </div>
-              <p className="text-[11px] text-muted-foreground max-w-md">
-                Setiap lencana apresiasi guru, kejuaraan lomba, olimpiade, dan capaian tahfidz langsung aktif dan tersimpan resmi di portofolio siswa untuk verifikasi lomba.
+              <p className="text-[11px] text-muted-foreground max-w-sm">
+                Lencana penghargaan dan apresiasi belajar dari guru akan ditampilkan di sini.
               </p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs font-semibold border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 mt-1"
-                onClick={() => setActiveTab?.("profil")}
-              >
-                Lihat Tab Profil & Lencana <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

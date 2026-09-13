@@ -219,19 +219,19 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
 
       {/* 1. SEKSI KEHADIRAN (Presensi Hari Ini) */}
       <Card className="border-border shadow-xs bg-card">
-        <CardHeader className="p-3 sm:p-4 border-b border-border/80 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2.5">
+        <CardHeader className="p-3 sm:p-4 border-b border-border/80 flex flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
               presensiStatus === "HADIR" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
             }`}>
               <CalendarCheck className="h-4 w-4" />
             </div>
-            <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
+            <CardTitle className="text-xs sm:text-sm font-bold truncate">
               1. Kehadiran Hari Ini ({currentDayName})
             </CardTitle>
           </div>
           <Badge
-            className={`font-bold text-xs px-2.5 py-1 ${
+            className={`font-bold text-xs px-2.5 py-1 shrink-0 ${
               presensiStatus === "HADIR"
                 ? "bg-emerald-600 text-white"
                 : presensiStatus === "SAKIT" || presensiStatus === "IZIN"
@@ -269,37 +269,51 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
 
       {/* 2. SEKSI TUGAS DAN LKPD */}
       <Card className="border-border shadow-xs bg-card">
-        <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 flex-wrap">
+        <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div className="h-8 w-8 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0">
               <FileText className="h-4 w-4" />
             </div>
-            <div>
-              <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-wrap">
+              <CardTitle className="text-xs sm:text-sm font-bold whitespace-nowrap">
                 2. Tugas dan LKPD
-                {pendingTasks.length > 0 ? (
-                  <Badge className="bg-amber-600 text-white text-[10px] font-bold">
-                    {pendingTasks.length} Belum Dikumpulkan
-                  </Badge>
-                ) : (
-                  <Badge className="bg-emerald-600 text-white text-[10px] font-bold">
-                    Semua Selesai
-                  </Badge>
-                )}
               </CardTitle>
+              {myTugasList.length === 0 ? (
+                <Badge variant="outline" className="text-muted-foreground border-border text-[10px] font-semibold bg-muted/40">
+                  Belum Ada Tugas
+                </Badge>
+              ) : pendingTasks.length > 0 ? (
+                <Badge className="bg-amber-600 text-white text-[10px] font-bold">
+                  {pendingTasks.length} Belum Dikumpulkan
+                </Badge>
+              ) : (
+                <Badge className="bg-emerald-600 text-white text-[10px] font-bold">
+                  Semua Selesai
+                </Badge>
+              )}
             </div>
           </div>
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 text-xs font-semibold text-blue-600 gap-1 self-end sm:self-center hover:bg-blue-500/10"
+            className="h-7 text-xs font-semibold text-blue-600 gap-1 hover:bg-blue-500/10 shrink-0 px-2"
             onClick={() => setActiveTab?.("tugas")}
           >
-            Buka Modul Tugas & LKPD <ArrowRight className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Buka Modul</span><span className="sm:hidden">Buka</span> <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </CardHeader>
         <CardContent className="p-4">
-          {pendingTasks.length === 0 ? (
+          {myTugasList.length === 0 ? (
+            <div className="p-6 text-center rounded-xl border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-1.5">
+              <FileText className="h-7 w-7 text-muted-foreground/40" />
+              <div className="text-xs font-bold text-foreground">
+                Belum Ada Tugas / LKPD Aktif
+              </div>
+              <div className="text-[11px] text-muted-foreground max-w-sm">
+                Guru pengampu belum menerbitkan tugas atau LKPD untuk rombel {siswaClass}.
+              </div>
+            </div>
+          ) : pendingTasks.length === 0 ? (
             <div className="p-5 text-center rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-500/20 flex flex-col items-center justify-center gap-1.5">
               <CheckCircle2 className="h-7 w-7 text-emerald-600" />
               <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
@@ -314,9 +328,9 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               {pendingTasks.slice(0, 4).map((task) => (
                 <div
                   key={task.id}
-                  className="p-3.5 rounded-xl border border-border bg-card hover:border-blue-500/50 hover:bg-blue-50/20 dark:hover:bg-blue-950/20 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                  className="p-3 sm:p-3.5 rounded-xl border border-border bg-card hover:border-blue-500/50 hover:bg-blue-50/20 dark:hover:bg-blue-950/20 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-[10px] font-bold border-blue-500/30 text-blue-600">
                         {task.mapel || task.subject || "Mata Pelajaran"}
@@ -325,12 +339,12 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                         {task.type || "LKPD Digital"}
                       </Badge>
                       {task.teacher_name && task.teacher_name !== "Guru Pengampu" && (
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground truncate">
                           • {task.teacher_name}
                         </span>
                       )}
                     </div>
-                    <div className="font-bold text-sm text-foreground">
+                    <div className="font-bold text-sm text-foreground truncate">
                       {task.title}
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-2">
@@ -354,28 +368,26 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
       {/* 3. SEKSI JADWAL HARI INI */}
       <Card className="border-border shadow-xs bg-card">
         <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div className="h-8 w-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0">
               <CalendarClock className="h-4 w-4" />
             </div>
-            <div>
-              <CardTitle className="text-xs sm:text-sm font-bold">
-                3. Jadwal Hari Ini ({currentDayName})
-              </CardTitle>
-            </div>
+            <CardTitle className="text-xs sm:text-sm font-bold truncate">
+              3. Jadwal Hari Ini ({currentDayName})
+            </CardTitle>
           </div>
           <Button
             size="sm"
             variant="ghost"
-            className="text-xs font-bold text-emerald-600 gap-1 hover:bg-emerald-500/10"
+            className="h-7 text-xs font-bold text-emerald-600 gap-1 hover:bg-emerald-500/10 px-2 shrink-0"
             onClick={() => setActiveTab?.("jadwal")}
           >
-            Jadwal Lengkap <ArrowRight className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Jadwal Lengkap</span><span className="sm:hidden">Lengkap</span> <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </CardHeader>
-        <CardContent className="p-4 space-y-2.5">
+        <CardContent className="p-3 sm:p-4 space-y-2.5">
           {jadwalToday.length === 0 ? (
-            <div className="text-xs text-muted-foreground italic py-4 text-center border border-dashed rounded-xl border-border">
+            <div className="text-xs text-muted-foreground italic py-6 text-center border border-dashed rounded-xl border-border bg-muted/10">
               Tidak ada jadwal mata pelajaran terdaftar untuk {siswaClass} pada hari {currentDayName}.
             </div>
           ) : (
@@ -388,32 +400,37 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               return (
                 <div
                   key={j.id || idx}
-                  className="p-3.5 rounded-xl border border-border bg-muted/20 hover:border-emerald-500/80 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                  className="p-3 sm:p-3.5 rounded-xl border border-border bg-muted/20 hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 cursor-pointer transition-all shadow-2xs space-y-2.5"
                   onClick={() => setActiveTab?.("tugas")}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 px-3 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center justify-center gap-1.5 border border-emerald-500/30 whitespace-nowrap">
+                  {/* Baris Atas: Jam KBM (Kiri) & Ruang / Kelas (Kanan) */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="h-7 px-2.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold text-xs inline-flex items-center gap-1.5 border border-emerald-500/30 shrink-0">
                       <Clock className="h-3.5 w-3.5 text-emerald-600" />
                       <span>{displayJam}</span>
                     </div>
-                    <div>
-                      <div className="font-semibold text-sm text-foreground flex items-center gap-2">
+                    <Badge variant="outline" className="text-[10px] font-mono font-bold text-muted-foreground border-border bg-background/80 shrink-0 gap-1">
+                      <Building2 className="h-3 w-3 text-muted-foreground" />
+                      <span>{displayRuang}</span>
+                    </Badge>
+                  </div>
+
+                  {/* Baris Bawah: Mapel, Guru & Tombol Aksi */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
+                    <div className="min-w-0">
+                      <div className="font-bold text-sm text-foreground truncate">
                         {displayMapel}
                       </div>
-                      <div className="text-xs text-muted-foreground font-medium flex items-center gap-3 mt-0.5">
-                        <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium">
-                          <UserCheck className="h-3.5 w-3.5 text-emerald-600" /> {displayGuru}
-                        </span>
-                        <span className="text-muted-foreground/50">•</span>
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {displayRuang}
-                        </span>
+                      <div className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 mt-0.5">
+                        <UserCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span className="truncate">{displayGuru}</span>
                       </div>
                     </div>
+
+                    <Badge className="bg-emerald-600 text-white border border-emerald-500/30 text-[11px] font-bold self-start sm:self-center gap-1.5 shadow-2xs shrink-0 hover:bg-emerald-700">
+                      <BookOpen className="h-3.5 w-3.5" /> Buka Mapel / Tugas →
+                    </Badge>
                   </div>
-                  <Badge className="bg-emerald-600 text-white border border-emerald-500/30 text-[11px] font-bold self-start sm:self-center gap-1.5 shadow-2xs">
-                    <BookOpen className="h-3.5 w-3.5" /> Buka Mapel / Tugas →
-                  </Badge>
                 </div>
               );
             })
@@ -423,29 +440,29 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
 
       {/* 4. SEKSI KOLEKSI LENCANA */}
       <Card className="border-border shadow-xs bg-card">
-        <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
+        <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div className="h-8 w-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0">
               <Trophy className="h-4 w-4" />
             </div>
-            <div>
-              <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <CardTitle className="text-xs sm:text-sm font-bold whitespace-nowrap">
                 4. Koleksi Lencana & Prestasi
-                {myBadges.length > 0 && (
-                  <Badge className="bg-amber-500 text-slate-950 font-bold text-[10px]">
-                    {myBadges.length} Lencana Aktif
-                  </Badge>
-                )}
               </CardTitle>
+              {myBadges.length > 0 && (
+                <Badge className="bg-amber-500 text-slate-950 font-bold text-[10px]">
+                  {myBadges.length} Lencana Aktif
+                </Badge>
+              )}
             </div>
           </div>
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 text-xs font-semibold text-amber-600 dark:text-amber-400 gap-1 self-end sm:self-center hover:bg-amber-500/10"
+            className="h-7 text-xs font-semibold text-amber-600 dark:text-amber-400 gap-1 hover:bg-amber-500/10 px-2 shrink-0"
             onClick={() => setActiveTab?.("profil")}
           >
-            Buka Portofolio Lengkap <ArrowRight className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Buka Portofolio</span><span className="sm:hidden">Portofolio</span> <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </CardHeader>
         <CardContent className="p-4">

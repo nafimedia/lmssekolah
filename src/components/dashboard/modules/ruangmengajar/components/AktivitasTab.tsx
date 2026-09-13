@@ -123,54 +123,77 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
 
   return (
     <>
-      <Card className="border-border shadow-xs bg-card">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-          <div>
-            <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
-              <FileText className="h-5 w-5 text-emerald-600" /> Aktivitas Pembelajaran & LKPD Digital ({activeMapel})
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Lembar kerja, tugas kelompok, praktikum, kuis formatif, dan projek P5 untuk {activeRombel}. Buat baru, periksa, dan nilai aktivitas secara langsung.
-            </CardDescription>
+    <>
+      <Card className="border-border shadow-xs bg-card overflow-hidden">
+        {/* Header Bersih & Ringkas (Clean UI Mobile-First) */}
+        <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between gap-2 bg-muted/15">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-xs sm:text-sm font-bold truncate text-foreground">
+                  Tugas & LKPD
+                </h3>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-semibold">
+                  {activities.length}
+                </Badge>
+              </div>
+              <p className="text-[10px] text-muted-foreground truncate hidden sm:block">
+                {activeMapel} · {activeRombel}
+              </p>
+            </div>
           </div>
 
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 shadow-xs"
+            className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
             onClick={() => setIsCreateOpen(true)}
+            title="Buat LKPD / Aktivitas Baru"
           >
-            <Plus className="h-4 w-4" /> Buat LKPD / Aktivitas Baru
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">+ Buat LKPD</span>
+            <span className="sm:hidden">+ LKPD</span>
           </Button>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-3 sm:p-4 space-y-3">
           {activities.length === 0 ? (
-            <div className="py-12 text-center border border-dashed border-border rounded-xl bg-muted/20">
-              <FileText className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
+            <div className="py-8 text-center border border-dashed border-border rounded-xl bg-muted/20">
+              <FileText className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
               <h4 className="font-bold text-xs text-foreground">Belum Ada Aktivitas / LKPD Digital</h4>
               <p className="text-[11px] text-muted-foreground mt-1 max-w-sm mx-auto font-medium">
-                Belum ada aktivitas pembelajaran yang dibuat untuk <strong>{activeRombel}</strong> ({activeMapel}). Klik tombol di atas untuk membuat LKPD baru.
+                Belum ada aktivitas pembelajaran untuk <strong>{activeRombel}</strong> ({activeMapel}).
               </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs font-semibold mt-2"
+                onClick={() => setIsCreateOpen(true)}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Buat LKPD Sekarang
+              </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
               {activities.map((act) => (
-                <div key={act.id} className="p-4 rounded-xl border border-border bg-card space-y-3 hover:shadow-xs transition">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="font-mono text-[10px] font-semibold gap-1">
-                      {act.type === "LKPD" && <><FileText className="h-3 w-3 text-emerald-600" /> LKPD DIGITAL</>}
-                      {act.type === "TUGAS_KELOMPOK" && <><Users className="h-3 w-3 text-blue-600" /> TUGAS KELOMPOK</>}
-                      {act.type === "QUIZ" && <><Brain className="h-3 w-3 text-purple-600" /> KUIS FORMATIF</>}
-                      {act.type === "TUGAS_MANDIRI" && <><PenTool className="h-3 w-3 text-amber-600" /> TUGAS MANDIRI</>}
-                      {act.type === "PRAKTIKUM" && <><FlaskConical className="h-3 w-3 text-teal-600" /> PRAKTIKUM</>}
-                      {act.type === "PROYEK_P5" && <><Target className="h-3 w-3 text-rose-600" /> PROYEK P5/PPRA</>}
-                      {act.type === "HAFALAN" && <><BookCheck className="h-3 w-3 text-indigo-600" /> SETORAN HAFALAN</>}
+                <div key={act.id} className="p-3 rounded-xl border border-border bg-card space-y-2.5 hover:shadow-xs transition">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <Badge variant="outline" className="font-mono text-[9px] font-semibold gap-1 py-0 px-1.5 truncate">
+                      {act.type === "LKPD" && <><FileText className="h-2.5 w-2.5 text-emerald-600" /> LKPD</>}
+                      {act.type === "TUGAS_KELOMPOK" && <><Users className="h-2.5 w-2.5 text-blue-600" /> KELOMPOK</>}
+                      {act.type === "QUIZ" && <><Brain className="h-2.5 w-2.5 text-purple-600" /> KUIS</>}
+                      {act.type === "TUGAS_MANDIRI" && <><PenTool className="h-2.5 w-2.5 text-amber-600" /> MANDIRI</>}
+                      {act.type === "PRAKTIKUM" && <><FlaskConical className="h-2.5 w-2.5 text-teal-600" /> PRAKTIKUM</>}
+                      {act.type === "PROYEK_P5" && <><Target className="h-2.5 w-2.5 text-rose-600" /> P5</>}
+                      {act.type === "HAFALAN" && <><BookCheck className="h-2.5 w-2.5 text-indigo-600" /> HAFALAN</>}
                       {!["LKPD", "TUGAS_KELOMPOK", "QUIZ", "TUGAS_MANDIRI", "PRAKTIKUM", "PROYEK_P5", "HAFALAN"].includes(act.type) && (
-                        <><FileText className="h-3 w-3 text-primary" /> {act.type}</>
+                        <><FileText className="h-2.5 w-2.5 text-primary" /> {act.type}</>
                       )}
                     </Badge>
                     <Badge
-                      className={`text-white font-semibold text-[10px] ${
+                      className={`text-white font-semibold text-[9px] py-0 px-1.5 ${
                         act.status === "DRAF"
                           ? "bg-amber-500 hover:bg-amber-600"
                           : "bg-emerald-600 hover:bg-emerald-700"
@@ -181,38 +204,38 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                   </div>
 
                   <div>
-                    <h4 className="font-bold text-xs text-foreground leading-snug">{act.title}</h4>
-                    <p className="text-[10px] text-muted-foreground mt-1 font-medium">Batas Pengumpulan: {act.dueDate}</p>
+                    <h4 className="font-bold text-xs text-foreground truncate">{act.title}</h4>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 truncate font-medium">Batas: {act.dueDate}</p>
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-muted-foreground font-medium">Terkumpul:</span>
-                    <span className="font-bold font-mono text-emerald-600">{act.submittedCount} / {act.totalStudents} Siswa</span>
+                  <div className="p-2 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground font-medium">Terkumpul:</span>
+                    <span className="font-bold font-mono text-emerald-600">{act.submittedCount} / {act.totalStudents}</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 pt-1">
+                  <div className="flex items-center gap-1.5 pt-0.5">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1 text-xs font-semibold gap-1 text-primary border-primary/30 hover:bg-primary/5"
+                      className="flex-1 h-7 text-xs font-semibold gap-1 text-primary border-primary/30 hover:bg-primary/5"
                       onClick={() => handleOpenViewActivity(act)}
                     >
-                      <PencilLine className="h-3.5 w-3.5" />
+                      <PencilLine className="h-3 w-3" />
                       {act.type === "TUGAS_KELOMPOK"
-                        ? "💬 Ruang Diskusi & Kelola"
+                        ? "Kelola"
                         : act.type === "QUIZ"
-                        ? "⚡ Lihat Kuis & Nilai"
-                        : "📄 Nilai LKPD"}
+                        ? "Nilai Kuis"
+                        : "Nilai LKPD"}
                     </Button>
 
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       title="Hapus Aktivitas"
                       onClick={() => handleDeleteActivity(act.id, act.title)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>

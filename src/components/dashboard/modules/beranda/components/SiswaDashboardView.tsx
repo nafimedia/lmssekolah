@@ -146,7 +146,9 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shrink-0 shadow-2xs px-3"
               onClick={() => setActiveTab?.("tugas")}
             >
-              <BookOpen className="h-3.5 w-3.5" /> Buka LKPD / Tugas
+              <BookOpen className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Buka LKPD / Tugas</span>
+              <span className="sm:hidden">Buka KBM</span>
             </Button>
           </CardContent>
         </Card>
@@ -208,10 +210,10 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
 
       {/* To-Do List: Tasks & LKPD Pending Submission */}
       <Card className="border-border shadow-xs">
-        <CardHeader className="p-4 border-b border-border flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-blue-600" />
-            <CardTitle className="text-sm font-bold">
+        <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+            <CardTitle className="text-xs sm:text-sm font-bold">
               Tugas & LKPD Perlu Dikerjakan
             </CardTitle>
             {pendingTasks.length > 0 ? (
@@ -227,7 +229,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
           <Button
             size="sm"
             variant="ghost"
-            className="text-xs font-bold text-blue-600 gap-1"
+            className="h-7 text-xs font-semibold text-blue-600 gap-1 self-end sm:self-center"
             onClick={() => setActiveTab?.("tugas")}
           >
             Lihat Semua Tugas <ArrowRight className="h-3.5 w-3.5" />

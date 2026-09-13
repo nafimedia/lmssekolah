@@ -117,52 +117,52 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
 
   return (
     <div className="space-y-4">
-      {/* Reflection & Remedial Follow-Up Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Card className="border-emerald-200 dark:border-emerald-900 bg-emerald-50/40 dark:bg-emerald-950/20 p-4 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Refleksi KBM Hari Ini</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          </div>
-          <p className="text-lg font-bold text-foreground">KBM Berlangsung Sangat Baik</p>
-          <p className="text-[11px] text-slate-500">Seluruh indikator TP berhasil dicapai siswa {activeRombel}.</p>
-        </Card>
-
-        <Card className="border-amber-200 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 p-4 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Siswa Perlu Remedial</span>
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-          </div>
-          <p className="text-lg font-bold text-foreground">{remedialCount} Siswa Terdokumentasi</p>
-          <p className="text-[11px] text-slate-500">Tersambung otomatis ke modul Penilaian & Remedial.</p>
-        </Card>
-
-        <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/40 dark:bg-blue-950/20 p-4 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">Siswa Siap Pengayaan</span>
-            <Rocket className="h-4 w-4 text-blue-600" />
-          </div>
-          <p className="text-lg font-bold text-foreground">{pengayaanCount} Siswa Berprestasi</p>
-          <p className="text-[11px] text-slate-500">Dapat diberikan modul suplemen pengayaan lanjutan.</p>
-        </Card>
+    <div className="space-y-3">
+      {/* Metric Chips Ringkas 1 Baris (Hemat Ruang Layar HP) */}
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 block">KBM Kondusif</span>
+          <span className="text-xs font-semibold text-emerald-600">Optimal</span>
+        </div>
+        <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 block">Remedial</span>
+          <span className="text-xs font-bold font-mono text-amber-600">{remedialCount} Siswa</span>
+        </div>
+        <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+          <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 block">Pengayaan</span>
+          <span className="text-xs font-bold font-mono text-blue-600">{pengayaanCount} Siswa</span>
+        </div>
       </div>
 
       {/* Main Student Notes Card */}
-      <Card className="border-border shadow-sm bg-card">
-        <CardHeader className="border-b border-border pb-4">
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-primary" /> Catatan Siswa & Refleksi Pembelajaran ({activeRombel})
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Catat perkembangan, prestasi, atau siswa yang membutuhkan pendampingan khusus selama KBM {activeMapel}.
-          </CardDescription>
-        </CardHeader>
+      <Card className="border-border shadow-xs bg-card overflow-hidden">
+        {/* Header Bersih & Ringkas (Clean UI Mobile-First) */}
+        <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between gap-2 bg-muted/15">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <ClipboardList className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-xs sm:text-sm font-bold truncate text-foreground">
+                  Catatan Siswa & Refleksi
+                </h3>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-semibold">
+                  {notes.length}
+                </Badge>
+              </div>
+              <p className="text-[10px] text-muted-foreground truncate hidden sm:block">
+                {activeMapel} · {activeRombel}
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <CardContent className="p-4 space-y-4">
+        <CardContent className="p-3 sm:p-4 space-y-3">
           {/* Quick Note Input Form */}
-          <div className="p-3.5 rounded-xl bg-muted/40 border border-border space-y-3">
-            <h4 className="text-xs font-semibold flex items-center gap-1.5 text-primary">
-              <Plus className="h-4 w-4" /> Catat Observasi Siswa Sesi KBM Ini
+          <div className="p-3 rounded-xl bg-muted/30 border border-border space-y-2.5">
+            <h4 className="text-xs font-bold flex items-center gap-1.5 text-foreground">
+              <Plus className="h-3.5 w-3.5 text-emerald-600" /> Tulis Observasi Siswa
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

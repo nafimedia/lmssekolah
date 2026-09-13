@@ -226,74 +226,66 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
         statusVariant="success"
       />
 
-      {/* Summary Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-border bg-card shadow-sm hover:shadow transition">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-primary/10 text-primary shrink-0">
-              <Zap className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground font-semibold">Semua Kuis</p>
-              <h3 className="text-xl font-bold text-foreground mt-0.5">{totalQuizzes}</h3>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Summary Metric Strip - Kompak di Mobile */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground font-semibold">Semua Kuis</p>
+            <h3 className="text-base sm:text-lg font-extrabold text-foreground">{totalQuizzes}</h3>
+          </div>
+        </div>
 
-        <Card className="border-border bg-card shadow-sm hover:shadow transition">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
-              <Play className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground font-semibold">Live Sesi Aktif</p>
-              <h3 className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">{liveQuizzes}</h3>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500 shrink-0">
+            <Play className="h-4 w-4 sm:h-5 sm:w-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground font-semibold">Live Aktif</p>
+            <h3 className="text-base sm:text-lg font-extrabold text-amber-600 dark:text-amber-400">{liveQuizzes}</h3>
+          </div>
+        </div>
 
-        <Card className="border-border bg-card shadow-sm hover:shadow transition">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
-              <CheckCircle2 className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground font-semibold">Selesai Dikerjakan</p>
-              <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{completedQuizzes}</h3>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
+            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground font-semibold">Selesai</p>
+            <h3 className="text-base sm:text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{completedQuizzes}</h3>
+          </div>
+        </div>
 
-        <Card className="border-border bg-card shadow-sm hover:shadow transition">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500 shrink-0">
-              <Trophy className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground font-semibold">Rata-Rata Skor</p>
-              <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-0.5">{avgScore}%</h3>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500 shrink-0">
+            <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground font-semibold">Rata Skor</p>
+            <h3 className="text-base sm:text-lg font-extrabold text-blue-600 dark:text-blue-400">{avgScore}%</h3>
+          </div>
+        </div>
       </div>
 
       {/* Filter Tabs & Quiz List */}
-      <Card className="border-border bg-card shadow-sm">
-        <CardHeader className="pb-3 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <Card className="border-border bg-card shadow-xs">
+        <CardHeader className="p-3 sm:p-4 pb-3 border-b border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <HelpCircle className="h-5 w-5 text-primary" /> Daftar Sesi Kuis Interaktif Live Siswa
+            <CardTitle className="text-sm sm:text-base font-bold flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Kuis Interaktif Live Siswa
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs hidden sm:block">
               Sesi evaluasi kuis kilat yang dipublikasikan oleh guru pengampu mata pelajaran MTsN 2 Cilacap.
             </CardDescription>
           </div>
 
-          <div className="flex items-center gap-1.5 p-1 bg-muted/60 rounded-xl border border-border text-xs w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 p-1 bg-muted/60 rounded-xl border border-border text-xs overflow-x-auto no-scrollbar">
             <button
               type="button"
               onClick={() => setFilterTab("semua")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
                 filterTab === "semua" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -302,16 +294,16 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
             <button
               type="button"
               onClick={() => setFilterTab("aktif")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
                 filterTab === "aktif" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Live Aktif ({liveQuizzes})
+              Live ({liveQuizzes})
             </button>
             <button
               type="button"
               onClick={() => setFilterTab("selesai")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
                 filterTab === "selesai" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -329,73 +321,126 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
           ) : filteredExams.length === 0 ? (
             <div className="p-12 text-center space-y-2">
               <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
-              <div className="font-bold text-sm text-foreground">Belum Ada Kuis Interaktif Live Terdaftar</div>
+              <div className="font-bold text-sm text-foreground">Belum Ada Kuis Interaktif Live</div>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {exams.length === 0
-                  ? "Belum ada sesi kuis interaktif yang dijadwalkan untuk rombel Anda. Kuis yang dipublikasikan oleh guru pengampu akan muncul di sini secara otomatis."
-                  : "Tidak ada kuis yang sesuai dengan filter kategori ini."}
+                  ? "Belum ada sesi kuis interaktif yang dijadwalkan untuk rombel Anda. Kuis yang dipublikasikan oleh guru akan muncul di sini."
+                  : "Tidak ada kuis yang sesuai dengan filter ini."}
               </p>
             </div>
           ) : (
-            <table className="w-full text-xs text-left">
-              <thead className="bg-muted/70 text-muted-foreground font-bold border-b border-border">
-                <tr>
-                  <th className="p-3.5">Judul Kuis Interaktif</th>
-                  <th className="p-3.5">Mata Pelajaran</th>
-                  <th className="p-3.5 text-center">Durasi & KKM</th>
-                  <th className="p-3.5 text-center">Status Sesi</th>
-                  <th className="p-3.5 text-right">Aksi Pengerjaan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+            <>
+              {/* Tampilan Kartu Mobile-First */}
+              <div className="md:hidden divide-y divide-border">
                 {filteredExams.map((ex) => {
                   const state = getQuizState(ex);
                   return (
-                    <tr key={ex.id} className="hover:bg-muted/30 transition">
-                      <td className="p-3.5 font-bold text-foreground text-sm flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-amber-500 shrink-0" />
-                        {ex.title}
-                      </td>
-
-                      <td className="p-3.5">
-                        <div className="font-semibold text-foreground">{ex.subject_name || "Mata Pelajaran"}</div>
-                        <div className="text-[11px] text-muted-foreground">Sesi Kelas VIII</div>
-                      </td>
-
-                      <td className="p-3.5 text-center font-mono">
-                        <div className="flex items-center justify-center gap-2 text-[11px]">
-                          <Badge variant="outline" className="gap-1 border-border font-mono">
-                            <Clock className="h-3 w-3 text-amber-500" /> {ex.duration_minutes || 15} Mins
-                          </Badge>
-                          <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 font-bold">
-                            KKM: {ex.passing_score || 75}
-                          </Badge>
+                    <div key={ex.id} className="p-3.5 space-y-2.5 hover:bg-muted/20 transition">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Badge variant="outline" className="text-[10px] font-bold border-primary/30 text-primary py-0 px-1.5">
+                              {ex.subject_name || "Mata Pelajaran"}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground">Kelas VIII</span>
+                          </div>
+                          <h4 className="text-xs font-bold text-foreground line-clamp-2 leading-snug flex items-center gap-1.5">
+                            <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                            {ex.title}
+                          </h4>
                         </div>
-                      </td>
-
-                      <td className="p-3.5 text-center">
-                        <Badge variant="outline" className={`gap-1 px-2.5 py-1 ${state.color}`}>
-                          <state.icon className="h-3.5 w-3.5" />
+                        <Badge variant="outline" className={`gap-1 px-2 py-0.5 text-[10px] shrink-0 font-bold ${state.color}`}>
+                          <state.icon className="h-3 w-3" />
                           {state.label}
                         </Badge>
-                      </td>
+                      </div>
 
-                      <td className="p-3.5 text-right">
-                        {state.status === "aktif" ? (
-                          <Button size="sm" className="h-8 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs" onClick={() => handleStartQuiz(ex)}>
-                            ⚡ Ikuti Kuis Live
-                          </Button>
-                        ) : (
-                          <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleStartQuiz(ex)}>
-                            🏆 Lihat Hasil ({state.result?.score}/100)
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3 text-amber-500" /> {ex.duration_minutes || 15}m
+                          </span>
+                          <span>•</span>
+                          <span className="text-emerald-600 font-bold">KKM {ex.passing_score || 75}</span>
+                        </div>
+                        <div>
+                          {state.status === "aktif" ? (
+                            <Button size="sm" className="h-7 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs px-3" onClick={() => handleStartQuiz(ex)}>
+                              ⚡ Ikuti Kuis
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 px-3" onClick={() => handleStartQuiz(ex)}>
+                              🏆 Hasil ({state.result?.score}/100)
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+
+              {/* Tabel Desktop Lengkap */}
+              <table className="hidden md:table w-full text-xs text-left">
+                <thead className="bg-muted/70 text-muted-foreground font-bold border-b border-border">
+                  <tr>
+                    <th className="p-3.5">Judul Kuis Interaktif</th>
+                    <th className="p-3.5">Mata Pelajaran</th>
+                    <th className="p-3.5 text-center">Durasi & KKM</th>
+                    <th className="p-3.5 text-center">Status Sesi</th>
+                    <th className="p-3.5 text-right">Aksi Pengerjaan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredExams.map((ex) => {
+                    const state = getQuizState(ex);
+                    return (
+                      <tr key={ex.id} className="hover:bg-muted/30 transition">
+                        <td className="p-3.5 font-bold text-foreground text-sm flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+                          {ex.title}
+                        </td>
+
+                        <td className="p-3.5">
+                          <div className="font-semibold text-foreground">{ex.subject_name || "Mata Pelajaran"}</div>
+                          <div className="text-[11px] text-muted-foreground">Sesi Kelas VIII</div>
+                        </td>
+
+                        <td className="p-3.5 text-center font-mono">
+                          <div className="flex items-center justify-center gap-2 text-[11px]">
+                            <Badge variant="outline" className="gap-1 border-border font-mono">
+                              <Clock className="h-3 w-3 text-amber-500" /> {ex.duration_minutes || 15} Mins
+                            </Badge>
+                            <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 font-bold">
+                              KKM: {ex.passing_score || 75}
+                            </Badge>
+                          </div>
+                        </td>
+
+                        <td className="p-3.5 text-center">
+                          <Badge variant="outline" className={`gap-1 px-2.5 py-1 ${state.color}`}>
+                            <state.icon className="h-3.5 w-3.5" />
+                            {state.label}
+                          </Badge>
+                        </td>
+
+                        <td className="p-3.5 text-right">
+                          {state.status === "aktif" ? (
+                            <Button size="sm" className="h-8 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs" onClick={() => handleStartQuiz(ex)}>
+                              ⚡ Ikuti Kuis Live
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleStartQuiz(ex)}>
+                              🏆 Lihat Hasil ({state.result?.score}/100)
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
           )}
         </CardContent>
       </Card>

@@ -39,33 +39,35 @@ export function StudentHeaderBanner({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-6 border-b border-border/70 font-sans">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-            <Icon className={`h-6 w-6 ${iconColorClass}`} />
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 sm:pb-4 mb-3 sm:mb-5 border-b border-border/70 font-sans">
+      <div className="space-y-0.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+            <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${iconColorClass}`} />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-base sm:text-xl font-bold tracking-tight text-foreground flex items-center gap-1.5">
             {title}
           </h1>
           {studentClass && studentClass.trim() !== "" && (
-            <Badge className="bg-emerald-600 text-white font-bold text-xs px-2.5 py-0.5 shadow-2xs gap-1">
-              <GraduationCap className="h-3.5 w-3.5" /> {studentClass}
+            <Badge className="bg-emerald-600 text-white font-bold text-[10px] sm:text-xs px-2 py-0.5 shadow-2xs gap-1">
+              <GraduationCap className="h-3 w-3" /> {studentClass}
             </Badge>
           )}
           {studentNisn && (
-            <Badge variant="outline" className="font-mono font-semibold text-xs border-border">
+            <Badge variant="outline" className="font-mono font-semibold text-[10px] sm:text-xs border-border py-0 px-1.5">
               NISN: {studentNisn}
             </Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+        {subtitle && (
+          <p className="text-[11px] text-muted-foreground truncate hidden sm:block">{subtitle}</p>
+        )}
       </div>
 
-      <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+      <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
         {statusText && (
-          <Badge className={`text-xs px-3 py-1 font-semibold flex items-center gap-1.5 ${getStatusBadgeStyle()}`}>
-            <Sparkles className="h-3.5 w-3.5" /> {statusText}
+          <Badge className={`text-[10px] sm:text-xs px-2.5 py-0.5 font-semibold flex items-center gap-1.5 ${getStatusBadgeStyle()}`}>
+            <Sparkles className="h-3 w-3" /> {statusText}
           </Badge>
         )}
         {actionButtons}

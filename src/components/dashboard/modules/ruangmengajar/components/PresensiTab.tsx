@@ -136,124 +136,206 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
   };
 
   return (
-    <Card className="border-border shadow-sm bg-card">
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-        <div>
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Presensi Real-Time Sesi KBM ({activeRombel})
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Presensi terikat dengan jadwal KBM {activeMapel} hari ini. Tandai siswa yang tidak hadir.
-          </CardDescription>
+    <Card className="border-border shadow-xs bg-card overflow-hidden">
+      {/* Header Bersih & Ringkas (Clean UI Mobile-First) */}
+      <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between gap-2 bg-muted/15">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <UserCheck className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-xs sm:text-sm font-bold truncate text-foreground">
+              Presensi KBM {activeRombel}
+            </h3>
+            <p className="text-[10px] text-muted-foreground truncate hidden sm:block">
+              {activeMapel} · {students.length} Siswa Terdaftar
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button
             size="sm"
             variant="outline"
-            className="gap-1.5 text-xs font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 shadow-xs"
+            className="h-8 px-2.5 text-xs font-semibold gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
             onClick={handleAllHadir}
             disabled={students.length === 0 || isSaving}
+            title="Setel semua siswa menjadi Hadir"
           >
-            <Sparkles className="h-3.5 w-3.5" /> Set Semua Hadir
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Set Semua Hadir</span>
+            <span className="sm:hidden">Semua Hadir</span>
           </Button>
 
           <Button
             size="sm"
-            className="gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs disabled:opacity-70"
+            className="h-8 px-2.5 text-xs font-semibold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs disabled:opacity-70"
             onClick={handleSavePresensi}
             disabled={students.length === 0 || isSaving}
           >
             {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            {isSaving ? "Menyimpan..." : "Simpan Presensi"}
+            <span className="hidden sm:inline">{isSaving ? "Menyimpan..." : "Simpan Presensi"}</span>
+            <span className="sm:hidden">Simpan</span>
           </Button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="p-4 sm:p-6 space-y-6">
-        {/* Stat Badges Overview */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-center">
-            <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">HADIR</div>
-            <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{countHadir}</div>
+      <CardContent className="p-3 sm:p-4 space-y-3">
+        {/* Stat Badges Overview - Compact Single Row Strip */}
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-3 p-1.5 bg-muted/25 rounded-xl border border-border/70 text-center">
+          <div className="py-1 px-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 dark:text-emerald-300 block">HADIR</span>
+            <span className="text-sm sm:text-lg font-extrabold font-mono text-emerald-600 dark:text-emerald-400">{countHadir}</span>
           </div>
-          <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-center">
-            <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">SAKIT</div>
-            <div className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">{countSakit}</div>
+          <div className="py-1 px-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <span className="text-[9px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-300 block">SAKIT</span>
+            <span className="text-sm sm:text-lg font-extrabold font-mono text-amber-600 dark:text-amber-400">{countSakit}</span>
           </div>
-          <div className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/10 text-center">
-            <div className="text-[11px] font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">IZIN</div>
-            <div className="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">{countIzin}</div>
+          <div className="py-1 px-1 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <span className="text-[9px] sm:text-[10px] font-bold text-blue-700 dark:text-blue-300 block">IZIN</span>
+            <span className="text-sm sm:text-lg font-extrabold font-mono text-blue-600 dark:text-blue-400">{countIzin}</span>
           </div>
-          <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-center">
-            <div className="text-[11px] font-semibold text-rose-700 dark:text-rose-300 uppercase tracking-wider">ALPA</div>
-            <div className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">{countAlpa}</div>
+          <div className="py-1 px-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
+            <span className="text-[9px] sm:text-[10px] font-bold text-rose-700 dark:text-rose-300 block">ALPA</span>
+            <span className="text-sm sm:text-lg font-extrabold font-mono text-rose-600 dark:text-rose-400">{countAlpa}</span>
           </div>
         </div>
 
-        {/* Table Student Attendance List */}
+        {/* Student Attendance Content */}
         {isLoading ? (
           <div className="p-8 text-center text-xs text-muted-foreground">Memuat data presensi siswa {activeRombel}...</div>
         ) : students.length === 0 ? (
-          <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2">
+          <div className="p-8 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2">
             <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
             <div className="font-semibold text-foreground text-sm">Belum Ada Siswa Terdaftar pada {activeRombel}</div>
             <p>Belum ada data siswa yang terdaftar untuk kelas / rombel ini.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto border border-border rounded-xl shadow-xs">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-muted/50 text-muted-foreground font-bold border-b border-border">
-                  <th className="py-3 px-4 w-12 text-center">No</th>
-                  <th className="py-3 px-4 w-28">NIS</th>
-                  <th className="py-3 px-4">Nama Siswa</th>
-                  <th className="py-3 px-4 text-center">Status Kehadiran</th>
-                  <th className="py-3 px-4 min-w-[200px]">Keterangan / Catatan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {students.map((student, index) => (
-                  <tr key={student.id} className="hover:bg-muted/30 transition">
-                    <td className="py-3 px-4 text-center font-mono font-medium">{index + 1}</td>
-                    <td className="py-3 px-4 font-mono font-semibold text-muted-foreground">{student.nis}</td>
-                    <td className="py-3 px-4 font-bold text-foreground">{student.name}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center justify-center gap-1.5">
-                        {(["HADIR", "SAKIT", "IZIN", "ALPA"] as const).map((st) => (
-                          <button
-                            key={st}
-                            type="button"
-                            onClick={() => handleSetStatus(student.id, st)}
-                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${student.status === st
-                                ? st === "HADIR"
-                                  ? "bg-emerald-600 text-white shadow-xs"
-                                  : st === "SAKIT"
+          <>
+            {/* Tampilan Mobile: Quick-Tap Cards Ramah Layar Ponsel */}
+            <div className="block md:hidden space-y-2">
+              {students.map((student, index) => (
+                <div
+                  key={student.id}
+                  className="p-2.5 rounded-xl border border-border bg-card space-y-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono font-bold text-muted-foreground w-4 shrink-0">
+                          {index + 1}.
+                        </span>
+                        <h5 className="font-bold text-xs text-foreground truncate">{student.name}</h5>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground font-mono pl-5.5">{student.nis}</p>
+                    </div>
+
+                    <Badge
+                      className={`text-[9px] font-bold uppercase shrink-0 px-2 py-0.5 ${
+                        student.status === "HADIR"
+                          ? "bg-emerald-600 text-white"
+                          : student.status === "SAKIT"
+                          ? "bg-amber-600 text-white"
+                          : student.status === "IZIN"
+                          ? "bg-blue-600 text-white"
+                          : "bg-rose-600 text-white"
+                      }`}
+                    >
+                      {student.status}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center gap-1 pt-1 border-t border-border/50">
+                    {(["HADIR", "SAKIT", "IZIN", "ALPA"] as const).map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => handleSetStatus(student.id, st)}
+                        className={`flex-1 py-1 rounded-md text-[10px] font-bold transition-all text-center ${
+                          student.status === st
+                            ? st === "HADIR"
+                              ? "bg-emerald-600 text-white shadow-xs"
+                              : st === "SAKIT"
+                              ? "bg-amber-600 text-white shadow-xs"
+                              : st === "IZIN"
+                              ? "bg-blue-600 text-white shadow-xs"
+                              : "bg-rose-600 text-white shadow-xs"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        {st === "HADIR" ? "Hadir" : st === "SAKIT" ? "Sakit" : st === "IZIN" ? "Izin" : "Alpa"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {student.status !== "HADIR" && (
+                    <Input
+                      placeholder="Catatan / keterangan tidak hadir..."
+                      value={student.notes || ""}
+                      onChange={(e) => handleSetNotes(student.id, e.target.value)}
+                      className="h-7 text-[11px] bg-muted/30 mt-1"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Tampilan Desktop: Tabel Lengkap */}
+            <div className="hidden md:block overflow-x-auto border border-border rounded-xl shadow-xs">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-muted/50 text-muted-foreground font-bold border-b border-border">
+                    <th className="py-2.5 px-3 w-10 text-center">No</th>
+                    <th className="py-2.5 px-3 w-28">NIS</th>
+                    <th className="py-2.5 px-3">Nama Siswa</th>
+                    <th className="py-2.5 px-3 text-center">Status Kehadiran</th>
+                    <th className="py-2.5 px-3 min-w-[180px]">Keterangan / Catatan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {students.map((student, index) => (
+                    <tr key={student.id} className="hover:bg-muted/30 transition">
+                      <td className="py-2.5 px-3 text-center font-mono font-medium">{index + 1}</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-muted-foreground">{student.nis}</td>
+                      <td className="py-2.5 px-3 font-bold text-foreground">{student.name}</td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center justify-center gap-1">
+                          {(["HADIR", "SAKIT", "IZIN", "ALPA"] as const).map((st) => (
+                            <button
+                              key={st}
+                              type="button"
+                              onClick={() => handleSetStatus(student.id, st)}
+                              className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
+                                student.status === st
+                                  ? st === "HADIR"
+                                    ? "bg-emerald-600 text-white shadow-xs"
+                                    : st === "SAKIT"
                                     ? "bg-amber-600 text-white shadow-xs"
                                     : st === "IZIN"
-                                      ? "bg-blue-600 text-white shadow-xs"
-                                      : "bg-rose-600 text-white shadow-xs"
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                    ? "bg-blue-600 text-white shadow-xs"
+                                    : "bg-rose-600 text-white shadow-xs"
+                                  : "bg-muted text-muted-foreground hover:bg-muted/80"
                               }`}
-                          >
-                            {st}
-                          </button>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Input
-                        placeholder="Tuliskan catatan/keterangan..."
-                        value={student.notes || ""}
-                        onChange={(e) => handleSetNotes(student.id, e.target.value)}
-                        className="h-8 text-xs bg-background"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                            >
+                              {st}
+                            </button>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <Input
+                          placeholder="Catatan / keterangan..."
+                          value={student.notes || ""}
+                          onChange={(e) => handleSetNotes(student.id, e.target.value)}
+                          className="h-7 text-xs bg-background"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

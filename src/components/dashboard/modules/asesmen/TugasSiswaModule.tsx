@@ -686,7 +686,8 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               onClick={() => setSelectedAssignment(null)}
               className="gap-1.5 font-bold text-xs rounded-xl shadow-2xs hover:bg-muted shrink-0"
             >
-              <ArrowLeft className="h-4 w-4 text-primary" /> Kembali ke Daftar Tugas
+              <ArrowLeft className="h-4 w-4 text-primary" />
+              <span className="hidden sm:inline">Kembali ke </span>Daftar Tugas
             </Button>
             <div className="h-6 w-px bg-border hidden sm:block" />
             <div>
@@ -1240,12 +1241,12 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
 
       {/* Filter Tabs & Task List */}
       <Card className="border-border bg-card shadow-xs">
-        <CardHeader className="p-4 pb-3 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 p-1 bg-muted/70 rounded-xl border border-border text-xs w-full sm:w-auto overflow-x-auto">
+        <CardHeader className="p-3 sm:p-4 pb-3 border-b border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 p-1 bg-muted/70 rounded-xl border border-border text-xs w-full sm:w-auto overflow-x-auto no-scrollbar">
             <button
               type="button"
               onClick={() => setFilterTab("belum")}
-              className={`px-3.5 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
                 filterTab === "belum"
                   ? "bg-amber-600 text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -1259,13 +1260,13 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
             <button
               type="button"
               onClick={() => setFilterTab("dikumpulkan")}
-              className={`px-3.5 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
                 filterTab === "dikumpulkan"
                   ? "bg-blue-600 text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span>📤 Sudah Dikumpulkan</span>
+              <span>📤 Dikumpulkan</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "dikumpulkan" ? "bg-white/20 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"}`}>
                 {submittedCount}
               </span>
@@ -1273,13 +1274,13 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
             <button
               type="button"
               onClick={() => setFilterTab("dinilai")}
-              className={`px-3.5 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
                 filterTab === "dinilai"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span>✅ Sudah Dinilai</span>
+              <span>✅ Dinilai</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "dinilai" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}>
                 {gradedCount}
               </span>
@@ -1287,13 +1288,13 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
             <button
               type="button"
               onClick={() => setFilterTab("semua")}
-              className={`px-3.5 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
                 filterTab === "semua"
                   ? "bg-primary text-primary-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span>Semua Tugas</span>
+              <span>Semua</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "semua" ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-foreground"}`}>
                 {totalCount}
               </span>
@@ -1302,7 +1303,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
 
           {/* Filter Mapel Dropdown */}
           <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-            <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">Filter Mapel:</span>
+            <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Mapel:</span>
             <select
               value={selectedMapelFilter}
               onChange={(e) => setSelectedMapelFilter(e.target.value)}
@@ -1333,82 +1334,145 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               </p>
             </div>
           ) : (
-            <table className="w-full text-xs text-left">
-              <thead className="bg-muted/70 text-muted-foreground font-bold border-b border-border">
-                <tr>
-                  <th className="p-3.5">Tugas & Deskripsi</th>
-                  <th className="p-3.5">Mata Pelajaran & Guru</th>
-                  <th className="p-3.5 text-center">Batas Waktu (Deadline)</th>
-                  <th className="p-3.5 text-center">Status Submisi</th>
-                  <th className="p-3.5 text-right">Aksi Pengerjaan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+            <>
+              {/* Tampilan Kartu Mobile-First (Tampil di Layar HP) */}
+              <div className="md:hidden divide-y divide-border">
                 {filteredAssignments.map((a) => {
                   const taskState = getTaskStatus(a);
                   const sub = mySubmissionsMap.get(String(a.id));
                   return (
-                    <tr key={a.id} className="hover:bg-muted/30 transition">
-                      <td className="p-3.5">
-                        <div className="font-bold text-foreground text-sm flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-primary shrink-0" />
-                          {a.title}
+                    <div key={a.id} className="p-3.5 space-y-2.5 hover:bg-muted/20 transition">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                            <Badge variant="outline" className="text-[10px] font-bold border-primary/30 text-primary py-0 px-1.5">
+                              {a.mapel}
+                            </Badge>
+                            {a.rombel && (
+                              <span className="text-[10px] text-muted-foreground">{a.rombel}</span>
+                            )}
+                          </div>
+                          <h4 className="text-xs font-bold text-foreground line-clamp-2 leading-snug">
+                            {a.title}
+                          </h4>
                         </div>
-                        {a.description && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
-                            {a.description}
-                          </p>
-                        )}
-                      </td>
-
-                      <td className="p-3.5">
-                        <div className="font-semibold text-foreground">{a.mapel}</div>
-                        <div className="text-[11px] text-muted-foreground">
-                          Guru: {a.author_guru || "Guru Pengampu"} • {a.rombel || "Semua Class"}
-                        </div>
-                      </td>
-
-                      <td className="p-3.5 text-center font-mono">
-                        <Badge variant="outline" className="gap-1 border-border font-mono text-[11px]">
-                          <Clock className="h-3 w-3 text-amber-500" />
-                          {a.due_date || "25 Agustus 2026"}
-                        </Badge>
-                      </td>
-
-                      <td className="p-3.5 text-center">
-                        <Badge variant="outline" className={`gap-1 px-2.5 py-1 ${taskState.color}`}>
-                          <taskState.icon className="h-3.5 w-3.5" />
+                        <Badge variant="outline" className={`gap-1 px-2 py-0.5 text-[10px] shrink-0 font-bold ${taskState.color}`}>
+                          <taskState.icon className="h-3 w-3" />
                           {taskState.label}
                         </Badge>
-                      </td>
+                      </div>
 
-                      <td className="p-3.5 text-right">
-                        {taskState.status === "belum" && (
-                          <Button size="sm" className="h-8 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => handleOpenDetail(a)}>
-                            🚀 Kerjakan
-                          </Button>
-                        )}
-                        {taskState.status === "draft" && (
-                          <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10" onClick={() => handleOpenDetail(a)}>
-                            ✏️ Lanjutkan
-                          </Button>
-                        )}
-                        {taskState.status === "dikumpulkan" && (
-                          <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-blue-500/40 text-blue-600 hover:bg-blue-500/10" onClick={() => handleOpenDetail(a)}>
-                            👀 Lihat Jawaban
-                          </Button>
-                        )}
-                        {taskState.status === "dinilai" && (
-                          <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleOpenDetail(a)}>
-                            🏆 Lihat Hasil ({sub?.score}/100)
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                          <Clock className="h-3 w-3 text-amber-500" />
+                          <span>{a.due_date || "Hari ini"}</span>
+                        </div>
+                        <div>
+                          {taskState.status === "belum" && (
+                            <Button size="sm" className="h-7 text-xs font-bold bg-primary text-primary-foreground shadow-xs px-3" onClick={() => handleOpenDetail(a)}>
+                              🚀 Kerjakan
+                            </Button>
+                          )}
+                          {taskState.status === "draft" && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10 px-3" onClick={() => handleOpenDetail(a)}>
+                              ✏️ Lanjut
+                            </Button>
+                          )}
+                          {taskState.status === "dikumpulkan" && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 hover:bg-blue-500/10 px-3" onClick={() => handleOpenDetail(a)}>
+                              👀 Jawaban
+                            </Button>
+                          )}
+                          {taskState.status === "dinilai" && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 px-3" onClick={() => handleOpenDetail(a)}>
+                              🏆 Nilai: {sub?.score}/100
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+
+              {/* Tabel Lengkap Desktop */}
+              <table className="hidden md:table w-full text-xs text-left">
+                <thead className="bg-muted/70 text-muted-foreground font-bold border-b border-border">
+                  <tr>
+                    <th className="p-3.5">Tugas & Deskripsi</th>
+                    <th className="p-3.5">Mata Pelajaran & Guru</th>
+                    <th className="p-3.5 text-center">Batas Waktu (Deadline)</th>
+                    <th className="p-3.5 text-center">Status Submisi</th>
+                    <th className="p-3.5 text-right">Aksi Pengerjaan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredAssignments.map((a) => {
+                    const taskState = getTaskStatus(a);
+                    const sub = mySubmissionsMap.get(String(a.id));
+                    return (
+                      <tr key={a.id} className="hover:bg-muted/30 transition">
+                        <td className="p-3.5">
+                          <div className="font-bold text-foreground text-sm flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary shrink-0" />
+                            {a.title}
+                          </div>
+                          {a.description && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                              {a.description}
+                            </p>
+                          )}
+                        </td>
+
+                        <td className="p-3.5">
+                          <div className="font-semibold text-foreground">{a.mapel}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Guru: {a.author_guru || "Guru Pengampu"} • {a.rombel || "Semua Class"}
+                          </div>
+                        </td>
+
+                        <td className="p-3.5 text-center font-mono">
+                          <Badge variant="outline" className="gap-1 border-border font-mono text-[11px]">
+                            <Clock className="h-3 w-3 text-amber-500" />
+                            {a.due_date || "25 Agustus 2026"}
+                          </Badge>
+                        </td>
+
+                        <td className="p-3.5 text-center">
+                          <Badge variant="outline" className={`gap-1 px-2.5 py-1 ${taskState.color}`}>
+                            <taskState.icon className="h-3.5 w-3.5" />
+                            {taskState.label}
+                          </Badge>
+                        </td>
+
+                        <td className="p-3.5 text-right">
+                          {taskState.status === "belum" && (
+                            <Button size="sm" className="h-8 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => handleOpenDetail(a)}>
+                              🚀 Kerjakan
+                            </Button>
+                          )}
+                          {taskState.status === "draft" && (
+                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10" onClick={() => handleOpenDetail(a)}>
+                              ✏️ Lanjutkan
+                            </Button>
+                          )}
+                          {taskState.status === "dikumpulkan" && (
+                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-blue-500/40 text-blue-600 hover:bg-blue-500/10" onClick={() => handleOpenDetail(a)}>
+                              👀 Lihat Jawaban
+                            </Button>
+                          )}
+                          {taskState.status === "dinilai" && (
+                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleOpenDetail(a)}>
+                              🏆 Lihat Hasil ({sub?.score}/100)
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
           )}
         </CardContent>
       </Card>

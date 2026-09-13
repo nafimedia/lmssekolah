@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { BookOpen, Video, FileText, Plus, CheckCircle2, ExternalLink, Library, Upload } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { BookOpen, Video, FileText, Plus, Check, Eye, Library, Upload } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -171,39 +171,55 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
 
   return (
     <>
-      <Card className="border-border shadow-xs bg-card">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-          <div>
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" /> Materi Pembelajaran Sesi KBM ({activeMapel})
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Bahan ajar dan buku paket yang aktif untuk sesi mengajar {activeRombel}. Pilih dan buka materi yang digunakan hari ini.
-            </CardDescription>
+      <Card className="border-border shadow-xs bg-card overflow-hidden">
+        {/* Header Bersih & Ringkas (Clean UI Mobile-First) */}
+        <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between gap-2 bg-muted/15">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <BookOpen className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-xs sm:text-sm font-bold truncate text-foreground">
+                  Bahan Ajar KBM
+                </h3>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-semibold">
+                  {materials.length}
+                </Badge>
+              </div>
+              <p className="text-[10px] text-muted-foreground truncate hidden sm:block">
+                {activeMapel} · {activeRombel}
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             <Button
               size="sm"
               variant="outline"
-              className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/50 font-semibold text-xs gap-1.5 shadow-xs"
+              className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/50"
               onClick={() => setIsElibraryOpen(true)}
+              title="Ambil dari E-Library"
             >
-              <Library className="h-4 w-4 text-purple-600 dark:text-purple-400" /> Ambil dari E-Library
+              <Library className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+              <span className="hidden sm:inline">E-Library</span>
             </Button>
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 shadow-xs"
+              className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={() => setIsUploadOpen(true)}
+              title="Unggah Bahan Ajar"
             >
-              <Upload className="h-4 w-4" /> + Unggah Bahan Ajar
+              <Upload className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">+ Unggah</span>
+              <span className="sm:hidden">Unggah</span>
             </Button>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-3 sm:p-4 space-y-3">
           {materials.length === 0 ? (
-            <div className="p-8 text-center border border-dashed border-border rounded-xl space-y-3">
+            <div className="p-6 sm:p-8 text-center border border-dashed border-border rounded-xl space-y-3">
               <FileText className="h-8 w-8 text-muted-foreground/40 mx-auto" />
               <p className="text-xs text-muted-foreground">
                 Belum ada bahan ajar yang terdaftar untuk mata pelajaran <strong>{activeMapel}</strong>.
@@ -215,63 +231,84 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                   className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/50 font-semibold text-xs gap-1.5"
                   onClick={() => setIsElibraryOpen(true)}
                 >
-                  <Library className="h-3.5 w-3.5 text-purple-600" /> Ambil dari E-Library
+                  <Library className="h-3.5 w-3.5 text-purple-600" /> E-Library
                 </Button>
                 <Button
                   size="sm"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5"
                   onClick={() => setIsUploadOpen(true)}
                 >
-                  <Upload className="h-3.5 w-3.5" /> Unggah Bahan Ajar Sekarang
+                  <Upload className="h-3.5 w-3.5" /> Unggah Sekarang
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             {materials.map((m) => (
               <div
                 key={m.id}
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-3 rounded-xl border transition-all ${
                   m.selectedForToday
-                    ? "border-primary/50 bg-primary/5 dark:bg-primary/10 shadow-xs"
+                    ? "border-emerald-500/40 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-xs"
                     : "border-border bg-card hover:bg-muted/30"
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    {m.type === "MODUL_AJAR" && <FileText className="h-5 w-5 text-emerald-600 shrink-0" />}
-                    {m.type === "VIDEO" && <Video className="h-5 w-5 text-blue-600 shrink-0" />}
-                    {m.type === "SLIDE_PPT" && <BookOpen className="h-5 w-5 text-amber-600 shrink-0" />}
-                    {m.type === "EBOOK" && <Library className="h-5 w-5 text-purple-600 shrink-0" />}
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+                      {m.type === "MODUL_AJAR" && <FileText className="h-4 w-4 text-emerald-600" />}
+                      {m.type === "VIDEO" && <Video className="h-4 w-4 text-blue-600" />}
+                      {m.type === "SLIDE_PPT" && <BookOpen className="h-4 w-4 text-amber-600" />}
+                      {m.type === "EBOOK" && <Library className="h-4 w-4 text-purple-600" />}
+                    </div>
 
-                    <div>
-                      <h4 className="font-bold text-xs text-foreground line-clamp-1">{m.title}</h4>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{m.source} · {m.chapter}</p>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-xs text-foreground truncate">{m.title}</h4>
+                      <p className="text-[10px] text-muted-foreground truncate mt-0.5">{m.source} · {m.chapter}</p>
                     </div>
                   </div>
 
-                  <Badge variant={m.selectedForToday ? "default" : "outline"} className="text-[10px] font-semibold shrink-0 gap-1">
-                    {m.selectedForToday ? <><CheckCircle2 className="h-3 w-3" /> DIGUNAKAN HARI INI</> : "TIDAK AKTIF"}
+                  <Badge
+                    variant={m.selectedForToday ? "default" : "outline"}
+                    className={`text-[10px] font-semibold shrink-0 px-2 py-0.5 ${
+                      m.selectedForToday
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                        : "text-muted-foreground border-border"
+                    }`}
+                  >
+                    {m.selectedForToday ? "Aktif" : "Nonaktif"}
                   </Badge>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between">
+                <div className="mt-2.5 pt-2 border-t border-border/60 flex items-center justify-between gap-2">
                   <Button
                     size="sm"
-                    variant="ghost"
-                    className="h-7 px-2 text-[11px] font-semibold text-primary gap-1"
+                    variant="outline"
+                    className="h-7 px-2.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5 gap-1.5"
                     onClick={() => handleOpenViewMaterial(m)}
                   >
-                    <ExternalLink className="h-3 w-3" /> Buka Materi & Preview
+                    <Eye className="h-3.5 w-3.5" /> Buka
                   </Button>
 
                   <Button
                     size="sm"
                     variant={m.selectedForToday ? "secondary" : "outline"}
-                    className="h-7 px-2.5 text-[11px] font-semibold gap-1"
+                    className={`h-7 px-2.5 text-xs font-semibold gap-1.5 ${
+                      m.selectedForToday
+                        ? "text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200"
+                        : "text-foreground hover:bg-muted"
+                    }`}
                     onClick={() => handleToggleSelect(m.id)}
                   >
-                    {m.selectedForToday ? "Lepas dari Sesi KBM" : <><CheckCircle2 className="h-3 w-3" /> Gunakan Hari Ini</>}
+                    {m.selectedForToday ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-600" /> Dipakai
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-3.5 w-3.5" /> Gunakan
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>

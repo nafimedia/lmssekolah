@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Video, FileText, Library, ExternalLink, Download, Sparkles, CheckCircle2 } from "lucide-react";
+import { BookOpen, Video, FileText, Library, ExternalLink, Download, Sparkles, CheckCircle2, Eye, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export interface MaterialDetail {
@@ -31,11 +32,28 @@ export function ViewMaterialDialog({
   activeRombel,
   activeMapel,
 }: ViewMaterialDialogProps) {
+  const [showEmbedOnMobile, setShowEmbedOnMobile] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShowEmbedOnMobile(false);
+    }
+  }, [isOpen]);
+
   if (!material) return null;
+
+  const targetUrl = material.file_url || material.url || "";
+  const isPdfOrDoc = Boolean(
+    targetUrl &&
+      (targetUrl.toLowerCase().includes(".pdf") ||
+        targetUrl.toLowerCase().includes("/uploads/") ||
+        material.type === "MODUL_AJAR" ||
+        material.type === "EBOOK")
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="border-b border-border pb-3">
           <div className="flex items-center gap-2 mb-1">
             <Badge variant="outline" className="text-[10px] font-semibold gap-1">
@@ -51,16 +69,16 @@ export function ViewMaterialDialog({
             </span>
           </div>
 
-          <DialogTitle className="text-lg font-bold flex items-center justify-between gap-4">
-            <span>{material.title}</span>
+          <DialogTitle className="text-base sm:text-lg font-bold flex items-center justify-between gap-4">
+            <span className="truncate">{material.title}</span>
           </DialogTitle>
-          <DialogDescription className="text-xs">
+          <DialogDescription className="text-xs truncate">
             {material.source} — {material.chapter}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 space-y-4">
-          {/* Content Viewer / Video Player / E-Book Reader */}
+        <div className="py-3 space-y-4">
+          {/* Video Player */}
           {material.type === "VIDEO" ? (
             <div className="space-y-3">
               <div className="aspect-video w-full rounded-xl bg-slate-900 flex flex-col items-center justify-center text-white p-6 relative overflow-hidden shadow-inner">
@@ -82,14 +100,15 @@ export function ViewMaterialDialog({
               </div>
             </div>
           ) : material.type === "SLIDE_PPT" ? (
-            <div className="p-6 rounded-xl border border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
+            /* Slide PPT */
+            <div className="p-5 sm:p-6 rounded-xl border border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold text-sm">
                 <BookOpen className="h-5 w-5" /> Slide Presentasi Kurikulum Merdeka (PPTX)
               </div>
               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                Slide ini dirancang untuk diproyeksikan pada layar Proyektor / Smart TV Ruang {activeRombel}. Berisi diagram ringkasan konsep, peta materi, dan soal pemantik diskusi kelompok.
+                Slide dirancang untuk diproyeksikan pada layar Proyektor / Smart TV Ruang {activeRombel}. Berisi ringkasan konsep, peta materi, dan pemantik diskusi.
               </p>
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-2">
                 <Button
                   size="sm"
                   className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs gap-1.5"
@@ -97,27 +116,115 @@ export function ViewMaterialDialog({
                 >
                   <Sparkles className="h-4 w-4" /> Tampilkan Slide Proyektor
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs font-semibold gap-1.5"
-                  onClick={() => toast.success("Mengunduh file PPTX...")}
-                >
-                  <Download className="h-4 w-4" /> Unduh Slide (PPTX)
-                </Button>
+                {targetUrl && (
+                  <a
+                    href={targetUrl}
+                    download={`${material.title}.pptx`}
+                    className="inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-muted h-8 px-3 text-xs font-semibold gap-1.5"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Unduh Slide (PPTX)
+                  </a>
+                )}
               </div>
             </div>
-          ) : material.file_url || material.url ? (
-            <div className="relative w-full rounded-xl border border-border bg-slate-900 overflow-hidden shadow-inner min-h-[450px]">
-              <iframe
-                src={material.file_url || material.url}
-                className="w-full h-[480px] rounded-xl border-0"
-                title={material.title}
-              />
+          ) : isPdfOrDoc ? (
+            /* Modul PDF / Dokumen Digital */
+            <div className="space-y-3">
+              {/* Bilah Ringkas Dokumen */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-muted/40 rounded-xl border border-border text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span className="font-semibold text-foreground truncate">{material.title}</span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {targetUrl && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2.5 text-xs font-semibold gap-1 text-primary"
+                        onClick={() => window.open(targetUrl, "_blank")}
+                        title="Buka dokumen di tab baru"
+                      >
+                        <ExternalLink className="h-3 w-3" /> Buka Layar Penuh
+                      </Button>
+                      <a
+                        href={targetUrl}
+                        download={`${material.title}.pdf`}
+                        className="inline-flex items-center justify-center rounded-md border border-emerald-500/40 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 h-7 px-2.5 text-xs font-semibold gap-1 transition-colors"
+                        title="Unduh berkas jika dibutuhkan"
+                      >
+                        <Download className="h-3 w-3" /> Unduh Berkas
+                      </a>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Tampilan Ponsel (Mobile): Mencegah Auto-Download pada Android Chrome */}
+              <div className="block md:hidden">
+                {!showEmbedOnMobile ? (
+                  <div className="p-5 rounded-xl border border-border bg-card flex flex-col items-center text-center space-y-3">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shadow-xs">
+                      <FileText className="h-7 w-7" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-sm text-foreground">{material.title}</h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        {material.source || activeMapel} · {material.chapter || activeRombel}
+                      </p>
+                      {material.uploaded_by && (
+                        <p className="text-[10px] text-muted-foreground">Pengunggah: {material.uploaded_by}</p>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 bg-muted/30 p-2.5 rounded-lg border border-border/50 max-w-sm">
+                      Dokumen siap dibaca langsung. Berkas tidak akan otomatis tersimpan di HP Anda kecuali Anda memilih tombol unduh.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 pt-1 w-full max-w-xs">
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 flex-1"
+                        onClick={() => window.open(targetUrl, "_blank")}
+                      >
+                        <Eye className="h-3.5 w-3.5" /> Baca Dokumen
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-[11px] text-muted-foreground h-8 px-2"
+                        onClick={() => setShowEmbedOnMobile(true)}
+                        title="Tampilkan langsung di dalam dialog ini"
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" /> Pratinjau Tersemat
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full rounded-xl border border-border bg-slate-900 overflow-hidden shadow-inner min-h-[400px]">
+                    <iframe
+                      src={targetUrl}
+                      className="w-full h-[400px] rounded-xl border-0"
+                      title={material.title}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Tampilan Desktop: Tampil tersemat langsung tanpa download */}
+              <div className="hidden md:block">
+                <div className="relative w-full rounded-xl border border-border bg-slate-900 overflow-hidden shadow-inner min-h-[460px]">
+                  <iframe
+                    src={targetUrl}
+                    className="w-full h-[480px] rounded-xl border-0"
+                    title={material.title}
+                  />
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="p-6 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex items-center justify-between border-b border-border pb-3">
+            /* Materi Berupa Teks / Instruksi */
+            <div className="p-5 rounded-xl border border-border bg-card space-y-3">
+              <div className="flex items-center justify-between border-b border-border pb-2.5">
                 <div className="font-semibold text-xs text-primary flex items-center gap-2">
                   <FileText className="h-4 w-4" /> Berkas Bahan Ajar Digital ({activeMapel})
                 </div>
@@ -126,17 +233,19 @@ export function ViewMaterialDialog({
                 </Badge>
               </div>
 
-              <div className="space-y-3 text-xs text-slate-700 dark:text-slate-300">
-                <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
+              <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
+                <div className="p-3.5 rounded-lg bg-muted/40 border border-border space-y-1.5">
                   <p className="font-bold text-foreground text-sm">{material.title}</p>
-                  <p className="text-muted-foreground font-mono">
-                    Mata Pelajaran: {material.source || activeMapel} · Kelas: {material.chapter || activeRombel}
+                  <p className="text-muted-foreground font-mono text-[11px]">
+                    {material.source || activeMapel} · {material.chapter || activeRombel}
                   </p>
                   {material.uploaded_by && (
-                    <p className="text-muted-foreground">Penyusun/Pengunggah: {material.uploaded_by}</p>
+                    <p className="text-muted-foreground text-[11px]">Penyusun: {material.uploaded_by}</p>
                   )}
                   {material.content && (
-                    <p className="mt-2 text-foreground leading-relaxed">{material.content}</p>
+                    <p className="mt-2 text-foreground leading-relaxed pt-2 border-t border-border/50">
+                      {material.content}
+                    </p>
                   )}
                 </div>
               </div>
@@ -157,10 +266,11 @@ export function ViewMaterialDialog({
               onOpenChange(false);
             }}
           >
-            <CheckCircle2 className="h-4 w-4" /> Gunakan Dalam Sesi KBM Ini
+            <CheckCircle2 className="h-4 w-4" /> Gunakan Dalam Sesi KBM
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+

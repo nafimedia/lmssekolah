@@ -412,10 +412,10 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
     return (
       <div className="space-y-4">
         <StudentHeaderBanner
-          title="Kehadiran & Rekapitulasi Presensi Saya"
+          title="Kehadiran & Rekapitulasi Presensi"
           icon={UserCheck}
-          statusText="Presensi Terverifikasi"
-          statusVariant="success"
+          studentClass={studentClass}
+          studentNisn={studentNis}
         />
 
         {/* Read-Only Status Banner */}

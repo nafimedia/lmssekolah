@@ -420,9 +420,8 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         <StudentHeaderBanner
           title="Ujian CBT & Asesmen Digital"
           icon={MonitorCheck}
+          studentClass={(me as any)?.class_name || (me as any)?.class}
           studentNisn={me?.nis_nip}
-          statusText="CBT Engine Siap Digunakan"
-          statusVariant="success"
         />
       ) : (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">

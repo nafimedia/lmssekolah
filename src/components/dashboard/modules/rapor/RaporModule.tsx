@@ -1150,20 +1150,6 @@ export function RaporModule({
         <StudentHeaderBanner
           title="Rekap Nilai & Progress Belajar"
           icon={Award}
-          statusText={
-            studentMetrics.avgFinalScore >= 75
-              ? "Target Ketuntasan Belajar Terpenuhi"
-              : studentMetrics.avgFinalScore > 0
-                ? "Perlu Peningkatan / Remedial"
-                : ""
-          }
-          statusVariant={
-            studentMetrics.avgFinalScore >= 75
-              ? "success"
-              : studentMetrics.avgFinalScore > 0
-                ? "warning"
-                : "neutral"
-          }
           actionButtons={
             <Button
               size="sm"

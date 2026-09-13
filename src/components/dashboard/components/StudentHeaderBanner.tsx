@@ -21,7 +21,7 @@ export function StudentHeaderBanner({
   iconColorClass = "text-emerald-600 dark:text-emerald-400",
   studentClass,
   studentNisn,
-  statusText = "Siswa Aktif MTsN 2 Cilacap",
+  statusText,
   statusVariant = "success",
   actionButtons,
 }: StudentHeaderBannerProps) {
@@ -64,15 +64,17 @@ export function StudentHeaderBanner({
         )}
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
-        {statusText && (
-          <Badge className={`text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 font-semibold flex items-center gap-1 shrink-0 ${getStatusBadgeStyle()}`}>
-            <Sparkles className="h-3 w-3 shrink-0" />
-            <span className="truncate max-w-[130px] sm:max-w-none">{statusText}</span>
-          </Badge>
-        )}
-        {actionButtons}
-      </div>
+      {(statusText || actionButtons) && (
+        <div className="flex items-center gap-2 shrink-0">
+          {statusText && statusText.trim() !== "" && (
+            <Badge className={`text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 font-semibold flex items-center gap-1 shrink-0 ${getStatusBadgeStyle()}`}>
+              <Sparkles className="h-3 w-3 shrink-0" />
+              <span className="truncate max-w-[130px] sm:max-w-none">{statusText}</span>
+            </Badge>
+          )}
+          {actionButtons}
+        </div>
+      )}
     </div>
   );
 }

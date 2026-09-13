@@ -150,8 +150,6 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
         <StudentHeaderBanner
           title={`Jadwal Pelajaran ${resolvedInitialRombel}`}
           icon={CalendarClock}
-          statusText={resolvedInitialRombel}
-          statusVariant="success"
           actionButtons={
             <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 px-3" onClick={() => setIsPrintJadwalOpen(true)}>
               <Printer className="h-3.5 w-3.5" /> Cetak Jadwal (PDF)

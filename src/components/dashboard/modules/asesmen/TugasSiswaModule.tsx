@@ -1637,8 +1637,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       <StudentHeaderBanner
         title="Tugas dan LKPD"
         icon={FileText}
-        statusText="Portofolio Tugas Aktif"
-        statusVariant="success"
+        studentClass={studentRombel}
       />
 
       {/* Sesi KBM Live Alert Banner (Only shown if teacher is currently teaching) */}

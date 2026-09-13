@@ -223,8 +223,6 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
       <StudentHeaderBanner
         title="Kuis Interaktif Live Saya"
         icon={Zap}
-        statusText="Kuis Live Ready"
-        statusVariant="success"
       />
 
       {/* Summary Metric Strip - Kompak di Mobile */}

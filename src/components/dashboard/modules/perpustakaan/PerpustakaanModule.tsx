@@ -228,10 +228,8 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
     <>
       {activeRole === "siswa" ? (
         <StudentHeaderBanner
-          title="E-Library & Buku Digital Saya"
+          title="Perpustakaan Digital & Buku Saya"
           icon={Library}
-          statusText="Buku Digital Terverifikasi"
-          statusVariant="success"
         />
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">

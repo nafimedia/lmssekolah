@@ -293,8 +293,6 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
         <StudentHeaderBanner
           title="Progress Belajar Saya"
           icon={TrendingUp}
-          statusText="Perkembangan Pembelajaran Aktif"
-          statusVariant="success"
         />
         {isLoading ? (
           <div className="p-8 text-center text-xs text-muted-foreground">Memuat data progress belajar...</div>

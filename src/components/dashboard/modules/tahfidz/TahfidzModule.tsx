@@ -446,8 +446,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
         <StudentHeaderBanner
           title="Tahfidz & Hafalan Qur'an"
           icon={BookMarked}
-          statusText="Program Aktif"
-          statusVariant="success"
+          studentClass={userProfile?.class_name || activeUser?.class_name || activeRombel}
         />
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -637,20 +636,17 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
           {/* Target Overview Card */}
           <Card className="border-border shadow-xs bg-gradient-to-r from-emerald-500/10 via-card to-card">
             <CardContent className="p-3.5 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="space-y-1 text-center sm:text-left">
-                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2 justify-center sm:justify-start">
-                  <span>Program Pembinaan Tahfidz MTsN 2 Cilacap</span>
-                  {selectedJuz !== "Semua Juz" && (
-                    <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/40 text-emerald-600">
-                      Filter {selectedJuz}
-                    </Badge>
-                  )}
-                </div>
+              <div className="flex items-center gap-2.5 flex-wrap justify-center sm:justify-start">
                 <div className="text-lg sm:text-xl font-bold text-foreground">
                   {selectedJuz === "Semua Juz"
                     ? "Target & Capaian Hafalan Al-Qur'an"
                     : `Capaian & Evaluasi Setoran ${selectedJuz}`}
                 </div>
+                {selectedJuz !== "Semua Juz" && (
+                  <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/40 text-emerald-600">
+                    {selectedJuz}
+                  </Badge>
+                )}
               </div>
 
               <div className="flex items-center gap-3 shrink-0">

@@ -179,9 +179,8 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         title={`Ruang Belajar — ${userName}`}
         subtitle={`Portal akademik siswa MTsN 2 Cilacap • ${currentDayName}, ${formattedTime}`}
         icon={GraduationCap}
+        studentClass={siswaClass}
         studentNisn={siswaNisn}
-        statusText={statusText}
-        statusVariant={statusVariant}
       />
 
       {/* Real-Time Alert: KBM Live Session in Student's Class */}

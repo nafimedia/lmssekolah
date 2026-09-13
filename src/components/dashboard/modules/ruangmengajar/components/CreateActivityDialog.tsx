@@ -129,7 +129,7 @@ export function CreateActivityForm({
       try {
         const parsed = JSON.parse(initialData.questions_data);
         if (Array.isArray(parsed)) return parsed;
-      } catch {}
+      } catch { }
     }
     return [];
   });
@@ -142,7 +142,7 @@ export function CreateActivityForm({
       try {
         const parsed = JSON.parse(initialData.quiz_data);
         if (Array.isArray(parsed)) return parsed;
-      } catch {}
+      } catch { }
     }
     return [];
   });
@@ -433,7 +433,7 @@ export function CreateActivityForm({
             </Button>
             <div className="flex items-center gap-2">
               <Badge className="bg-emerald-600 text-white font-semibold text-[11px] gap-1 px-2.5 py-0.5">
-                <Sparkles className="h-3 w-3" /> FORM AKTIVITAS KURIKULUM MERDEKA
+                <Sparkles className="h-3 w-3" />
               </Badge>
               <span className="text-xs text-muted-foreground font-mono">
                 {activeMapel} · {activeRombel}
@@ -450,7 +450,7 @@ export function CreateActivityForm({
               <CardDescription className="text-xs text-muted-foreground mt-0.5">
                 {isEditing
                   ? "Perbarui instruksi, bobot nilai, tenggat waktu, atau terbitkan aktivitas draf ini."
-                  : "Atur lembar kerja, tenggat waktu, dan materi pendukung pembelajaran untuk siswa."}
+                  : ""}
               </CardDescription>
             </div>
 
@@ -485,7 +485,7 @@ export function CreateActivityForm({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-medium text-foreground block">Kategori Aktivitas:</label>
-                <span className="text-[11px] text-muted-foreground">Pilih jenis instrumen aktivitas pembelajaran</span>
+                <span className="text-[11px] text-muted-foreground"></span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {activityOptions.map((opt) => (
@@ -493,11 +493,10 @@ export function CreateActivityForm({
                     key={opt.id}
                     type="button"
                     onClick={() => handleSelectType(opt)}
-                    className={`px-3 py-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
-                      type === opt.id
-                        ? "bg-emerald-600 text-white border-emerald-600 font-semibold shadow-2xs"
-                        : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${type === opt.id
+                      ? "bg-emerald-600 text-white border-emerald-600 font-semibold shadow-2xs"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
+                      }`}
                   >
                     <span>{opt.label}</span>
                   </button>
@@ -590,7 +589,7 @@ export function CreateActivityForm({
                     🗓️ {formatDueDateTime(dueDateDate, dueDateTime)}
                   </p>
                 ) : (
-                  <p className="text-[10px] text-muted-foreground">Pilih tanggal & jam batas waktu</p>
+                  <p className="text-[10px] text-muted-foreground"></p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -635,33 +634,30 @@ export function CreateActivityForm({
                   <button
                     type="button"
                     onClick={() => setUploadMode("FILE")}
-                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${
-                      uploadMode === "FILE"
-                        ? "bg-background text-foreground shadow-2xs font-semibold"
-                        : "text-muted-foreground hover:text-foreground font-medium"
-                    }`}
+                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "FILE"
+                      ? "bg-background text-foreground shadow-2xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground font-medium"
+                      }`}
                   >
                     <Upload className="h-3.5 w-3.5" /> Unggah Berkas
                   </button>
                   <button
                     type="button"
                     onClick={() => setUploadMode("ELIBRARY")}
-                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${
-                      uploadMode === "ELIBRARY"
-                        ? "bg-background text-purple-700 dark:text-purple-300 shadow-2xs font-semibold"
-                        : "text-muted-foreground hover:text-foreground font-medium"
-                    }`}
+                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "ELIBRARY"
+                      ? "bg-background text-purple-700 dark:text-purple-300 shadow-2xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground font-medium"
+                      }`}
                   >
                     <Library className="h-3.5 w-3.5 text-purple-600" /> Dari E-Library
                   </button>
                   <button
                     type="button"
                     onClick={() => setUploadMode("URL")}
-                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${
-                      uploadMode === "URL"
-                        ? "bg-background text-foreground shadow-2xs font-semibold"
-                        : "text-muted-foreground hover:text-foreground font-medium"
-                    }`}
+                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "URL"
+                      ? "bg-background text-foreground shadow-2xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground font-medium"
+                      }`}
                   >
                     <Link2 className="h-3.5 w-3.5" /> Tautan Web
                   </button>
@@ -685,7 +681,7 @@ export function CreateActivityForm({
                       className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-emerald-500/40 hover:border-emerald-500 rounded-xl cursor-pointer bg-card/60 hover:bg-emerald-500/5 transition text-center"
                     >
                       <Upload className="h-6 w-6 text-emerald-600 mb-1" />
-                      <span className="text-xs font-medium text-foreground">Klik untuk memilih berkas LKPD (PDF / Word)</span>
+                      <span className="text-xs font-medium text-foreground">Klik untuk memilih berkas LKPD</span>
                       <span className="text-[11px] text-muted-foreground mt-0.5">
                         Berkas fisik otomatis disimpan ke File Server (`/uploads/lkpd/`)
                       </span>
@@ -805,13 +801,13 @@ export function CreateActivityForm({
                       {type === "PRAKTIKUM"
                         ? `Lembar Langkah & Pengamatan Praktikum (${lkpdQuestions.length} Butir)`
                         : type === "HAFALAN"
-                        ? `Target Ayat & Butir Setoran Hafalan (${lkpdQuestions.length} Butir)`
-                        : type === "PROYEK_P5"
-                        ? `Tahapan & Lembar Kerja Proyek (${lkpdQuestions.length} Butir)`
-                        : `Lembar Butir Pertanyaan / Tugas Terstruktur (${lkpdQuestions.length} Butir)`}
+                          ? `Target Ayat & Butir Setoran Hafalan (${lkpdQuestions.length} Butir)`
+                          : type === "PROYEK_P5"
+                            ? `Tahapan & Lembar Kerja Proyek (${lkpdQuestions.length} Butir)`
+                            : `Lembar Butir Pertanyaan / Tugas Terstruktur (${lkpdQuestions.length} Butir)`}
                     </span>
                     <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-                      Siswa akan menjawab pertanyaan-pertanyaan ini satu per satu secara terstruktur di layar mereka.
+
                     </p>
                   </div>
                   <Button
@@ -1031,13 +1027,13 @@ export function CreateActivityForm({
         </CardContent>
       </Card>
 
-    <PickElibraryDialog
-      isOpen={isPickElibOpen}
-      onOpenChange={setIsPickElibOpen}
-      activeRombel={activeRombel}
-      activeMapel={activeMapel}
-      onSelectBook={handleSelectElibraryForActivity}
-    />
+      <PickElibraryDialog
+        isOpen={isPickElibOpen}
+        onOpenChange={setIsPickElibOpen}
+        activeRombel={activeRombel}
+        activeMapel={activeMapel}
+        onSelectBook={handleSelectElibraryForActivity}
+      />
     </>
   );
 }

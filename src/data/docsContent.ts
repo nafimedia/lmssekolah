@@ -173,6 +173,68 @@ export const DOCS_DATA: DocCategory[] = [
         ],
       },
       {
+        id: "siswa-bahan-ajar",
+        slug: "siswa-bahan-ajar",
+        title: "Bahan Ajar & Alur Belajar Bertahap (Tandai Selesai)",
+        category: "Panduan Siswa",
+        role: "siswa",
+        lead: "Panduan menyimak materi aneka format (teks langsung, video, dokumen, audio), belajar bertahap sesuai nomor langkah, dan membuka materi berikutnya.",
+        content: [
+          "Siswa dapat mengakses seluruh bahan pembelajaran yang dibagikan oleh guru mata pelajaran melalui menu 'Bahan Ajar & Materi' pada bilah navigasi Ruang Belajar.",
+          "Materi pembelajaran disusun bertahap (Langkah #1, #2, #3, ...). Pada mode Belajar Mandiri / PR, siswa membuka Langkah #1 terlebih dahulu, membaca rangkuman atau menonton video penjelasan, kemudian menekan tombol 'Tandai Selesai' (Mark as Done).",
+          "Setelah tombol ditekan, status penyelesaian akan otomatis tercatat di server madrasah dan materi Langkah #2 langsung terbuka untuk dipelajari.",
+          "Jika materi berstatus '🔒 Terkunci oleh Guru', materi tersebut sedang dikunci khusus oleh guru pengampu dan baru dapat diakses saat sesi tatap muka di kelas dibuka kembali oleh guru.",
+        ],
+        screenshot: {
+          src: "/docs/screenshots/siswa_bahan_ajar.png",
+          alt: "Bahan Ajar Ruang Belajar Siswa",
+          caption: "Menu Bahan Ajar Siswa: Urutan langkah pembelajaran (#1, #2), badge indikator mode Tatap Muka/Mandiri, dan status kunci bertahap.",
+        },
+        steps: [
+          {
+            number: 1,
+            title: "Buka Menu 'Bahan Ajar & Materi'",
+            description: "Klik menu Bahan Ajar pada navigasi Ruang Belajar dan pilih mata pelajaran atau jenjang kelas.",
+          },
+          {
+            number: 2,
+            title: "Pilih Materi yang Siap Dipelajari",
+            description: "Klik tombol 'Pelajari Materi' pada kartu bahan ajar yang berstatus terbuka (Langkah #1).",
+          },
+          {
+            number: 3,
+            title: "Simak Konten Materi",
+            description: "Baca rangkuman teks catatan guru, tonton tayangan video YouTube/MP4, dengarkan audio, atau unduh berkas modul PDF pendukung.",
+          },
+          {
+            number: 4,
+            title: "Klik 'Tandai Selesai' (Mode Mandiri)",
+            description: "Setelah selesai mempelajari materi, klik tombol hijau '✔ Tandai Selesai (Buka Langkah Berikutnya)' di bagian bawah dialog baca.",
+          },
+          {
+            number: 5,
+            title: "Langkah Berikutnya Terbuka Otomatis",
+            description: "Kartu Langkah #1 akan berstatus '✅ Selesai' dan materi Langkah #2 otomatis terbuka untuk dapat dipelajari.",
+          },
+        ],
+        callouts: [
+          {
+            type: "info",
+            title: "Fungsi Tombol 'Tandai Selesai'",
+            text: "Tombol ini mencatat riwayat progres belajar mandiri Anda secara permanen ke database madrasah sekaligus membuka kunci materi langkah berikutnya.",
+          },
+          {
+            type: "warning",
+            title: "Hak Veto Gembok Guru (Master Lock)",
+            text: "Jika guru mengunci materi tertentu di kelas, materi tersebut tetap berstatus '🔒 Terkunci oleh Guru' meskipun Anda telah menandai selesai langkah-langkah sebelumnya.",
+          },
+        ],
+        subsections: [
+          { id: "alur-belajar-mandiri", title: "Alur Pembukaan Langkah Bertahap" },
+          { id: "ragam-media-siswa", title: "Ragam Media Pembelajaran" },
+        ],
+      },
+      {
         id: "siswa-tugas",
         slug: "siswa-tugas",
         title: "Pengerjaan & Pengumpulan Tugas / LKPD",
@@ -509,6 +571,69 @@ export const DOCS_DATA: DocCategory[] = [
         subsections: [
           { id: "langkah-presensi", title: "Alur Presensi Kelas" },
           { id: "pengisian-jurnal", title: "Format Jurnal Mengajar" },
+        ],
+      },
+      {
+        id: "guru-bahan-ajar",
+        slug: "guru-bahan-ajar",
+        title: "Bahan Ajar KBM: 6 Format, Urutan Belajar, & Mode Akses",
+        category: "Panduan Guru",
+        role: "guru",
+        lead: "Penyusunan bahan ajar multimedia variatif (Dokumen, Video, Teks Langsung, Web, Audio MP3, Gambar), pengaturan langkah KBM, dan kontrol buka-tutup akses siswa.",
+        content: [
+          "Bahan ajar KBM mendukung 6 ragam format media pembelajaran modern: (1) Dokumen PDF/Word/PPT, (2) Video YouTube atau berkas MP4/WebM, (3) Teks Catatan / Rangkuman Langsung yang diketik guru langsung di LMS tanpa perlu membuat PDF, (4) Tautan Web eksternal (Simulasi PhET/Canva/Artikel), (5) Audio MP3 (Listening bahasa/murattal Al-Qur'an), dan (6) Gambar / Infografis.",
+          "Guru dapat menyusun alur pembelajaran terstruktur menggunakan nomor urut langkah tayang (Langkah #1, Langkah #2, Langkah #3, dst.) sehingga materi tersusun rapi otomatis di layar peserta didik.",
+          "Tersedia 2 pilihan sistem kontrol akses: (A) Mode Tatap Muka di Kelas, di mana guru memegang kendali buka-tutup gembok secara langsung saat jam pelajaran; atau (B) Mode Mandiri / PR, di mana siswa harus mempelajari materi dan menekan tombol 'Tandai Selesai' untuk membuka langkah berikutnya secara berurutan.",
+          "Guru memiliki Hak Veto (Master Lock). Jika materi tertentu dikunci oleh guru (status: Terkunci), materi tersebut tetap tertutup bagi siswa meskipun siswa telah menyelesaikan seluruh materi langkah sebelumnya.",
+        ],
+        screenshot: {
+          src: "/docs/screenshots/guru_bahan_ajar_form.png",
+          alt: "Formulir Unggah dan Susun Bahan Ajar KBM Guru",
+          caption: "Editor Bahan Ajar Guru: 6 pilihan format bahan ajar, penomoran urutan tayang (Langkah Ke-), dan pemilihan sistem kontrol akses siswa.",
+        },
+        steps: [
+          {
+            number: 1,
+            title: "Akses Tab 'Materi' pada Ruang Mengajar",
+            description: "Pilih rombel ampunan dan buka tab 'Materi & Bahan Ajar' untuk mengelola materi KBM pada pertemuan aktif.",
+          },
+          {
+            number: 2,
+            title: "Klik '+ Tambah Modul / Bahan Ajar'",
+            description: "Pilih salah satu dari 6 format bahan ajar yang ingin dibagikan kepada peserta didik.",
+          },
+          {
+            number: 3,
+            title: "Tentukan Urutan Tayang (Langkah Ke-)",
+            description: "Isikan nomor urut langkah pembelajaran (misal: 1 untuk rangkuman apersepsi, 2 untuk video pengantar, 3 untuk pendalaman dokumen).",
+          },
+          {
+            number: 4,
+            title: "Pilih Mode Akses Siswa",
+            description: "Pilih 'Tatap Muka di Kelas' untuk kendali manual saklar gembok atau 'Mandiri / PR' untuk pembukaan bertahap via tombol 'Tandai Selesai'.",
+          },
+          {
+            number: 5,
+            title: "Pantau Rekapitulasi Siswa Selesai",
+            description: "Periksa indikator 'x Siswa Selesai' pada setiap kartu materi untuk mengevaluasi ketuntasan belajar mandiri siswa.",
+          },
+        ],
+        callouts: [
+          {
+            type: "tip",
+            title: "Ketik Rangkuman Tanpa Perlu Buat PDF",
+            text: "Gunakan format 'Teks Catatan Langsung' untuk memberikan apersepsi atau poin-poin inti materi secara instan tanpa perlu mengetik di Word lalu mengonversinya ke PDF.",
+          },
+          {
+            type: "info",
+            title: "Penyimpanan Berkas Fisik di Server Disk",
+            text: "Seluruh berkas fisik (PDF, Video MP4, Audio MP3) otomatis tersimpan rapi di File Server Disk (/uploads/modul_ajar/) madrasah dan terindeks di database MySQL.",
+          },
+        ],
+        subsections: [
+          { id: "format-bahan-ajar", title: "6 Ragam Format Bahan Ajar" },
+          { id: "mode-kontrol-akses", title: "Perbedaan Mode Tatap Muka vs Mandiri" },
+          { id: "master-lock-guru", title: "Hak Veto Gembok Guru (Master Lock)" },
         ],
       },
       {

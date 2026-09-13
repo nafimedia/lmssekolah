@@ -123,7 +123,6 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
 
   return (
     <>
-    <>
       <Card className="border-border shadow-xs bg-card overflow-hidden">
         {/* Header Bersih & Ringkas (Clean UI Mobile-First) */}
         <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between gap-2 bg-muted/15">

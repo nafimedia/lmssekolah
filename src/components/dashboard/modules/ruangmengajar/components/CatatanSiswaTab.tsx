@@ -116,7 +116,6 @@ export function CatatanSiswaTab({ activeRombel, activeMapel }: CatatanSiswaTabPr
   const pengayaanCount = notes.filter((n) => n.type === "PENGAYAAN").length;
 
   return (
-    <div className="space-y-4">
     <div className="space-y-3">
       {/* Metric Chips Ringkas 1 Baris (Hemat Ruang Layar HP) */}
       <div className="grid grid-cols-3 gap-2 text-center">

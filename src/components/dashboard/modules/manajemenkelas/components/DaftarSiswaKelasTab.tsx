@@ -103,7 +103,7 @@ export function DaftarSiswaKelasTab({
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
             <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" /> Anggota Siswa {classNameTitle}
+              <Users className="h-5 w-5 text-primary" /> Daftar Siswa {classNameTitle}
             </CardTitle>
             <CardDescription className="text-xs">
               Daftar lengkap {students.length} siswa bimbingan, kontak WhatsApp orang tua, & rekapitulasi presensi.

@@ -224,9 +224,6 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
                   <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     Tidak ada jadwal mengajar terdaftar untuk Anda pada hari {currentDayName}.
                   </div>
-                  <p className="text-[11px] text-slate-500 max-w-md mx-auto">
-                    Anda dapat menggunakan waktu ini untuk mengoreksi tugas LKPD, menginput nilai harian, atau membuat Perangkat Ajar PDF.
-                  </p>
                 </div>
               ) : (
                 jadwalHariIni.map((j, idx) => (

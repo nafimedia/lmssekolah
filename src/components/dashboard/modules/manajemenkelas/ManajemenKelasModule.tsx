@@ -327,11 +327,10 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                   setActiveTab("rekap_rombel");
                   setSelectedClass("Semua");
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === "rekap_rombel"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${activeTab === "rekap_rombel"
                     ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-                }`}
+                  }`}
               >
                 <ShieldCheck className={`h-3.5 w-3.5 ${activeTab === "rekap_rombel" ? "text-emerald-600" : "opacity-60"}`} />
                 <span>Matriks {totalClassesCount} Kelas Terpadu</span>
@@ -341,11 +340,10 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
                 <button
                   type="button"
                   onClick={() => setActiveTab("siswa")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeTab === "siswa"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${activeTab === "siswa"
                       ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
                       : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-                  }`}
+                    }`}
                 >
                   <Users className={`h-3.5 w-3.5 ${activeTab === "siswa" ? "text-blue-600" : "opacity-60"}`} />
                   <span>Detail Siswa ({selectedClass})</span>
@@ -440,9 +438,6 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
                 <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Manajemen {selectedClass}
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Portal bimbingan siswa, presensi kelas, dan pengumuman internal.
-              </p>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -508,11 +503,10 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               <button
                 type="button"
                 onClick={() => setActiveTab("siswa")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === "siswa"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${activeTab === "siswa"
                     ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-                }`}
+                  }`}
               >
                 <Users className={`h-3.5 w-3.5 ${activeTab === "siswa" ? "text-emerald-600" : "opacity-60"}`} />
                 <span>Daftar Siswa ({classStudents.length})</span>
@@ -521,11 +515,10 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               <button
                 type="button"
                 onClick={() => setActiveTab("pengumuman")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === "pengumuman"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${activeTab === "pengumuman"
                     ? "bg-background text-foreground font-bold shadow-xs border border-border/60"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-                }`}
+                  }`}
               >
                 <Megaphone className={`h-3.5 w-3.5 ${activeTab === "pengumuman" ? "text-amber-600" : "opacity-60"}`} />
                 <span>Pengumuman Internal ({announcements.length})</span>

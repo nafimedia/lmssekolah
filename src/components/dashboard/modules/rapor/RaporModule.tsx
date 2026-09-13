@@ -1060,7 +1060,7 @@ export function RaporModule({
                   <tr>
                     <td className="py-1">Tanpa Keterangan (A)</td>
                     <td className="py-1 text-right font-mono font-bold text-emerald-600">
-                      0 Hari (Nihil)
+                      0 Hari
                     </td>
                   </tr>
                 </tbody>
@@ -1371,10 +1371,10 @@ export function RaporModule({
                           <div className="text-[10px] text-muted-foreground">Nilai Akhir</div>
                           <div
                             className={`font-mono font-extrabold text-xs mt-0.5 ${m.avg >= 75
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : m.avg > 0
-                                  ? "text-amber-600"
-                                  : "text-muted-foreground"
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : m.avg > 0
+                                ? "text-amber-600"
+                                : "text-muted-foreground"
                               }`}
                           >
                             {m.avg > 0 ? m.avg : "-"}
@@ -1425,10 +1425,10 @@ export function RaporModule({
                         <div className="h-2.5 rounded-full bg-muted overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${isOptimal
-                                ? "bg-emerald-600"
-                                : inProgress
-                                  ? "bg-amber-500"
-                                  : "bg-muted-foreground/30"
+                              ? "bg-emerald-600"
+                              : inProgress
+                                ? "bg-amber-500"
+                                : "bg-muted-foreground/30"
                               }`}
                             style={{ width: `${x.progressPct}%` }}
                           />
@@ -1479,9 +1479,6 @@ export function RaporModule({
               ? "Laporan Pembelajaran & Rekap Leger Seluruh Kelas"
               : `Laporan Pembelajaran & Rekap Leger ${selectedClass}`}
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Monitoring e-Rapor Kurikulum Merdeka, KKTP, capaian formatif & sumatif terpadu.
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -1593,176 +1590,84 @@ export function RaporModule({
       {selectedClass === "ALL" && (
         <Card className="border-border shadow-xs bg-card">
           <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
-              <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Matriks Rekapitulasi Leger Pembelajaran Per Kelas</span>
-              </CardTitle>
+            <CardTitle className="text-xs font-bold flex items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Matriks Rekapitulasi Leger Pembelajaran Per Kelas</span>
+            </CardTitle>
             <Badge className="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5">
               {classSummaries.length} Kelas
-            </Badge>
-          </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              {isLoading ? (
-                <div className="p-8 text-center text-xs text-muted-foreground">
-                  Memuat rekapitulasi leger kelas...
-                </div>
-              ) : classSummaries.length === 0 ? (
-                <div className="p-8 text-center text-xs text-muted-foreground">
-                  Tidak ada kelas terdaftar.
-                </div>
-              ) : (
-                <table className="w-full text-xs">
-                  <thead className="bg-muted/50 text-muted-foreground font-bold text-left border-b border-border">
-                    <tr>
-                      <th className="p-3">Rombel / Kelas</th>
-                      <th className="p-3">Wali Kelas</th>
-                      <th className="p-3 text-center">Total Siswa</th>
-                      <th className="p-3 text-center">Rata-Rata Nilai</th>
-                      <th className="p-3 text-center">Ketuntasan KKTP</th>
-                      <th className="p-3 text-right">Aksi Laporan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {classSummaries.map((c) => (
-                      <tr key={c.rombel} className="hover:bg-muted/30 transition">
-                        <td className="p-3 font-bold text-foreground flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono font-bold bg-muted/40">
-                            {c.rombel}
-                          </Badge>
-                        </td>
-                        <td className="p-3 text-muted-foreground font-medium">{c.waliKelas}</td>
-                        <td className="p-3 text-center font-bold text-foreground">
-                          {c.totalSiswa} Siswa
-                        </td>
-                        <td className="p-3 text-center font-bold font-mono text-emerald-600 dark:text-emerald-400">
-                          {c.avgScore} Poin
-                        </td>
-                        <td className="p-3 text-center">
-                          <div className="flex items-center justify-center gap-1.5 text-[11px]">
-                            <Badge
-                              variant="outline"
-                              className="text-emerald-600 border-emerald-500/30 font-bold bg-emerald-500/5"
-                            >
-                              {c.tuntasCount} Tuntas
-                            </Badge>
-                            {c.prosesCount > 0 && (
-                              <Badge
-                                variant="outline"
-                                className="text-amber-600 border-amber-500/30 font-bold bg-amber-500/5"
-                              >
-                                {c.prosesCount} Dalam Proses
-                              </Badge>
-                            )}
-                            {c.belumCount > 0 && (
-                              <Badge
-                                variant="outline"
-                                className="text-rose-600 border-rose-500/30 font-bold bg-rose-500/5"
-                              >
-                                {c.belumCount} Belum Ada Nilai
-                              </Badge>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-3 text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs font-bold gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
-                            onClick={() => setSelectedClass(c.rombel)}
-                          >
-                            <Eye className="h-3.5 w-3.5" /> Buka Leger Kelas
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* SECTION 2: TABEL LEGER NILAI SISWA REAL */}
-        <Card className="border-border shadow-xs bg-card">
-          <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Award className="h-5 w-5 text-emerald-600" />
-                <span>
-                  Leger Nilai Siswa - {selectedClass === "ALL" ? "Seluruh Kelas" : selectedClass}
-                </span>
-              </CardTitle>
-            <Badge className="bg-emerald-600 text-white font-bold text-xs">
-              {filteredStudents.length} Siswa
             </Badge>
           </CardHeader>
           <CardContent className="p-0 overflow-x-auto">
             {isLoading ? (
               <div className="p-8 text-center text-xs text-muted-foreground">
-                Memuat data leger siswa...
+                Memuat rekapitulasi leger kelas...
               </div>
-            ) : filteredStudents.length === 0 ? (
-              <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 m-4">
-                <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
-                <div className="font-semibold text-foreground text-sm">
-                  Belum Ada Data Siswa pada {selectedClass === "ALL" ? "Filter Ini" : selectedClass}
-                </div>
-                <p>Belum ada data siswa terdaftar untuk kelas ini.</p>
+            ) : classSummaries.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                Tidak ada kelas terdaftar.
               </div>
             ) : (
               <table className="w-full text-xs">
                 <thead className="bg-muted/50 text-muted-foreground font-bold text-left border-b border-border">
                   <tr>
-                    <th className="p-3">Nama Siswa</th>
-                    <th className="p-3 font-mono">NISN</th>
                     <th className="p-3">Rombel / Kelas</th>
-                    <th className="p-3 text-center">Submisi Tugas</th>
-                    <th className="p-3 text-center">Ujian CBT</th>
+                    <th className="p-3">Wali Kelas</th>
+                    <th className="p-3 text-center">Total Siswa</th>
                     <th className="p-3 text-center">Rata-Rata Nilai</th>
-                    <th className="p-3 text-center">Status KKTP</th>
-                    <th className="p-3 text-right">E-Rapor</th>
+                    <th className="p-3 text-center">Ketuntasan KKTP</th>
+                    <th className="p-3 text-right">Aksi Laporan</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filteredStudents.map((s) => (
-                    <tr key={s.id} className="hover:bg-muted/30 transition">
-                      <td className="p-3 font-bold text-foreground">{s.name}</td>
-                      <td className="p-3 font-mono text-muted-foreground">{s.nis}</td>
-                      <td className="p-3 font-bold">
-                        <Badge variant="outline" className="font-mono text-[11px] bg-muted/40">
-                          {s.rombel}
+                  {classSummaries.map((c) => (
+                    <tr key={c.rombel} className="hover:bg-muted/30 transition">
+                      <td className="p-3 font-bold text-foreground flex items-center gap-2">
+                        <Badge variant="outline" className="font-mono font-bold bg-muted/40">
+                          {c.rombel}
                         </Badge>
                       </td>
-                      <td className="p-3 text-center font-mono font-bold">
-                        {s.tugasCount} Submisi
-                      </td>
-                      <td className="p-3 text-center font-mono font-bold">
-                        {s.cbtCount} CBT
+                      <td className="p-3 text-muted-foreground font-medium">{c.waliKelas}</td>
+                      <td className="p-3 text-center font-bold text-foreground">
+                        {c.totalSiswa} Siswa
                       </td>
                       <td className="p-3 text-center font-bold font-mono text-emerald-600 dark:text-emerald-400">
-                        {s.avgScore} Poin
+                        {c.avgScore} Poin
                       </td>
                       <td className="p-3 text-center">
-                        <Badge
-                          variant="outline"
-                          className={
-                            s.avgScore >= 75
-                              ? "text-emerald-600 border-emerald-500/30 font-bold"
-                              : s.avgScore > 0
-                                ? "text-amber-600 border-amber-500/30 font-bold"
-                                : "text-muted-foreground border-border font-medium"
-                          }
-                        >
-                          {s.status}
-                        </Badge>
+                        <div className="flex items-center justify-center gap-1.5 text-[11px]">
+                          <Badge
+                            variant="outline"
+                            className="text-emerald-600 border-emerald-500/30 font-bold bg-emerald-500/5"
+                          >
+                            {c.tuntasCount} Tuntas
+                          </Badge>
+                          {c.prosesCount > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="text-amber-600 border-amber-500/30 font-bold bg-amber-500/5"
+                            >
+                              {c.prosesCount} Dalam Proses
+                            </Badge>
+                          )}
+                          {c.belumCount > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="text-rose-600 border-rose-500/30 font-bold bg-rose-500/5"
+                            >
+                              {c.belumCount} Belum Ada Nilai
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="p-3 text-right">
                         <Button
                           size="sm"
                           variant="outline"
                           className="h-7 text-xs font-bold gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
-                          onClick={() => openStudentRaporModal(s)}
+                          onClick={() => setSelectedClass(c.rombel)}
                         >
-                          <FileText className="h-3.5 w-3.5" /> Cetak E-Rapor
+                          <Eye className="h-3.5 w-3.5" /> Buka Leger Kelas
                         </Button>
                       </td>
                     </tr>
@@ -1772,6 +1677,98 @@ export function RaporModule({
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* SECTION 2: TABEL LEGER NILAI SISWA REAL */}
+      <Card className="border-border shadow-xs bg-card">
+        <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
+          <CardTitle className="text-base font-bold flex items-center gap-2">
+            <Award className="h-5 w-5 text-emerald-600" />
+            <span>
+              Leger Nilai Siswa - {selectedClass === "ALL" ? "Seluruh Kelas" : selectedClass}
+            </span>
+          </CardTitle>
+          <Badge className="bg-emerald-600 text-white font-bold text-xs">
+            {filteredStudents.length} Siswa
+          </Badge>
+        </CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          {isLoading ? (
+            <div className="p-8 text-center text-xs text-muted-foreground">
+              Memuat data leger siswa...
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2 m-4">
+              <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+              <div className="font-semibold text-foreground text-sm">
+                Belum Ada Data Siswa pada {selectedClass === "ALL" ? "Filter Ini" : selectedClass}
+              </div>
+              <p>Belum ada data siswa terdaftar untuk kelas ini.</p>
+            </div>
+          ) : (
+            <table className="w-full text-xs">
+              <thead className="bg-muted/50 text-muted-foreground font-bold text-left border-b border-border">
+                <tr>
+                  <th className="p-3">Nama Siswa</th>
+                  <th className="p-3 font-mono">NISN</th>
+                  <th className="p-3">Rombel / Kelas</th>
+                  <th className="p-3 text-center">Submisi Tugas</th>
+                  <th className="p-3 text-center">Ujian CBT</th>
+                  <th className="p-3 text-center">Rata-Rata Nilai</th>
+                  <th className="p-3 text-center">Status KKTP</th>
+                  <th className="p-3 text-right">E-Rapor</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredStudents.map((s) => (
+                  <tr key={s.id} className="hover:bg-muted/30 transition">
+                    <td className="p-3 font-bold text-foreground">{s.name}</td>
+                    <td className="p-3 font-mono text-muted-foreground">{s.nis}</td>
+                    <td className="p-3 font-bold">
+                      <Badge variant="outline" className="font-mono text-[11px] bg-muted/40">
+                        {s.rombel}
+                      </Badge>
+                    </td>
+                    <td className="p-3 text-center font-mono font-bold">
+                      {s.tugasCount} Submisi
+                    </td>
+                    <td className="p-3 text-center font-mono font-bold">
+                      {s.cbtCount} CBT
+                    </td>
+                    <td className="p-3 text-center font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                      {s.avgScore} Poin
+                    </td>
+                    <td className="p-3 text-center">
+                      <Badge
+                        variant="outline"
+                        className={
+                          s.avgScore >= 75
+                            ? "text-emerald-600 border-emerald-500/30 font-bold"
+                            : s.avgScore > 0
+                              ? "text-amber-600 border-amber-500/30 font-bold"
+                              : "text-muted-foreground border-border font-medium"
+                        }
+                      >
+                        {s.status}
+                      </Badge>
+                    </td>
+                    <td className="p-3 text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs font-bold gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
+                        onClick={() => openStudentRaporModal(s)}
+                      >
+                        <FileText className="h-3.5 w-3.5" /> Cetak E-Rapor
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 🖨️ MODAL PRATINJAU & CETAK E-RAPOR PDF (REAL DATA ONLY) */}
       {renderPrintDialog()}

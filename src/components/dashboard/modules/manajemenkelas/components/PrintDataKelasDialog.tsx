@@ -57,7 +57,7 @@ export function PrintDataKelasDialog({
               </div>
             </div>
             <div className="py-1 bg-emerald-800 text-white font-extrabold text-xs text-center uppercase tracking-widest rounded-xs">
-              LAPORAN ANGGOTA SISWA & REKAPITULASI PRESENSI KELAS
+              LAPORAN DAFTAR SISWA & REKAPITULASI PRESENSI KELAS
             </div>
           </div>
 

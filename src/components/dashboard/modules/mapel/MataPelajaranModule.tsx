@@ -373,11 +373,11 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
               ? `Materi & Buku Pelajaran Siswa — Tingkat ${kelas}`
               : "Perangkat Pembelajaran & Modul Ajar"}
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {isSiswa
-              ? `Akses modul materi, silabus, dan buku pegangan siswa terdaftar tingkat ${kelas}.`
-              : "Validasi silabus, RPP, modul ajar, dan kelengkapan perangkat kurikulum madrasah."}
-          </p>
+          {isSiswa && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Akses modul materi, silabus, dan buku pegangan siswa terdaftar tingkat {kelas}.
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -462,11 +462,9 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               {isWakaOrKamad || isSiswa
                 ? `Daftar Mata Pelajaran Tingkat ${kelas}:`
-                : `Mata Pelajaran Pengampuan Anda — Tingkat ${kelas}:`}
+                : `Mata Pelajaran — Tingkat ${kelas}:`}
             </div>
-            <Badge variant="outline" className="text-xs font-mono text-emerald-600 border-emerald-500/30 font-bold">
-              {displayedMapels.length} Mata Pelajaran{isWakaOrKamad || isSiswa ? "" : " Pengampuan"}
-            </Badge>
+
           </div>
 
           {isLoadingMapel ? (
@@ -536,7 +534,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
             {!isSiswa && !canSupervisePerangkat && (
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="outline" className="text-xs font-bold border-emerald-500/40 text-emerald-600 bg-emerald-500/10">
-                  👨‍🏫 Mata Pelajaran Pengampuan Anda
+                  👨‍🏫 Mata Pelajaran
                 </Badge>
               </div>
             )}

@@ -102,9 +102,6 @@ export function PengumumanModule() {
                 {list.length} Berita
               </Badge>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-none mt-0.5">
-              Pusat penerbitan pengumuman resmi madrasah untuk GTK, Guru, dan Siswa
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">

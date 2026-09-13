@@ -546,14 +546,14 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
             (isRed
               ? "🔴 Libur Resmi"
               : cat === "cbt"
-              ? "🔵 Ujian CBT"
-              : cat === "rapat"
-              ? "🟣 Rapat Dinas"
-              : cat === "kokurikuler"
-              ? "🟡 Kokurikuler P5"
-              : cat === "libur"
-              ? "🔴 Libur Resmi"
-              : "🟢 KBM Efektif");
+                ? "🔵 Ujian CBT"
+                : cat === "rapat"
+                  ? "🟣 Rapat Dinas"
+                  : cat === "kokurikuler"
+                    ? "🟡 Kokurikuler P5"
+                    : cat === "libur"
+                      ? "🔴 Libur Resmi"
+                      : "🟢 KBM Efektif");
 
           // Coba cari tanggal ISO dari date_str jika tersimpan format tertentu
           let rawDate = item.date_str || "";
@@ -704,8 +704,8 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
       (m) =>
         m.isRedDate ||
         ((m.category === "libur" || m.badge?.includes("Libur Nasional") || m.badge?.includes("Hari Besar") || m.badge?.includes("Libur Resmi")) &&
-        !m.badge?.includes("Cuti Bersama") &&
-        m.category !== "cuti")
+          !m.badge?.includes("Cuti Bersama") &&
+          m.category !== "cuti")
     );
     const hasCbt = matches.some((m) => m.category === "cbt");
     const hasKokurikuler = matches.some(
@@ -740,9 +740,6 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                 {currentMonthAgendas.length} Agenda
               </Badge>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-none mt-0.5">
-              Sistem penanggalan terpadu Masehi, Hijriah (Kemenag), dan Pasaran Jawa MTsN 2 Cilacap
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -883,13 +880,12 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
               ].map((dayItem) => (
                 <div
                   key={dayItem.name}
-                  className={`py-1 text-xs font-semibold ${
-                    dayItem.isSunday
+                  className={`py-1 text-xs font-semibold ${dayItem.isSunday
                       ? "text-red-500 dark:text-red-400 font-bold"
                       : dayItem.isFriday
-                      ? "text-emerald-600 dark:text-emerald-400 font-bold"
-                      : "text-muted-foreground"
-                  }`}
+                        ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                        : "text-muted-foreground"
+                    }`}
                 >
                   {dayItem.name}
                 </div>
@@ -910,8 +906,8 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                   (ev) =>
                     ev.isRedDate ||
                     ((ev.category === "libur" || ev.badge?.includes("Libur Nasional") || ev.badge?.includes("Hari Besar") || ev.badge?.includes("Libur Resmi")) &&
-                    !ev.badge?.includes("Cuti Bersama") &&
-                    ev.category !== "cuti")
+                      !ev.badge?.includes("Cuti Bersama") &&
+                      ev.category !== "cuti")
                 );
                 const isRedDate = day.isSunday || isHoliday;
 
@@ -1098,9 +1094,8 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                             {monthShort}
                           </span>
                           <span
-                            className={`text-sm sm:text-base font-black leading-tight ${
-                              isLibur ? "text-red-600 dark:text-red-400" : "text-blue-600 dark:text-blue-400"
-                            }`}
+                            className={`text-sm sm:text-base font-black leading-tight ${isLibur ? "text-red-600 dark:text-red-400" : "text-blue-600 dark:text-blue-400"
+                              }`}
                           >
                             {dayNum}
                           </span>
@@ -1128,13 +1123,12 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                           <div className="flex items-center gap-1.5 pt-0.5">
                             <Badge
                               variant="secondary"
-                              className={`text-[9px] px-1 py-0 font-semibold border-none ${
-                                isLibur
+                              className={`text-[9px] px-1 py-0 font-semibold border-none ${isLibur
                                   ? "bg-red-500/15 text-red-600 dark:text-red-400"
                                   : item.category === "cbt"
-                                  ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
-                                  : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                              }`}
+                                    ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                                    : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                                }`}
                             >
                               {item.badge}
                             </Badge>

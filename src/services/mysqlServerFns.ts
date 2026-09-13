@@ -104,6 +104,7 @@ export interface AssignmentRow {
   author_guru?: string;
   attachment_url?: string;
   questions_data?: string;
+  quiz_data?: string;
   type?: string;
   status?: string;
   max_score?: number;
@@ -510,6 +511,7 @@ export interface MaterialRow {
   file_url?: string;
   uploaded_by?: string;
   teacher_name?: string;
+  status?: string;
   created_at?: string;
 }
 
@@ -2167,6 +2169,19 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
     } catch (e: any) {
       console.error("[saveMaterialFn Error]:", e);
       return { success: false, message: `Gagal menyimpan modul ke database: ${e?.message || e}` };
+    }
+  });
+
+export const updateMaterialStatusFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string; status: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("UPDATE materials SET status = ? WHERE id = ?", [data.status, data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[updateMaterialStatusFn Error]:", e);
+      return { success: false };
     }
   });
 
@@ -4074,7 +4089,7 @@ async function ensureLkpdSchema(execute: any) {
 }
 
 export const getLkpdActivitiesFn = createServerFn({ method: "POST" })
-  .validator((data: { rombel: string; mapel: string }) => data)
+  .validator((data: { rombel: string; mapel: string; excludeDraft?: boolean }) => data)
   .handler(async ({ data }): Promise<LkpdActivityRow[]> => {
     try {
       const { query, execute } = await import("@/lib/db");
@@ -4087,6 +4102,7 @@ export const getLkpdActivitiesFn = createServerFn({ method: "POST" })
       const { isSameClass } = await import("@/utils/classNormalization");
 
       const filtered = (allRows || []).filter((item) => {
+        if (data.excludeDraft && (item.status || "").toUpperCase() === "DRAF") return false;
         const matchRombel = cleanRombel === "ALL" || isSameClass(item.rombel, cleanRombel);
         const matchMapel = cleanMapel === "ALL" || item.mapel === cleanMapel || item.mapel.toLowerCase() === cleanMapel.toLowerCase();
         return matchRombel && matchMapel;
@@ -4157,6 +4173,68 @@ export const saveLkpdActivityFn = createServerFn({ method: "POST" })
       return { success: true, id: String(res?.insertId || Date.now()) };
     } catch (e) {
       console.error("[saveLkpdActivityFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const updateLkpdActivityFn = createServerFn({ method: "POST" })
+  .validator((data: LkpdActivityRow & { id: string | number }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      await authorizeSubjectAccessServer(data.mapel);
+      const { execute } = await import("@/lib/db");
+      await ensureLkpdSchema(execute);
+
+      let finalAttachmentUrl = data.attachment_url || "";
+      if (finalAttachmentUrl && finalAttachmentUrl.startsWith("data:")) {
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          const uploadDir = path.join(process.cwd(), "public", "uploads", "lkpd");
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          const base64Data = finalAttachmentUrl.split(";base64,").pop();
+          if (base64Data) {
+            const rawFileName = `${data.title || "LKPD"}.pdf`;
+            const cleanFileName = rawFileName.replace(/[^a-zA-Z0-9_.-]/g, "_");
+            const uniqueFileName = `${Date.now()}_${cleanFileName}`;
+            const physicalPath = path.join(uploadDir, uniqueFileName);
+            fs.writeFileSync(physicalPath, Buffer.from(base64Data, "base64"));
+            finalAttachmentUrl = `/uploads/lkpd/${uniqueFileName}`;
+            console.log(`[updateLkpdActivityFn] Physical LKPD file updated to: ${physicalPath}`);
+          }
+        } catch (fsErr) {
+          console.warn("[updateLkpdActivityFn File Save Warning]:", fsErr);
+        }
+      }
+
+      await execute(
+        `UPDATE lkpd_activities 
+         SET title = ?, type = ?, instructions = ?, due_date = ?, max_score = ?, status = ?,
+             attachment_url = CASE WHEN ? != '' THEN ? ELSE attachment_url END,
+             submission_type = ?, quiz_data = ?, questions_data = ?, peer_assessment_enabled = ?, peer_criteria = ?
+         WHERE id = ?`,
+        [
+          data.title,
+          data.type || "LKPD",
+          data.instructions || "",
+          data.due_date,
+          data.max_score ? String(data.max_score) : "100",
+          data.status || "AKTIF",
+          finalAttachmentUrl,
+          finalAttachmentUrl,
+          data.submission_type || "TEXT_AND_FILE",
+          data.quiz_data || "",
+          data.questions_data || "",
+          data.peer_assessment_enabled ? 1 : 0,
+          data.peer_criteria || "",
+          data.id,
+        ]
+      );
+      return { success: true };
+    } catch (e) {
+      console.error("[updateLkpdActivityFn Error]:", e);
       return { success: false };
     }
   });

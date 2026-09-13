@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   Bookmark,
   Users,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
@@ -58,6 +59,8 @@ export interface CreateActivityFormProps {
     attachment_url?: string;
     questions_data?: string;
   }) => void;
+  initialData?: any | null;
+  onActivityUpdated?: (updatedAct: any) => void;
 }
 
 export interface CreateActivityDialogProps {
@@ -83,15 +86,18 @@ export function CreateActivityForm({
   activeMapel,
   onCancel,
   onActivityCreated,
+  initialData,
+  onActivityUpdated,
 }: CreateActivityFormProps) {
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<ActivityTypeOption>("LKPD");
-  const [instructions, setInstructions] = useState("");
+  const isEditing = Boolean(initialData?.id);
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [type, setType] = useState<ActivityTypeOption>(initialData?.type || "LKPD");
+  const [instructions, setInstructions] = useState(initialData?.instructions || "");
   const [dueDateDate, setDueDateDate] = useState("");
   const [dueDateTime, setDueDateTime] = useState("23:59");
-  const [maxScore, setMaxScore] = useState("100");
-  const [submissionType, setSubmissionType] = useState("TEXT_AND_FILE");
-  const [peerAssessmentEnabled, setPeerAssessmentEnabled] = useState(false);
+  const [maxScore, setMaxScore] = useState(String(initialData?.max_score || initialData?.maxScore || "100"));
+  const [submissionType, setSubmissionType] = useState(initialData?.submission_type || "TEXT_AND_FILE");
+  const [peerAssessmentEnabled, setPeerAssessmentEnabled] = useState(Boolean(initialData?.peer_assessment_enabled));
 
   // Helper untuk memformat tanggal & jam batas pengumpulan yang rapi dan konsisten
   const formatDueDateTime = (dateStr: string, timeStr: string): string => {
@@ -117,13 +123,29 @@ export function CreateActivityForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
 
-  // Structured Questions Builder for LKPD, Praktikum, Tugas Mandiri (100% Bersih / Murni Kosong)
-  const [lkpdQuestions, setLkpdQuestions] = useState<LkpdQuestionItem[]>([]);
+  // Structured Questions Builder for LKPD, Praktikum, Tugas Mandiri
+  const [lkpdQuestions, setLkpdQuestions] = useState<LkpdQuestionItem[]>(() => {
+    if (initialData?.questions_data) {
+      try {
+        const parsed = JSON.parse(initialData.questions_data);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+    }
+    return [];
+  });
 
-  // Quiz Builder State (Khusus tipe QUIZ - 100% Bersih / Murni Kosong)
+  // Quiz Builder State (Khusus tipe QUIZ)
   const [quizQuestions, setQuizQuestions] = useState<
     Array<{ id: number; question: string; optionA: string; optionB: string; optionC: string; optionD: string; keyAnswer: string }>
-  >([]);
+  >(() => {
+    if (initialData?.quiz_data) {
+      try {
+        const parsed = JSON.parse(initialData.quiz_data);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+    }
+    return [];
+  });
 
   const activityOptions: { id: ActivityTypeOption; label: string; color: string; disabled?: boolean }[] = [
     {
@@ -312,13 +334,15 @@ export function CreateActivityForm({
     const activeUser = MysqlAuthService.getActiveUser();
     const resolvedTeacherName = activeUser?.full_name || "Guru Pengampu";
 
+    const resolvedDueDate = dueDateDate
+      ? formatDueDateTime(dueDateDate, dueDateTime)
+      : initialData?.dueDate || initialData?.due_date || "Sesuai Jadwal KBM";
+
     const targetStatus = isDraft ? "DRAF" : "AKTIF";
 
-    const resolvedDueDate = dueDateDate ? formatDueDateTime(dueDateDate, dueDateTime) : "Sesuai Jadwal KBM";
-
     const payload = {
-      rombel: activeRombel,
-      mapel: activeMapel,
+      rombel: initialData?.rombel || activeRombel,
+      mapel: initialData?.mapel || activeMapel,
       teacher_name: resolvedTeacherName,
       title: title.trim(),
       type: type,
@@ -333,26 +357,41 @@ export function CreateActivityForm({
       peer_assessment_enabled: type === "TUGAS_KELOMPOK" && peerAssessmentEnabled ? 1 : 0,
     };
 
-    const res = await MysqlDataService.saveLkpdActivity(payload);
-
-    const created = {
-      id: res.id || "act_" + Date.now(),
-      title: title.trim(),
-      type: type,
-      dueDate: resolvedDueDate,
-      status: targetStatus,
-      submittedCount: 0,
-      totalStudents: 0,
-      attachment_url: finalAttachment.startsWith("data:") ? "/uploads/lkpd/..." : finalAttachment,
-      questions_data: questionsDataStr,
-    };
-
-    onActivityCreated(created);
-    if (isDraft) {
-      toast.success(`💾 Aktivitas "${title}" berhasil disimpan sebagai draf!`);
+    if (isEditing && initialData?.id) {
+      await MysqlDataService.updateLkpdActivity({ id: initialData.id, ...payload });
+      const updated = {
+        ...initialData,
+        ...payload,
+        id: String(initialData.id),
+        dueDate: resolvedDueDate,
+      };
+      onActivityUpdated?.(updated);
+      if (isDraft) {
+        toast.success(`💾 Draf aktivitas "${title}" berhasil diperbarui!`);
+      } else {
+        toast.success(`✅ Aktivitas "${title}" berhasil diperbarui dan diterbitkan!`);
+      }
     } else {
-      toast.success(`✅ Aktivitas "${title}" berhasil diterbitkan ke siswa!`);
+      const res = await MysqlDataService.saveLkpdActivity(payload);
+      const created = {
+        id: res.id || "act_" + Date.now(),
+        title: title.trim(),
+        type: type,
+        dueDate: resolvedDueDate,
+        status: targetStatus,
+        submittedCount: 0,
+        totalStudents: 0,
+        attachment_url: finalAttachment.startsWith("data:") ? "/uploads/lkpd/..." : finalAttachment,
+        questions_data: questionsDataStr,
+      };
+      onActivityCreated(created);
+      if (isDraft) {
+        toast.success(`💾 Aktivitas "${title}" berhasil disimpan sebagai draf!`);
+      } else {
+        toast.success(`✅ Aktivitas "${title}" berhasil diterbitkan ke siswa!`);
+      }
     }
+
     setTitle("");
     setInstructions("");
     setDueDateDate("");
@@ -400,10 +439,13 @@ export function CreateActivityForm({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-                <Plus className="h-5 w-5 text-emerald-600" /> Buat Tugas & LKPD Baru
+                {isEditing ? <Pencil className="h-5 w-5 text-emerald-600" /> : <Plus className="h-5 w-5 text-emerald-600" />}
+                {isEditing ? "Edit Aktivitas / LKPD" : "Buat Tugas & LKPD Baru"}
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                Atur lembar kerja, tenggat waktu, dan materi pendukung pembelajaran untuk siswa.
+                {isEditing
+                  ? "Perbarui instruksi, bobot nilai, tenggat waktu, atau terbitkan aktivitas draf ini."
+                  : "Atur lembar kerja, tenggat waktu, dan materi pendukung pembelajaran untuk siswa."}
               </CardDescription>
             </div>
 
@@ -969,10 +1011,12 @@ export function CreateActivityForm({
                 className="text-xs font-medium gap-1.5 px-4 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 onClick={() => handleSaveActivity(true)}
               >
-                <Bookmark className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> Simpan Draf
+                <Bookmark className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                {isEditing ? "Perbarui Draf" : "Simpan Draf"}
               </Button>
               <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 px-5 shadow-xs cursor-pointer">
-                <CheckCircle2 className="h-4 w-4" /> Terbitkan Aktivitas Ke Siswa
+                <CheckCircle2 className="h-4 w-4" />
+                {isEditing ? "Perbarui & Terbitkan Sekarang" : "Terbitkan Aktivitas Ke Siswa"}
               </Button>
             </div>
           </form>

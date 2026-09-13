@@ -49,7 +49,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         const todayStr = new Date().toISOString().split("T")[0];
         const [dbPresensi, dbTugas, dbJadwal, dbSessions, dbSubmissions, dbAwards, dbAchievements] = await Promise.all([
           MysqlDataService.getKbmPresensi("ALL", "ALL", todayStr),
-          MysqlDataService.getLkpdActivities(currentClass, "ALL"),
+          MysqlDataService.getLkpdActivities(currentClass, "ALL", true),
           MysqlDataService.getJadwalList(),
           MysqlDataService.getActiveKbmSessions(),
           MysqlDataService.getSubmissions(),
@@ -73,7 +73,14 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
           return matchName || matchNis;
         });
         setPresensiToday(myPres);
-        setMyTugasList(dbTugas || []);
+
+        // Strict filter: non-draft and matching student's class
+        const validTugas = (dbTugas || []).filter((t: any) => {
+          const isDraft = (t.status || "").toUpperCase() === "DRAF";
+          const classMatches = !t.rombel || t.rombel === "ALL" || isSameClass(t.rombel, currentClass);
+          return !isDraft && classMatches;
+        });
+        setMyTugasList(validTugas);
 
         // 2. Match Submissions
         const mySubs = (dbSubmissions || []).filter((s: any) => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, CheckCircle2, Trophy, PencilLine, Brain, Users, PenTool, FlaskConical, Target, BookCheck, Trash2 } from "lucide-react";
+import { FileText, Plus, CheckCircle2, Trophy, PencilLine, Pencil, Brain, Users, PenTool, FlaskConical, Target, BookCheck, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ export interface LearningActivityItem {
   submission_type?: string;
   quiz_data?: string;
   questions_data?: string;
+  max_score?: number | string;
+  peer_assessment_enabled?: boolean | number;
 }
 
 interface AktivitasTabProps {
@@ -36,6 +38,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
   const [selectedActivityForView, setSelectedActivityForView] = useState<ActivityDetail | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<LearningActivityItem | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -73,6 +76,8 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
               submission_type: item.submission_type,
               quiz_data: item.quiz_data,
               questions_data: item.questions_data,
+              max_score: item.max_score,
+              peer_assessment_enabled: item.peer_assessment_enabled,
             };
           })
         );
@@ -95,6 +100,12 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
     setActivities((prev) => [newAct, ...prev]);
   };
 
+  const handleActivityUpdated = (updatedAct: any) => {
+    setActivities((prev) =>
+      prev.map((a) => (a.id === updatedAct.id ? { ...a, ...updatedAct } : a))
+    );
+  };
+
   const handleDeleteActivity = async (id: string, title: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus aktivitas "${title}"?`)) {
       setActivities((prev) => prev.filter((a) => a.id !== id));
@@ -107,15 +118,23 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
     }
   };
 
-  if (isCreateOpen) {
+  if (isCreateOpen || editingActivity) {
     return (
       <CreateActivityForm
         activeRombel={activeRombel}
         activeMapel={activeMapel}
-        onCancel={() => setIsCreateOpen(false)}
+        initialData={editingActivity}
+        onCancel={() => {
+          setIsCreateOpen(false);
+          setEditingActivity(null);
+        }}
         onActivityCreated={(newAct) => {
           handleActivityCreated(newAct);
           setIsCreateOpen(false);
+        }}
+        onActivityUpdated={(updatedAct) => {
+          handleActivityUpdated(updatedAct);
+          setEditingActivity(null);
         }}
       />
     );
@@ -213,19 +232,41 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                   </div>
 
                   <div className="flex items-center gap-1.5 pt-0.5">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 h-7 text-xs font-semibold gap-1 text-primary border-primary/30 hover:bg-primary/5"
-                      onClick={() => handleOpenViewActivity(act)}
-                    >
-                      <PencilLine className="h-3 w-3" />
-                      {act.type === "TUGAS_KELOMPOK"
-                        ? "Kelola"
-                        : act.type === "QUIZ"
-                        ? "Nilai Kuis"
-                        : "Nilai LKPD"}
-                    </Button>
+                    {act.status === "DRAF" ? (
+                      <Button
+                        size="sm"
+                        className="flex-1 h-7 text-xs font-semibold gap-1 bg-amber-600 hover:bg-amber-700 text-white shadow-xs"
+                        onClick={() => setEditingActivity(act)}
+                      >
+                        <PencilLine className="h-3 w-3" />
+                        Edit & Terbitkan
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 h-7 text-xs font-semibold gap-1 text-primary border-primary/30 hover:bg-primary/5"
+                          onClick={() => handleOpenViewActivity(act)}
+                        >
+                          <PencilLine className="h-3 w-3" />
+                          {act.type === "TUGAS_KELOMPOK"
+                            ? "Kelola"
+                            : act.type === "QUIZ"
+                            ? "Nilai Kuis"
+                            : "Nilai LKPD"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10"
+                          title="Edit Aktivitas"
+                          onClick={() => setEditingActivity(act)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
 
                     <Button
                       size="sm"

@@ -25,6 +25,7 @@ import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHe
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { CbtExamRow, CbtResultRow } from "@/services/mysqlServerFns";
+import { isSameClass } from "@/utils/classNormalization";
 import { toast } from "sonner";
 
 interface KuisSiswaModuleProps {
@@ -55,11 +56,12 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
       const [allExams, allResults, dbLkpd] = await Promise.all([
         MysqlDataService.getCbtExams(),
         MysqlDataService.getCbtResults(),
-        MysqlDataService.getLkpdActivities(studentRombel, "ALL"),
+        MysqlDataService.getLkpdActivities(studentRombel, "ALL", true),
       ]);
 
       const quizLkpdExams: CbtExamRow[] = (dbLkpd || [])
-        .filter((l: any) => l.type === "QUIZ" || l.quiz_data)
+        .filter((l: any) => (l.status || "").toUpperCase() !== "DRAF" && (l.type === "QUIZ" || l.quiz_data))
+        .filter((l: any) => !l.rombel || l.rombel === "ALL" || isSameClass(l.rombel, studentRombel))
         .map((l: any) => {
           let parsedQuestions: any[] = [];
           if (l.quiz_data) {

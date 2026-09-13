@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { BookOpen, Video, FileText, Plus, Check, Eye, Library, Upload, Music, Image as ImageIcon, Globe } from "lucide-react";
+import { BookOpen, Video, FileText, Plus, Check, Eye, Library, Upload, Music, Image as ImageIcon, Globe, Lock, Unlock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export interface TeachingMaterialItem {
   file_url?: string;
   uploaded_by?: string;
   selectedForToday: boolean;
+  status?: string;
 }
 
 interface MateriTabProps {
@@ -65,6 +66,9 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
               parsedType = "EBOOK";
             }
 
+            const rawStatus = (item.status || "Aktif").trim();
+            const isUnlocked = rawStatus.toLowerCase() !== "terkunci" && rawStatus.toLowerCase() !== "sembunyi";
+
             return {
               id: String(item.id || idx),
               title: item.title,
@@ -73,7 +77,8 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
               source: item.subject_name || activeMapel || "Media Pembelajaran LMS",
               file_url: item.file_url,
               uploaded_by: item.uploaded_by,
-              selectedForToday: true,
+              selectedForToday: isUnlocked,
+              status: isUnlocked ? "Aktif" : "Terkunci",
             };
           })
         );
@@ -181,10 +186,26 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
     }
   };
 
-  const handleToggleSelect = (id: string) => {
+  const handleToggleSelect = async (m: TeachingMaterialItem) => {
+    const nextStatus = m.selectedForToday ? "Terkunci" : "Aktif";
     setMaterials((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, selectedForToday: !m.selectedForToday } : m))
+      prev.map((item) =>
+        item.id === m.id
+          ? { ...item, selectedForToday: !item.selectedForToday, status: nextStatus }
+          : item
+      )
     );
+
+    try {
+      await MysqlDataService.updateMaterialStatus(m.id, nextStatus);
+      if (nextStatus === "Aktif") {
+        toast.success(`🔓 Akses materi "${m.title}" berhasil dibuka untuk siswa!`);
+      } else {
+        toast.success(`🔒 Akses materi "${m.title}" dikunci / disembunyikan dari siswa.`);
+      }
+    } catch (e) {
+      console.warn("Gagal update status materi:", e);
+    }
   };
 
   const handleOpenViewMaterial = (m: TeachingMaterialItem) => {
@@ -299,10 +320,10 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                     className={`text-[10px] font-semibold shrink-0 px-2 py-0.5 ${
                       m.selectedForToday
                         ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                        : "text-muted-foreground border-border"
+                        : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
                     }`}
                   >
-                    {m.selectedForToday ? "Aktif" : "Nonaktif"}
+                    {m.selectedForToday ? "🔓 Terbuka Siswa" : "🔒 Terkunci / Sembunyi"}
                   </Badge>
                 </div>
 
@@ -318,21 +339,22 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
 
                   <Button
                     size="sm"
-                    variant={m.selectedForToday ? "secondary" : "outline"}
+                    variant={m.selectedForToday ? "outline" : "default"}
                     className={`h-7 px-2.5 text-xs font-semibold gap-1.5 ${
                       m.selectedForToday
-                        ? "text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200"
-                        : "text-foreground hover:bg-muted"
+                        ? "border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
+                        : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                     }`}
-                    onClick={() => handleToggleSelect(m.id)}
+                    onClick={() => handleToggleSelect(m)}
+                    title={m.selectedForToday ? "Kunci materi agar siswa fokus ke materi sebelumnya" : "Buka materi ini untuk diakses siswa"}
                   >
                     {m.selectedForToday ? (
                       <>
-                        <Check className="h-3.5 w-3.5 text-emerald-600" /> Dipakai
+                        <Lock className="h-3 w-3" /> Kunci Akses
                       </>
                     ) : (
                       <>
-                        <Plus className="h-3.5 w-3.5" /> Gunakan
+                        <Unlock className="h-3 w-3" /> Buka Siswa
                       </>
                     )}
                   </Button>

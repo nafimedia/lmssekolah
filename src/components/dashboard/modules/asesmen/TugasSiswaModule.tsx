@@ -28,6 +28,8 @@ import {
   Star,
   Users,
   Search,
+  Brain,
+  Zap,
 } from "lucide-react";
 
 export interface PeerRatingEntry {
@@ -143,6 +145,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     }
   };
   const [submitting, setSubmitting] = useState(false);
+  const [studentQuizAnswers, setStudentQuizAnswers] = useState<Record<number, string>>({});
 
   const me = MysqlAuthService.getActiveUser();
   const studentName = me?.full_name || userProfile?.name || "Siswa MTsN 2 Cilacap";
@@ -159,7 +162,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       const [allAssignments, allSubmissions, dbLkpd, dbActiveSessions, dbJadwal, dbPengampu, allUsers] = await Promise.all([
         MysqlDataService.getAssignments(),
         MysqlDataService.getSubmissions(),
-        MysqlDataService.getLkpdActivities(studentRombel, "ALL"),
+        MysqlDataService.getLkpdActivities(studentRombel, "ALL", true),
         MysqlDataService.getActiveKbmSessions(),
         MysqlDataService.getJadwalList(),
         MysqlDataService.getPengampuList(),
@@ -213,6 +216,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
 
       const mappedLkpdAssignments: AssignmentRow[] = (dbLkpd || [])
         .filter((l: any) => (l.status || "").toUpperCase() !== "DRAF")
+        .filter((l: any) => !l.rombel || l.rombel === "ALL" || isSameClass(l.rombel, studentRombel))
         .map((l: any) => ({
         id: String(l.id),
         title: l.title,
@@ -342,6 +346,23 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         setUploadFileSize("");
       }
       setIsDraft(Boolean(existingSub.notes?.includes("[DRAFT]")));
+
+      // Parse existing quiz answers if any
+      if (existingSub.notes?.includes("[QUIZ]")) {
+        try {
+          const rawJson = existingSub.notes.substring(existingSub.notes.indexOf("{"));
+          const parsed = JSON.parse(rawJson);
+          if (parsed.answers) {
+            setStudentQuizAnswers(parsed.answers);
+          } else {
+            setStudentQuizAnswers({});
+          }
+        } catch (e) {
+          setStudentQuizAnswers({});
+        }
+      } else {
+        setStudentQuizAnswers({});
+      }
     } else {
       setStudentNotes("");
       setFileUrl("");
@@ -349,6 +370,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       setUploadFileSize("");
       setUploadMode("FILE");
       setIsDraft(false);
+      setStudentQuizAnswers({});
     }
   };
 
@@ -426,6 +448,71 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       }
     } catch (e) {
       toast.error("Terjadi kesalahan saat mengunggah tugas.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (!selectedAssignment) return;
+    let questions: any[] = [];
+    if (selectedAssignment.quiz_data) {
+      try {
+        questions = JSON.parse(selectedAssignment.quiz_data);
+      } catch (e) {}
+    }
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return toast.error("Data butir soal kuis tidak ditemukan.");
+    }
+
+    const answeredCount = Object.keys(studentQuizAnswers).length;
+    if (answeredCount < questions.length) {
+      if (!confirm(`Anda baru menjawab ${answeredCount} dari ${questions.length} butir soal. Apakah Anda yakin ingin mengumpulkan kuis ini sekarang?`)) {
+        return;
+      }
+    }
+
+    setSubmitting(true);
+    try {
+      let correctCount = 0;
+      questions.forEach((q: any, idx: number) => {
+        const studentAns = (studentQuizAnswers[idx] || "").toUpperCase().trim();
+        const correctAns = (q.keyAnswer || q.correct_answer || q.key || "A").toUpperCase().trim();
+        if (studentAns && studentAns === correctAns) {
+          correctCount++;
+        }
+      });
+
+      const calculatedScore = Math.round((correctCount / questions.length) * 100);
+
+      const notesPayload = `[QUIZ] ${JSON.stringify({
+        score: calculatedScore,
+        correctCount,
+        totalQuestions: questions.length,
+        answers: studentQuizAnswers,
+        completedAt: new Date().toISOString(),
+      })}`;
+
+      const res = await MysqlDataService.saveSubmission({
+        assignment_id: String(selectedAssignment.id),
+        user_id: studentEmail,
+        student_name: studentName,
+        rombel: studentRombel,
+        file_url: "",
+        notes: notesPayload,
+        score: calculatedScore,
+        feedback: `Kuis formatif otomatis dinilai: ${correctCount}/${questions.length} butir benar (${calculatedScore} Poin).`,
+      });
+
+      if (res.success) {
+        toast.success(`🎉 Kuis Selesai! Skor Anda: ${calculatedScore} / 100 (${correctCount}/${questions.length} Benar)`);
+        await loadData();
+        setSelectedAssignment(null);
+      } else {
+        toast.error("Gagal mengumpulkan jawaban kuis.");
+      }
+    } catch (e) {
+      toast.error("Terjadi kesalahan saat memproses kuis.");
     } finally {
       setSubmitting(false);
     }
@@ -591,6 +678,24 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       }
     }
 
+    let parsedQuizQuestions: any[] = [];
+    if (selectedAssignment.quiz_data) {
+      try {
+        parsedQuizQuestions = JSON.parse(selectedAssignment.quiz_data);
+        if (!Array.isArray(parsedQuizQuestions)) parsedQuizQuestions = [];
+      } catch (e) {
+        parsedQuizQuestions = [];
+      }
+    }
+
+    const isQuiz = selectedAssignment.type === "QUIZ" || parsedQuizQuestions.length > 0;
+    const isGroupTask =
+      selectedAssignment.type === "TUGAS_KELOMPOK" ||
+      selectedAssignment.type === "PROYEK_P5" ||
+      Boolean((selectedAssignment as any).peer_assessment_enabled) ||
+      selectedAssignment.title.toLowerCase().includes("kelompok") ||
+      String((selectedAssignment as any).type || "").toLowerCase().includes("kelompok");
+
     return (
       <div className="space-y-6">
         {/* Workspace Top Toolbar */}
@@ -723,8 +828,8 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               </CardContent>
             </Card>
 
-            {/* Lembar Butir Pertanyaan / Soal LKPD (jika ada) */}
-            {parsedQuestions.length > 0 && (
+            {/* Lembar Butir Pertanyaan / Soal LKPD (hanya jika bukan kuis pilihan ganda) */}
+            {!isQuiz && parsedQuestions.length > 0 && (
               <Card className="border-emerald-300 dark:border-emerald-800 bg-emerald-50/20 dark:bg-emerald-950/10 shadow-xs">
                 <CardHeader className="p-4 pb-3 border-b border-emerald-200 dark:border-emerald-900 bg-emerald-100/40 dark:bg-emerald-950/30">
                   <div className="flex items-center justify-between">
@@ -750,58 +855,60 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               </Card>
             )}
 
-            {/* Forum Diskusi Kelompok & Tanya Jawab Interaktif */}
-            <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-950/10 shadow-xs">
-              <CardHeader className="p-4 pb-3 border-b border-blue-200 dark:border-blue-900 bg-blue-100/40 dark:bg-blue-950/30">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xs font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-blue-600" /> Forum Diskusi Kelompok & Tanya Jawab Interaktif
-                  </CardTitle>
-                  <Badge variant="outline" className="text-[10px] font-mono border-blue-400 text-blue-600">
-                    {discussions.length} Tanggapan
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
-                  {discussions.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic text-center py-4">
-                      Belum ada pesan dalam forum diskusi ini. Tulis pertanyaan atau hasil musyawarah kelompok Anda di bawah!
-                    </p>
-                  ) : (
-                    discussions.map((d, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-card border border-border text-xs space-y-1 shadow-2xs">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-extrabold text-foreground flex items-center gap-1.5">
-                            {d.user_name}
-                            <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0">
-                              {d.user_role}
-                            </Badge>
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">{d.created_at || "Terkirim"}</span>
+            {/* Forum Diskusi Kelompok & Tanya Jawab Interaktif (HANYA untuk Tugas Kelompok) */}
+            {isGroupTask && (
+              <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-950/10 shadow-xs">
+                <CardHeader className="p-4 pb-3 border-b border-blue-200 dark:border-blue-900 bg-blue-100/40 dark:bg-blue-950/30">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xs font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-blue-600" /> Forum Diskusi Kelompok & Tanya Jawab Interaktif
+                    </CardTitle>
+                    <Badge variant="outline" className="text-[10px] font-mono border-blue-400 text-blue-600">
+                      {discussions.length} Tanggapan
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                  <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                    {discussions.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic text-center py-4">
+                        Belum ada pesan dalam forum diskusi ini. Tulis pertanyaan atau hasil musyawarah kelompok Anda di bawah!
+                      </p>
+                    ) : (
+                      discussions.map((d, idx) => (
+                        <div key={idx} className="p-3 rounded-xl bg-card border border-border text-xs space-y-1 shadow-2xs">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="font-extrabold text-foreground flex items-center gap-1.5">
+                              {d.user_name}
+                              <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0">
+                                {d.user_role}
+                              </Badge>
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">{d.created_at || "Terkirim"}</span>
+                          </div>
+                          <p className="text-foreground leading-relaxed">{d.message}</p>
                         </div>
-                        <p className="text-foreground leading-relaxed">{d.message}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
+                      ))
+                    )}
+                  </div>
 
-                <form onSubmit={handleSendDiscussion} className="flex gap-2 pt-2 border-t border-blue-200 dark:border-blue-900">
-                  <Input
-                    placeholder="Tulis pesan diskusi kelompok / tanggapan Anda..."
-                    value={newDiscussionMsg}
-                    onChange={(e) => setNewDiscussionMsg(e.target.value)}
-                    className="text-xs rounded-xl"
-                  />
-                  <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 rounded-xl shrink-0 shadow-xs">
-                    <Send className="h-3.5 w-3.5" /> Kirim
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                  <form onSubmit={handleSendDiscussion} className="flex gap-2 pt-2 border-t border-blue-200 dark:border-blue-900">
+                    <Input
+                      placeholder="Tulis pesan diskusi kelompok / tanggapan Anda..."
+                      value={newDiscussionMsg}
+                      onChange={(e) => setNewDiscussionMsg(e.target.value)}
+                      className="text-xs rounded-xl"
+                    />
+                    <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 rounded-xl shrink-0 shadow-xs">
+                      <Send className="h-3.5 w-3.5" /> Kirim
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Kartu Penilaian Antarteman (Peer Assessment) - Model Praktis Seluruh Rekan Sekelas */}
-            {(selectedAssignment.type === "TUGAS_KELOMPOK" || selectedAssignment.type === "PROYEK_P5" || (selectedAssignment as any).peer_assessment_enabled || selectedAssignment.title.toLowerCase().includes("kelompok") || String((selectedAssignment as any).type || "").toLowerCase().includes("kelompok")) && (() => {
+            {/* Kartu Penilaian Antarteman (Peer Assessment) - Model Praktis Seluruh Rekan Sekelas (HANYA untuk Tugas Kelompok) */}
+            {isGroupTask && (() => {
               const filteredClassmates = classmates.filter((c) => {
                 const name = (c.full_name || c.name || "").toLowerCase();
                 const nisn = (c.nis_nip || c.nis || "").toLowerCase();
@@ -1194,195 +1301,310 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               </div>
             ) : null}
 
-            {/* Form Pengerjaan & Pengumpulan Jawaban */}
-            <Card className="border-border shadow-md">
-              <CardHeader className="p-4 pb-3 border-b border-border bg-muted/20">
-                <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
-                  <FileCheck2 className="h-4 w-4 text-primary" /> Lembar Jawaban & Submisi Siswa
-                </CardTitle>
-                <CardDescription className="text-[11px]">
-                  Ketikkan jawaban tugas Anda di bawah, atau lampirkan berkas dokumen jawaban.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 space-y-4">
-                {/* Textarea Esai Jawaban */}
-                <div className="space-y-1.5">
-                  <label className="font-bold text-xs text-foreground flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <MessageSquare className="h-3.5 w-3.5 text-primary" /> Jawaban / Catatan Siswa
-                    </span>
-                    <span className="text-[10px] text-muted-foreground font-normal">Ketik langsung di sini</span>
-                  </label>
-                  <Textarea
-                    placeholder="Tuliskan jawaban Anda, uraian analisis, atau ringkasan pengerjaan tugas di sini..."
-                    rows={8}
-                    value={studentNotes}
-                    onChange={(e) => setStudentNotes(e.target.value)}
-                    className="text-xs rounded-xl font-sans leading-relaxed border-border focus-visible:ring-primary"
-                  />
-                </div>
-
-                {/* Input Berkas / File Upload Siswa */}
-                <div className="space-y-2 pt-1">
+            {isQuiz ? (
+              <Card className="border-purple-300 dark:border-purple-900 shadow-md bg-card">
+                <CardHeader className="p-4 pb-3 border-b border-purple-200 dark:border-purple-900 bg-purple-100/30 dark:bg-purple-950/30">
                   <div className="flex items-center justify-between">
-                    <label className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                      <Paperclip className="h-3.5 w-3.5 text-primary" /> Lampiran Berkas Tugas Siswa
-                    </label>
-                    <div className="flex items-center gap-1 p-0.5 bg-muted rounded-lg border border-border">
-                      <button
-                        type="button"
-                        onClick={() => setUploadMode("FILE")}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${
-                          uploadMode === "FILE"
-                            ? "bg-background text-primary shadow-xs"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        📁 Unggah File
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setUploadMode("URL")}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${
-                          uploadMode === "URL"
-                            ? "bg-background text-primary shadow-xs"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        🔗 Link Drive
-                      </button>
-                    </div>
+                    <CardTitle className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-purple-600" /> Lembar Pengerjaan Kuis Formatif
+                    </CardTitle>
+                    <Badge variant="outline" className="text-[10px] font-mono border-purple-400 text-purple-700 dark:text-purple-300 font-bold">
+                      {Object.keys(studentQuizAnswers).length}/{parsedQuizQuestions.length} Terjawab
+                    </Badge>
                   </div>
-
-                  {uploadMode === "FILE" ? (
-                    <div>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                      />
-
-                      {fileUrl ? (
-                        <div className="p-3 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 space-y-2.5 shadow-2xs">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="h-8 w-8 rounded-lg bg-emerald-600/15 text-emerald-600 flex items-center justify-center shrink-0">
-                                <FileCheck2 className="h-4 w-4" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-bold text-xs text-foreground truncate">
-                                  {uploadFileName || "Berkas_Tugas_Siswa.pdf"}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground flex items-center gap-2">
-                                  <span>{uploadFileSize || "Berkas Siap"}</span>
-                                  <span>•</span>
-                                  <span className="text-emerald-600 font-bold">Siap Disimpan</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {fileUrl && !fileUrl.startsWith("data:") && (
-                                <a
-                                  href={fileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="h-7 px-2.5 rounded-lg border border-border bg-background hover:bg-muted text-[11px] font-bold inline-flex items-center gap-1 text-foreground"
-                                >
-                                  <Eye className="h-3 w-3 text-primary" /> Lihat
-                                </a>
-                              )}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleDeleteFile}
-                                className="h-7 px-2.5 text-[11px] font-bold border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg gap-1"
-                              >
-                                <Trash2 className="h-3 w-3" /> Hapus
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="text-[10px] text-muted-foreground italic flex items-center gap-1 border-t border-emerald-200 dark:border-emerald-900/40 pt-1.5">
-                            <span>💡 Ingin mengganti berkas? Klik <strong>Hapus</strong> lalu pilih file baru.</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          onClick={() => fileInputRef.current?.click()}
-                          className="p-4 border-2 border-dashed border-border hover:border-primary/60 bg-muted/20 hover:bg-primary/5 rounded-xl cursor-pointer text-center space-y-1.5 transition group"
-                        >
-                          <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto group-hover:scale-105 transition">
-                            <Upload className="h-4 w-4" />
-                          </div>
-                          <div className="font-bold text-xs text-foreground">
-                            Klik untuk memilih berkas dari HP / Komputer
-                          </div>
-                          <p className="text-[10px] text-muted-foreground">
-                            Format PDF, Word (DOC/DOCX), atau Gambar (Maksimal 10 MB)
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          placeholder="https://drive.google.com/... atau tautan berkas tugas"
-                          value={fileUrl}
-                          onChange={(e) => {
-                            setFileUrl(e.target.value);
-                            setUploadFileName(e.target.value);
-                          }}
-                          className="text-xs rounded-xl"
-                        />
-                        {fileUrl && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setFileUrl("");
-                              setUploadFileName("");
-                            }}
-                            className="h-9 px-2.5 text-xs text-red-600 border-red-200 hover:bg-red-50 rounded-xl shrink-0"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                  <CardDescription className="text-[11px]">
+                    Pilih salah satu jawaban yang menurut Anda paling tepat (A, B, C, atau D).
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 space-y-4">
+                  {existingSub && existingSub.score !== undefined && existingSub.score > 0 && (
+                    <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-between text-xs">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-purple-800 dark:text-purple-300 block">
+                          🎉 Nilai Kuis Anda: {existingSub.score} / 100
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">{existingSub.feedback || "Kuis telah dikerjakan."}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        Sematkan tautan Google Drive / Cloud Storage jika berkas berukuran sangat besar (misal video).
-                      </p>
+                      <Badge className="bg-purple-600 text-white font-bold text-xs px-2.5 py-1">
+                        SELESAI
+                      </Badge>
                     </div>
                   )}
-                </div>
 
-                {/* Action Buttons */}
-                <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={submitting}
-                    onClick={() => handleSaveSubmission(true)}
-                    className="w-full sm:w-auto text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10 rounded-xl"
-                  >
-                    <Save className="h-3.5 w-3.5 mr-1.5" /> Simpan Draft
-                  </Button>
+                  <div className="space-y-4 max-h-[550px] overflow-y-auto pr-1">
+                    {parsedQuizQuestions.map((q: any, qIdx: number) => {
+                      const selectedAns = studentQuizAnswers[qIdx];
+                      const options = [
+                        { key: "A", text: q.optionA },
+                        { key: "B", text: q.optionB },
+                        { key: "C", text: q.optionC },
+                        { key: "D", text: q.optionD },
+                      ].filter((opt) => Boolean(opt.text));
 
-                  <Button
-                    size="sm"
-                    disabled={submitting}
-                    onClick={() => handleSaveSubmission(false)}
-                    className="w-full sm:w-auto text-xs font-bold bg-primary text-primary-foreground shadow-sm rounded-xl px-4"
-                  >
-                    <Send className="h-3.5 w-3.5 mr-1.5" /> {existingSub && !existingSub.notes?.includes("[DRAFT]") ? "Perbarui Jawaban" : "Kumpulkan Tugas"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                      return (
+                        <div
+                          key={qIdx}
+                          className="p-3.5 rounded-xl border border-border bg-muted/15 space-y-2.5 text-xs shadow-2xs"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-primary font-mono text-[11px]">
+                              Soal #{qIdx + 1}
+                            </span>
+                            {selectedAns && (
+                              <Badge className="bg-purple-600 text-white font-mono text-[9px] px-1.5 py-0">
+                                Pilihan: {selectedAns}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="font-semibold text-foreground leading-relaxed whitespace-pre-wrap">
+                            {q.question}
+                          </p>
+
+                          <div className="grid grid-cols-1 gap-1.5 pt-1">
+                            {options.map((opt) => {
+                              const isSelected = selectedAns === opt.key;
+                              return (
+                                <button
+                                  key={opt.key}
+                                  type="button"
+                                  onClick={() =>
+                                    setStudentQuizAnswers((prev) => ({
+                                      ...prev,
+                                      [qIdx]: opt.key,
+                                    }))
+                                  }
+                                  className={`p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition cursor-pointer text-xs ${
+                                    isSelected
+                                      ? "border-purple-600 bg-purple-50 dark:bg-purple-950/40 text-purple-950 dark:text-purple-100 font-bold shadow-2xs ring-1 ring-purple-500"
+                                      : "border-border/80 bg-card hover:bg-muted/40 text-foreground"
+                                  }`}
+                                >
+                                  <span
+                                    className={`h-5 w-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                                      isSelected
+                                        ? "bg-purple-600 text-white"
+                                        : "bg-muted text-muted-foreground"
+                                    }`}
+                                  >
+                                    {opt.key}
+                                  </span>
+                                  <span className="leading-snug">{opt.text}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                    <div className="text-[11px] text-muted-foreground">
+                      Jawaban tersimpan otomatis saat memilih.
+                    </div>
+                    <Button
+                      size="sm"
+                      disabled={submitting || parsedQuizQuestions.length === 0}
+                      onClick={handleSubmitQuiz}
+                      className="w-full sm:w-auto text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-xs rounded-xl px-5"
+                    >
+                      <Zap className="h-3.5 w-3.5 mr-1.5" />
+                      {existingSub ? "Kirim Ulang Jawaban Kuis" : "Kumpulkan Jawaban Kuis"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              /* Form Pengerjaan & Pengumpulan Jawaban */
+              <Card className="border-border shadow-md">
+                <CardHeader className="p-4 pb-3 border-b border-border bg-muted/20">
+                  <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <FileCheck2 className="h-4 w-4 text-primary" /> Lembar Jawaban & Submisi Siswa
+                  </CardTitle>
+                  <CardDescription className="text-[11px]">
+                    Ketikkan jawaban tugas Anda di bawah, atau lampirkan berkas dokumen jawaban.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 space-y-4">
+                  {/* Textarea Esai Jawaban */}
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-xs text-foreground flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <MessageSquare className="h-3.5 w-3.5 text-primary" /> Jawaban / Catatan Siswa
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-normal">Ketik langsung di sini</span>
+                    </label>
+                    <Textarea
+                      placeholder="Tuliskan jawaban Anda, uraian analisis, atau ringkasan pengerjaan tugas di sini..."
+                      rows={8}
+                      value={studentNotes}
+                      onChange={(e) => setStudentNotes(e.target.value)}
+                      className="text-xs rounded-xl font-sans leading-relaxed border-border focus-visible:ring-primary"
+                    />
+                  </div>
+
+                  {/* Input Berkas / File Upload Siswa */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                        <Paperclip className="h-3.5 w-3.5 text-primary" /> Lampiran Berkas Tugas Siswa
+                      </label>
+                      <div className="flex items-center gap-1 p-0.5 bg-muted rounded-lg border border-border">
+                        <button
+                          type="button"
+                          onClick={() => setUploadMode("FILE")}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${
+                            uploadMode === "FILE"
+                              ? "bg-background text-primary shadow-xs"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          📁 Unggah File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setUploadMode("URL")}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${
+                            uploadMode === "URL"
+                              ? "bg-background text-primary shadow-xs"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          🔗 Link Drive
+                        </button>
+                      </div>
+                    </div>
+
+                    {uploadMode === "FILE" ? (
+                      <div>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                        />
+
+                        {fileUrl ? (
+                          <div className="p-3 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 space-y-2.5 shadow-2xs">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-8 w-8 rounded-lg bg-emerald-600/15 text-emerald-600 flex items-center justify-center shrink-0">
+                                  <FileCheck2 className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-bold text-xs text-foreground truncate">
+                                    {uploadFileName || "Berkas_Tugas_Siswa.pdf"}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+                                    <span>{uploadFileSize || "Berkas Siap"}</span>
+                                    <span>•</span>
+                                    <span className="text-emerald-600 font-bold">Siap Disimpan</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {fileUrl && !fileUrl.startsWith("data:") && (
+                                  <a
+                                    href={fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="h-7 px-2.5 rounded-lg border border-border bg-background hover:bg-muted text-[11px] font-bold inline-flex items-center gap-1 text-foreground"
+                                  >
+                                    <Eye className="h-3 w-3 text-primary" /> Lihat
+                                  </a>
+                                )}
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleDeleteFile}
+                                  className="h-7 px-2.5 text-[11px] font-bold border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg gap-1"
+                                >
+                                  <Trash2 className="h-3 w-3" /> Hapus
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="text-[10px] text-muted-foreground italic flex items-center gap-1 border-t border-emerald-200 dark:border-emerald-900/40 pt-1.5">
+                              <span>💡 Ingin mengganti berkas? Klik <strong>Hapus</strong> lalu pilih file baru.</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className="p-4 border-2 border-dashed border-border hover:border-primary/60 bg-muted/20 hover:bg-primary/5 rounded-xl cursor-pointer text-center space-y-1.5 transition group"
+                          >
+                            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto group-hover:scale-105 transition">
+                              <Upload className="h-4 w-4" />
+                            </div>
+                            <div className="font-bold text-xs text-foreground">
+                              Klik untuk memilih berkas dari HP / Komputer
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">
+                              Format PDF, Word (DOC/DOCX), atau Gambar (Maksimal 10 MB)
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="https://drive.google.com/... atau tautan berkas tugas"
+                            value={fileUrl}
+                            onChange={(e) => {
+                              setFileUrl(e.target.value);
+                              setUploadFileName(e.target.value);
+                            }}
+                            className="text-xs rounded-xl"
+                          />
+                          {fileUrl && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setFileUrl("");
+                                setUploadFileName("");
+                              }}
+                              className="h-9 px-2.5 text-xs text-red-600 border-red-200 hover:bg-red-50 rounded-xl shrink-0"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          Sematkan tautan Google Drive / Cloud Storage jika berkas berukuran sangat besar (misal video).
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={submitting}
+                      onClick={() => handleSaveSubmission(true)}
+                      className="w-full sm:w-auto text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10 rounded-xl"
+                    >
+                      <Save className="h-3.5 w-3.5 mr-1.5" /> Simpan Draft
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      disabled={submitting}
+                      onClick={() => handleSaveSubmission(false)}
+                      className="w-full sm:w-auto text-xs font-bold bg-primary text-primary-foreground shadow-sm rounded-xl px-4"
+                    >
+                      <Send className="h-3.5 w-3.5 mr-1.5" /> {existingSub && !existingSub.notes?.includes("[DRAFT]") ? "Perbarui Jawaban" : "Kumpulkan Tugas"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

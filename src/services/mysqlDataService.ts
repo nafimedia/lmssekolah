@@ -42,6 +42,7 @@ import {
   getMaterialsFn,
   getMaterialsPaginatedFn,
   saveMaterialFn,
+  updateMaterialStatusFn,
   deleteMaterialFn,
   getHafalanFn,
   saveHafalanFn,
@@ -94,6 +95,7 @@ import {
   deleteStudentKbmNoteFn,
   getLkpdActivitiesFn,
   saveLkpdActivityFn,
+  updateLkpdActivityFn,
   deleteLkpdActivityFn,
   getLkpdGradesFn,
   getAllLkpdGradesFn,
@@ -757,6 +759,16 @@ export class MysqlDataService {
     }
   }
 
+  static async updateMaterialStatus(id: string, status: string): Promise<boolean> {
+    try {
+      const res = await updateMaterialStatusFn({ data: { id, status } });
+      return res.success;
+    } catch (e) {
+      console.warn("updateMaterialStatusFn failed:", e);
+      return false;
+    }
+  }
+
   static async deleteMaterial(id: string): Promise<boolean> {
     try {
       const res = await deleteMaterialFn({ data: { id } });
@@ -1237,9 +1249,9 @@ export class MysqlDataService {
   }
 
   // LKPD & Digital Activities
-  static async getLkpdActivities(rombel: string, mapel: string): Promise<LkpdActivityRow[]> {
+  static async getLkpdActivities(rombel: string, mapel: string, excludeDraft: boolean = false): Promise<LkpdActivityRow[]> {
     try {
-      return await getLkpdActivitiesFn({ data: { rombel, mapel } });
+      return await getLkpdActivitiesFn({ data: { rombel, mapel, excludeDraft } });
     } catch (e) {
       console.warn("getLkpdActivitiesFn failed:", e);
       return [];
@@ -1252,6 +1264,16 @@ export class MysqlDataService {
     } catch (e) {
       console.warn("saveLkpdActivityFn failed:", e);
       return { success: false };
+    }
+  }
+
+  static async updateLkpdActivity(data: LkpdActivityRow & { id: string | number }): Promise<boolean> {
+    try {
+      const res = await updateLkpdActivityFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("updateLkpdActivityFn failed:", e);
+      return false;
     }
   }
 

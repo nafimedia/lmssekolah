@@ -87,10 +87,25 @@ export function CreateActivityForm({
   const [title, setTitle] = useState("");
   const [type, setType] = useState<ActivityTypeOption>("LKPD");
   const [instructions, setInstructions] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [dueDateDate, setDueDateDate] = useState("");
+  const [dueDateTime, setDueDateTime] = useState("23:59");
   const [maxScore, setMaxScore] = useState("100");
   const [submissionType, setSubmissionType] = useState("TEXT_AND_FILE");
   const [peerAssessmentEnabled, setPeerAssessmentEnabled] = useState(false);
+
+  // Helper untuk memformat tanggal & jam batas pengumpulan yang rapi dan konsisten
+  const formatDueDateTime = (dateStr: string, timeStr: string): string => {
+    if (!dateStr) return "";
+    try {
+      const [year, month, day] = dateStr.split("-");
+      const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+      const monthName = months[parseInt(month, 10) - 1] || month;
+      const timePart = timeStr ? `${timeStr} WIB` : "23:59 WIB";
+      return `${parseInt(day, 10)} ${monthName} ${year}, ${timePart}`;
+    } catch {
+      return `${dateStr} ${timeStr}`;
+    }
+  };
 
   // Attachment State (Physical File Upload or URL or E-Library)
   const [uploadMode, setUploadMode] = useState<"FILE" | "URL" | "ELIBRARY">("FILE");
@@ -110,48 +125,58 @@ export function CreateActivityForm({
     Array<{ id: number; question: string; optionA: string; optionB: string; optionC: string; optionD: string; keyAnswer: string }>
   >([]);
 
-  const activityOptions: { id: ActivityTypeOption; label: string; color: string }[] = [
+  const activityOptions: { id: ActivityTypeOption; label: string; color: string; disabled?: boolean }[] = [
     {
       id: "LKPD",
       label: "📄 LKPD Digital",
       color: "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
+      disabled: false,
     },
     {
       id: "TUGAS_KELOMPOK",
       label: "👥 Diskusi & Kelompok",
       color: "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
-    },
-    {
-      id: "QUIZ",
-      label: "⚡ Kuis Formatif",
-      color: "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300",
+      disabled: false,
     },
     {
       id: "TUGAS_MANDIRI",
       label: "✍️ Tugas Mandiri",
       color: "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
+      disabled: false,
+    },
+    {
+      id: "QUIZ",
+      label: "⚡ Kuis Formatif (Belum Aktif)",
+      color: "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300",
+      disabled: true,
     },
     {
       id: "PRAKTIKUM",
-      label: "🔬 Praktikum & Lab",
+      label: "🔬 Praktikum & Lab (Belum Aktif)",
       color: "border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-950/30 dark:text-teal-300",
+      disabled: true,
     },
     {
       id: "PROYEK_P5",
-      label: "🎯 Proyek P5 / PPRA",
+      label: "🎯 Proyek P5 / PPRA (Belum Aktif)",
       color: "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
+      disabled: true,
     },
     {
       id: "HAFALAN",
-      label: "📖 Setoran Hafalan",
+      label: "📖 Setoran Hafalan (Belum Aktif)",
       color: "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300",
+      disabled: true,
     },
   ];
 
   const handleSelectType = (opt: typeof activityOptions[0]) => {
+    if (opt.disabled) return;
     setType(opt.id);
-    if (opt.id === "TUGAS_KELOMPOK" || opt.id === "PROYEK_P5") {
+    if (opt.id === "TUGAS_KELOMPOK") {
       setPeerAssessmentEnabled(true);
+    } else {
+      setPeerAssessmentEnabled(false);
     }
   };
 
@@ -289,6 +314,8 @@ export function CreateActivityForm({
 
     const targetStatus = isDraft ? "DRAF" : "AKTIF";
 
+    const resolvedDueDate = dueDateDate ? formatDueDateTime(dueDateDate, dueDateTime) : "Sesuai Jadwal KBM";
+
     const payload = {
       rombel: activeRombel,
       mapel: activeMapel,
@@ -296,14 +323,14 @@ export function CreateActivityForm({
       title: title.trim(),
       type: type,
       instructions: instructions.trim() || "(Belum ada petunjuk tugas)",
-      due_date: dueDate,
-      max_score: Number(maxScore) || 100,
+      due_date: resolvedDueDate,
+      max_score: maxScore || "100",
       status: targetStatus,
       attachment_url: finalAttachment,
       submission_type: submissionType,
       quiz_data: type === "QUIZ" ? JSON.stringify(quizQuestions) : "",
       questions_data: questionsDataStr,
-      peer_assessment_enabled: peerAssessmentEnabled ? 1 : 0,
+      peer_assessment_enabled: type === "TUGAS_KELOMPOK" && peerAssessmentEnabled ? 1 : 0,
     };
 
     const res = await MysqlDataService.saveLkpdActivity(payload);
@@ -312,7 +339,7 @@ export function CreateActivityForm({
       id: res.id || "act_" + Date.now(),
       title: title.trim(),
       type: type,
-      dueDate: dueDate,
+      dueDate: resolvedDueDate,
       status: targetStatus,
       submittedCount: 0,
       totalStudents: 0,
@@ -328,6 +355,10 @@ export function CreateActivityForm({
     }
     setTitle("");
     setInstructions("");
+    setDueDateDate("");
+    setDueDateTime("23:59");
+    setMaxScore("100");
+    setPeerAssessmentEnabled(false);
     setSelectedFile(null);
     setFileBase64("");
     setAttachmentUrl("");
@@ -405,17 +436,24 @@ export function CreateActivityForm({
           <form id="create-activity-form" onSubmit={handleSubmit} className="space-y-5">
             {/* Pilihan Kategori Aktivitas */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-foreground block">Kategori Aktivitas:</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-foreground block">Kategori Aktivitas:</label>
+                <span className="text-[11px] text-muted-foreground">Kategori bertanda "Belum Aktif" sedang disiapkan</span>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 {activityOptions.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
+                    disabled={opt.disabled}
                     onClick={() => handleSelectType(opt)}
+                    title={opt.disabled ? "Kategori ini belum aktif" : opt.label}
                     className={`px-3 py-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 ${
-                      type === opt.id
+                      opt.disabled
+                        ? "opacity-45 bg-muted/40 border-dashed border-border text-muted-foreground cursor-not-allowed select-none"
+                        : type === opt.id
                         ? "bg-emerald-600 text-white border-emerald-600 font-semibold shadow-2xs"
-                        : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted font-medium cursor-pointer"
                     }`}
                   >
                     <span>{opt.label}</span>
@@ -424,52 +462,54 @@ export function CreateActivityForm({
               </div>
             </div>
 
-            {/* Sakelar Penilaian Antarteman (Peer Assessment) */}
-            <div className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2.5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <Users className="h-4 w-4" />
+            {/* Sakelar Penilaian Antarteman (Peer Assessment) - Khusus Diskusi & Tugas Kelompok */}
+            {type === "TUGAS_KELOMPOK" && (
+              <div className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2.5 animate-in fade-in-50 duration-200">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <label htmlFor="toggle-peer-assessment" className="text-xs font-semibold text-foreground cursor-pointer block">
+                        Aktifkan Penilaian Antarteman (Peer Assessment)
+                      </label>
+                      <span className="text-[11px] text-muted-foreground block">
+                        Peserta didik saling menilai keaktifan, kerjasama, tanggung jawab, dan sikap sesama anggota kelompok.
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <label htmlFor="toggle-peer-assessment" className="text-xs font-semibold text-foreground cursor-pointer block">
-                      Aktifkan Penilaian Antarteman (Peer Assessment)
-                    </label>
-                    <span className="text-[11px] text-muted-foreground block">
-                      Peserta didik saling menilai keaktifan, kerjasama, tanggung jawab, dan sikap sesama anggota kelompok.
-                    </span>
-                  </div>
+                  <input
+                    type="checkbox"
+                    id="toggle-peer-assessment"
+                    checked={peerAssessmentEnabled}
+                    onChange={(e) => setPeerAssessmentEnabled(e.target.checked)}
+                    className="rounded border-border text-emerald-600 focus:ring-emerald-500 h-4 w-4 cursor-pointer"
+                  />
                 </div>
-                <input
-                  type="checkbox"
-                  id="toggle-peer-assessment"
-                  checked={peerAssessmentEnabled}
-                  onChange={(e) => setPeerAssessmentEnabled(e.target.checked)}
-                  className="rounded border-border text-emerald-600 focus:ring-emerald-500 h-4 w-4 cursor-pointer"
-                />
-              </div>
 
-              {peerAssessmentEnabled && (
-                <div className="pt-2 border-t border-border/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                  <div className="p-2 rounded-lg bg-background border border-border/60">
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-400 block">1. Keaktifan</span>
-                    <span className="text-muted-foreground text-[10px]">Inisiatif ide & keaktifan diskusi</span>
+                {peerAssessmentEnabled && (
+                  <div className="pt-2 border-t border-border/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                    <div className="p-2 rounded-lg bg-background border border-border/60">
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-400 block">1. Keaktifan</span>
+                      <span className="text-muted-foreground text-[10px]">Inisiatif ide & keaktifan diskusi</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-background border border-border/60">
+                      <span className="font-semibold text-blue-700 dark:text-blue-400 block">2. Kerjasama</span>
+                      <span className="text-muted-foreground text-[10px]">Kekompakan & kontribusi tugas</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-background border border-border/60">
+                      <span className="font-semibold text-amber-700 dark:text-amber-400 block">3. Tanggung Jawab</span>
+                      <span className="text-muted-foreground text-[10px]">Menyelesaikan bagian tepat waktu</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-background border border-border/60">
+                      <span className="font-semibold text-teal-700 dark:text-teal-400 block">4. Sikap & Tasamuh</span>
+                      <span className="text-muted-foreground text-[10px]">Menghargai pendapat teman</span>
+                    </div>
                   </div>
-                  <div className="p-2 rounded-lg bg-background border border-border/60">
-                    <span className="font-semibold text-blue-700 dark:text-blue-400 block">2. Kerjasama</span>
-                    <span className="text-muted-foreground text-[10px]">Kekompakan & kontribusi tugas</span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-background border border-border/60">
-                    <span className="font-semibold text-amber-700 dark:text-amber-400 block">3. Tanggung Jawab</span>
-                    <span className="text-muted-foreground text-[10px]">Menyelesaikan bagian tepat waktu</span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-background border border-border/60">
-                    <span className="font-semibold text-teal-700 dark:text-teal-400 block">4. Sikap & Tasamuh</span>
-                    <span className="text-muted-foreground text-[10px]">Menghargai pendapat teman</span>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Judul Aktivitas */}
             <div className="space-y-1.5">
@@ -482,25 +522,49 @@ export function CreateActivityForm({
               />
             </div>
 
-            {/* Pengaturan Batas Waktu, Bobot Skor, dan Metode Pengumpulan */}
+            {/* Pengaturan Batas Waktu, Nilai Maksimal, dan Metode Pengumpulan */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-foreground block">Batas Pengumpulan:</label>
-                <Input
-                  placeholder="Misal: Hari ini, 15:00 WIB"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="text-xs font-normal"
-                />
+                <div className="grid grid-cols-2 gap-1.5">
+                  <Input
+                    type="date"
+                    value={dueDateDate}
+                    onChange={(e) => setDueDateDate(e.target.value)}
+                    className="text-xs font-normal"
+                    title="Pilih Tanggal Batas Pengumpulan"
+                  />
+                  <Input
+                    type="time"
+                    value={dueDateTime}
+                    onChange={(e) => setDueDateTime(e.target.value)}
+                    className="text-xs font-normal"
+                    title="Pilih Jam Batas Pengumpulan"
+                  />
+                </div>
+                {dueDateDate ? (
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium truncate">
+                    🗓️ {formatDueDateTime(dueDateDate, dueDateTime)}
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">Pilih tanggal & jam batas waktu</p>
+                )}
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground block">Bobot Skor Maksimal:</label>
-                <Input
-                  type="number"
+                <label className="text-xs font-medium text-foreground block">Nilai Maksimal:</label>
+                <select
                   value={maxScore}
                   onChange={(e) => setMaxScore(e.target.value)}
-                  className="text-xs font-normal font-mono text-emerald-600 dark:text-emerald-400"
-                />
+                  className="h-9 w-full rounded-md border border-border bg-background px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 text-emerald-700 dark:text-emerald-400"
+                >
+                  <option value="100">100 (Skala 100 / Poin Penuh)</option>
+                  <option value="80">80 (Skala 80)</option>
+                  <option value="60">60 (Skala 60)</option>
+                  <option value="50">50 (Skala 50)</option>
+                  <option value="A">Predikat A (Sangat Baik)</option>
+                  <option value="B">Predikat B (Baik)</option>
+                  <option value="C">Predikat C (Cukup)</option>
+                </select>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-foreground block">Metode Pengumpulan Siswa:</label>

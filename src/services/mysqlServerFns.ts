@@ -3929,7 +3929,7 @@ export interface LkpdActivityRow {
   type: string;
   instructions?: string;
   due_date: string;
-  max_score?: number;
+  max_score?: number | string;
   status?: string;
   attachment_url?: string;
   submission_type?: string;
@@ -4023,6 +4023,8 @@ async function ensureLkpdSchema(execute: any) {
     if (!colNames.has("peer_criteria")) {
       await execute("ALTER TABLE lkpd_activities ADD COLUMN peer_criteria TEXT").catch(() => {});
     }
+    // Pastikan kolom max_score mendukung teks huruf (A, B, C) maupun angka (100, 80, dll)
+    await execute("ALTER TABLE lkpd_activities MODIFY COLUMN max_score VARCHAR(20) DEFAULT '100'").catch(() => {});
     await execute(`
       CREATE TABLE IF NOT EXISTS peer_assessments (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -4142,7 +4144,7 @@ export const saveLkpdActivityFn = createServerFn({ method: "POST" })
           data.type || "LKPD",
           data.instructions || "",
           data.due_date,
-          data.max_score || 100,
+          data.max_score ? String(data.max_score) : "100",
           data.status || "AKTIF",
           finalAttachmentUrl,
           data.submission_type || "TEXT_AND_FILE",

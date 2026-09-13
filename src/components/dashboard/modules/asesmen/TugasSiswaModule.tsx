@@ -741,7 +741,11 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase block">Nilai Maksimal</span>
-                    <span className="font-bold text-emerald-600">{selectedAssignment.max_score || 100} Poin</span>
+                    <span className="font-bold text-emerald-600">
+                      {typeof selectedAssignment.max_score === "string" && isNaN(Number(selectedAssignment.max_score))
+                        ? `Predikat ${selectedAssignment.max_score}`
+                        : `${selectedAssignment.max_score || 100} Poin`}
+                    </span>
                   </div>
                 </div>
 

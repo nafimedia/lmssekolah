@@ -2,11 +2,24 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Trophy, BookOpen, CalendarClock, ArrowRight, CheckCircle2, UserCheck, Building2, Clock, Sparkles, FileText } from "lucide-react";
+import {
+  GraduationCap,
+  Trophy,
+  BookOpen,
+  CalendarClock,
+  ArrowRight,
+  CheckCircle2,
+  UserCheck,
+  Building2,
+  Clock,
+  Sparkles,
+  FileText,
+  CalendarCheck,
+  Medal,
+} from "lucide-react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
-
 import { isSameClass, normalizeRombelName } from "@/utils/classNormalization";
 
 interface SiswaDashboardViewProps {
@@ -25,7 +38,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
   const [myTugasList, setMyTugasList] = useState<any[]>([]);
   const [mySubmissions, setMySubmissions] = useState<any[]>([]);
   const [jadwalToday, setJadwalToday] = useState<any[]>([]);
-
+  const [myBadges, setMyBadges] = useState<any[]>([]);
   const [liveSession, setLiveSession] = useState<any | null>(null);
 
   useEffect(() => {
@@ -34,14 +47,17 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         const currentUser = MysqlAuthService.getActiveUser();
         const currentClass = normalizeRombelName(currentUser?.class_name || "Kelas 8A");
         const todayStr = new Date().toISOString().split("T")[0];
-        const [dbPresensi, dbTugas, dbJadwal, dbSessions, dbSubmissions] = await Promise.all([
+        const [dbPresensi, dbTugas, dbJadwal, dbSessions, dbSubmissions, dbAwards, dbAchievements] = await Promise.all([
           MysqlDataService.getKbmPresensi("ALL", "ALL", todayStr),
           MysqlDataService.getLkpdActivities(currentClass, "ALL"),
           MysqlDataService.getJadwalList(),
           MysqlDataService.getActiveKbmSessions(),
           MysqlDataService.getSubmissions(),
+          MysqlDataService.getAwards().catch(() => []),
+          MysqlDataService.getUserAchievements().catch(() => []),
         ]);
 
+        // 1. Match Attendance
         const myPres = (dbPresensi || []).find((p: any) => {
           const cleanDbName = (p.student_name || "").toLowerCase().trim();
           const cleanUserName = (userName || "").toLowerCase().trim();
@@ -59,6 +75,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         setPresensiToday(myPres);
         setMyTugasList(dbTugas || []);
 
+        // 2. Match Submissions
         const mySubs = (dbSubmissions || []).filter((s: any) => {
           const matchNis = s.student_nis && currentUser?.nis_nip && s.student_nis === currentUser.nis_nip;
           const matchName =
@@ -69,16 +86,55 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         });
         setMySubmissions(mySubs);
 
+        // 3. Match Live KBM Session
         const liveSess = (dbSessions || []).find(
           (s: any) => s.status === "SEDANG_BERLANGSUNG" && isSameClass(s.rombel || "", currentClass)
         );
         setLiveSession(liveSess || null);
 
+        // 4. Match Today's Schedule for Class
         const classSchedule = (dbJadwal || []).filter((j: any) => {
           const matchDay = (j.hari || "").toLowerCase().trim() === currentDayName.toLowerCase().trim();
           return matchDay && isSameClass(j.rombel || j.class_name, currentClass);
         });
         setJadwalToday(classSchedule);
+
+        // 5. Match Awards & Achievements (Badges)
+        const studentAwards = (dbAwards || [])
+          .filter((a: any) => {
+            const matchName =
+              a.student_name &&
+              currentUser?.full_name &&
+              a.student_name.toLowerCase().trim() === currentUser.full_name.toLowerCase().trim();
+            const matchNis = a.student_nis && currentUser?.nis_nip && a.student_nis === currentUser.nis_nip;
+            const matchId = a.student_id && currentUser?.id && String(a.student_id) === String(currentUser.id);
+            return matchName || matchNis || matchId;
+          })
+          .filter((a: any) => a.badge_category && !a.warning_category)
+          .map((a: any) => ({
+            title: a.badge_category,
+            category: "Apresiasi Guru",
+            subtitle: a.comment_text || "Lencana Resmi Madrasah",
+            icon: "⭐",
+          }));
+
+        const studentAchievements = (dbAchievements || [])
+          .filter((ach: any) => {
+            const matchId = ach.user_id && currentUser?.id && String(ach.user_id) === String(currentUser.id);
+            const matchName =
+              ach.user_name &&
+              currentUser?.full_name &&
+              ach.user_name.toLowerCase().trim() === currentUser.full_name.toLowerCase().trim();
+            return matchId || matchName;
+          })
+          .map((ach: any) => ({
+            title: ach.title,
+            category: ach.category || "Prestasi & Juara",
+            subtitle: ach.issuer || "Penghargaan Madrasah",
+            icon: "🏆",
+          }));
+
+        setMyBadges([...studentAwards, ...studentAchievements]);
       } catch (e) {
         console.warn("loadSiswaRealData error:", e);
       }
@@ -147,92 +203,100 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               onClick={() => setActiveTab?.("tugas")}
             >
               <BookOpen className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Buka LKPD / Tugas</span>
+              <span className="hidden sm:inline">Buka Tugas & LKPD</span>
               <span className="sm:hidden">Buka KBM</span>
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Horizontal Compact Metric Strip (~42px) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs">
-        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
-          <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${presensiStatus === "HADIR" ? "bg-emerald-500/15 text-emerald-600" : "bg-amber-500/15 text-amber-600"}`}>
-            <CheckCircle2 className="h-3.5 w-3.5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] text-muted-foreground font-medium leading-none">Kehadiran Presensi</p>
-              <span className="text-[10px] text-muted-foreground font-mono">{siswaClass}</span>
+      {/* 1. SEKSI KEHADIRAN (Presensi Hari Ini) */}
+      <Card className="border-border shadow-xs bg-card">
+        <CardHeader className="p-3 sm:p-4 border-b border-border/80 flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+              presensiStatus === "HADIR" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+            }`}>
+              <CalendarCheck className="h-4 w-4" />
             </div>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
-              {presensiStatus || "BELUM ABSEN"}
-            </p>
-          </div>
-        </div>
-
-        <div
-          className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs cursor-pointer hover:border-blue-500/50 transition-colors"
-          onClick={() => setActiveTab?.("tugas")}
-        >
-          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-            <BookOpen className="h-3.5 w-3.5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] text-muted-foreground font-medium leading-none">Tugas & LKPD Digital</p>
-              <span className="text-[10px] text-blue-600 font-semibold">Buka →</span>
+            <div>
+              <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
+                1. Kehadiran Hari Ini ({currentDayName})
+              </CardTitle>
+              <CardDescription className="text-[11px]">
+                Status presensi KBM kelas {siswaClass}
+              </CardDescription>
             </div>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5 truncate">
-              {pendingTasks.length} Belum Dikumpulkan <span className="text-xs font-normal text-muted-foreground">({myTugasList.length} Total)</span>
-            </p>
           </div>
-        </div>
-
-        <div
-          className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs cursor-pointer hover:border-amber-500/50 transition-colors"
-          onClick={() => setActiveTab?.("profil")}
-        >
-          <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <Trophy className="h-3.5 w-3.5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] text-muted-foreground font-medium leading-none">Status Akademik</p>
-              <span className="text-[10px] text-amber-600 font-semibold">Profil →</span>
+          <Badge
+            className={`font-bold text-xs px-2.5 py-1 ${
+              presensiStatus === "HADIR"
+                ? "bg-emerald-600 text-white"
+                : presensiStatus === "SAKIT" || presensiStatus === "IZIN"
+                ? "bg-blue-600 text-white"
+                : "bg-amber-500 text-slate-950 font-extrabold"
+            }`}
+          >
+            {presensiStatus === "HADIR" ? "✔ HADIR" : presensiStatus || "BELUM ABSEN"}
+          </Badge>
+        </CardHeader>
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-muted/40 border border-border/70">
+            <div className="space-y-1">
+              <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                <CheckCircle2 className={`h-4 w-4 ${presensiStatus === "HADIR" ? "text-emerald-600" : "text-amber-500"}`} />
+                <span>
+                  {presensiStatus === "HADIR"
+                    ? `Alhamdulillah, kehadiran Anda tercatat pada ${presensiToday?.time || presensiToday?.jam || formattedTime} WIB.`
+                    : "Presensi kehadiran harian belum terkonfirmasi oleh guru pengampu di kelas."}
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {presensiStatus === "HADIR"
+                  ? `Kehadiran resmi tersimpan di sistem presensi madrasah untuk rombel ${siswaClass}.`
+                  : `Pastikan Anda mengikuti pembelajaran tatap muka di rombel ${siswaClass} secara tertib.`}
+              </p>
             </div>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
-              Siswa Aktif <span className="text-xs font-normal text-muted-foreground">({siswaClass})</span>
-            </p>
+            <div className="text-xs font-semibold text-muted-foreground shrink-0 flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{formattedTime} WIB</span>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* To-Do List: Tasks & LKPD Pending Submission */}
-      <Card className="border-border shadow-xs">
+      {/* 2. SEKSI TUGAS DAN LKPD */}
+      <Card className="border-border shadow-xs bg-card">
         <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <FileText className="h-4 w-4 text-blue-600 shrink-0" />
-            <CardTitle className="text-xs sm:text-sm font-bold">
-              Tugas & LKPD Perlu Dikerjakan
-            </CardTitle>
-            {pendingTasks.length > 0 ? (
-              <Badge className="bg-amber-600 text-white text-[10px] font-bold">
-                {pendingTasks.length} Belum Dikumpulkan
-              </Badge>
-            ) : (
-              <Badge className="bg-emerald-600 text-white text-[10px] font-bold">
-                Semua Selesai
-              </Badge>
-            )}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="h-8 w-8 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 grid place-items-center shrink-0">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
+                2. Tugas dan LKPD
+                {pendingTasks.length > 0 ? (
+                  <Badge className="bg-amber-600 text-white text-[10px] font-bold">
+                    {pendingTasks.length} Belum Dikumpulkan
+                  </Badge>
+                ) : (
+                  <Badge className="bg-emerald-600 text-white text-[10px] font-bold">
+                    Semua Selesai
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription className="text-[11px]">
+                Daftar lembar kerja & penugasan mata pelajaran kelas {siswaClass}
+              </CardDescription>
+            </div>
           </div>
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 text-xs font-semibold text-blue-600 gap-1 self-end sm:self-center"
+            className="h-7 text-xs font-semibold text-blue-600 gap-1 self-end sm:self-center hover:bg-blue-500/10"
             onClick={() => setActiveTab?.("tugas")}
           >
-            Lihat Semua Tugas <ArrowRight className="h-3.5 w-3.5" />
+            Buka Modul Tugas & LKPD <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </CardHeader>
         <CardContent className="p-4">
@@ -248,7 +312,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
             </div>
           ) : (
             <div className="space-y-2.5">
-              {pendingTasks.slice(0, 3).map((task) => (
+              {pendingTasks.slice(0, 4).map((task) => (
                 <div
                   key={task.id}
                   className="p-3.5 rounded-xl border border-border bg-card hover:border-blue-500/50 hover:bg-blue-50/20 dark:hover:bg-blue-950/20 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
@@ -288,18 +352,34 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 dark:border-slate-800 shadow-xs">
-        <CardHeader className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-emerald-600" /> Jadwal Belajar {siswaClass} Hari Ini ({currentDayName})
-          </CardTitle>
-          <Button size="sm" variant="ghost" className="text-xs font-bold text-emerald-600 gap-1" onClick={() => setActiveTab?.("jadwal")}>
+      {/* 3. SEKSI JADWAL HARI INI */}
+      <Card className="border-border shadow-xs bg-card">
+        <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0">
+              <CalendarClock className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-xs sm:text-sm font-bold">
+                3. Jadwal Hari Ini ({currentDayName})
+              </CardTitle>
+              <CardDescription className="text-[11px]">
+                Mata pelajaran & jam KBM kelas {siswaClass}
+              </CardDescription>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-xs font-bold text-emerald-600 gap-1 hover:bg-emerald-500/10"
+            onClick={() => setActiveTab?.("jadwal")}
+          >
             Jadwal Lengkap <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </CardHeader>
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-4 space-y-2.5">
           {jadwalToday.length === 0 ? (
-            <div className="text-xs text-slate-500 italic py-4 text-center border border-dashed rounded-xl border-slate-200 dark:border-slate-800">
+            <div className="text-xs text-muted-foreground italic py-4 text-center border border-dashed rounded-xl border-border">
               Tidak ada jadwal mata pelajaran terdaftar untuk {siswaClass} pada hari {currentDayName}.
             </div>
           ) : (
@@ -312,8 +392,8 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               return (
                 <div
                   key={j.id || idx}
-                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 hover:border-emerald-500/80 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
-                  onClick={() => setActiveTab?.("asesmen")}
+                  className="p-3.5 rounded-xl border border-border bg-muted/20 hover:border-emerald-500/80 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                  onClick={() => setActiveTab?.("tugas")}
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-9 px-3 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center justify-center gap-1.5 border border-emerald-500/30 whitespace-nowrap">
@@ -341,6 +421,82 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                 </div>
               );
             })
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 4. SEKSI KOLEKSI LENCANA */}
+      <Card className="border-border shadow-xs bg-card">
+        <CardHeader className="p-3 sm:p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 grid place-items-center shrink-0">
+              <Trophy className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
+                4. Koleksi Lencana & Prestasi
+                {myBadges.length > 0 && (
+                  <Badge className="bg-amber-500 text-slate-950 font-bold text-[10px]">
+                    {myBadges.length} Lencana Aktif
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription className="text-[11px]">
+                Lencana apresiasi, kejuaraan lomba, dan prestasi resmi siswa
+              </CardDescription>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 text-xs font-semibold text-amber-600 dark:text-amber-400 gap-1 self-end sm:self-center hover:bg-amber-500/10"
+            onClick={() => setActiveTab?.("profil")}
+          >
+            Buka Portofolio Lengkap <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </CardHeader>
+        <CardContent className="p-4">
+          {myBadges.length === 0 ? (
+            <div className="p-5 text-center rounded-xl bg-amber-50/40 dark:bg-amber-950/20 border border-amber-500/20 flex flex-col items-center justify-center gap-2">
+              <Medal className="h-7 w-7 text-amber-500/80" />
+              <div className="text-xs font-bold text-amber-900 dark:text-amber-300">
+                Lencana Langsung Diaktifkan untuk Keperluan Lomba & Prestasi
+              </div>
+              <p className="text-[11px] text-muted-foreground max-w-md">
+                Setiap lencana apresiasi guru, kejuaraan lomba, olimpiade, dan capaian tahfidz langsung aktif dan tersimpan resmi di portofolio siswa untuk verifikasi lomba.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs font-semibold border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 mt-1"
+                onClick={() => setActiveTab?.("profil")}
+              >
+                Lihat Tab Profil & Lencana <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {myBadges.map((b, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition flex items-start gap-3 shadow-2xs"
+                >
+                  <div className="text-2xl shrink-0">{b.icon || "🏅"}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Badge variant="outline" className="text-[9px] font-bold border-amber-500/40 text-amber-600 dark:text-amber-400">
+                        {b.category || "Prestasi"}
+                      </Badge>
+                      <Badge className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0">
+                        Aktif
+                      </Badge>
+                    </div>
+                    <div className="font-bold text-xs text-foreground truncate mt-1">{b.title}</div>
+                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{b.subtitle || "Terverifikasi Madrasah"}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

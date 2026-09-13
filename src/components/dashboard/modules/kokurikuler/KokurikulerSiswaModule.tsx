@@ -237,7 +237,7 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
 
   const handlePrintPortfolio = () => {
     window.print();
-    toast.success("🖨️ Dokumen Portofolio P5-PPRA Siswa siap dicetak!");
+    toast.success("🖨️ Dokumen Portofolio Kokurikuler Siswa siap dicetak!");
   };
 
   return (
@@ -250,13 +250,13 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold tracking-tight text-foreground">Projek P5-PPRA Siswa</h1>
+              <h1 className="text-base font-bold tracking-tight text-foreground">Projek Kokurikuler Siswa</h1>
               <Badge variant="outline" className="text-[10px] font-semibold h-5 px-1.5 border-purple-500/30 text-purple-700 dark:text-purple-300">
                 Kelas {studentRombel}
               </Badge>
             </div>
             <p className="text-[11px] text-muted-foreground leading-none mt-0.5">
-              Pelaksanaan Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil 'Alamin
+              Pelaksanaan Projek Kokurikuler & Penguatan Karakter Profil Pelajar
             </p>
           </div>
         </div>
@@ -333,7 +333,7 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
                 <Badge variant="outline" className="text-muted-foreground text-[10px] mb-1 w-fit">
                   STATUS PROJEK KOKURIKULER KELAS {studentRombel}
                 </Badge>
-                <CardTitle className="text-base font-bold">Informasi Tema Projek P5-PPRA Semester Ini</CardTitle>
+                <CardTitle className="text-base font-bold">Informasi Tema Projek Kokurikuler Semester Ini</CardTitle>
                 <CardDescription className="text-xs">
                   Daftar agenda projek pembiasaan karakter Kurikulum Merdeka yang ditugaskan oleh Fasilitator Projek Madrasah.
                 </CardDescription>
@@ -419,7 +419,7 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                <Award className="h-4 w-4 text-purple-600" /> Rekam Portofolio & Lembar Capaian Projek P5-PPRA
+                <Award className="h-4 w-4 text-purple-600" /> Rekam Portofolio & Lembar Capaian Projek Kokurikuler
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Dokumen hasil karya, laporan projek, dan catatan evaluasi tahapan karakter oleh Fasilitator Projek.
@@ -512,7 +512,7 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
         <DialogContent className="sm:max-w-md border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-              <Upload className="h-5 w-5 text-purple-600" /> Unggah Laporan Projek P5-PPRA
+              <Upload className="h-5 w-5 text-purple-600" /> Unggah Laporan Projek Kokurikuler
             </DialogTitle>
             <DialogDescription className="text-xs">
               Unggah dokumen PDF laporan projek kokurikuler atau portofolio karya kelompok Anda untuk dinilai fasilitator.

@@ -158,7 +158,7 @@ export function CreateActivityForm({
     },
     {
       id: "PROYEK_P5",
-      label: "🎯 Proyek P5 / PPRA (Belum Aktif)",
+      label: "🎯 Proyek Kokurikuler (Belum Aktif)",
       color: "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
       disabled: true,
     },

@@ -148,10 +148,10 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
     <>
       {isSiswa ? (
         <StudentHeaderBanner
-          title="Jadwal Pelajaran Saya"
-          subtitle="Jadwal jam KBM tatap muka & alokasi ruang kelas harian MTsN 2 Cilacap"
+          title={`Jadwal Pelajaran ${resolvedInitialRombel}`}
+          subtitle={`Jadwal jam KBM tatap muka & alokasi ruang kelas ${resolvedInitialRombel} MTsN 2 Cilacap`}
           icon={CalendarClock}
-          statusText="Pelajaran Aktif 2026/2027"
+          statusText={resolvedInitialRombel}
           statusVariant="success"
           actionButtons={
             <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs font-bold border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 px-3" onClick={() => setIsPrintJadwalOpen(true)}>
@@ -182,48 +182,50 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
         </div>
       )}
 
-      {/* Horizontal Compact Metric Strip (~42px) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs mb-4">
-        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
-          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-            <CalendarClock className="h-3.5 w-3.5" />
+      {/* Horizontal Compact Metric Strip (~42px) - Only for Admin / Non-Siswa */}
+      {!isSiswa && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs mb-4">
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <CalendarClock className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Jadwal KBM</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{jadwalList.length} Sesi</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Jadwal KBM</p>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{jadwalList.length} Sesi</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
-          <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <Building2 className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <Building2 className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Kelas Terdaftar</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">6 Kelas Aktif</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground font-medium leading-none">Kelas Terdaftar</p>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">6 Kelas Aktif</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
-          <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${activeSessions.length > 0 ? "bg-emerald-500/15 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
-            <CalendarClock className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${activeSessions.length > 0 ? "bg-emerald-500/15 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+              <CalendarClock className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">KBM Live Berjalan</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{activeSessions.length} Sesi Live</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground font-medium leading-none">KBM Live Berjalan</p>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{activeSessions.length} Sesi Live</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
-          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-            <CalendarClock className="h-3.5 w-3.5" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground font-medium leading-none">Hari Pembelajaran</p>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">6 Hari (Senin - Sabtu)</p>
+          <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <CalendarClock className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Hari Pembelajaran</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">6 Hari (Senin - Sabtu)</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {!isRestrictedRole ? (
         <div className="p-2.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-4 shadow-2xs text-xs">
@@ -258,14 +260,14 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
             </Badge>
           </div>
         </div>
-      ) : (
+      ) : isWaliKelas ? (
         <div className="p-2.5 rounded-xl bg-muted/40 border border-border/80 flex items-center justify-between gap-4 mb-4 shadow-2xs">
           <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
             <Building2 className="h-4 w-4 text-primary shrink-0" />
             <span>Jadwal Pelajaran <strong className="text-primary font-bold">{resolvedInitialRombel}</strong></span>
           </div>
         </div>
-      )}
+      ) : null}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoadingJadwal ? (
@@ -276,6 +278,9 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
           hariList.map((h) => {
             let listForDay = (jadwalList || []).filter((s) => {
               if (s.hari !== h) return false;
+              if (isSiswa) {
+                return isSameClass(s.rombel, resolvedInitialRombel);
+              }
               const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
               const matchRombel = filterRombel === "Semua" || isSameClass(s.rombel, filterRombel);
               return matchKelas && matchRombel;

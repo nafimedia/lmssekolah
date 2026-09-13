@@ -76,7 +76,7 @@ export function GlobalCommandPalette({
     { key: "nilai", label: activeRole === "siswa" ? "Rekap Nilai Saya" : "Penilaian & E-Rapor Kurikulum Merdeka", icon: Award, group: "Pembelajaran & Nilai" },
     { key: "asesmen", label: "Pusat Asesmen Formatif & Sumatif", icon: Sparkles, group: "Pembelajaran & Nilai" },
     { key: "tahfidz", label: activeRole === "siswa" ? "Setoran Tahfidz Saya" : "Setoran Hafalan & Rapor Tahfidz Qur'an", icon: BookMarked, group: "Pembelajaran & Nilai" },
-    { key: "kokurikuler", label: "Kegiatan Kokurikuler & Projek P5-PPRA", icon: FolderKanban, group: "Pembelajaran & Nilai" },
+    { key: "kokurikuler", label: "Kegiatan Kokurikuler", icon: FolderKanban, group: "Pembelajaran & Nilai" },
     { key: "perpustakaan", label: "Perpustakaan Digital & E-Book Buku", icon: Library, group: "Layanan Sekolah" },
     { key: "pengumuman", label: "Pengumuman Resmi & Buletin Madrasah", icon: Bell, group: "Layanan Sekolah" },
     { key: "agenda", label: "Agenda & Kalender Madrasah", icon: Calendar, group: "Layanan Sekolah" },

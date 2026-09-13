@@ -257,7 +257,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "nilai", label: "Rekap Nilai Sistem", group: "Evaluasi & CBT" },
       { key: "apresiasi_guru", label: "Award & Warning Guru", group: "Apresiasi & Pembinaan" },
       { key: "tahfidz_report", label: "Laporan Tahfidz", group: "Monitoring Eksekutif" },
-      { key: "kokurikuler_report", label: "Laporan P5", group: "Monitoring Eksekutif" },
+      { key: "kokurikuler_report", label: "Laporan Kokurikuler", group: "Monitoring Eksekutif" },
       { key: "pengaturan", label: "Pemeliharaan & Cadangan Data", group: "Pengaturan" },
       { key: "profil", label: "Profil Saya", group: "Pengaturan" },
     ],
@@ -301,7 +301,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "progress", label: "Progress Belajar Kelas", group: "Evaluasi & Mutu" },
       { key: "cbt", label: "Monitoring CBT", group: "Evaluasi & Mutu" },
       { key: "tahfidz_report", label: "Laporan Tahfidz Quran", group: "Evaluasi & Mutu" },
-      { key: "kokurikuler_report", label: "Laporan Kokurikuler P5", group: "Evaluasi & Mutu" },
+      { key: "kokurikuler_report", label: "Laporan Kokurikuler", group: "Evaluasi & Mutu" },
 
       { key: "agenda", label: "Agenda Madrasah", group: "Informasi & Akun" },
       { key: "pengumuman", label: "Pengumuman Resmi", group: "Informasi & Akun" },
@@ -325,7 +325,7 @@ const ROLE_PERMISSIONS: Record<
       { key: "nilai", label: "Laporan Pembelajaran", group: "Evaluasi & Penilaian" },
       { key: "apresiasi_guru", label: "Award & Warning Guru", group: "Evaluasi & Penilaian" },
       { key: "tahfidz_report", label: "Laporan Tahfidz", group: "Laporan Khusus" },
-      { key: "kokurikuler_report", label: "Laporan P5", group: "Laporan Khusus" },
+      { key: "kokurikuler_report", label: "Laporan Kokurikuler", group: "Laporan Khusus" },
       { key: "agenda", label: "Agenda & Kalender", group: "Informasi & Pengaturan" },
       { key: "pengumuman", label: "Pengumuman Resmi", group: "Informasi & Pengaturan" },
       { key: "profil", label: "Profil Saya", group: "Informasi & Pengaturan" },
@@ -386,12 +386,12 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Siswa", group: "Ruang Belajar" },
       { key: "jadwal", label: "Jadwal Pelajaran", group: "Ruang Belajar" },
-      { key: "tugas", label: "Tugas & Submisi LKPD", group: "Ruang Belajar" },
+      { key: "tugas", label: "Tugas dan LKPD", group: "Ruang Belajar" },
       { key: "cbt", label: "CBT Ujian Online", group: "Ruang Belajar" },
       { key: "nilai", label: "Rekap Nilai & Progres Belajar", group: "Capaian & Prestasi" },
       { key: "tahfidz", label: "Setoran Tahfidz Qur'an", group: "Capaian & Prestasi" },
       { key: "agenda", label: "Agenda & Kalender Akademik", group: "Informasi & Penunjang" },
-      { key: "kokurikuler", label: "Kegiatan Kokurikuler (P5)", group: "Informasi & Penunjang" },
+      { key: "kokurikuler", label: "Kegiatan Kokurikuler", group: "Informasi & Penunjang" },
       { key: "perpustakaan", label: "E-Library Video & Audio", group: "Informasi & Penunjang" },
       { key: "profil", label: "Profil & Lencana Saya", group: "Informasi & Penunjang" },
     ],
@@ -924,20 +924,6 @@ function DashboardContent({
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between gap-1.5 sm:gap-4 border-b border-border bg-background/95 px-2 sm:px-4 lg:px-8 backdrop-blur-md">
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <SidebarTrigger className="h-8 w-8 sm:h-9 sm:w-9 border border-border shrink-0" />
-            <button
-              type="button"
-              onClick={() => setIsCommandPaletteOpen(true)}
-              className="flex items-center justify-center sm:justify-between w-8 sm:w-64 md:w-72 h-8 sm:h-9 px-2 sm:px-3 text-xs bg-muted/40 hover:bg-muted/70 text-muted-foreground border border-border/80 rounded-xl transition cursor-pointer shrink-0 sm:shrink"
-              title="Cari fitur, siswa, mapel..."
-            >
-              <span className="flex items-center gap-2 truncate">
-                <Search className="h-3.5 w-3.5 opacity-70 shrink-0" />
-                <span className="hidden sm:inline truncate">Cari fitur, siswa, mapel...</span>
-              </span>
-              <kbd className="hidden sm:inline-flex font-mono text-[10px] font-extrabold bg-background px-1.5 py-0.5 rounded border border-border text-foreground shrink-0">
-                Ctrl K
-              </kbd>
-            </button>
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2.5 min-w-0">
@@ -959,12 +945,29 @@ function DashboardContent({
               </Button>
             )}
 
+            {/* Quick Search Button moved next to Theme Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="flex items-center justify-center sm:justify-between w-8 sm:w-56 md:w-64 h-8 sm:h-9 px-2 sm:px-3 text-xs bg-muted/40 hover:bg-muted/70 text-muted-foreground border border-border/80 rounded-xl transition cursor-pointer shrink-0"
+              title="Cari fitur, siswa, mapel... (Ctrl+K)"
+            >
+              <span className="flex items-center gap-2 truncate">
+                <Search className="h-3.5 w-3.5 opacity-70 shrink-0" />
+                <span className="hidden sm:inline truncate">Cari fitur, mapel...</span>
+              </span>
+              <kbd className="hidden sm:inline-flex font-mono text-[10px] font-extrabold bg-background px-1.5 py-0.5 rounded border border-border text-foreground shrink-0">
+                Ctrl K
+              </kbd>
+            </button>
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
               onClick={() => setDark(!dark)}
+              title={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
             >
               {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
             </Button>

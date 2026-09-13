@@ -54,7 +54,7 @@ export function PusatAsesmenModule({
             activeTab === "kuis"
               ? "Kuis Interaktif Live Saya"
               : activeTab === "individu"
-              ? "Tugas & Submisi LKPD Saya"
+              ? "Tugas dan LKPD"
               : "Pusat Asesmen & Penilaian Saya"
           }
           subtitle="Portal pengerjaan kuis kilat interaktif, tugas mandiri LKPD digital, dan asesmen Kurikulum Merdeka"

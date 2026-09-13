@@ -631,16 +631,16 @@ export function RaporModule({
       });
     });
 
-    // 2. Match P5 Projects
+    // 2. Match Kokurikuler Projects
     const matchedP5 = p5ProjectsList.filter(
       (p) => p.class_name && isSameClass(p.class_name, sRombel)
     );
 
     matchedP5.forEach((p) => {
       list.push({
-        kegiatan: `P5: ${p.title}`,
+        kegiatan: `Kokurikuler: ${p.title}`,
         nilai: (p.progress_pct || 0) >= 80 ? "A" : (p.progress_pct || 0) > 0 ? "B" : "-",
-        keterangan: `Tema: ${p.theme || "P5-PPRA"}`,
+        keterangan: `Tema: ${p.theme || "Kokurikuler"}`,
       });
     });
 
@@ -1004,11 +1004,11 @@ export function RaporModule({
             </table>
           </div>
 
-          {/* Ekstrakurikuler & Presensi */}
+          {/* Kokurikuler & Presensi */}
           <div className="grid grid-cols-2 gap-4 text-xs font-medium">
             <div className="border border-slate-200 rounded-md p-3 bg-slate-50 space-y-2">
               <div className="font-bold text-slate-900">
-                Kegiatan Ekstrakurikuler & Kokurikuler (P5-PPRA):
+                Kegiatan Kokurikuler & Karakter:
               </div>
               <table className="w-full text-[11px] border-collapse">
                 <thead>
@@ -1025,7 +1025,7 @@ export function RaporModule({
                         colSpan={3}
                         className="p-2 text-center text-slate-400 italic font-normal"
                       >
-                        (Belum ada data nilai ekstrakurikuler & kokurikuler)
+                        (Belum ada data nilai kegiatan kokurikuler)
                       </td>
                     </tr>
                   ) : (

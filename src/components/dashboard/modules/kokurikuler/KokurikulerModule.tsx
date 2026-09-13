@@ -63,7 +63,7 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
             id: String(item.id || `p-${idx + 1}`),
             title: item.title,
             target: item.class_name || `Tingkat Kelas`,
-            coordinator: (item as any).coordinator || "Koordinator P5-PPRA",
+            coordinator: (item as any).coordinator || "Koordinator Kokurikuler",
             progress: item.progress_pct || 0,
             studentsCount: (item as any).students_count || 0,
             status: item.status || "Dalam Proses",
@@ -411,7 +411,7 @@ export function KokurikulerSiswaModule() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FolderKanban className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Kegiatan Kokurikuler & Projek P5-PPRA
+            <FolderKanban className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Kegiatan Kokurikuler Siswa
           </h1>
         </div>
       </div>
@@ -419,8 +419,8 @@ export function KokurikulerSiswaModule() {
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="border-border shadow-xs">
           <CardHeader className="pb-3">
-            <Badge className="bg-emerald-600 text-white text-[10px] mb-1 w-fit">PROJEK P5 AKTIF</Badge>
-            <CardTitle className="text-base font-bold font-mono">Status Projek P5 Saya</CardTitle>
+            <Badge className="bg-emerald-600 text-white text-[10px] mb-1 w-fit">PROJEK KOKURIKULER AKTIF</Badge>
+            <CardTitle className="text-base font-bold font-mono">Status Projek Kokurikuler Saya</CardTitle>
             <CardDescription className="text-xs">Informasi projek & kehadiran kegiatan kokurikuler siswa.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

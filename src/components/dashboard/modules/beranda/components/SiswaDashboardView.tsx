@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -226,14 +226,9 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
             }`}>
               <CalendarCheck className="h-4 w-4" />
             </div>
-            <div>
-              <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
-                1. Kehadiran Hari Ini ({currentDayName})
-              </CardTitle>
-              <CardDescription className="text-[11px]">
-                Status presensi KBM kelas {siswaClass}
-              </CardDescription>
-            </div>
+            <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2">
+              1. Kehadiran Hari Ini ({currentDayName})
+            </CardTitle>
           </div>
           <Badge
             className={`font-bold text-xs px-2.5 py-1 ${
@@ -292,9 +287,6 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription className="text-[11px]">
-                Daftar lembar kerja & penugasan mata pelajaran kelas {siswaClass}
-              </CardDescription>
             </div>
           </div>
           <Button
@@ -370,9 +362,6 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               <CardTitle className="text-xs sm:text-sm font-bold">
                 3. Jadwal Hari Ini ({currentDayName})
               </CardTitle>
-              <CardDescription className="text-[11px]">
-                Mata pelajaran & jam KBM kelas {siswaClass}
-              </CardDescription>
             </div>
           </div>
           <Button
@@ -448,9 +437,6 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription className="text-[11px]">
-                Lencana apresiasi, kejuaraan lomba, dan prestasi resmi siswa
-              </CardDescription>
             </div>
           </div>
           <Button

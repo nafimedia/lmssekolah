@@ -27,7 +27,7 @@ import {
   ShieldCheck,
   FileText,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -445,7 +445,6 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       {isSiswa ? (
         <StudentHeaderBanner
           title="Tahfidz & Hafalan Qur'an"
-          subtitle="Pantau target hafalan baru, muroja'ah, dan catatan dari guru pembina."
           icon={BookMarked}
           statusText="Program Aktif"
           statusVariant="success"
@@ -748,14 +747,9 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       {!isSiswa && activeTab === "rekap_siswa" && (
         <Card className="border-border shadow-xs bg-card overflow-hidden">
           <CardHeader className="p-4 pb-3 border-b border-border flex flex-row items-center justify-between">
-            <div>
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Users className="h-5 w-5 text-emerald-600" /> Matrix Capaian Tahfidz Per Siswa
               </CardTitle>
-              <CardDescription className="text-xs">
-                Rekapitulasi total setoran, surah terakhir, rata-rata nilai tajwid, dan status kelancaran siswa.
-              </CardDescription>
-            </div>
             <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
               {studentTahfidzSummary.length} Siswa Terdaftar
             </Badge>
@@ -833,15 +827,10 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       {activeTab === "progress" && (
         <Card className="border-border shadow-xs bg-card">
           <CardHeader className="p-4 pb-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <span>Progres Surah & Ayat ({selectedJuz})</span>
-                <Badge className="bg-emerald-600 text-white font-bold text-xs">{activeQuranSurahs.length} Surah</Badge>
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Status hafalan: ✅ Lancar (Mutqin), 🔄 Sedang Berjalan, ⏳ Belum Disetor.
-              </CardDescription>
-            </div>
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+              <span>Progres Surah & Ayat ({selectedJuz})</span>
+              <Badge className="bg-emerald-600 text-white font-bold text-xs">{activeQuranSurahs.length} Surah</Badge>
+            </CardTitle>
 
             {!isSiswa && (
               <div className="flex items-center gap-2">
@@ -924,12 +913,9 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       {activeTab === "riwayat" && (
         <Card className="border-border shadow-xs bg-card">
           <CardHeader className="p-4 pb-3 border-b border-border flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base font-bold">
-                {isSiswa ? "Riwayat Setoran Hafalan" : "Riwayat Setoran Tahfidz"}
-              </CardTitle>
-              <CardDescription className="text-xs">Daftar catatan setoran hafalan baru dan muroja'ah.</CardDescription>
-            </div>
+            <CardTitle className="text-base font-bold">
+              {isSiswa ? "Riwayat Setoran Hafalan" : "Riwayat Setoran Tahfidz"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0 overflow-x-auto">
             {isLoading ? (
@@ -1203,11 +1189,6 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               <BellRing className="h-5 w-5 text-amber-500" />
               {isSiswa ? "Catatan Guru Pembina" : "Peringatan & Pembinaan Tahfidz"}
             </CardTitle>
-            <CardDescription className="text-xs">
-              {isSiswa
-                ? "Catatan khusus dari guru mengenai tajwid, makhraj, atau ayat yang perlu diulang."
-                : "Deteksi otomatis siswa yang belum pernah menyetor, perlu pengulangan, atau memerlukan perhatian khusus."}
-            </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             {isLoading ? (
@@ -1281,9 +1262,6 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
             <CardTitle className="text-base font-bold flex items-center gap-2">
               <Medal className="h-5 w-5 text-amber-500" /> Koleksi Lencana Prestasi Tahfidz
             </CardTitle>
-            <CardDescription className="text-xs">
-              Apresiasi atas ketuntasan hafalan lancar (mutqin) dan keaktifan setoran.
-            </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

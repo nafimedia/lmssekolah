@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -264,7 +264,7 @@ export function KamadDashboardView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* CHART 1: Rata-Rata Nilai Siswa per Rombel */}
         <Card className="border-border shadow-xs lg:col-span-1 bg-card">
-          <CardHeader className="p-4 pb-3 border-b border-border">
+          <CardHeader className="p-4 py-3 border-b border-border">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -279,9 +279,6 @@ export function KamadDashboardView({
                 Leger Lengkap <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
-            <CardDescription className="text-xs">
-              Capaian rata-rata akademik pembelajaran per rombel.
-            </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             {nilaiRombelData.length === 0 ? (
@@ -313,7 +310,7 @@ export function KamadDashboardView({
 
         {/* CHART 2: Kehadiran Siswa Realtime */}
         <Card className="border-border shadow-xs lg:col-span-1 bg-card">
-          <CardHeader className="p-4 pb-3 border-b border-border">
+          <CardHeader className="p-4 py-3 border-b border-border">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <CalendarCheck className="h-4 w-4 text-teal-600 dark:text-teal-400" /> Grafik Kehadiran Siswa
@@ -322,9 +319,6 @@ export function KamadDashboardView({
                 Hari Ini
               </Badge>
             </div>
-            <CardDescription className="text-xs">
-              Rekapitulasi presensi harian siswa terhubung KBM Live.
-            </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             {kehadiranSiswaData.length === 0 ? (
@@ -365,7 +359,7 @@ export function KamadDashboardView({
 
         {/* CHART 3: Kehadiran Guru & GTK */}
         <Card className="border-border shadow-xs lg:col-span-1 bg-card">
-          <CardHeader className="p-4 pb-3 border-b border-border">
+          <CardHeader className="p-4 py-3 border-b border-border">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <UserCheck2 className="h-4 w-4 text-blue-600 dark:text-blue-400" /> Grafik Kehadiran Guru & Staf GTK
@@ -374,9 +368,6 @@ export function KamadDashboardView({
                 Presensi GTK
               </Badge>
             </div>
-            <CardDescription className="text-xs">
-              Monitoring kehadiran jam tatap muka Guru Pengampu KBM.
-            </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             {kehadiranGuruData.length === 0 ? (

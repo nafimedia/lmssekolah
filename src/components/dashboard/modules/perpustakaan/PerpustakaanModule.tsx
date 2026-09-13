@@ -229,7 +229,6 @@ export function PerpustakaanModule({ activeRole }: { activeRole?: string } = {})
       {activeRole === "siswa" ? (
         <StudentHeaderBanner
           title="E-Library & Buku Digital Saya"
-          subtitle="Akses e-book modul pelajaran, video tutorial KBM, audio edukasi / listening, dan buku digital MTsN 2 Cilacap"
           icon={Library}
           statusText="Buku Digital Terverifikasi"
           statusVariant="success"

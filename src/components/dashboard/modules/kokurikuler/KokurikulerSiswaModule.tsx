@@ -31,7 +31,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHeaderBanner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { validateUploadedFile } from "@/lib/fileValidation";
@@ -255,9 +254,6 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
                 Kelas {studentRombel}
               </Badge>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-none mt-0.5">
-              Pelaksanaan Projek Kokurikuler & Penguatan Karakter Profil Pelajar
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">

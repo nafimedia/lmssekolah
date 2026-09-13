@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,15 +157,10 @@ export function WakaDashboardView({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pintasan Operasional Kurikulum */}
         <Card className="border-border shadow-xs bg-card">
-          <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-                <BookOpen className="h-3.5 w-3.5 text-primary" /> Pintasan Pengelolaan Kurikulum
-              </CardTitle>
-              <CardDescription className="text-[11px] mt-0.5">
-                Akses cepat validasi dan supervisi pembelajaran madrasah.
-              </CardDescription>
-            </div>
+          <CardHeader className="p-3.5 py-2.5 border-b border-border flex flex-row items-center justify-between">
+            <CardTitle className="text-xs font-bold flex items-center gap-1.5">
+              <BookOpen className="h-3.5 w-3.5 text-primary" /> Pintasan Pengelolaan Kurikulum
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
             <Button
@@ -227,15 +222,10 @@ export function WakaDashboardView({
 
         {/* Chart Capaian Akademik Rombel */}
         <Card className="border-border shadow-xs bg-card">
-          <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-                <BarChart3 className="h-3.5 w-3.5 text-primary" /> Capaian Akademik Antar Kelas
-              </CardTitle>
-              <CardDescription className="text-[11px] mt-0.5">
-                Grafik perbandingan nilai rata-rata tiap kelas.
-              </CardDescription>
-            </div>
+          <CardHeader className="p-3.5 py-2.5 border-b border-border flex flex-row items-center justify-between">
+            <CardTitle className="text-xs font-bold flex items-center gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5 text-primary" /> Capaian Akademik Antar Kelas
+            </CardTitle>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"

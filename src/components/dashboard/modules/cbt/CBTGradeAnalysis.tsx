@@ -976,14 +976,9 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
       {/* Item Analysis Table Card */}
       <Card className="border-border bg-card overflow-hidden">
         <CardHeader className="p-4 border-b border-border/60 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-emerald-600" /> Matriks Analisis Butir Soal (Tingkat Kesukaran & Daya Beda)
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Dihitung secara riil dari capaian evaluasi siswa yang mengikuti ujian CBT madrasah.
-            </CardDescription>
-          </div>
+          <CardTitle className="text-sm font-bold flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-emerald-600" /> Matriks Analisis Butir Soal (Tingkat Kesukaran & Daya Beda)
+          </CardTitle>
           <Badge variant="outline" className="text-xs font-mono font-bold bg-primary/10 text-primary border-primary/30 w-fit">
             Rata-rata Daya Serap: {avgScore}%
           </Badge>

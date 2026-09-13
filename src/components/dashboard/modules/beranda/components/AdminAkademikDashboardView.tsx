@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -165,15 +165,10 @@ export function AdminAkademikDashboardView({
 
         {/* Chart Nilai Akademik Siswa */}
         <Card className="border-border shadow-xs bg-card">
-          <CardHeader className="p-4 pb-3 border-b border-border flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Grafik Capaian Kelas / Rombel
-              </CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                Monitoring grafik nilai rata-rata per Rombel MTsN 2 Cilacap.
-              </CardDescription>
-            </div>
+          <CardHeader className="p-4 py-3 border-b border-border flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-bold flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Grafik Capaian Kelas / Rombel
+            </CardTitle>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="ghost" className="h-7 text-xs font-bold text-emerald-600 hover:bg-emerald-500/10 px-2 gap-1" onClick={() => setActiveTab?.("nilai")}>
                 Buka Leger Nilai →

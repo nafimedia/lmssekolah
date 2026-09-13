@@ -304,11 +304,6 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
             <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             {isSiswa ? "Bahan Ajar & Materi Belajar KBM" : "Pustaka Bahan Ajar & Modul Kurikulum"}
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {isSiswa
-              ? "Pelajari modul, video, catatan materi terstruktur, dan selesaikan langkah pembelajaran bertahap."
-              : "Unggah dokumen modul ajar, video, teks rangkuman, dan atur alur buka-tutup akses siswa."}
-          </p>
         </div>
 
         {!isSiswa && (

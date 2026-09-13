@@ -20,7 +20,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -171,9 +170,6 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
           <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
             <Upload className="h-5 w-5 text-emerald-600" /> Unggah & Susun Bahan Ajar KBM
           </DialogTitle>
-          <DialogDescription className="text-xs">
-            Unggah modul dokumen, video, catatan teks langsung, link web, audio, atau gambar dengan urutan & mode kontrol akses.
-          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">

@@ -413,7 +413,6 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
       <div className="space-y-4">
         <StudentHeaderBanner
           title="Kehadiran & Rekapitulasi Presensi Saya"
-          subtitle="Status kehadiran resmi yang dicatat oleh Wali Kelas & Guru Pengampu saat KBM di madrasah"
           icon={UserCheck}
           statusText="Presensi Terverifikasi"
           statusVariant="success"
@@ -488,9 +487,6 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
           <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <CalendarCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Presensi & Kehadiran Siswa
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Pencatatan presensi harian per kelas, monitoring ketidakhadiran, dan integrasi e-Rapor.
-          </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">

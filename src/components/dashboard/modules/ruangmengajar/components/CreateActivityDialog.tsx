@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -442,17 +442,10 @@ export function CreateActivityForm({
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-                {isEditing ? <Pencil className="h-5 w-5 text-emerald-600" /> : <Plus className="h-5 w-5 text-emerald-600" />}
-                {isEditing ? "Edit Aktivitas / LKPD" : "Buat Tugas & LKPD Baru"}
-              </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                {isEditing
-                  ? "Perbarui instruksi, bobot nilai, tenggat waktu, atau terbitkan aktivitas draf ini."
-                  : ""}
-              </CardDescription>
-            </div>
+            <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+              {isEditing ? <Pencil className="h-5 w-5 text-emerald-600" /> : <Plus className="h-5 w-5 text-emerald-600" />}
+              {isEditing ? "Edit Aktivitas / LKPD" : "Buat Tugas & LKPD Baru"}
+            </CardTitle>
 
             <div className="flex items-center gap-2 shrink-0">
               <Button type="button" variant="outline" size="sm" className="text-xs font-medium" onClick={onCancel}>

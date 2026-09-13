@@ -4,7 +4,7 @@ import { CheckCircle2, GraduationCap, LucideIcon, Sparkles } from "lucide-react"
 
 interface StudentHeaderBannerProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   icon: LucideIcon;
   iconColorClass?: string;
   studentClass?: string;

@@ -17,7 +17,7 @@ import {
   CheckCircle2,
   PhoneCall,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MysqlDataService } from "@/services/mysqlDataService";
@@ -211,16 +211,11 @@ export function WaliKelasDashboardView({
         <div className="lg:col-span-2 space-y-6">
           {/* Schedule Today Card */}
           <Card className="border-border shadow-xs">
-            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between border-b border-border/60">
-              <div>
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-emerald-600" />
-                  Jadwal KBM {rombelName} — {currentDayName}
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Mata pelajaran dan alokasi guru pengampu di {rombelName} hari ini
-                </CardDescription>
-              </div>
+            <CardHeader className="p-4 py-3 flex flex-row items-center justify-between border-b border-border/60">
+              <CardTitle className="text-sm sm:text-base font-bold flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-emerald-600" />
+                Jadwal KBM {rombelName} — {currentDayName}
+              </CardTitle>
               <Button
                 size="sm"
                 variant="ghost"
@@ -281,16 +276,11 @@ export function WaliKelasDashboardView({
 
           {/* Student KBM Notes & Behavior Alerts */}
           <Card className="border-border shadow-xs">
-            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between border-b border-border/60">
-              <div>
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  Catatan Pembinaan & Sikap Siswa
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Rekapitulasi catatan guru pengampu mengenai siswa di {rombelName}
-                </CardDescription>
-              </div>
+            <CardHeader className="p-4 py-3 flex flex-row items-center justify-between border-b border-border/60">
+              <CardTitle className="text-sm sm:text-base font-bold flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                Catatan Pembinaan & Sikap Siswa
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
               {studentNotes.length === 0 ? (

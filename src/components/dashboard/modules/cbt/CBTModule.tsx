@@ -419,7 +419,6 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
       {userRole === "siswa" ? (
         <StudentHeaderBanner
           title="Ujian CBT & Asesmen Digital"
-          subtitle="Pelaksanaan asesmen sumatif, penilaian harian, dan try out CBT madrasah"
           icon={MonitorCheck}
           studentNisn={me?.nis_nip}
           statusText="CBT Engine Siap Digunakan"
@@ -443,9 +442,6 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
                 </Badge>
               )}
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Live proctoring, bank soal acak, analisis ketuntasan KKM, dan manajemen remedial.
-            </p>
           </div>
           <div className="flex gap-2">
             <Button

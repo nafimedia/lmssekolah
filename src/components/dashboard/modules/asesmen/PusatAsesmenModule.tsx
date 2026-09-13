@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ClipboardCheck, FileText } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -57,7 +57,6 @@ export function PusatAsesmenModule({
               ? "Tugas dan LKPD"
               : "Pusat Asesmen & Penilaian Saya"
           }
-          subtitle="Portal pengerjaan kuis kilat interaktif, tugas mandiri LKPD digital, dan asesmen Kurikulum Merdeka"
           icon={ClipboardCheck}
           studentClass="Kelas VIII A"
           statusText="Portofolio Asesmen Aktif"
@@ -88,10 +87,7 @@ export function PusatAsesmenModule({
           <Card className="border-border">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-base font-bold">Asesmen Formatif (Formatif 1, 2, 3)</CardTitle>
-                  <CardDescription className="text-xs">Observasi harian, diskusi kelompok, & asesmen proses pembelajaran siswa.</CardDescription>
-                </div>
+                <CardTitle className="text-base font-bold">Asesmen Formatif (Formatif 1, 2, 3)</CardTitle>
                 <Button size="sm" className="text-xs font-bold bg-primary text-primary-foreground" onClick={() => toast.success("Form Input Asesmen Formatif Baru dibuat!")}>
                   + Buat Formatif Baru
                 </Button>
@@ -145,10 +141,7 @@ export function PusatAsesmenModule({
           <Card className="border-border">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-base font-bold">Asesmen Sumatif (Sumatif 1 PTS, Sumatif 2 Unit, Sumatif 3 PAS)</CardTitle>
-                  <CardDescription className="text-xs">Ujian terstruktur penentu pencapaian ketuntasan Kurikulum Merdeka.</CardDescription>
-                </div>
+                <CardTitle className="text-base font-bold">Asesmen Sumatif (Sumatif 1 PTS, Sumatif 2 Unit, Sumatif 3 PAS)</CardTitle>
                 <Button size="sm" className="text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white" onClick={() => toast.success("Jadwal Ujian Sumatif Baru ditambahkan!")}>
                   + Buat Sumatif Baru
                 </Button>
@@ -189,10 +182,7 @@ export function PusatAsesmenModule({
           <Card className="border-border">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-base font-bold">Kuis Interaktif Online</CardTitle>
-                  <CardDescription className="text-xs">Platform kuis kilat Pilihan Ganda & Isian singkat interaktif.</CardDescription>
-                </div>
+                <CardTitle className="text-base font-bold">Kuis Interaktif Online</CardTitle>
                 {activeRole !== "siswa" && (
                   <Button size="sm" className="text-xs font-bold bg-amber-500 hover:bg-amber-600 text-black" onClick={handleCreateQuiz}>
                     + Buat Kuis Baru

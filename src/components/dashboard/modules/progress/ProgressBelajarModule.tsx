@@ -292,7 +292,6 @@ export function ProgressBelajarModule({ activeRole, userProfile }: { activeRole?
       <div className="space-y-6">
         <StudentHeaderBanner
           title="Progress Belajar Saya"
-          subtitle="Pemantauan persentase penyelesaian materi dan ketuntasan belajar per mata pelajaran"
           icon={TrendingUp}
           statusText="Perkembangan Pembelajaran Aktif"
           statusVariant="success"

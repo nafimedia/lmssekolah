@@ -19,7 +19,7 @@ import {
   Printer,
   Sparkles,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1149,7 +1149,6 @@ export function RaporModule({
       <div className="space-y-4">
         <StudentHeaderBanner
           title="Rekap Nilai & Progress Belajar"
-          subtitle={`Transkrip nilai asesmen dan capaian pembelajaran ${formatClassName(targetStudent?.rombel || defaultRombel)}`}
           icon={Award}
           statusText={
             studentMetrics.avgFinalScore >= 75
@@ -1246,14 +1245,9 @@ export function RaporModule({
           <TabsContent value="nilai" className="space-y-4">
             <Card className="border-border shadow-xs bg-card">
               <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-base font-bold">
-                    Rekap Nilai Mata Pelajaran
-                  </CardTitle>
-                  <CardDescription className="text-xs mt-0.5">
-                    Rincian perolehan nilai tugas harian, LKPD, dan ujian CBT semester ini.
-                  </CardDescription>
-                </div>
+                <CardTitle className="text-base font-bold">
+                  Rekap Nilai Mata Pelajaran
+                </CardTitle>
                 <Badge variant="outline" className="font-mono text-xs border-emerald-500/40 text-emerald-700 dark:text-emerald-300">
                   Target KKTP: 75
                 </Badge>
@@ -1599,15 +1593,10 @@ export function RaporModule({
       {selectedClass === "ALL" && (
         <Card className="border-border shadow-xs bg-card">
           <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
-            <div>
               <CardTitle className="text-xs font-bold flex items-center gap-1.5">
                 <Building2 className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Matriks Rekapitulasi Leger Pembelajaran Per Kelas</span>
               </CardTitle>
-              <CardDescription className="text-[11px] mt-0.5">
-                Overview rerata nilai akhir dan statistik ketuntasan KKTP per kelas.
-              </CardDescription>
-            </div>
             <Badge className="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5">
               {classSummaries.length} Kelas
             </Badge>
@@ -1696,17 +1685,12 @@ export function RaporModule({
         {/* SECTION 2: TABEL LEGER NILAI SISWA REAL */}
         <Card className="border-border shadow-xs bg-card">
           <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
-            <div>
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Award className="h-5 w-5 text-emerald-600" />
                 <span>
                   Leger Nilai Siswa - {selectedClass === "ALL" ? "Seluruh Kelas" : selectedClass}
                 </span>
               </CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                Perolehan rata-rata nilai tugas LKPD dan ujian CBT siswa (100% Data Riil MySQL).
-              </CardDescription>
-            </div>
             <Badge className="bg-emerald-600 text-white font-bold text-xs">
               {filteredStudents.length} Siswa
             </Badge>

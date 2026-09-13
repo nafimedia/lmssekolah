@@ -149,7 +149,6 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
       {isSiswa ? (
         <StudentHeaderBanner
           title={`Jadwal Pelajaran ${resolvedInitialRombel}`}
-          subtitle={`Jadwal jam KBM tatap muka & alokasi ruang kelas ${resolvedInitialRombel} MTsN 2 Cilacap`}
           icon={CalendarClock}
           statusText={resolvedInitialRombel}
           statusVariant="success"
@@ -165,9 +164,6 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
             <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
               <CalendarClock className="h-5 w-5 text-primary" /> Jadwal Pelajaran
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Alokasi jam KBM tatap muka madrasah, ruang kelas, dan distribusi beban pendidik.
-            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs font-semibold border-border px-3" onClick={() => setIsPrintJadwalOpen(true)}>

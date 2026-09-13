@@ -1636,7 +1636,6 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       {/* Header Banner Siswa */}
       <StudentHeaderBanner
         title="Tugas dan LKPD"
-        subtitle="Lihat tugas yang diberikan guru pengampu, kerjakan sebelum batas waktu, dan pantau hasil penilaian."
         icon={FileText}
         statusText="Portofolio Tugas Aktif"
         statusVariant="success"

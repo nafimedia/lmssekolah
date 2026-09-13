@@ -222,7 +222,6 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
       {/* Header Banner Siswa */}
       <StudentHeaderBanner
         title="Kuis Interaktif Live Saya"
-        subtitle="Ikuti kuis interaktif kelas, latihan soal mandiri, dan pantau riwayat skor kuis kilat Anda."
         icon={Zap}
         statusText="Kuis Live Ready"
         statusVariant="success"

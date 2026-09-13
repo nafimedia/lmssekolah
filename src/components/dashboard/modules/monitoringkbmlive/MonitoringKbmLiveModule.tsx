@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -280,9 +280,6 @@ export function MonitoringKbmLiveModule() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Activity className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Pemantauan KBM Langsung
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Supervisi real time pembelajaran tatap muka di kelas.
-          </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

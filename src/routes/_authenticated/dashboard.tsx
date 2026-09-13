@@ -1154,11 +1154,10 @@ function DashboardContent({
 }
 
 /* ---------- Pages ---------- */
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+function SectionHeader({ title }: { title: string; sub?: string }) {
   return (
     <div className="mb-6">
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      {sub && <p className="text-sm text-muted-foreground mt-1">{sub}</p>}
     </div>
   );
 }

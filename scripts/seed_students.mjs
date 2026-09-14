@@ -2,9 +2,35 @@ import mysql from 'mysql2/promise';
 import xlsxMod from 'xlsx';
 import bcryptMod from 'bcryptjs';
 import path from 'path';
+import fs from 'fs';
 
 const xlsx = xlsxMod.default || xlsxMod;
 const bcrypt = bcryptMod.default || bcryptMod;
+
+// Load .env file into process.env if available
+const envPath = path.join(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+  try {
+    const envContent = fs.readFileSync(envPath, 'utf-8');
+    for (const line of envContent.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx > 0) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        let val = trimmed.slice(eqIdx + 1).trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Gagal membaca berkas .env:', err.message);
+  }
+}
 
 async function seedStudents() {
   console.log('===============================================================');
@@ -12,111 +38,140 @@ async function seedStudents() {
   console.log('===============================================================');
 
   const excelPath = path.join(process.cwd(), 'DAFTAR KELAS 7, 8 DAN 9.xlsx');
-  console.log(`📂 Membaca berkas Excel: ${excelPath}`);
-
-  const wb = xlsx.readFile(excelPath);
-
-  // 1. Ambil data Kelas 7 (hanya 7A dan 7B)
-  const sheet7 = wb.Sheets['KELAS 7'];
-  if (!sheet7) {
-    throw new Error('Sheet "KELAS 7" tidak ditemukan dalam berkas Excel!');
-  }
-  const data7 = xlsx.utils.sheet_to_json(sheet7, { header: 1 });
+  const patchSqlPath = path.join(process.cwd(), 'patch_siswa_7a_7b_8a.sql');
 
   const targetStudentsK7 = [];
-  for (let i = 10; i < data7.length; i++) {
-    const row = data7[i];
-    if (!row || !row[1]) continue;
-
-    const no = row[0];
-    const rawName = String(row[1]).trim();
-    const noIndukRaw = row[2] ? String(row[2]).trim() : '';
-    const nisnRaw = row[3] ? String(row[3]).trim() : '';
-    const jkRaw = row[4] ? String(row[4]).trim().toUpperCase() : 'L';
-    const kelasRaw = row[5] ? String(row[5]).trim().toUpperCase() : '';
-
-    if (kelasRaw === '7A' || kelasRaw === '7B') {
-      const className = kelasRaw === '7A' ? 'VII-A' : 'VII-B';
-      const cleanNisn = nisnRaw.replace(/[^0-9]/g, '');
-      const cleanInduk = noIndukRaw.replace(/[^0-9]/g, '');
-
-      targetStudentsK7.push({
-        fullName: rawName.toUpperCase(),
-        noInduk: noIndukRaw,
-        nisn: cleanNisn || cleanInduk,
-        gender: jkRaw === 'P' ? 'Perempuan' : 'Laki-laki',
-        className,
-        rombelCode: kelasRaw.toLowerCase(), // '7a' or '7b'
-      });
-    }
-  }
-
-  console.log(`✅ Berhasil mengekstrak ${targetStudentsK7.length} siswa Kelas 7 dari Excel:`);
-  console.log(`   - 7A: ${targetStudentsK7.filter((s) => s.rombelCode === '7a').length} siswa`);
-  console.log(`   - 7B: ${targetStudentsK7.filter((s) => s.rombelCode === '7b').length} siswa`);
-
-  // 2. Cari Siswa Tambahan Kelas 8A: Wafiq Nabilah
-  const sheet8 = wb.Sheets['KELAS 8'];
   let wafiqStudent = null;
-  if (sheet8) {
-    const data8 = xlsx.utils.sheet_to_json(sheet8, { header: 1 });
-    for (let i = 10; i < data8.length; i++) {
-      const row = data8[i];
-      if (!row || !row[1]) continue;
-      const name = String(row[1]).trim();
-      if (name.toUpperCase().includes('WAFIQ') && name.toUpperCase().includes('NABILA')) {
-        const noInduk = row[2] ? String(row[2]).trim() : '26177';
-        const nisn = row[3] ? String(row[3]).trim().replace(/[^0-9]/g, '') : noInduk;
-        wafiqStudent = {
-          fullName: name.toUpperCase(),
-          noInduk,
-          nisn: nisn || noInduk || '26177',
-          gender: 'Perempuan',
-          className: 'VIII-A',
-          rombelCode: '8a',
-        };
-        break;
-      }
-    }
-  }
-
-  if (wafiqStudent) {
-    console.log(`✅ Ditemukan siswa tambahan Kelas 8A: ${wafiqStudent.fullName} (Induk/NISN: ${wafiqStudent.nisn})`);
-  } else {
-    wafiqStudent = {
-      fullName: 'WAFIQ NABILA RAMADHANI',
-      noInduk: '26177',
-      nisn: '26177',
-      gender: 'Perempuan',
-      className: 'VIII-A',
-      rombelCode: '8a',
-    };
-    console.log(`ℹ️ Menggunakan data Wafiq Nabilah dari data registrasi: ${wafiqStudent.fullName}`);
-  }
-
-  // 3. Cari Siswa Tambahan Kelas 9B: Zainun Agil
-  const sheet9 = wb.Sheets['KELAS 9'];
   let zainunStudent = null;
-  if (sheet9) {
-    const data9 = xlsx.utils.sheet_to_json(sheet9, { header: 1 });
-    for (let i = 10; i < data9.length; i++) {
-      const row = data9[i];
+
+  if (fs.existsSync(excelPath)) {
+    console.log(`📂 Membaca berkas Excel: ${excelPath}`);
+    const wb = xlsx.readFile(excelPath);
+
+    // 1. Ambil data Kelas 7 (hanya 7A dan 7B)
+    const sheet7 = wb.Sheets['KELAS 7'];
+    if (!sheet7) {
+      throw new Error('Sheet "KELAS 7" tidak ditemukan dalam berkas Excel!');
+    }
+    const data7 = xlsx.utils.sheet_to_json(sheet7, { header: 1 });
+
+    for (let i = 10; i < data7.length; i++) {
+      const row = data7[i];
       if (!row || !row[1]) continue;
-      const name = String(row[1]).trim();
-      if (name.toUpperCase().includes('ZAINUN') && name.toUpperCase().includes('AGIL')) {
-        const noInduk = row[2] ? String(row[2]).trim() : '240265';
-        const nisn = row[3] ? String(row[3]).trim().replace(/[^0-9]/g, '') : '0126865403';
-        zainunStudent = {
-          fullName: name.toUpperCase(),
-          noInduk,
-          nisn: nisn || '0126865403',
-          gender: 'Laki-laki',
-          className: 'IX-B',
-          rombelCode: '9b',
-        };
-        break;
+
+      const rawName = String(row[1]).trim();
+      const noIndukRaw = row[2] ? String(row[2]).trim() : '';
+      const nisnRaw = row[3] ? String(row[3]).trim() : '';
+      const jkRaw = row[4] ? String(row[4]).trim().toUpperCase() : 'L';
+      const kelasRaw = row[5] ? String(row[5]).trim().toUpperCase() : '';
+
+      if (kelasRaw === '7A' || kelasRaw === '7B') {
+        const className = kelasRaw === '7A' ? 'VII-A' : 'VII-B';
+        const cleanNisn = nisnRaw.replace(/[^0-9]/g, '');
+        const cleanInduk = noIndukRaw.replace(/[^0-9]/g, '');
+
+        targetStudentsK7.push({
+          fullName: rawName.toUpperCase(),
+          noInduk: noIndukRaw,
+          nisn: cleanNisn || cleanInduk,
+          gender: jkRaw === 'P' ? 'Perempuan' : 'Laki-laki',
+          className,
+          rombelCode: kelasRaw.toLowerCase(), // '7a' or '7b'
+        });
       }
     }
+
+    console.log(`✅ Berhasil mengekstrak ${targetStudentsK7.length} siswa Kelas 7 dari Excel:`);
+    console.log(`   - 7A: ${targetStudentsK7.filter((s) => s.rombelCode === '7a').length} siswa`);
+    console.log(`   - 7B: ${targetStudentsK7.filter((s) => s.rombelCode === '7b').length} siswa`);
+
+    // 2. Cari Siswa Tambahan Kelas 8A: Wafiq Nabilah
+    const sheet8 = wb.Sheets['KELAS 8'];
+    if (sheet8) {
+      const data8 = xlsx.utils.sheet_to_json(sheet8, { header: 1 });
+      for (let i = 10; i < data8.length; i++) {
+        const row = data8[i];
+        if (!row || !row[1]) continue;
+        const name = String(row[1]).trim();
+        if (name.toUpperCase().includes('WAFIQ') && name.toUpperCase().includes('NABILA')) {
+          const noInduk = row[2] ? String(row[2]).trim() : '26177';
+          const nisn = row[3] ? String(row[3]).trim().replace(/[^0-9]/g, '') : noInduk;
+          wafiqStudent = {
+            fullName: name.toUpperCase(),
+            noInduk,
+            nisn: nisn || noInduk || '26177',
+            gender: 'Perempuan',
+            className: 'VIII-A',
+            rombelCode: '8a',
+          };
+          break;
+        }
+      }
+    }
+
+    if (wafiqStudent) {
+      console.log(`✅ Ditemukan siswa tambahan Kelas 8A: ${wafiqStudent.fullName} (Induk/NISN: ${wafiqStudent.nisn})`);
+    } else {
+      wafiqStudent = {
+        fullName: 'WAFIQ NABILA RAMADHANI',
+        noInduk: '26177',
+        nisn: '26177',
+        gender: 'Perempuan',
+        className: 'VIII-A',
+        rombelCode: '8a',
+      };
+      console.log(`ℹ️ Menggunakan data Wafiq Nabilah dari data registrasi: ${wafiqStudent.fullName}`);
+    }
+
+    // 3. Cari Siswa Tambahan Kelas 9B: Zainun Agil
+    const sheet9 = wb.Sheets['KELAS 9'];
+    if (sheet9) {
+      const data9 = xlsx.utils.sheet_to_json(sheet9, { header: 1 });
+      for (let i = 10; i < data9.length; i++) {
+        const row = data9[i];
+        if (!row || !row[1]) continue;
+        const name = String(row[1]).trim();
+        if (name.toUpperCase().includes('ZAINUN') && name.toUpperCase().includes('AGIL')) {
+          const noInduk = row[2] ? String(row[2]).trim() : '240265';
+          const nisn = row[3] ? String(row[3]).trim().replace(/[^0-9]/g, '') : '0126865403';
+          zainunStudent = {
+            fullName: name.toUpperCase(),
+            noInduk,
+            nisn: nisn || '0126865403',
+            gender: 'Laki-laki',
+            className: 'IX-B',
+            rombelCode: '9b',
+          };
+          break;
+        }
+      }
+    }
+  } else if (fs.existsSync(patchSqlPath)) {
+    console.log(`📂 Berkas Excel tidak ada di direktori, membaca data riil dari ${patchSqlPath}...`);
+    const sqlContent = fs.readFileSync(patchSqlPath, 'utf-8');
+    const insertRegex = /VALUES \('([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)'/g;
+    let match;
+    while ((match = insertRegex.exec(sqlContent)) !== null) {
+      const [, id, email, pass, fullName, idType, nisn, className] = match;
+      const s = {
+        fullName,
+        noInduk: nisn,
+        nisn,
+        gender: 'L',
+        className,
+        rombelCode: className.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      };
+      if (className === 'VII-A' || className === 'VII-B') {
+        targetStudentsK7.push(s);
+      } else if (className === 'VIII-A') {
+        wafiqStudent = s;
+      }
+    }
+    console.log(`✅ Berhasil mengekstrak ${targetStudentsK7.length} siswa Kelas 7 dari berkas patch SQL:`);
+    console.log(`   - 7A: ${targetStudentsK7.filter((s) => s.className === 'VII-A').length} siswa`);
+    console.log(`   - 7B: ${targetStudentsK7.filter((s) => s.className === 'VII-B').length} siswa`);
+  } else {
+    throw new Error('Tidak ditemukan berkas Excel DAFTAR KELAS 7, 8 DAN 9.xlsx ataupun patch_siswa_7a_7b_8a.sql!');
   }
 
   if (zainunStudent) {
@@ -124,12 +179,19 @@ async function seedStudents() {
   }
 
   // 4. Hubungkan ke Database MySQL
-  console.log('\n🔌 Menghubungkan ke database MySQL db_lms...');
+  const dbHost = process.env.DATABASE_HOST || 'localhost';
+  const dbPort = parseInt(process.env.DATABASE_PORT || '3306', 10);
+  const dbUser = process.env.DATABASE_USER || 'root';
+  const dbPassword = process.env.DATABASE_PASSWORD || '';
+  const dbName = process.env.DATABASE_NAME || 'db_lms';
+
+  console.log(`\n🔌 Menghubungkan ke database MySQL ${dbUser}@${dbHost}:${dbPort}/${dbName} (Password: ${dbPassword ? 'TERSEDIA' : 'KOSONG'})...`);
   const conn = await mysql.createConnection({
-    host: process.env.DATABASE_HOST || 'localhost',
-    user: process.env.DATABASE_USER || 'root',
-    password: process.env.DATABASE_PASSWORD || '',
-    database: process.env.DATABASE_NAME || 'db_lms',
+    host: dbHost,
+    port: dbPort,
+    user: dbUser,
+    password: dbPassword,
+    database: dbName,
   });
 
   // Password hash default: asd123

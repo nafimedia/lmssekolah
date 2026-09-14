@@ -36,21 +36,21 @@ Pada spreadsheet asli, sel berwarna hijau pada kolom kelas menandakan bahwa guru
 | No | NIP | Nama | Jabatan/Mapel | Kelas | Level Admin |
 |---:|---|---|---|---|---|
 | 1 | `197905162006041020` | H. SOLIHUN, S.Pd., M.Si | Kepala Madrasah | VII, VIII, IX | Kamad |
-| 2 | `196909081998032001` | Hj. NANGIMAH, S. | Bahasa Indonesia | VII | Guru Pengampu |
+| 2 | `196909081998032001` | Hj. NANGIMAH, S.Pd. | Bahasa Indonesia | VII | Guru Pengampu |
 | 3 | `197002272005011001` | ACHMAD MAKMUN ROSID, S.Pd., M.Pd | Bahasa Inggris | VIII | Admin, Wali Kelas, Guru |
-| 4 | `197004082007012025` | MAHMUDAH, S. | Akidah Akhlak | - | Guru Pengampu |
-| 5 | `197109302007012011` | Hj. SITI MUHSINAH, S | Bahasa Arab | IX | Guru Pengampu |
+| 4 | `197004082007012025` | MAHMUDAH, S.Ag | Akidah Akhlak | - | Guru Pengampu |
+| 5 | `197109302007012011` | Hj. SITI MUHSINAH, S.Ag | Bahasa Arab | IX | Guru Pengampu |
 | 6 | `197311232005011004` | H. DASIRUN, S.Ag., M.Pd.I | Sejarah Kebudayaan Islam | - | Guru Pengampu |
 | 7 | `197311252007102001` | SRIYANI KUNTARI, S.Pd | Matematika | - | Guru Pengampu |
 | 8 | `197312112007101021` | TEGUH WIYONO, S.Pd | Pendidikan Jasmani, Olahraga dan Kesehatan | - | Guru Pengampu |
 | 9 | `197405022007101003` | MUHTAMAM, S.Ag., M.Pd.I | Fikih | VII, IX | Guru Pengampu |
 | 10 | `197509192009012008` | UMI KHAFSOH, S.Pd | Ilmu Pendidikan Sosial | - | Guru Pengampu |
-| 11 | `197602012007101019` | WAKHIBUN, S.P | Akidah Akhlak | VIII | Guru Pengampu |
+| 11 | `197602012007101019` | WAKHIBUN, S.Pd.I., M.Pd | Akidah Akhlak | VIII | Guru Pengampu |
 | 12 | `197705132007101002` | SAYONO, S.Pd., M.Pd. | Matematika | IX | Guru Pengampu |
-| 13 | `197710212007101001` | WAHYUDIN, S | Bahasa Arab | - | Guru Pengampu |
+| 13 | `197710212007101001` | WAHYUDIN, M.Pd.I | Bahasa Arab | - | Guru Pengampu |
 | 14 | `197804212009012004` | NAZIHATUN ZUHRIYAH, S.Pd. | Ilmu Pendidikan Sosial | VII | Guru Pengampu |
 | 15 | `197806212007101002` | RIDHO ANSHORI, S.Pd., M.Pd | Bahasa Inggris | - | Guru Pengampu |
-| 16 | `197807072007102001` | CARYATI, | Fikih | - | Guru Pengampu |
+| 16 | `197807072007102001` | CARYATI, S.Ag | Fikih | - | Guru Pengampu |
 | 17 | `197906142007102002` | SOBIYATI, S.Pd | Bahasa Indonesia | VIII | Wali Kelas, Guru |
 | 18 | `198002152007102002` | DAISAH, S.Pd | Bahasa Indonesia | IX | Guru Pengampu |
 | 19 | `198007172005012001` | H. ANI YULIANI, S.Pd | Matematika | VIII | Guru Pengampu |

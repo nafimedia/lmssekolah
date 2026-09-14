@@ -132,6 +132,7 @@ export function RaporModule({
 
   const [isLoading, setIsLoading] = useState(true);
   const [studentsList, setStudentsList] = useState<any[]>([]);
+  const [teachersList, setTeachersList] = useState<any[]>([]);
   const [subjectsList, setSubjectsList] = useState<any[]>([]);
   const [submissionsList, setSubmissionsList] = useState<any[]>([]);
   const [cbtResultsList, setCbtResultsList] = useState<any[]>([]);
@@ -181,9 +182,14 @@ export function RaporModule({
 
           if (users && users.length > 0) {
             const siswaList = users.filter((u: any) => u.role === "siswa");
+            const guruList = users.filter(
+              (u: any) => u.role === "guru" || u.role === "admin" || u.role === "walikelas" || u.role === "waka"
+            );
             setStudentsList(siswaList);
+            setTeachersList(guruList);
           } else {
             setStudentsList([]);
+            setTeachersList([]);
           }
 
           setSubjectsList(subjects || []);
@@ -290,8 +296,8 @@ export function RaporModule({
     }
     return [
       { id: 1, code: "AGM-01", name: "Al Qur'an Hadis", teacher: "AH. SYARIF HIDAYAH, S.Pd.I" },
-      { id: 2, code: "AGM-02", name: "Akidah Akhlak", teacher: "WAKHIBUN, S.P" },
-      { id: 3, code: "AGM-03", name: "Fikih", teacher: "CARYATI, S.Pd" },
+      { id: 2, code: "AGM-02", name: "Akidah Akhlak", teacher: "WAKHIBUN, S.Pd.I., M.Pd" },
+      { id: 3, code: "AGM-03", name: "Fikih", teacher: "CARYATI, S.Ag" },
       { id: 4, code: "AGM-04", name: "Sejarah Kebudayaan Islam", teacher: "H. DASIRUN, S.Ag., M.Pd.I" },
       { id: 5, code: "AGM-05", name: "Bahasa Arab", teacher: "ENDAH SUPRIHATIN, S.Pd" },
       { id: 6, code: "UMM-01", name: "Bahasa Indonesia", teacher: "SOBIYATI, S.Pd" },
@@ -302,7 +308,7 @@ export function RaporModule({
       { id: 11, code: "UMM-06", name: "Pendidikan Kewarganegaraan", teacher: "ANGGUN NOVTALIA BERLIAN, S.Pd" },
       { id: 12, code: "UMM-07", name: "Pendidikan Jasmani, Olahraga dan Kesehatan", teacher: "NUR ROCHMAN SHODIQ, S.Pd.I" },
       { id: 13, code: "UMM-08", name: "Prakarya dan Seni Budaya", teacher: "ISNAENI HASANAH, S.Pd.I" },
-      { id: 14, code: "MLK-01", name: "Bahasa Jawa", teacher: "RINDANG FARIHA IDANA, S.Pd" },
+      { id: 14, code: "MLK-01", name: "Bahasa Jawa", teacher: "RINDANG FARIHA DIANA, S.Pd" },
     ];
   }, [subjectsList]);
 
@@ -445,7 +451,17 @@ export function RaporModule({
           (isSameClass(p.rombel, sRombel) ||
             isSameClass(normalizeRombelName(p.rombel || ""), sRombel))
       );
-      const teacherName = matchedPengampu?.guru || sub.teacher || "Guru Pengampu MTsN 2";
+      const rawTeacher = matchedPengampu?.guru || sub.teacher || "Guru Pengampu MTsN 2";
+
+      // Auto-resolve to official full name from users master list if available
+      const officialTeacher = teachersList.find((t: any) => {
+        if (!rawTeacher || rawTeacher.startsWith("Guru Pengampu")) return false;
+        const tFullName = (t.full_name || "").toLowerCase();
+        const rawBase = rawTeacher.toLowerCase().split(",")[0].trim();
+        const tBase = tFullName.split(",")[0].trim();
+        return rawBase.length > 2 && (tFullName.includes(rawBase) || tBase.includes(rawBase));
+      });
+      const teacherName = officialTeacher?.full_name || rawTeacher;
 
       // 2. Formatif (Tugas / LKPD from assignment_submissions and lkpd_grades)
       const subMatches = submissionsList.filter((s: any) => {

@@ -430,7 +430,7 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
                 </p>
               </div>
 
-              {/* Mode Kontrol Akses (2 Opsi Sesuai Permintaan Klien) */}
+              {/* Kontrol Akses Materi (Opsi 3) */}
               <div>
                 <Label className="text-xs font-semibold flex items-center gap-1.5">
                   {accessMode === "GURU_KONTROL" ? (
@@ -438,20 +438,20 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
                   ) : (
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                   )}
-                  Mode Kontrol Akses Materi
+                  Kontrol Akses
                 </Label>
                 <select
                   className="w-full h-9 rounded-md border border-border bg-background px-2.5 text-xs mt-1 font-semibold"
                   value={accessMode}
                   onChange={(e) => setAccessMode(e.target.value as any)}
                 >
-                  <option value="GURU_KONTROL">🏫 Tatap Muka (Guru yang Kontrol Buka/Tutup)</option>
-                  <option value="SISWA_MANDIRI">🏡 Mandiri / PR (Siswa Klik Tandai Selesai)</option>
+                  <option value="GURU_KONTROL">🏫 Kendali Guru</option>
+                  <option value="SISWA_MANDIRI">📚 Progres Mandiri</option>
                 </select>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
                   {accessMode === "GURU_KONTROL"
-                    ? "Digunakan saat di kelas: guru membuka gembok saat jam pelajaran berlangsung."
-                    : "Digunakan saat daring/PR: siswa membuka materi berikutnya secara bertahap."}
+                    ? "Materi dibuka sesuai instruksi guru di kelas."
+                    : "Materi terbuka otomatis setelah modul tuntas."}
                 </p>
               </div>
             </div>

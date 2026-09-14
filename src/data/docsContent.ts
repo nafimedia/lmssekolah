@@ -188,7 +188,7 @@ export const DOCS_DATA: DocCategory[] = [
         screenshot: {
           src: "/docs/screenshots/siswa_bahan_ajar.png",
           alt: "Bahan Ajar Ruang Belajar Siswa",
-          caption: "Menu Bahan Ajar Siswa: Urutan langkah pembelajaran (#1, #2), badge indikator mode Tatap Muka/Mandiri, dan status kunci bertahap.",
+          caption: "Menu Bahan Ajar Siswa: Urutan langkah pembelajaran (#1, #2), badge indikator Kendali Guru / Progres Mandiri, dan status akses bertahap.",
         },
         steps: [
           {
@@ -225,8 +225,8 @@ export const DOCS_DATA: DocCategory[] = [
           },
           {
             type: "warning",
-            title: "Hak Veto Gembok Guru (Master Lock)",
-            text: "Jika guru mengunci materi tertentu di kelas, materi tersebut tetap berstatus '🔒 Terkunci oleh Guru' meskipun Anda telah menandai selesai langkah-langkah sebelumnya.",
+            title: "Hak Kendali Utama Guru (Master Lock)",
+            text: "Jika guru mengunci materi tertentu, materi tersebut tetap berstatus '🔒 Terkunci oleh Guru' meskipun Anda telah menyelesaikan langkah-langkah sebelumnya.",
           },
         ],
         subsections: [
@@ -583,7 +583,7 @@ export const DOCS_DATA: DocCategory[] = [
         content: [
           "Bahan ajar KBM mendukung 6 ragam format media pembelajaran modern: (1) Dokumen PDF/Word/PPT, (2) Video YouTube atau berkas MP4/WebM, (3) Teks Catatan / Rangkuman Langsung yang diketik guru langsung di LMS tanpa perlu membuat PDF, (4) Tautan Web eksternal (Simulasi PhET/Canva/Artikel), (5) Audio MP3 (Listening bahasa/murattal Al-Qur'an), dan (6) Gambar / Infografis.",
           "Guru dapat menyusun alur pembelajaran terstruktur menggunakan nomor urut langkah tayang (Langkah #1, Langkah #2, Langkah #3, dst.) sehingga materi tersusun rapi otomatis di layar peserta didik.",
-          "Tersedia 2 pilihan sistem kontrol akses: (A) Mode Tatap Muka di Kelas, di mana guru memegang kendali buka-tutup gembok secara langsung saat jam pelajaran; atau (B) Mode Mandiri / PR, di mana siswa harus mempelajari materi dan menekan tombol 'Tandai Selesai' untuk membuka langkah berikutnya secara berurutan.",
+          "Tersedia 2 pilihan sistem kontrol akses: (A) Kendali Guru, di mana guru memegang kendali pembukaan akses secara langsung saat pembelajaran; atau (B) Progres Mandiri, di mana materi terbuka otomatis setelah siswa menyelesaikan langkah sebelumnya.",
           "Guru memiliki Hak Veto (Master Lock). Jika materi tertentu dikunci oleh guru (status: Terkunci), materi tersebut tetap tertutup bagi siswa meskipun siswa telah menyelesaikan seluruh materi langkah sebelumnya.",
         ],
         screenshot: {
@@ -610,7 +610,7 @@ export const DOCS_DATA: DocCategory[] = [
           {
             number: 4,
             title: "Pilih Mode Akses Siswa",
-            description: "Pilih 'Tatap Muka di Kelas' untuk kendali manual saklar gembok atau 'Mandiri / PR' untuk pembukaan bertahap via tombol 'Tandai Selesai'.",
+            description: "Pilih 'Kendali Guru' untuk pengaturan akses manual oleh pengampu atau 'Progres Mandiri' untuk pembukaan bertahap otomatis.",
           },
           {
             number: 5,
@@ -632,8 +632,8 @@ export const DOCS_DATA: DocCategory[] = [
         ],
         subsections: [
           { id: "format-bahan-ajar", title: "6 Ragam Format Bahan Ajar" },
-          { id: "mode-kontrol-akses", title: "Perbedaan Mode Tatap Muka vs Mandiri" },
-          { id: "master-lock-guru", title: "Hak Veto Gembok Guru (Master Lock)" },
+          { id: "mode-kontrol-akses", title: "Perbedaan Kendali Guru vs Progres Mandiri" },
+          { id: "master-lock-guru", title: "Hak Kendali Utama Guru (Master Lock)" },
         ],
       },
       {

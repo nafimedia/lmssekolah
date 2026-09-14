@@ -178,7 +178,7 @@ export function ViewMaterialDialog({
                   : "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
               }`}
             >
-              {material.access_mode === "SISWA_MANDIRI" ? "🏡 Mandiri (PR)" : "🏫 Tatap Muka"}
+              {material.access_mode === "SISWA_MANDIRI" ? "📚 Progres Mandiri" : "🏫 Kendali Guru"}
             </Badge>
 
             <span className="text-xs text-muted-foreground font-mono">

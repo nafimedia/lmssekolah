@@ -351,7 +351,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                               : "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
                           }`}
                         >
-                          {m.access_mode === "SISWA_MANDIRI" ? "🏡 Mandiri (PR)" : "🏫 Tatap Muka"}
+                          {m.access_mode === "SISWA_MANDIRI" ? "📚 Progres Mandiri" : "🏫 Kendali Guru"}
                         </Badge>
                         {m.access_mode === "SISWA_MANDIRI" && (
                           <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-emerald-400 text-emerald-600 flex items-center gap-0.5">
@@ -373,7 +373,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                         : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
                     }`}
                   >
-                    {m.selectedForToday ? "🔓 Terbuka" : "🔒 Terkunci (Hidden)"}
+                    {m.selectedForToday ? "🔓 Terbuka" : "🔒 Terkunci"}
                   </Badge>
                 </div>
 
@@ -404,7 +404,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                       </>
                     ) : (
                       <>
-                        <Unlock className="h-3 w-3" /> Buka Siswa
+                        <Unlock className="h-3 w-3" /> Buka Akses
                       </>
                     )}
                   </Button>

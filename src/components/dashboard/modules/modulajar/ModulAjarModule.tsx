@@ -268,7 +268,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
 
         if (isTeacherLocked) {
           isUnlocked = false;
-          lockReason = "Materi ini sedang dikunci/disembunyikan oleh Guru Pengampu.";
+          lockReason = "Materi ini sedang dibatasi aksesnya oleh Guru Pengampu.";
         } else if (m.access_mode === "SISWA_MANDIRI") {
           if (idx > 0) {
             const prevItem = list[idx - 1];
@@ -473,7 +473,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                               : "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
                           }`}
                         >
-                          {m.access_mode === "SISWA_MANDIRI" ? "🏡 Mandiri" : "🏫 Tatap Muka"}
+                          {m.access_mode === "SISWA_MANDIRI" ? "📚 Progres Mandiri" : "🏫 Kendali Guru"}
                         </Badge>
                       </div>
 

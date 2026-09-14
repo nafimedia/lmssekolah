@@ -62,6 +62,17 @@ const MIME_TYPES = {
   ".woff2": "font/woff2",
   ".ttf": "font/ttf",
   ".webp": "image/webp",
+  ".pdf": "application/pdf",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".ppt": "application/vnd.ms-powerpoint",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".xls": "application/vnd.ms-excel",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 };
 
 const server = http.createServer(async (req, res) => {
@@ -77,21 +88,25 @@ const server = http.createServer(async (req, res) => {
     const acceptEncoding = (req.headers["accept-encoding"] || "").toLowerCase();
     const isCompressible = /\.(js|mjs|css|json|html|svg|txt|xml)$/i.test(ext);
 
+    const baseHeaders = {
+      "Content-Type": contentType,
+      "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
+    };
+    if (ext === ".pdf") {
+      baseHeaders["Content-Disposition"] = "inline";
+    }
+
     if (isCompressible && acceptEncoding.includes("gzip")) {
       res.writeHead(200, {
-        "Content-Type": contentType,
+        ...baseHeaders,
         "Content-Encoding": "gzip",
         "Vary": "Accept-Encoding",
-        "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
       });
       fs.createReadStream(filePath).pipe(zlib.createGzip({ level: 6 })).pipe(res);
       return;
     }
 
-    res.writeHead(200, {
-      "Content-Type": contentType,
-      "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
-    });
+    res.writeHead(200, baseHeaders);
     fs.createReadStream(filePath).pipe(res);
     return;
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Download, Music, Image as ImageIcon, Globe, ExternalLink, FileEdit, CheckCircle2, Video } from "lucide-react";
+import { FileText, Download, Music, Image as ImageIcon, Globe, ExternalLink, FileEdit, CheckCircle2, Video, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -38,6 +38,16 @@ export function PreviewModulDialog({
 }: PreviewModulDialogProps) {
   const [isCompletedByMe, setIsCompletedByMe] = useState(false);
   const [isMarkingDone, setIsMarkingDone] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(typeof window !== "undefined" && window.innerWidth >= 768);
+    };
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
 
   const activeUser = MysqlAuthService.getActiveUser();
   const isSiswa = activeUser?.role === "siswa";
@@ -268,12 +278,47 @@ export function PreviewModulDialog({
                 </Button>
               </div>
             ) : fileUrl ? (
-              /* 7. PDF VIEWER (IFRAME) */
-              <iframe
-                src={fileUrl}
-                className="w-full h-[520px] rounded-xl border-0"
-                title={previewModul.title}
-              />
+              isDesktop ? (
+                /* 7. PDF VIEWER (IFRAME) - HANYA DESKTOP */
+                <iframe
+                  src={fileUrl}
+                  className="w-full h-[520px] rounded-xl border-0"
+                  title={previewModul.title}
+                />
+              ) : (
+                /* TAMPILAN MOBILE - KARTU BERSIH TANPA AUTO-DOWNLOAD IFRAME */
+                <div className="w-full max-w-md p-6 bg-card border border-border rounded-2xl shadow-xs text-center space-y-3">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 mx-auto flex items-center justify-center shadow-xs">
+                    <FileText className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-foreground">{previewModul.title}</h4>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {previewModul.mapel} · {previewModul.jenjang}
+                    </p>
+                    {previewModul.teacher && (
+                      <p className="text-[10px] text-muted-foreground">Penyusun: {previewModul.teacher}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 w-full"
+                      onClick={() => window.open(fileUrl, "_blank")}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Buka Dokumen di Tab Baru
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs font-semibold gap-1.5 w-full"
+                      onClick={() => onDownload(previewModul)}
+                    >
+                      <Download className="h-3.5 w-3.5" /> Unduh Berkas ({previewModul.size || "Berkas"})
+                    </Button>
+                  </div>
+                </div>
+              )
             ) : (
               <div className="p-12 text-center space-y-3">
                 <div className="text-4xl">📄</div>

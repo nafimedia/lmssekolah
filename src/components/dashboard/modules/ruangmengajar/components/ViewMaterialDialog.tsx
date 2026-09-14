@@ -67,6 +67,16 @@ export function ViewMaterialDialog({
   const [completions, setCompletions] = useState<any[]>([]);
   const [isCompletedByMe, setIsCompletedByMe] = useState(false);
   const [isMarkingDone, setIsMarkingDone] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(typeof window !== "undefined" && window.innerWidth >= 768);
+    };
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
 
   const activeUser = MysqlAuthService.getActiveUser();
   const isSiswa = activeUser?.role === "siswa";
@@ -375,53 +385,41 @@ export function ViewMaterialDialog({
                 </div>
               </div>
 
-              {/* Tampilan Ponsel (Mobile) */}
-              <div className="block md:hidden">
-                {!showEmbedOnMobile ? (
-                  <div className="p-5 rounded-xl border border-border bg-card flex flex-col items-center text-center space-y-3">
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shadow-xs">
-                      <FileText className="h-7 w-7" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-sm text-foreground">{material.title}</h4>
-                      <p className="text-[11px] text-muted-foreground">
-                        {material.source || activeMapel} · {material.chapter || activeRombel}
-                      </p>
-                      {material.uploaded_by && (
-                        <p className="text-[10px] text-muted-foreground">Pengunggah: {material.uploaded_by}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-center gap-2 pt-1 w-full max-w-xs">
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 flex-1"
-                        onClick={() => window.open(targetUrl, "_blank")}
-                      >
-                        <Eye className="h-3.5 w-3.5" /> Baca Dokumen
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-[11px] text-muted-foreground h-8 px-2"
-                        onClick={() => setShowEmbedOnMobile(true)}
-                      >
-                        <RefreshCw className="h-3 w-3 mr-1" /> Pratinjau Tersemat
-                      </Button>
-                    </div>
+              {/* Tampilan Ponsel (Mobile) - Tidak memuat tag iframe untuk mencegah download otomatis di Android Chrome */}
+              {!isDesktop ? (
+                <div className="p-5 rounded-xl border border-border bg-card flex flex-col items-center text-center space-y-3">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shadow-xs">
+                    <FileText className="h-7 w-7" />
                   </div>
-                ) : (
-                  <div className="relative w-full rounded-xl border border-border bg-slate-900 overflow-hidden shadow-inner min-h-[400px]">
-                    <iframe
-                      src={targetUrl}
-                      className="w-full h-[400px] rounded-xl border-0"
-                      title={material.title}
-                    />
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm text-foreground">{material.title}</h4>
+                    <p className="text-[11px] text-muted-foreground">
+                      {material.source || activeMapel} · {material.chapter || activeRombel}
+                    </p>
+                    {material.uploaded_by && (
+                      <p className="text-[10px] text-muted-foreground">Pengunggah: {material.uploaded_by}</p>
+                    )}
                   </div>
-                )}
-              </div>
-
-              {/* Tampilan Desktop */}
-              <div className="hidden md:block">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1 w-full max-w-xs">
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 w-full sm:flex-1"
+                      onClick={() => window.open(targetUrl, "_blank")}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Buka Dokumen
+                    </Button>
+                    <a
+                      href={targetUrl}
+                      download={`${material.title}.pdf`}
+                      className="inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-muted h-8 px-3 text-xs font-semibold gap-1 text-muted-foreground hover:text-foreground w-full sm:w-auto transition-colors"
+                      title="Unduh berkas fisik"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Unduh Berkas
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                /* Tampilan Desktop - Pratinjau Dokumen Tersemat */
                 <div className="relative w-full rounded-xl border border-border bg-slate-900 overflow-hidden shadow-inner min-h-[460px]">
                   <iframe
                     src={targetUrl}
@@ -429,7 +427,7 @@ export function ViewMaterialDialog({
                     title={material.title}
                   />
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             /* Fallback Text */

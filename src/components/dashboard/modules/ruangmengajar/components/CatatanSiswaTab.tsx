@@ -12,7 +12,7 @@ import { MysqlAuthService } from "@/services/mysqlAuthService";
 export interface StudentBehaviorNote {
   id: string;
   studentName: string;
-  type: "PRESTASI" | "PEMBELAJARAN" | "PERLU_PERHATIAN" | "REMEDIAL" | "PENGAYAAN";
+  type: "PRESTASI" | "PEMBELAJARAN" | "PERLU_PERHATIAN" | "REMEDIAL" | "PENGAYAAN" | "REFLEKSI";
   note: string;
   date: string;
 }

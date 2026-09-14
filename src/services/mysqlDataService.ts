@@ -90,6 +90,7 @@ import {
   getJadwalPelajaranFn,
   getKbmPresensiFn,
   saveKbmPresensiBatchFn,
+  submitStudentSelfPresensiFn,
   getDailyPresensiRombelFn,
   saveDailyPresensiRombelBatchFn,
   getStudentKbmNotesFn,
@@ -911,6 +912,8 @@ export class MysqlDataService {
         tanggal: r.tanggal,
         jam_ke: r.jam_ke || "07.30",
         materi: r.materi,
+        tujuan_pembelajaran: r.tujuan_pembelajaran || "",
+        kegiatan: r.kegiatan || "",
         catatan: r.catatan || "",
       }));
     } catch (e) {
@@ -1227,6 +1230,23 @@ export class MysqlDataService {
       return res.success;
     } catch (e) {
       console.warn("saveKbmPresensiBatchFn failed:", e);
+      return false;
+    }
+  }
+
+  static async submitStudentSelfPresensi(data: {
+    rombel: string;
+    mapel: string;
+    date_str: string;
+    student_nis: string;
+    student_name: string;
+    guru_name?: string;
+  }): Promise<boolean> {
+    try {
+      const res = await submitStudentSelfPresensiFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("submitStudentSelfPresensiFn failed:", e);
       return false;
     }
   }

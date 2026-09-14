@@ -66,6 +66,7 @@ import { isSameClass } from "@/utils/classNormalization";
 import { normalizeSubjectName, isSameSubject } from "@/utils/subjectNormalization";
 import { getDeadlineStatus } from "@/utils/deadlineHelper";
 import { ViewMaterialDialog, MaterialDetail } from "../ruangmengajar/components/ViewMaterialDialog";
+import { SesiRuangBelajarView } from "./components/SesiRuangBelajarView";
 
 interface TugasSiswaModuleProps {
   userProfile?: any;
@@ -77,15 +78,18 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState<"semua" | "belum" | "dikumpulkan" | "dinilai">("semua");
 
-  // Ruang Belajar: Main Section Tab ("materi" vs "tugas")
-  const [learningSection, setLearningSection] = useState<"materi" | "tugas">(() => {
+  // Ruang Belajar: Main Section Tab ("sesi" vs "materi" vs "tugas")
+  const [learningSection, setLearningSection] = useState<"sesi" | "materi" | "tugas">(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const sub = params.get("sub");
       if (sub === "tugas") return "tugas";
       if (sub === "materi") return "materi";
+      if (sub === "sesi") return "sesi";
+      const qMapel = params.get("mapel");
+      if (qMapel && qMapel.trim()) return "sesi";
     }
-    return "materi";
+    return "sesi";
   });
 
   // Materials states for student
@@ -427,6 +431,9 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
             normalizeSubjectName(rawTarget) ||
             rawTarget;
           setSelectedMapelFilter(matchedTugas);
+
+          // Otomatis aktifkan Sesi Pembelajaran Terstruktur (7 Tahap)
+          setLearningSection("sesi");
         }
       }
     };
@@ -1799,45 +1806,175 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         </div>
       )}
 
-      {/* Navigasi Utama Ruang Belajar: Materi vs Tugas */}
-      <div className="flex items-center justify-between gap-3 border-b border-border/80 pb-2.5">
-        <div className="flex items-center gap-2">
+      {/* Navigasi Utama Ruang Belajar: Sesi Belajar vs Materi vs Tugas */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-2.5">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <Button
+            type="button"
+            size="sm"
+            variant={learningSection === "sesi" ? "default" : "outline"}
+            onClick={() => setLearningSection("sesi")}
+            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${
+              learningSection === "sesi"
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            <Sparkles className="h-4 w-4" /> 1. Sesi Belajar (7 Urutan KBM)
+          </Button>
           <Button
             type="button"
             size="sm"
             variant={learningSection === "materi" ? "default" : "outline"}
             onClick={() => setLearningSection("materi")}
-            className={`gap-2 font-bold text-xs h-9 rounded-xl transition shadow-2xs ${
+            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${
               learningSection === "materi"
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                 : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
             }`}
           >
-            <BookOpen className="h-4 w-4" /> 1. Materi & Modul Ajar ({filteredMaterials.length})
+            <BookOpen className="h-4 w-4" /> 2. Bahan Ajar Digital ({filteredMaterials.length})
           </Button>
           <Button
             type="button"
             size="sm"
             variant={learningSection === "tugas" ? "default" : "outline"}
             onClick={() => setLearningSection("tugas")}
-            className={`gap-2 font-bold text-xs h-9 rounded-xl transition shadow-2xs ${
+            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${
               learningSection === "tugas"
                 ? "bg-primary text-primary-foreground"
                 : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
             }`}
           >
-            <FileText className="h-4 w-4" /> 2. Tugas & LKPD ({totalCount})
+            <FileText className="h-4 w-4" /> 3. Tugas & LKPD ({totalCount})
           </Button>
         </div>
 
-        {learningSection === "materi" && (
-          <span className="text-xs text-muted-foreground hidden md:inline">
-            Modul & Video Pelajaran {studentRombel}
-          </span>
+        {selectedMateriMapel !== "SEMUA" && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>Mapel Aktif:</span>
+            <Badge className="bg-emerald-600 text-white text-[11px] font-bold">
+              {selectedMateriMapel}
+            </Badge>
+          </div>
         )}
       </div>
 
-      {learningSection === "materi" ? (
+      {learningSection === "sesi" ? (
+        selectedMateriMapel !== "SEMUA" ? (
+          <SesiRuangBelajarView
+            userProfile={userProfile}
+            studentName={studentName}
+            studentRombel={studentRombel}
+            studentNisn={studentNisn}
+            activeMapel={selectedMateriMapel}
+            materialsList={materialsList}
+            assignmentsList={assignments}
+            submissionsMap={mySubmissionsMap}
+            onOpenMaterial={handleOpenMaterial}
+            onOpenAssignment={handleOpenDetail}
+            onBackToAll={() => {
+              setSelectedMateriMapel("SEMUA");
+              setSelectedMapelFilter("SEMUA");
+              if (typeof window !== "undefined") {
+                const url = new URL(window.location.href);
+                url.searchParams.delete("mapel");
+                window.history.pushState({}, "", url.toString());
+              }
+            }}
+          />
+        ) : (
+          <div className="space-y-4">
+            <Card className="border-border bg-card shadow-xs">
+              <CardHeader className="p-4 sm:p-5 border-b border-border bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-600 text-white grid place-items-center shadow-2xs shrink-0">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm sm:text-base font-bold text-foreground">
+                      Pilih Mapel untuk Membuka Sesi Ruang Belajar Hari Ini
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">
+                      Pilih mata pelajaran KBM hari ini untuk masuk ke alur pembelajaran terstruktur 7 tahap:
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-5 space-y-3">
+                {todaySchedules.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {todaySchedules.map((sched, idx) => (
+                      <div
+                        key={sched.id || idx}
+                        onClick={() => {
+                          setSelectedMateriMapel(sched.mapel);
+                          setSelectedMapelFilter(sched.mapel);
+                          if (typeof window !== "undefined") {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("mapel", sched.mapel);
+                            window.history.pushState({}, "", url.toString());
+                          }
+                        }}
+                        className="p-3.5 rounded-xl border border-border bg-muted/15 hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 cursor-pointer transition-all shadow-2xs space-y-2 group"
+                      >
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                            ⏰ {sched.jam || `Jam ke-${idx + 1}`}
+                          </span>
+                          <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground">
+                            {studentRombel}
+                          </Badge>
+                        </div>
+                        <div className="font-bold text-sm text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                          {sched.mapel}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          👨‍🏫 {sched.guru || "Guru Pengampu"}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 rounded-xl h-7.5 mt-1 shadow-2xs"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" /> Buka Sesi Belajar →
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      Pilih dari daftar mata pelajaran terdaftar untuk {studentRombel}:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {materiSubjects.map((sub) => (
+                        <Button
+                          key={sub}
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs font-bold border-border bg-card hover:border-emerald-500 hover:bg-emerald-50/20 gap-1.5 rounded-xl"
+                          onClick={() => {
+                            setSelectedMateriMapel(sub);
+                            setSelectedMapelFilter(sub);
+                            if (typeof window !== "undefined") {
+                              const url = new URL(window.location.href);
+                              url.searchParams.set("mapel", sub);
+                              window.history.pushState({}, "", url.toString());
+                            }
+                          }}
+                        >
+                          <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
+                          {sub}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )
+      ) : learningSection === "materi" ? (
         <div className="space-y-4">
           {/* Filter Bar Materi */}
           <div className="p-3 bg-card rounded-2xl border border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs">

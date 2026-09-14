@@ -3633,7 +3633,7 @@ export interface StudentKbmNoteRow {
   mapel: string;
   teacher_name: string;
   student_name: string;
-  type: "PRESTASI" | "PEMBELAJARAN" | "PERLU_PERHATIAN" | "REMEDIAL" | "PENGAYAAN";
+  type: "PRESTASI" | "PEMBELAJARAN" | "PERLU_PERHATIAN" | "REMEDIAL" | "PENGAYAAN" | "REFLEKSI";
   note: string;
   date_str: string;
   created_at?: string;
@@ -3841,6 +3841,65 @@ export const saveKbmPresensiBatchFn = createServerFn({ method: "POST" })
     }
   });
 
+export const submitStudentSelfPresensiFn = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      rombel: string;
+      mapel: string;
+      date_str: string;
+      student_nis: string;
+      student_name: string;
+      guru_name?: string;
+    }) => data
+  )
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const sessionUser = await requireAuth();
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS kbm_presensi (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          rombel VARCHAR(100) NOT NULL,
+          mapel VARCHAR(255) NOT NULL,
+          guru_name VARCHAR(255) NOT NULL,
+          student_id VARCHAR(64),
+          student_nis VARCHAR(50) NOT NULL,
+          student_name VARCHAR(255) NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'HADIR',
+          notes TEXT,
+          date_str VARCHAR(100) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY uk_student_date (student_nis, date_str)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      const parts = data.date_str.split("-");
+      let altDate = data.date_str;
+      if (parts.length === 3) {
+        altDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      const nis = data.student_nis || sessionUser.nis_nip || data.student_name;
+      const sName = data.student_name || sessionUser.full_name;
+      const teacherName = data.guru_name || "Guru Pengampu";
+
+      await execute(
+        `DELETE FROM kbm_presensi WHERE (student_nis = ? OR student_name = ?) AND mapel = ? AND (date_str = ? OR date_str = ?)`,
+        [nis, sName, data.mapel, data.date_str, altDate]
+      );
+
+      await execute(
+        `INSERT INTO kbm_presensi (rombel, mapel, guru_name, student_nis, student_name, status, notes, date_str)
+         VALUES (?, ?, ?, ?, ?, 'HADIR', 'Presensi Mandiri Siswa via Ruang Belajar', ?)`,
+        [data.rombel, data.mapel, teacherName, nis, sName, data.date_str]
+      );
+
+      return { success: true };
+    } catch (e) {
+      console.error("[submitStudentSelfPresensiFn Error]:", e);
+      return { success: false };
+    }
+  });
+
 // ============================================================================
 // 25B-2. PRESENSI HARIAN ROMBEL BINAAN WALI KELAS
 // ============================================================================
@@ -4014,7 +4073,11 @@ export const saveStudentKbmNoteFn = createServerFn({ method: "POST" })
   .validator((data: StudentKbmNoteRow) => data)
   .handler(async ({ data }): Promise<{ success: boolean; id?: string }> => {
     try {
-      await authorizeSubjectAccessServer(data.mapel);
+      const sessionUser = await requireAuth();
+      const roles = (sessionUser.role || "").split(",").map((r: string) => r.trim().toLowerCase());
+      if (!roles.includes("siswa") && !roles.includes("student")) {
+        await authorizeSubjectAccessServer(data.mapel);
+      }
       const { execute } = await import("@/lib/db");
       await execute(`
         CREATE TABLE IF NOT EXISTS student_kbm_notes (

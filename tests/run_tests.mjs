@@ -2,6 +2,7 @@ import { runAuthSecurityTests } from "./unit/auth_security.test.mjs";
 import { runFileValidationTests } from "./unit/file_validation.test.mjs";
 import { runPaginationTests } from "./unit/pagination_math.test.mjs";
 import { runLearningTopicsTests } from "./unit/learning_topics.test.mjs";
+import { runScheduleHelperTests } from "./unit/schedule_helper.test.mjs";
 
 async function runAllTests() {
   console.log("=================================================");
@@ -44,6 +45,14 @@ async function runAllTests() {
     failedCount++;
   }
 
+  try {
+    await runScheduleHelperTests();
+    passedCount++;
+  } catch (err) {
+    console.error("❌ [FAIL] Schedule Helper Tests Failed:", err);
+    failedCount++;
+  }
+
   const durationMs = Date.now() - startTime;
   console.log("\n=================================================");
   console.log(`📊 TEST SUITE SUMMARY (${durationMs}ms)`);
@@ -51,11 +60,7 @@ async function runAllTests() {
   console.log(`❌ Failed Suites: ${failedCount}`);
   console.log("=================================================");
 
-  if (failedCount > 0) {
-    process.exit(1);
-  } else {
-    process.exit(0);
-  }
+  process.exitCode = failedCount > 0 ? 1 : 0;
 }
 
 runAllTests();

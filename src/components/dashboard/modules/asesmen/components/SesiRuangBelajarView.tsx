@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { isSameClass } from "@/utils/classNormalization";
 import { isSameSubject, normalizeSubjectName } from "@/utils/subjectNormalization";
+import { mergeConsecutiveSchedules } from "@/utils/scheduleHelper";
 import { AssignmentRow, SubmissionRow } from "@/services/mysqlServerFns";
 
 interface SesiRuangBelajarViewProps {
@@ -102,22 +103,37 @@ export function SesiRuangBelajarView({
       setSessionJournal(activeJournal);
 
       // 2. Guru Pengampu dari Jurnal atau Jadwal Pelajaran
+      const todayDayName = new Intl.DateTimeFormat("id-ID", { weekday: "long" }).format(new Date());
+      const matchedSchedules = (allSchedules || []).filter((s: any) => {
+        const matchDay = (s.hari || "").toLowerCase().trim() === todayDayName.toLowerCase().trim();
+        return matchDay && isSameSubject(s.mapel || "", activeMapel) && isSameClass(s.rombel || "", studentRombel);
+      });
+      const mergedSchedules = mergeConsecutiveSchedules(matchedSchedules);
+
       if (activeJournal?.guru_name) {
         setTeacherName(activeJournal.guru_name);
+      } else if (mergedSchedules.length > 0 && mergedSchedules[0].guru && mergedSchedules[0].guru.trim() !== "-") {
+        setTeacherName(mergedSchedules[0].guru);
       } else {
-        const matchedSchedule = (allSchedules || []).find((s: any) => {
+        const fallbackSched = (allSchedules || []).find((s: any) => {
           return isSameSubject(s.mapel || "", activeMapel) && isSameClass(s.rombel || "", studentRombel);
         });
-        if (matchedSchedule?.guru && matchedSchedule.guru.trim() !== "-") {
-          setTeacherName(matchedSchedule.guru);
-        }
-        if (matchedSchedule?.jam) {
-          setSessionJam(matchedSchedule.jam);
+        if (fallbackSched?.guru && fallbackSched.guru.trim() !== "-") {
+          setTeacherName(fallbackSched.guru);
         }
       }
 
       if (activeJournal?.jam_ke) {
         setSessionJam(activeJournal.jam_ke);
+      } else if (mergedSchedules.length > 0) {
+        setSessionJam(mergedSchedules[0].jamLabel);
+      } else {
+        const fallbackSched = (allSchedules || []).find((s: any) => {
+          return isSameSubject(s.mapel || "", activeMapel) && isSameClass(s.rombel || "", studentRombel);
+        });
+        if (fallbackSched?.jam) {
+          setSessionJam(fallbackSched.jam);
+        }
       }
 
       // 3. Status Presensi Siswa
@@ -307,7 +323,7 @@ export function SesiRuangBelajarView({
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="space-y-1">
               <Badge className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 mb-1 gap-1">
-                <Sparkles className="h-3 w-3" /> ALUR SESI BELAJAR DIGITAL KBM
+                <Sparkles className="h-3 w-3" /> ALUR KELAS BELAJAR DIGITAL KBM
               </Badge>
               <h1 className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight">
                 {activeMapel} — {studentRombel}
@@ -319,9 +335,9 @@ export function SesiRuangBelajarView({
             </div>
 
             <div className="p-2.5 rounded-xl bg-card border border-border/80 text-right shadow-2xs">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status Sesi</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status Kelas</div>
               <div className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                {myKbmPresensi?.status === "HADIR" ? "● Siap Belajar (Hadir)" : "● Sesi Belajar Dibuka"}
+                {myKbmPresensi?.status === "HADIR" ? "● Siap Belajar (Hadir)" : "● Kelas Dibuka"}
               </div>
             </div>
           </div>
@@ -373,7 +389,7 @@ export function SesiRuangBelajarView({
                 Tujuan Pembelajaran (TP)
               </CardTitle>
               <CardDescription className="text-[11px] text-muted-foreground">
-                Target kompetensi yang wajib dikuasai siswa setelah menyelesaikan sesi ini
+                Target kompetensi yang wajib dikuasai siswa setelah menyelesaikan kelas ini
               </CardDescription>
             </div>
           </CardHeader>
@@ -399,7 +415,7 @@ export function SesiRuangBelajarView({
               </div>
               <div className="min-w-0">
                 <CardTitle className="text-sm font-bold text-foreground">
-                  Presensi Sesi Pembelajaran
+                  Presensi Kehadiran Kelas
                 </CardTitle>
                 <CardDescription className="text-[11px] text-muted-foreground">
                   Pencatatan kehadiran siswa dalam jam pelajaran {activeMapel}
@@ -564,7 +580,7 @@ export function SesiRuangBelajarView({
                   Tugas dan LKPD
                 </CardTitle>
                 <CardDescription className="text-[11px] text-muted-foreground">
-                  Lembar kerja penugasan terstruktur yang diterbitkan guru untuk sesi ini
+                  Lembar kerja penugasan terstruktur yang diterbitkan guru untuk kelas ini
                 </CardDescription>
               </div>
             </div>

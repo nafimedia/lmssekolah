@@ -65,6 +65,7 @@ import { toast } from "sonner";
 import { isSameClass } from "@/utils/classNormalization";
 import { normalizeSubjectName, isSameSubject } from "@/utils/subjectNormalization";
 import { getDeadlineStatus } from "@/utils/deadlineHelper";
+import { MergedClassSchedule, mergeConsecutiveSchedules } from "@/utils/scheduleHelper";
 import { ViewMaterialDialog, MaterialDetail } from "../ruangmengajar/components/ViewMaterialDialog";
 import { SesiRuangBelajarView } from "./components/SesiRuangBelajarView";
 
@@ -110,6 +111,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   const [liveSession, setLiveSession] = useState<any | null>(null);
   const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
   const [classSchedules, setClassSchedules] = useState<any[]>([]);
+
+  const mergedTodayClasses = useMemo(() => {
+    return mergeConsecutiveSchedules(todaySchedules);
+  }, [todaySchedules]);
   const [selectedMapelFilter, setSelectedMapelFilter] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -275,23 +280,23 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         .filter((l: any) => (l.status || "").toUpperCase() !== "DRAF")
         .filter((l: any) => !l.rombel || l.rombel === "ALL" || isSameClass(l.rombel, studentRombel))
         .map((l: any) => ({
-        id: String(l.id),
-        title: l.title,
-        mapel: l.mapel || "Mata Pelajaran",
-        rombel: l.rombel || studentRombel,
-        subject_name: l.mapel || "Mata Pelajaran",
-        class_name: l.rombel || studentRombel,
-        due_date: l.due_date || "Sesuai Jadwal KBM",
-        max_score: l.max_score || 100,
-        description: l.instructions || "Kerjakan tugas / LKPD ini sesuai petunjuk guru.",
-        type: l.type || "LKPD Digital",
-        status: l.status || "AKTIF",
-        author_guru: resolveTeacher(l.teacher_name, l.mapel || "", l.rombel || studentRombel),
-        attachment_url: l.attachment_url,
-        questions_data: l.questions_data,
-        quiz_data: l.quiz_data,
-        created_at: l.created_at,
-      }));
+          id: String(l.id),
+          title: l.title,
+          mapel: l.mapel || "Mata Pelajaran",
+          rombel: l.rombel || studentRombel,
+          subject_name: l.mapel || "Mata Pelajaran",
+          class_name: l.rombel || studentRombel,
+          due_date: l.due_date || "Sesuai Jadwal KBM",
+          max_score: l.max_score || 100,
+          description: l.instructions || "Kerjakan tugas / LKPD ini sesuai petunjuk guru.",
+          type: l.type || "LKPD Digital",
+          status: l.status || "AKTIF",
+          author_guru: resolveTeacher(l.teacher_name, l.mapel || "", l.rombel || studentRombel),
+          attachment_url: l.attachment_url,
+          questions_data: l.questions_data,
+          quiz_data: l.quiz_data,
+          created_at: l.created_at,
+        }));
 
       const lkpdIds = new Set(mappedLkpdAssignments.map((a) => a.id));
       const filteredAllAssignments = (allAssignments || [])
@@ -598,7 +603,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     if (selectedAssignment.quiz_data) {
       try {
         questions = JSON.parse(selectedAssignment.quiz_data);
-      } catch (e) {}
+      } catch (e) { }
     }
     if (!Array.isArray(questions) || questions.length === 0) {
       return toast.error("Data butir soal kuis tidak ditemukan.");
@@ -948,13 +953,12 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                       href={selectedAssignment.attachment_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-white font-bold text-xs shadow-xs transition shrink-0 ${
-                        selectedAssignment.attachment_url.includes("elibrary")
-                          ? "bg-purple-600 hover:bg-purple-700"
-                          : selectedAssignment.attachment_url.includes("youtube") || selectedAssignment.attachment_url.endsWith(".mp4")
+                      className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-white font-bold text-xs shadow-xs transition shrink-0 ${selectedAssignment.attachment_url.includes("elibrary")
+                        ? "bg-purple-600 hover:bg-purple-700"
+                        : selectedAssignment.attachment_url.includes("youtube") || selectedAssignment.attachment_url.endsWith(".mp4")
                           ? "bg-blue-600 hover:bg-blue-700"
                           : "bg-emerald-600 hover:bg-emerald-700"
-                      }`}
+                        }`}
                     >
                       {selectedAssignment.attachment_url.includes("elibrary") ? (
                         <>
@@ -985,10 +989,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                       {selectedAssignment.type === "PRAKTIKUM"
                         ? `Lembar Langkah & Pengamatan Praktikum (${parsedQuestions.length} Butir)`
                         : selectedAssignment.type === "HAFALAN"
-                        ? `Target Ayat & Butir Setoran Hafalan (${parsedQuestions.length} Butir)`
-                        : selectedAssignment.type === "PROYEK_P5"
-                        ? `Tahapan & Lembar Kerja Proyek (${parsedQuestions.length} Butir)`
-                        : `Lembar Butir Soal Terstruktur (${parsedQuestions.length} Butir)`}
+                          ? `Target Ayat & Butir Setoran Hafalan (${parsedQuestions.length} Butir)`
+                          : selectedAssignment.type === "PROYEK_P5"
+                            ? `Tahapan & Lembar Kerja Proyek (${parsedQuestions.length} Butir)`
+                            : `Lembar Butir Soal Terstruktur (${parsedQuestions.length} Butir)`}
                     </CardTitle>
                     <Badge variant="outline" className="text-[10px] font-bold border-emerald-400 text-emerald-700 dark:text-emerald-300">
                       Total {parsedQuestions.reduce((acc: number, q: any) => acc + (Number(q.points) || 0), 0)} Poin
@@ -1255,11 +1259,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                                           variant={entry.isSaved ? "outline" : "default"}
                                           disabled={savingRowNisn === nisn}
                                           onClick={() => handleSaveSinglePeer(nisn)}
-                                          className={`h-7 px-2.5 text-[11px] font-bold rounded-lg cursor-pointer ${
-                                            entry.isSaved
-                                              ? "border-emerald-300 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950"
-                                              : "bg-amber-600 hover:bg-amber-700 text-white shadow-2xs"
-                                          }`}
+                                          className={`h-7 px-2.5 text-[11px] font-bold rounded-lg cursor-pointer ${entry.isSaved
+                                            ? "border-emerald-300 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                                            : "bg-amber-600 hover:bg-amber-700 text-white shadow-2xs"
+                                            }`}
                                         >
                                           {savingRowNisn === nisn ? "..." : entry.isSaved ? "Update" : "Simpan"}
                                         </Button>
@@ -1313,11 +1316,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                                       variant={entry.isSaved ? "outline" : "default"}
                                       disabled={savingRowNisn === nisn}
                                       onClick={() => handleSaveSinglePeer(nisn)}
-                                      className={`h-7 px-2.5 text-xs font-bold rounded-lg ${
-                                        entry.isSaved
-                                          ? "border-emerald-300 text-emerald-700"
-                                          : "bg-amber-600 text-white"
-                                      }`}
+                                      className={`h-7 px-2.5 text-xs font-bold rounded-lg ${entry.isSaved
+                                        ? "border-emerald-300 text-emerald-700"
+                                        : "bg-amber-600 text-white"
+                                        }`}
                                     >
                                       {savingRowNisn === nisn ? "..." : entry.isSaved ? "Update" : "Simpan"}
                                     </Button>
@@ -1527,18 +1529,16 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                                       [qIdx]: opt.key,
                                     }))
                                   }
-                                  className={`p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition cursor-pointer text-xs ${
-                                    isSelected
-                                      ? "border-purple-600 bg-purple-50 dark:bg-purple-950/40 text-purple-950 dark:text-purple-100 font-bold shadow-2xs ring-1 ring-purple-500"
-                                      : "border-border/80 bg-card hover:bg-muted/40 text-foreground"
-                                  }`}
+                                  className={`p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition cursor-pointer text-xs ${isSelected
+                                    ? "border-purple-600 bg-purple-50 dark:bg-purple-950/40 text-purple-950 dark:text-purple-100 font-bold shadow-2xs ring-1 ring-purple-500"
+                                    : "border-border/80 bg-card hover:bg-muted/40 text-foreground"
+                                    }`}
                                 >
                                   <span
-                                    className={`h-5 w-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
-                                      isSelected
-                                        ? "bg-purple-600 text-white"
-                                        : "bg-muted text-muted-foreground"
-                                    }`}
+                                    className={`h-5 w-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${isSelected
+                                      ? "bg-purple-600 text-white"
+                                      : "bg-muted text-muted-foreground"
+                                      }`}
                                   >
                                     {opt.key}
                                   </span>
@@ -1577,19 +1577,19 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                     {selectedAssignment.type === "HAFALAN"
                       ? "Lembar Konfirmasi & Setoran Hafalan"
                       : selectedAssignment.type === "PRAKTIKUM"
-                      ? "Lembar Laporan Praktikum & Dokumen Uji"
-                      : selectedAssignment.type === "PROYEK_P5"
-                      ? "Lembar Laporan & Artefak Proyek"
-                      : "Lembar Jawaban & Submisi Siswa"}
+                        ? "Lembar Laporan Praktikum & Dokumen Uji"
+                        : selectedAssignment.type === "PROYEK_P5"
+                          ? "Lembar Laporan & Artefak Proyek"
+                          : "Lembar Jawaban & Submisi Siswa"}
                   </CardTitle>
                   <CardDescription className="text-[11px]">
                     {selectedAssignment.type === "HAFALAN"
                       ? "Tuliskan catatan setoran ayat dan lampirkan rekaman audio/video hafalan atau tautan Drive."
                       : selectedAssignment.type === "PRAKTIKUM"
-                      ? "Ketikkan hasil pengamatan/analisis praktikum atau unggah berkas laporan praktikum."
-                      : selectedAssignment.type === "PROYEK_P5"
-                      ? "Ketikkan ringkasan kemajuan proyek atau lampirkan berkas dokumentasi/artefak karya."
-                      : "Ketikkan jawaban tugas Anda di bawah, atau lampirkan berkas dokumen jawaban."}
+                        ? "Ketikkan hasil pengamatan/analisis praktikum atau unggah berkas laporan praktikum."
+                        : selectedAssignment.type === "PROYEK_P5"
+                          ? "Ketikkan ringkasan kemajuan proyek atau lampirkan berkas dokumentasi/artefak karya."
+                          : "Ketikkan jawaban tugas Anda di bawah, atau lampirkan berkas dokumen jawaban."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
@@ -1620,22 +1620,20 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                         <button
                           type="button"
                           onClick={() => setUploadMode("FILE")}
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${
-                            uploadMode === "FILE"
-                              ? "bg-background text-primary shadow-xs"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${uploadMode === "FILE"
+                            ? "bg-background text-primary shadow-xs"
+                            : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           📁 Unggah File
                         </button>
                         <button
                           type="button"
                           onClick={() => setUploadMode("URL")}
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${
-                            uploadMode === "URL"
-                              ? "bg-background text-primary shadow-xs"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${uploadMode === "URL"
+                            ? "bg-background text-primary shadow-xs"
+                            : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
                           🔗 Link Drive
                         </button>
@@ -1814,24 +1812,22 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
             size="sm"
             variant={learningSection === "sesi" ? "default" : "outline"}
             onClick={() => setLearningSection("sesi")}
-            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${
-              learningSection === "sesi"
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
-            }`}
+            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${learningSection === "sesi"
+              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+              : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              }`}
           >
-            <Sparkles className="h-4 w-4" /> 1. Sesi Belajar (7 Urutan KBM)
+            <Sparkles className="h-4 w-4" /> 1. Kelas Hari Ini
           </Button>
           <Button
             type="button"
             size="sm"
             variant={learningSection === "materi" ? "default" : "outline"}
             onClick={() => setLearningSection("materi")}
-            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${
-              learningSection === "materi"
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
-            }`}
+            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${learningSection === "materi"
+              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+              : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              }`}
           >
             <BookOpen className="h-4 w-4" /> 2. Bahan Ajar Digital ({filteredMaterials.length})
           </Button>
@@ -1840,11 +1836,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
             size="sm"
             variant={learningSection === "tugas" ? "default" : "outline"}
             onClick={() => setLearningSection("tugas")}
-            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${
-              learningSection === "tugas"
-                ? "bg-primary text-primary-foreground"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
-            }`}
+            className={`gap-1.5 font-bold text-xs h-9 rounded-xl transition shadow-2xs shrink-0 ${learningSection === "tugas"
+              ? "bg-primary text-primary-foreground"
+              : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              }`}
           >
             <FileText className="h-4 w-4" /> 3. Tugas & LKPD ({totalCount})
           </Button>
@@ -1887,56 +1882,63 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
           <div className="space-y-4">
             <Card className="border-border bg-card shadow-xs">
               <CardHeader className="p-4 sm:p-5 border-b border-border bg-muted/20">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <div className="h-8 w-8 rounded-xl bg-emerald-600 text-white grid place-items-center shadow-2xs shrink-0">
                     <Sparkles className="h-4 w-4" />
                   </div>
                   <div>
                     <CardTitle className="text-sm sm:text-base font-bold text-foreground">
-                      Pilih Mapel untuk Membuka Sesi Ruang Belajar Hari Ini
+                      Jadwal & Kelas Hari Ini
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground">
-                      Pilih mata pelajaran KBM hari ini untuk masuk ke alur pembelajaran terstruktur 7 tahap:
+                      Pilih mata pelajaran yang dijadwalkan hari ini untuk masuk ke alur pembelajaran interaktif.
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-5 space-y-3">
-                {todaySchedules.length > 0 ? (
+                {mergedTodayClasses.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {todaySchedules.map((sched, idx) => (
+                    {mergedTodayClasses.map((cls, idx) => (
                       <div
-                        key={sched.id || idx}
+                        key={cls.id || idx}
                         onClick={() => {
-                          setSelectedMateriMapel(sched.mapel);
-                          setSelectedMapelFilter(sched.mapel);
+                          setSelectedMateriMapel(cls.mapel);
+                          setSelectedMapelFilter(cls.mapel);
                           if (typeof window !== "undefined") {
                             const url = new URL(window.location.href);
-                            url.searchParams.set("mapel", sched.mapel);
+                            url.searchParams.set("mapel", cls.mapel);
                             window.history.pushState({}, "", url.toString());
                           }
                         }}
-                        className="p-3.5 rounded-xl border border-border bg-muted/15 hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 cursor-pointer transition-all shadow-2xs space-y-2 group"
+                        className="p-3.5 rounded-xl border border-border bg-muted/15 hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 cursor-pointer transition-all shadow-2xs space-y-2.5 group flex flex-col justify-between"
                       >
-                        <div className="flex items-center justify-between gap-1.5">
-                          <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                            ⏰ {sched.jam || `Jam ke-${idx + 1}`}
-                          </span>
-                          <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground">
-                            {studentRombel}
-                          </Badge>
-                        </div>
-                        <div className="font-bold text-sm text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
-                          {sched.mapel}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          👨‍🏫 {sched.guru || "Guru Pengampu"}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                              ⏰ {cls.jamLabel}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <Badge variant="secondary" className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50">
+                                {cls.jpCount} JP
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground">
+                                {cls.rombel || studentRombel}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="font-bold text-sm text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+                            {cls.mapel}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            👨‍🏫 {cls.guru || "Guru Pengampu"}
+                          </div>
                         </div>
                         <Button
                           size="sm"
-                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 rounded-xl h-7.5 mt-1 shadow-2xs"
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 rounded-xl h-8 mt-1 shadow-2xs"
                         >
-                          <Sparkles className="h-3.5 w-3.5" /> Buka Sesi Belajar →
+                          <Sparkles className="h-3.5 w-3.5" /> Masuk Kelas →
                         </Button>
                       </div>
                     ))}
@@ -2114,276 +2116,272 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
           )}
         </div>
       ) : (
-      /* Filter Tabs & Task List */
-      <Card className="border-border bg-card shadow-xs">
-        <CardHeader className="p-3 sm:p-4 pb-3 border-b border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 p-1 bg-muted/70 rounded-xl border border-border text-xs w-full sm:w-auto overflow-x-auto no-scrollbar">
-            <button
-              type="button"
-              onClick={() => setFilterTab("belum")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                filterTab === "belum"
+        /* Filter Tabs & Task List */
+        <Card className="border-border bg-card shadow-xs">
+          <CardHeader className="p-3 sm:p-4 pb-3 border-b border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 p-1 bg-muted/70 rounded-xl border border-border text-xs w-full sm:w-auto overflow-x-auto no-scrollbar">
+              <button
+                type="button"
+                onClick={() => setFilterTab("belum")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${filterTab === "belum"
                   ? "bg-amber-600 text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <span>⏳ Perlu Dikerjakan</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "belum" ? "bg-white/20 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"}`}>
-                {pendingCount}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterTab("dikumpulkan")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                filterTab === "dikumpulkan"
+                  }`}
+              >
+                <span>⏳ Perlu Dikerjakan</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "belum" ? "bg-white/20 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"}`}>
+                  {pendingCount}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTab("dikumpulkan")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${filterTab === "dikumpulkan"
                   ? "bg-blue-600 text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <span>📤 Dikumpulkan</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "dikumpulkan" ? "bg-white/20 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"}`}>
-                {submittedCount}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterTab("dinilai")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                filterTab === "dinilai"
+                  }`}
+              >
+                <span>📤 Dikumpulkan</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "dikumpulkan" ? "bg-white/20 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"}`}>
+                  {submittedCount}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTab("dinilai")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${filterTab === "dinilai"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <span>✅ Dinilai</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "dinilai" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}>
-                {gradedCount}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterTab("semua")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                filterTab === "semua"
+                  }`}
+              >
+                <span>✅ Dinilai</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "dinilai" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}>
+                  {gradedCount}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTab("semua")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${filterTab === "semua"
                   ? "bg-primary text-primary-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <span>Semua</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "semua" ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-foreground"}`}>
-                {totalCount}
-              </span>
-            </button>
-          </div>
-
-          {/* Filter Mapel Dropdown */}
-          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0 flex-wrap">
-            <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Filter Mapel:</span>
-            <select
-              value={selectedMapelFilter}
-              onChange={(e) => setSelectedMapelFilter(e.target.value)}
-              className="h-8 flex-1 sm:flex-initial sm:min-w-[180px] rounded-lg border border-border bg-background px-2.5 text-xs font-bold text-primary shadow-2xs cursor-pointer"
-            >
-              <option value="SEMUA">Semua Mapel ({uniqueSubjects.length})</option>
-              {selectedMapelFilter !== "SEMUA" && !uniqueSubjects.includes(selectedMapelFilter) && (
-                <option value={selectedMapelFilter}>{selectedMapelFilter}</option>
-              )}
-              {uniqueSubjects.map((sub: string) => (
-                <option key={sub} value={sub}>{sub}</option>
-              ))}
-            </select>
-            {selectedMapelFilter !== "SEMUA" && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 text-[11px] font-bold text-muted-foreground hover:text-foreground px-2 rounded-lg"
-                onClick={() => {
-                  setSelectedMapelFilter("SEMUA");
-                  if (typeof window !== "undefined") {
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete("mapel");
-                    window.history.pushState({}, "", url.toString());
-                  }
-                }}
+                  }`}
               >
-                ✕ Reset Filter
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0 overflow-x-auto">
-          {loading ? (
-            <div className="p-12 text-center text-xs text-muted-foreground">
-              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-              Memuat data tugas...
+                <span>Semua</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${filterTab === "semua" ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-foreground"}`}>
+                  {totalCount}
+                </span>
+              </button>
             </div>
-          ) : filteredAssignments.length === 0 ? (
-            <div className="p-12 text-center space-y-2">
-              <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
-              <div className="font-bold text-sm text-foreground">Belum Ada Tugas Terdaftar</div>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                {assignments.length === 0
-                  ? "Belum ada penugasan atau LKPD digital yang diberikan oleh guru pengampu untuk kelas Anda."
-                  : "Tidak ada tugas yang sesuai dengan filter kategori ini."}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Tampilan Kartu Mobile-First (Tampil di Layar HP) */}
-              <div className="md:hidden p-3 space-y-2.5">
-                {filteredAssignments.map((a) => {
-                  const taskState = getTaskStatus(a);
-                  const sub = mySubmissionsMap.get(String(a.id));
-                  return (
-                    <div key={a.id} className="p-3.5 rounded-xl border border-border bg-muted/20 hover:border-primary/50 transition shadow-2xs space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                            <Badge variant="outline" className="text-[10px] font-bold border-primary/30 text-primary py-0 px-1.5">
-                              {a.mapel}
-                            </Badge>
-                            {a.rombel && (
-                              <span className="text-[10px] text-muted-foreground">{a.rombel}</span>
-                            )}
-                          </div>
-                          <h4 className="text-xs font-bold text-foreground line-clamp-2 leading-snug">
-                            {a.title}
-                          </h4>
-                        </div>
-                        <Badge variant="outline" className={`gap-1 px-2 py-0.5 text-[10px] shrink-0 font-bold ${taskState.color}`}>
-                          <taskState.icon className="h-3 w-3" />
-                          {taskState.label}
-                        </Badge>
-                      </div>
 
-                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
-                        {(() => {
-                          const dl = getDeadlineStatus(a.due_date, (a as any).created_at);
-                          return (
-                            <div className="flex items-center gap-1 text-[11px] font-mono">
-                              <Clock className={`h-3 w-3 ${dl.isOverdue ? "text-rose-500" : dl.isToday ? "text-amber-500" : "text-muted-foreground"}`} />
-                              <span className={dl.textColor}>
-                                {dl.isOverdue ? `Terlewat: ${dl.displayText}` : dl.displayText}
-                              </span>
-                            </div>
-                          );
-                        })()}
-                        <div>
-                          {taskState.status === "belum" && (
-                            <Button size="sm" className="h-7 text-xs font-bold bg-primary text-primary-foreground shadow-xs px-3" onClick={() => handleOpenDetail(a)}>
-                              🚀 Kerjakan
-                            </Button>
-                          )}
-                          {taskState.status === "draft" && (
-                            <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10 px-3" onClick={() => handleOpenDetail(a)}>
-                              ✏️ Lanjut
-                            </Button>
-                          )}
-                          {taskState.status === "dikumpulkan" && (
-                            <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 hover:bg-blue-500/10 px-3" onClick={() => handleOpenDetail(a)}>
-                              👀 Jawaban
-                            </Button>
-                          )}
-                          {taskState.status === "dinilai" && (
-                            <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 px-3" onClick={() => handleOpenDetail(a)}>
-                              🏆 Nilai: {sub?.score}/100
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* Filter Mapel Dropdown */}
+            <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0 flex-wrap">
+              <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Filter Mapel:</span>
+              <select
+                value={selectedMapelFilter}
+                onChange={(e) => setSelectedMapelFilter(e.target.value)}
+                className="h-8 flex-1 sm:flex-initial sm:min-w-[180px] rounded-lg border border-border bg-background px-2.5 text-xs font-bold text-primary shadow-2xs cursor-pointer"
+              >
+                <option value="SEMUA">Semua Mapel ({uniqueSubjects.length})</option>
+                {selectedMapelFilter !== "SEMUA" && !uniqueSubjects.includes(selectedMapelFilter) && (
+                  <option value={selectedMapelFilter}>{selectedMapelFilter}</option>
+                )}
+                {uniqueSubjects.map((sub: string) => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+              {selectedMapelFilter !== "SEMUA" && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-[11px] font-bold text-muted-foreground hover:text-foreground px-2 rounded-lg"
+                  onClick={() => {
+                    setSelectedMapelFilter("SEMUA");
+                    if (typeof window !== "undefined") {
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete("mapel");
+                      window.history.pushState({}, "", url.toString());
+                    }
+                  }}
+                >
+                  ✕ Reset Filter
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0 overflow-x-auto">
+            {loading ? (
+              <div className="p-12 text-center text-xs text-muted-foreground">
+                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                Memuat data tugas...
               </div>
-
-              {/* Tabel Lengkap Desktop */}
-              <table className="hidden md:table w-full text-xs text-left">
-                <thead className="bg-muted/70 text-muted-foreground font-bold border-b border-border">
-                  <tr>
-                    <th className="p-3.5">Tugas & Deskripsi</th>
-                    <th className="p-3.5">Mata Pelajaran & Guru</th>
-                    <th className="p-3.5 text-center">Batas Waktu (Deadline)</th>
-                    <th className="p-3.5 text-center">Status Submisi</th>
-                    <th className="p-3.5 text-right">Aksi Pengerjaan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+            ) : filteredAssignments.length === 0 ? (
+              <div className="p-12 text-center space-y-2">
+                <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                <div className="font-bold text-sm text-foreground">Belum Ada Tugas Terdaftar</div>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  {assignments.length === 0
+                    ? "Belum ada penugasan atau LKPD digital yang diberikan oleh guru pengampu untuk kelas Anda."
+                    : "Tidak ada tugas yang sesuai dengan filter kategori ini."}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Tampilan Kartu Mobile-First (Tampil di Layar HP) */}
+                <div className="md:hidden p-3 space-y-2.5">
                   {filteredAssignments.map((a) => {
                     const taskState = getTaskStatus(a);
                     const sub = mySubmissionsMap.get(String(a.id));
                     return (
-                      <tr key={a.id} className="hover:bg-muted/30 transition">
-                        <td className="p-3.5">
-                          <div className="font-bold text-foreground text-sm flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-primary shrink-0" />
-                            {a.title}
+                      <div key={a.id} className="p-3.5 rounded-xl border border-border bg-muted/20 hover:border-primary/50 transition shadow-2xs space-y-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                              <Badge variant="outline" className="text-[10px] font-bold border-primary/30 text-primary py-0 px-1.5">
+                                {a.mapel}
+                              </Badge>
+                              {a.rombel && (
+                                <span className="text-[10px] text-muted-foreground">{a.rombel}</span>
+                              )}
+                            </div>
+                            <h4 className="text-xs font-bold text-foreground line-clamp-2 leading-snug">
+                              {a.title}
+                            </h4>
                           </div>
-                          {a.description && (
-                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
-                              {a.description}
-                            </p>
-                          )}
-                        </td>
+                          <Badge variant="outline" className={`gap-1 px-2 py-0.5 text-[10px] shrink-0 font-bold ${taskState.color}`}>
+                            <taskState.icon className="h-3 w-3" />
+                            {taskState.label}
+                          </Badge>
+                        </div>
 
-                        <td className="p-3.5">
-                          <div className="font-semibold text-foreground">{a.mapel}</div>
-                          <div className="text-[11px] text-muted-foreground">
-                            Guru: {a.author_guru || "Guru Pengampu"} • {a.rombel || "Semua Class"}
-                          </div>
-                        </td>
-
-                        <td className="p-3.5 text-center font-mono">
+                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
                           {(() => {
                             const dl = getDeadlineStatus(a.due_date, (a as any).created_at);
                             return (
-                              <Badge variant="outline" className={`gap-1 font-mono text-[11px] ${dl.badgeClass}`}>
+                              <div className="flex items-center gap-1 text-[11px] font-mono">
                                 <Clock className={`h-3 w-3 ${dl.isOverdue ? "text-rose-500" : dl.isToday ? "text-amber-500" : "text-muted-foreground"}`} />
-                                {dl.isOverdue ? `Terlewat: ${dl.displayText}` : dl.displayText}
-                              </Badge>
+                                <span className={dl.textColor}>
+                                  {dl.isOverdue ? `Terlewat: ${dl.displayText}` : dl.displayText}
+                                </span>
+                              </div>
                             );
                           })()}
-                        </td>
-
-                        <td className="p-3.5 text-center">
-                          <Badge variant="outline" className={`gap-1 px-2.5 py-1 ${taskState.color}`}>
-                            <taskState.icon className="h-3.5 w-3.5" />
-                            {taskState.label}
-                          </Badge>
-                        </td>
-
-                        <td className="p-3.5 text-right">
-                          {taskState.status === "belum" && (
-                            <Button size="sm" className="h-8 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => handleOpenDetail(a)}>
-                              🚀 Kerjakan
-                            </Button>
-                          )}
-                          {taskState.status === "draft" && (
-                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10" onClick={() => handleOpenDetail(a)}>
-                              ✏️ Lanjutkan
-                            </Button>
-                          )}
-                          {taskState.status === "dikumpulkan" && (
-                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-blue-500/40 text-blue-600 hover:bg-blue-500/10" onClick={() => handleOpenDetail(a)}>
-                              👀 Lihat Jawaban
-                            </Button>
-                          )}
-                          {taskState.status === "dinilai" && (
-                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleOpenDetail(a)}>
-                              🏆 Lihat Hasil ({sub?.score}/100)
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
+                          <div>
+                            {taskState.status === "belum" && (
+                              <Button size="sm" className="h-7 text-xs font-bold bg-primary text-primary-foreground shadow-xs px-3" onClick={() => handleOpenDetail(a)}>
+                                🚀 Kerjakan
+                              </Button>
+                            )}
+                            {taskState.status === "draft" && (
+                              <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10 px-3" onClick={() => handleOpenDetail(a)}>
+                                ✏️ Lanjut
+                              </Button>
+                            )}
+                            {taskState.status === "dikumpulkan" && (
+                              <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-blue-500/40 text-blue-600 hover:bg-blue-500/10 px-3" onClick={() => handleOpenDetail(a)}>
+                                👀 Jawaban
+                              </Button>
+                            )}
+                            {taskState.status === "dinilai" && (
+                              <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 px-3" onClick={() => handleOpenDetail(a)}>
+                                🏆 Nilai: {sub?.score}/100
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     );
                   })}
-                </tbody>
-              </table>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                </div>
+
+                {/* Tabel Lengkap Desktop */}
+                <table className="hidden md:table w-full text-xs text-left">
+                  <thead className="bg-muted/70 text-muted-foreground font-bold border-b border-border">
+                    <tr>
+                      <th className="p-3.5">Tugas & Deskripsi</th>
+                      <th className="p-3.5">Mata Pelajaran & Guru</th>
+                      <th className="p-3.5 text-center">Batas Waktu (Deadline)</th>
+                      <th className="p-3.5 text-center">Status Submisi</th>
+                      <th className="p-3.5 text-right">Aksi Pengerjaan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredAssignments.map((a) => {
+                      const taskState = getTaskStatus(a);
+                      const sub = mySubmissionsMap.get(String(a.id));
+                      return (
+                        <tr key={a.id} className="hover:bg-muted/30 transition">
+                          <td className="p-3.5">
+                            <div className="font-bold text-foreground text-sm flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-primary shrink-0" />
+                              {a.title}
+                            </div>
+                            {a.description && (
+                              <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                                {a.description}
+                              </p>
+                            )}
+                          </td>
+
+                          <td className="p-3.5">
+                            <div className="font-semibold text-foreground">{a.mapel}</div>
+                            <div className="text-[11px] text-muted-foreground">
+                              Guru: {a.author_guru || "Guru Pengampu"} • {a.rombel || "Semua Class"}
+                            </div>
+                          </td>
+
+                          <td className="p-3.5 text-center font-mono">
+                            {(() => {
+                              const dl = getDeadlineStatus(a.due_date, (a as any).created_at);
+                              return (
+                                <Badge variant="outline" className={`gap-1 font-mono text-[11px] ${dl.badgeClass}`}>
+                                  <Clock className={`h-3 w-3 ${dl.isOverdue ? "text-rose-500" : dl.isToday ? "text-amber-500" : "text-muted-foreground"}`} />
+                                  {dl.isOverdue ? `Terlewat: ${dl.displayText}` : dl.displayText}
+                                </Badge>
+                              );
+                            })()}
+                          </td>
+
+                          <td className="p-3.5 text-center">
+                            <Badge variant="outline" className={`gap-1 px-2.5 py-1 ${taskState.color}`}>
+                              <taskState.icon className="h-3.5 w-3.5" />
+                              {taskState.label}
+                            </Badge>
+                          </td>
+
+                          <td className="p-3.5 text-right">
+                            {taskState.status === "belum" && (
+                              <Button size="sm" className="h-8 text-xs font-bold bg-primary text-primary-foreground shadow-xs" onClick={() => handleOpenDetail(a)}>
+                                🚀 Kerjakan
+                              </Button>
+                            )}
+                            {taskState.status === "draft" && (
+                              <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-amber-500/40 text-amber-600 hover:bg-amber-500/10" onClick={() => handleOpenDetail(a)}>
+                                ✏️ Lanjutkan
+                              </Button>
+                            )}
+                            {taskState.status === "dikumpulkan" && (
+                              <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-blue-500/40 text-blue-600 hover:bg-blue-500/10" onClick={() => handleOpenDetail(a)}>
+                                👀 Lihat Jawaban
+                              </Button>
+                            )}
+                            {taskState.status === "dinilai" && (
+                              <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleOpenDetail(a)}>
+                                🏆 Lihat Hasil ({sub?.score}/100)
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Dialog Baca / Pelajari Materi untuk Siswa */}

@@ -493,6 +493,13 @@ export function SesiRuangBelajarView({
                           </Badge>
                         </div>
 
+                        {m.chapter && (
+                          <div className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 truncate flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            {m.chapter}
+                          </div>
+                        )}
+
                         <CardTitle className="text-xs sm:text-sm font-bold text-foreground line-clamp-2 leading-snug">
                           {m.title}
                         </CardTitle>

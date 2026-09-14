@@ -42,16 +42,20 @@ export interface UploadModulPayload {
   sequence_order?: number;
   access_mode?: "GURU_KONTROL" | "SISWA_MANDIRI";
   content_text?: string;
+  topic_id?: string | null;
+  chapter?: string | null;
 }
 
 interface UploadModulDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   defaultMapel: string;
+  defaultTopicId?: string;
+  defaultChapter?: string;
   onUpload: (newModul: UploadModulPayload) => void;
 }
 
-export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload }: UploadModulDialogProps) {
+export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, defaultTopicId, defaultChapter, onUpload }: UploadModulDialogProps) {
   const allowedMapels = filterSubjectsForUser(ALL_SCHOOL_SUBJECTS);
   const [newTitle, setNewTitle] = useState("");
   const [newMapel, setNewMapel] = useState(defaultMapel || allowedMapels[0] || "Al Qur'an Hadis");
@@ -157,6 +161,8 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
       sequence_order: Number(sequenceOrder) || 1,
       access_mode: accessMode,
       content_text: jenisBahan === "TEKS" ? contentText.trim() : undefined,
+      topic_id: defaultTopicId || null,
+      chapter: defaultChapter || null,
     });
 
     resetForm();
@@ -167,9 +173,16 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, onUpload
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto border-border bg-card">
         <DialogHeader>
-          <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
-            <Upload className="h-5 w-5 text-emerald-600" /> Unggah & Susun Bahan Ajar KBM
-          </DialogTitle>
+          <div className="flex flex-col gap-1">
+            <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+              <Upload className="h-5 w-5 text-emerald-600" /> Unggah & Susun Bahan Ajar KBM
+            </DialogTitle>
+            {defaultChapter && (
+              <p className="text-xs text-muted-foreground">
+                Materi ini akan ditautkan ke: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{defaultChapter}</span>
+              </p>
+            )}
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">

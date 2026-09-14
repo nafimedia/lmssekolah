@@ -515,6 +515,20 @@ export interface MaterialRow {
   sequence_order?: number;
   access_mode?: "GURU_KONTROL" | "SISWA_MANDIRI" | string;
   content_text?: string;
+  topic_id?: string | null;
+  chapter?: string | null;
+  created_at?: string;
+}
+
+export interface LearningTopicRow {
+  id: string;
+  subject_name: string;
+  class_name: string;
+  title: string;
+  description?: string | null;
+  sequence_order?: number;
+  status?: string;
+  teacher_name?: string | null;
   created_at?: string;
 }
 
@@ -2049,7 +2063,7 @@ export const getMaterialsPaginatedFn = createServerFn({ method: "POST" })
       const totalPages = Math.ceil(total / limit) || 1;
 
       const rows = await query<MaterialRow[]>(
-        `SELECT id, title, subject_name, class_name, type, size, filename, file_url, uploaded_by, created_at FROM materials ${whereClause} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+        `SELECT id, title, subject_name, class_name, type, size, filename, file_url, uploaded_by, sequence_order, access_mode, content_text, topic_id, chapter, created_at FROM materials ${whereClause} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
         [...params, limit, offset]
       );
 
@@ -2082,6 +2096,8 @@ export const getMaterialsFn = createServerFn({ method: "GET" }).handler(
           sequence_order INT DEFAULT 1,
           access_mode VARCHAR(30) DEFAULT 'GURU_KONTROL',
           content_text LONGTEXT NULL,
+          topic_id VARCHAR(64) NULL,
+          chapter VARCHAR(255) NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
@@ -2095,9 +2111,15 @@ export const getMaterialsFn = createServerFn({ method: "GET" }).handler(
       try {
         await execute("ALTER TABLE materials ADD COLUMN content_text LONGTEXT NULL");
       } catch (e) {}
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN topic_id VARCHAR(64) NULL");
+      } catch (e) {}
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN chapter VARCHAR(255) NULL");
+      } catch (e) {}
 
       const rows = await query<MaterialRow[]>(
-        "SELECT id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by, sequence_order, access_mode, content_text, created_at FROM materials ORDER BY sequence_order ASC, created_at DESC"
+        "SELECT id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by, sequence_order, access_mode, content_text, topic_id, chapter, created_at FROM materials ORDER BY sequence_order ASC, created_at DESC"
       );
       return rows || [];
     } catch (e) {
@@ -2127,6 +2149,8 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           sequence_order INT DEFAULT 1,
           access_mode VARCHAR(30) DEFAULT 'GURU_KONTROL',
           content_text LONGTEXT NULL,
+          topic_id VARCHAR(64) NULL,
+          chapter VARCHAR(255) NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
@@ -2139,6 +2163,12 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
       } catch (e) {}
       try {
         await execute("ALTER TABLE materials ADD COLUMN content_text LONGTEXT NULL");
+      } catch (e) {}
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN topic_id VARCHAR(64) NULL");
+      } catch (e) {}
+      try {
+        await execute("ALTER TABLE materials ADD COLUMN chapter VARCHAR(255) NULL");
       } catch (e) {}
 
       let finalFileUrl = data.file_url || null;
@@ -2183,8 +2213,8 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
       }
 
       await execute(
-        `INSERT INTO materials (id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by, sequence_order, access_mode, content_text)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO materials (id, title, subject_name, class_name, type, status, size, filename, file_url, uploaded_by, sequence_order, access_mode, content_text, topic_id, chapter)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            title = VALUES(title),
            type = VALUES(type),
@@ -2194,7 +2224,9 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
            file_url = VALUES(file_url),
            sequence_order = VALUES(sequence_order),
            access_mode = VALUES(access_mode),
-           content_text = VALUES(content_text)`,
+           content_text = VALUES(content_text),
+           topic_id = VALUES(topic_id),
+           chapter = VALUES(chapter)`,
         [
           data.id,
           data.title,
@@ -2209,6 +2241,8 @@ export const saveMaterialFn = createServerFn({ method: "POST" })
           data.sequence_order || 1,
           data.access_mode || "GURU_KONTROL",
           data.content_text || null,
+          data.topic_id || null,
+          data.chapter || null,
         ]
       );
       return { success: true };
@@ -2261,6 +2295,115 @@ export const deleteMaterialFn = createServerFn({ method: "POST" })
       return { success: true };
     } catch (e) {
       console.error("[deleteMaterialFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+// 12.1 BAB / TOPIK PEMBELAJARAN (LEARNING TOPICS)
+export const getLearningTopicsFn = createServerFn({ method: "POST" })
+  .validator((data?: { subject_name?: string; class_name?: string }) => data || {})
+  .handler(async ({ data }): Promise<LearningTopicRow[]> => {
+    try {
+      const { query, execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS learning_topics (
+          id VARCHAR(64) PRIMARY KEY,
+          subject_name VARCHAR(100) NOT NULL,
+          class_name VARCHAR(50) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          description TEXT NULL,
+          sequence_order INT DEFAULT 1,
+          status VARCHAR(30) DEFAULT 'Aktif',
+          teacher_name VARCHAR(255) NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      const conditions: string[] = [];
+      const params: any[] = [];
+      if (data?.subject_name && data.subject_name.trim()) {
+        conditions.push("(LOWER(subject_name) LIKE ? OR ? LIKE CONCAT('%', LOWER(subject_name), '%'))");
+        const cleanSubj = `%${data.subject_name.trim().toLowerCase()}%`;
+        params.push(cleanSubj, data.subject_name.trim().toLowerCase());
+      }
+      if (data?.class_name && data.class_name.trim()) {
+        conditions.push("class_name = ?");
+        params.push(data.class_name.trim());
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+      const rows = await query<LearningTopicRow[]>(
+        `SELECT id, subject_name, class_name, title, description, sequence_order, status, teacher_name, created_at
+         FROM learning_topics
+         ${whereClause}
+         ORDER BY sequence_order ASC, created_at ASC`,
+        params
+      );
+      return rows || [];
+    } catch (e) {
+      console.error("[getLearningTopicsFn Error]:", e);
+      return [];
+    }
+  });
+
+export const saveLearningTopicFn = createServerFn({ method: "POST" })
+  .validator((data: LearningTopicRow) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS learning_topics (
+          id VARCHAR(64) PRIMARY KEY,
+          subject_name VARCHAR(100) NOT NULL,
+          class_name VARCHAR(50) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          description TEXT NULL,
+          sequence_order INT DEFAULT 1,
+          status VARCHAR(30) DEFAULT 'Aktif',
+          teacher_name VARCHAR(255) NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+
+      await execute(
+        `INSERT INTO learning_topics (id, subject_name, class_name, title, description, sequence_order, status, teacher_name)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           subject_name = VALUES(subject_name),
+           class_name = VALUES(class_name),
+           title = VALUES(title),
+           description = VALUES(description),
+           sequence_order = VALUES(sequence_order),
+           status = VALUES(status),
+           teacher_name = VALUES(teacher_name)`,
+        [
+          data.id,
+          data.subject_name,
+          data.class_name,
+          data.title,
+          data.description || null,
+          data.sequence_order || 1,
+          data.status || "Aktif",
+          data.teacher_name || null,
+        ]
+      );
+      return { success: true };
+    } catch (e: any) {
+      console.error("[saveLearningTopicFn Error]:", e);
+      return { success: false, message: e?.message || "Gagal menyimpan Bab/Topik" };
+    }
+  });
+
+export const deleteLearningTopicFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM learning_topics WHERE id = ?", [data.id]);
+      await execute("UPDATE materials SET topic_id = NULL WHERE topic_id = ?", [data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[deleteLearningTopicFn Error]:", e);
       return { success: false };
     }
   });

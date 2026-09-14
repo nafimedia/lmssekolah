@@ -44,6 +44,9 @@ import {
   saveMaterialFn,
   updateMaterialStatusFn,
   deleteMaterialFn,
+  getLearningTopicsFn,
+  saveLearningTopicFn,
+  deleteLearningTopicFn,
   markMaterialCompletedFn,
   getMaterialCompletionsFn,
   getHafalanFn,
@@ -153,6 +156,7 @@ import {
   CbtExamRow,
   CbtQuestionDbRow,
   MaterialRow,
+  LearningTopicRow,
   HafalanRow,
   ElibraryBookRow,
   P5ProjectRow,
@@ -186,6 +190,7 @@ export type {
   WaLogRow,
   CbtExamRow,
   MaterialRow,
+  LearningTopicRow,
   HafalanRow,
   ElibraryBookRow,
   P5ProjectRow,
@@ -780,6 +785,36 @@ export class MysqlDataService {
       return res.success;
     } catch (e) {
       console.warn("deleteMaterialFn failed:", e);
+      return false;
+    }
+  }
+
+  // Learning Topics / Bab & Topik KBM
+  static async getLearningTopics(params?: { subject_name?: string; class_name?: string }): Promise<LearningTopicRow[]> {
+    try {
+      return await getLearningTopicsFn({ data: params || {} });
+    } catch (e) {
+      console.warn("getLearningTopicsFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveLearningTopic(data: LearningTopicRow): Promise<boolean> {
+    try {
+      const res = await saveLearningTopicFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("saveLearningTopicFn failed:", e);
+      return false;
+    }
+  }
+
+  static async deleteLearningTopic(id: string): Promise<boolean> {
+    try {
+      const res = await deleteLearningTopicFn({ data: { id } });
+      return res.success;
+    } catch (e) {
+      console.warn("deleteLearningTopicFn failed:", e);
       return false;
     }
   }

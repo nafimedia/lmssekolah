@@ -1,6 +1,7 @@
 import { runAuthSecurityTests } from "./unit/auth_security.test.mjs";
 import { runFileValidationTests } from "./unit/file_validation.test.mjs";
 import { runPaginationTests } from "./unit/pagination_math.test.mjs";
+import { runLearningTopicsTests } from "./unit/learning_topics.test.mjs";
 
 async function runAllTests() {
   console.log("=================================================");
@@ -32,6 +33,14 @@ async function runAllTests() {
     passedCount++;
   } catch (err) {
     console.error("❌ [FAIL] Pagination Tests Failed:", err);
+    failedCount++;
+  }
+
+  try {
+    await runLearningTopicsTests();
+    passedCount++;
+  } catch (err) {
+    console.error("❌ [FAIL] Learning Topics Tests Failed:", err);
     failedCount++;
   }
 

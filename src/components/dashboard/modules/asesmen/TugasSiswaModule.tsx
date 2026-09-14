@@ -1783,7 +1783,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       {/* Header Banner Siswa */}
       <StudentHeaderBanner
         title="Ruang Belajar Siswa"
-        subtitle="Pusat materi pembelajaran, modul ajar digital, dan penugasan terstruktur"
+        subtitle=""
         icon={BookOpen}
         studentClass={studentRombel}
       />
@@ -1893,7 +1893,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                       Jadwal & Kelas Hari Ini
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground">
-                      Pilih mata pelajaran yang dijadwalkan hari ini untuk masuk ke alur pembelajaran interaktif.
+
                     </CardDescription>
                   </div>
                 </div>
@@ -1929,11 +1929,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                               window.history.pushState({}, "", url.toString());
                             }
                           }}
-                          className={`p-3.5 rounded-xl border bg-muted/15 cursor-pointer transition-all shadow-2xs space-y-2.5 group flex flex-col justify-between ${
-                            isClassLive
-                              ? "border-emerald-500/80 bg-emerald-50/15 dark:bg-emerald-950/15 shadow-emerald-500/10"
-                              : "border-border hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20"
-                          }`}
+                          className={`p-3.5 rounded-xl border bg-muted/15 cursor-pointer transition-all shadow-2xs space-y-2.5 group flex flex-col justify-between ${isClassLive
+                            ? "border-emerald-500/80 bg-emerald-50/15 dark:bg-emerald-950/15 shadow-emerald-500/10"
+                            : "border-border hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20"
+                            }`}
                         >
                           <div className="space-y-2">
                             <div className="flex items-center justify-between gap-1.5 flex-wrap">

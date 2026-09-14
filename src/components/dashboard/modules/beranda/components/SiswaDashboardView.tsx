@@ -180,10 +180,10 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
   const statusVariant: "success" | "warning" | "info" | "neutral" = presensiStatus === "HADIR"
     ? "success"
     : presensiStatus === "SAKIT" || presensiStatus === "IZIN"
-    ? "info"
-    : presensiStatus === "ALPA"
-    ? "warning"
-    : "warning";
+      ? "info"
+      : presensiStatus === "ALPA"
+        ? "warning"
+        : "warning";
 
   const submittedTaskIds = new Set(mySubmissions.map((s: any) => String(s.assignment_id)));
   const pendingTasks = myTugasList.filter((t: any) => !submittedTaskIds.has(String(t.id)));
@@ -235,9 +235,8 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
       <Card className="border-border shadow-xs bg-card">
         <CardHeader className="p-3 sm:p-4 border-b border-border/80 flex flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-              presensiStatus === "HADIR" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-            }`}>
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${presensiStatus === "HADIR" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              }`}>
               <CalendarCheck className="h-4 w-4" />
             </div>
             <CardTitle className="text-xs sm:text-sm font-bold truncate">
@@ -245,13 +244,12 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
             </CardTitle>
           </div>
           <Badge
-            className={`font-bold text-xs px-2.5 py-1 shrink-0 ${
-              presensiStatus === "HADIR"
+            className={`font-bold text-xs px-2.5 py-1 shrink-0 ${presensiStatus === "HADIR"
                 ? "bg-emerald-600 text-white"
                 : presensiStatus === "SAKIT" || presensiStatus === "IZIN"
-                ? "bg-blue-600 text-white"
-                : "bg-amber-500 text-slate-950 font-extrabold"
-            }`}
+                  ? "bg-blue-600 text-white"
+                  : "bg-amber-500 text-slate-950 font-extrabold"
+              }`}
           >
             {presensiStatus === "HADIR" ? "✔ HADIR" : presensiStatus || "BELUM ABSEN"}
           </Badge>
@@ -270,7 +268,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               <p className="text-[11px] text-muted-foreground">
                 {presensiStatus === "HADIR"
                   ? `Kehadiran resmi tersimpan di sistem presensi madrasah untuk rombel ${siswaClass}.`
-                  : `Pastikan Anda mengikuti pembelajaran tatap muka di rombel ${siswaClass} secara tertib.`}
+                  : ``}
               </p>
             </div>
             <div className="text-xs font-semibold text-muted-foreground shrink-0 flex items-center gap-2">

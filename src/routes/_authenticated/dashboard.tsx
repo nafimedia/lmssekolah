@@ -237,7 +237,7 @@ const MENU: { key: MenuKey; label: string; icon: typeof Home; group?: string }[]
 
 const ROLE_PERMISSIONS: Record<
   string,
-  { label: string; badge: string; allowedMenus: { key: MenuKey; label?: string; group?: string }[] }
+  { label: string; badge: string; allowedMenus: { key: MenuKey; label?: string; group?: string; icon?: typeof Home }[] }
 > = {
   admin: {
     label: "Super Administrator",
@@ -386,7 +386,7 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Siswa", group: "Ruang Belajar" },
       { key: "jadwal", label: "Jadwal Pelajaran", group: "Ruang Belajar" },
-      { key: "tugas", label: "Tugas dan LKPD", group: "Ruang Belajar" },
+      { key: "tugas", label: "Ruang Belajar", group: "Ruang Belajar", icon: BookOpen },
       { key: "cbt", label: "CBT Ujian Online", group: "Ruang Belajar" },
       { key: "nilai", label: "Rekap Nilai & Progres Belajar", group: "Capaian & Prestasi" },
       { key: "tahfidz", label: "Setoran Tahfidz Qur'an", group: "Capaian & Prestasi" },
@@ -412,8 +412,12 @@ function Dashboard() {
   const [active, setActive] = useState<MenuKey>(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const tab = params.get("tab") as MenuKey;
-      if (tab) return tab;
+      const rawTab = params.get("tab");
+      if (rawTab === "ruangbelajar" || rawTab === "ruang_belajar") return "tugas";
+      const tab = rawTab as MenuKey;
+      if (tab && MENU.some((m) => m.key === tab)) {
+        return tab;
+      }
     }
     return "beranda";
   });
@@ -663,6 +667,7 @@ function Dashboard() {
       return {
         ...base,
         label,
+        icon: (item as any).icon || base.icon,
         group: item.group || base.group,
       };
     })
@@ -689,6 +694,10 @@ function Dashboard() {
       }
       if (active === "mapel" && keys.includes("ruang_mengajar")) {
         setActive("ruang_mengajar");
+        return;
+      }
+      if (((active as any) === "ruang_belajar" || (active as any) === "ruangbelajar") && keys.includes("tugas")) {
+        setActive("tugas");
         return;
       }
       setActive("beranda");

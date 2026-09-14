@@ -65,6 +65,7 @@ import { toast } from "sonner";
 import { isSameClass } from "@/utils/classNormalization";
 import { normalizeSubjectName, isSameSubject } from "@/utils/subjectNormalization";
 import { getDeadlineStatus } from "@/utils/deadlineHelper";
+import { ViewMaterialDialog, MaterialDetail } from "../ruangmengajar/components/ViewMaterialDialog";
 
 interface TugasSiswaModuleProps {
   userProfile?: any;
@@ -75,6 +76,24 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState<"semua" | "belum" | "dikumpulkan" | "dinilai">("semua");
+
+  // Ruang Belajar: Main Section Tab ("materi" vs "tugas")
+  const [learningSection, setLearningSection] = useState<"materi" | "tugas">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const sub = params.get("sub");
+      if (sub === "tugas") return "tugas";
+      if (sub === "materi") return "materi";
+    }
+    return "materi";
+  });
+
+  // Materials states for student
+  const [materialsList, setMaterialsList] = useState<any[]>([]);
+  const [selectedMaterialForView, setSelectedMaterialForView] = useState<MaterialDetail | null>(null);
+  const [isViewMaterialOpen, setIsViewMaterialOpen] = useState(false);
+  const [selectedMateriMapel, setSelectedMateriMapel] = useState<string>("SEMUA");
+  const [searchMateriQuery, setSearchMateriQuery] = useState<string>("");
 
   // Live session and class schedule states
   const [liveSession, setLiveSession] = useState<any | null>(null);
@@ -160,7 +179,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       const currentDayName = dayNames[new Date().getDay()];
 
-      const [allAssignments, allSubmissions, dbLkpd, dbActiveSessions, dbJadwal, dbPengampu, allUsers] = await Promise.all([
+      const [allAssignments, allSubmissions, dbLkpd, dbActiveSessions, dbJadwal, dbPengampu, allUsers, allMaterials] = await Promise.all([
         MysqlDataService.getAssignments(),
         MysqlDataService.getSubmissions(),
         MysqlDataService.getLkpdActivities(studentRombel, "ALL", true),
@@ -168,7 +187,26 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         MysqlDataService.getJadwalList(),
         MysqlDataService.getPengampuList(),
         MysqlDataService.getUsers().catch(() => []),
+        MysqlDataService.getMaterials().catch(() => []),
       ]);
+
+      // Filter materials relevant to student class / level
+      const studentGrade = studentRombel.match(/\d+/)?.[0] || "";
+      const matchedMaterials = (allMaterials || []).filter((m: any) => {
+        if (!m.class_name || m.class_name === "ALL" || m.class_name === "Semua") return true;
+        if (isSameClass(m.class_name, studentRombel)) return true;
+        if (
+          studentGrade &&
+          (m.class_name.includes(studentGrade) ||
+            (studentGrade === "7" && m.class_name.includes("VII")) ||
+            (studentGrade === "8" && m.class_name.includes("VIII")) ||
+            (studentGrade === "9" && m.class_name.includes("IX")))
+        ) {
+          return true;
+        }
+        return false;
+      });
+      setMaterialsList(matchedMaterials);
 
       const peers = (allUsers || []).filter(
         (u: any) =>
@@ -305,6 +343,56 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
 
     return Array.from(set).sort();
   }, [classSchedules, assignments]);
+
+  // Open Material Dialog Handler
+  const handleOpenMaterial = (m: any) => {
+    setSelectedMaterialForView({
+      id: String(m.id),
+      title: m.title || "Materi Pembelajaran",
+      type: m.type || "MODUL_AJAR",
+      chapter: m.subject_name || `Pertemuan #${m.sequence_order || 1}`,
+      source: m.source || "Unggahan Guru",
+      content: m.content_text || "",
+      content_text: m.content_text || "",
+      url: m.file_url || "",
+      file_url: m.file_url || "",
+      uploaded_by: m.uploaded_by || "Guru Pengampu",
+      sequence_order: m.sequence_order || 1,
+      access_mode: m.access_mode || "SISWA_MANDIRI",
+    });
+    setIsViewMaterialOpen(true);
+  };
+
+  // Filtered Materials
+  const filteredMaterials = useMemo(() => {
+    return materialsList.filter((m: any) => {
+      if (selectedMateriMapel !== "SEMUA") {
+        const mMapel = normalizeSubjectName(m.subject_name || "");
+        const targetMapel = normalizeSubjectName(selectedMateriMapel);
+        if (!isSameSubject(mMapel, targetMapel)) return false;
+      }
+      if (searchMateriQuery.trim() !== "") {
+        const q = searchMateriQuery.toLowerCase();
+        const matchTitle = (m.title || "").toLowerCase().includes(q);
+        const matchSubject = (m.subject_name || "").toLowerCase().includes(q);
+        const matchAuthor = (m.uploaded_by || "").toLowerCase().includes(q);
+        if (!matchTitle && !matchSubject && !matchAuthor) return false;
+      }
+      return true;
+    });
+  }, [materialsList, selectedMateriMapel, searchMateriQuery]);
+
+  // Available subjects for materials
+  const materiSubjects = useMemo(() => {
+    const set = new Set<string>();
+    materialsList.forEach((m: any) => {
+      if (m.subject_name && m.subject_name.trim()) {
+        set.add(normalizeSubjectName(m.subject_name.trim()));
+      }
+    });
+    uniqueSubjects.forEach((s) => set.add(s));
+    return Array.from(set).sort();
+  }, [materialsList, uniqueSubjects]);
 
   // Filter Tasks
   const filteredAssignments = assignments.filter((a) => {
@@ -1645,8 +1733,9 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     <div className="space-y-6">
       {/* Header Banner Siswa */}
       <StudentHeaderBanner
-        title="Tugas dan LKPD"
-        icon={FileText}
+        title="Ruang Belajar Siswa"
+        subtitle="Pusat materi pembelajaran, modul ajar digital, dan penugasan terstruktur"
+        icon={BookOpen}
         studentClass={studentRombel}
       />
 
@@ -1668,7 +1757,163 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         </div>
       )}
 
-      {/* Filter Tabs & Task List */}
+      {/* Navigasi Utama Ruang Belajar: Materi vs Tugas */}
+      <div className="flex items-center justify-between gap-3 border-b border-border/80 pb-2.5">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={learningSection === "materi" ? "default" : "outline"}
+            onClick={() => setLearningSection("materi")}
+            className={`gap-2 font-bold text-xs h-9 rounded-xl transition shadow-2xs ${
+              learningSection === "materi"
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            <BookOpen className="h-4 w-4" /> 1. Materi & Modul Ajar ({filteredMaterials.length})
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={learningSection === "tugas" ? "default" : "outline"}
+            onClick={() => setLearningSection("tugas")}
+            className={`gap-2 font-bold text-xs h-9 rounded-xl transition shadow-2xs ${
+              learningSection === "tugas"
+                ? "bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            <FileText className="h-4 w-4" /> 2. Tugas & LKPD ({totalCount})
+          </Button>
+        </div>
+
+        {learningSection === "materi" && (
+          <span className="text-xs text-muted-foreground hidden md:inline">
+            Modul & Video Pelajaran {studentRombel}
+          </span>
+        )}
+      </div>
+
+      {learningSection === "materi" ? (
+        <div className="space-y-4">
+          {/* Filter Bar Materi */}
+          <div className="p-3 bg-card rounded-2xl border border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2 flex-1">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Cari materi, judul, atau guru pengampu..."
+                  value={searchMateriQuery}
+                  onChange={(e) => setSearchMateriQuery(e.target.value)}
+                  className="h-8.5 pl-8 text-xs rounded-xl"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Filter Mapel:</span>
+              <select
+                value={selectedMateriMapel}
+                onChange={(e) => setSelectedMateriMapel(e.target.value)}
+                className="h-8.5 rounded-xl border border-border bg-background px-3 text-xs font-bold text-emerald-700 dark:text-emerald-300 shadow-2xs cursor-pointer min-w-[160px]"
+              >
+                <option value="SEMUA">Semua Mapel ({materiSubjects.length})</option>
+                {materiSubjects.map((sub: string) => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Cards Grid */}
+          {filteredMaterials.length === 0 ? (
+            <Card className="border-border bg-card shadow-xs">
+              <CardContent className="p-12 text-center space-y-3">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mx-auto grid place-items-center">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div className="font-bold text-foreground text-sm">
+                  {searchMateriQuery || selectedMateriMapel !== "SEMUA"
+                    ? "Tidak Ada Materi Sesuai Filter"
+                    : "Belum Ada Bahan Ajar Diterbitkan"}
+                </div>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  {searchMateriQuery || selectedMateriMapel !== "SEMUA"
+                    ? "Coba sesuaikan kata kunci pencarian atau pilih mapel lain."
+                    : `Bahan ajar, modul digital, dan video yang dibagikan guru pengampu untuk ${studentRombel} akan otomatis muncul di sini.`}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {filteredMaterials.map((m: any) => {
+                const rawType = (m.type || "").toUpperCase();
+                const isVideo = rawType.includes("VIDEO");
+                const isPpt = rawType.includes("PPT");
+                const isAudio = rawType.includes("AUDIO");
+
+                return (
+                  <Card key={m.id} className="border-border hover:border-emerald-500/40 transition-all bg-card shadow-xs flex flex-col justify-between">
+                    <CardHeader className="p-4 pb-2.5 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge className="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 shadow-2xs">
+                          {m.subject_name || "Mata Pelajaran"}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px] font-mono text-muted-foreground">
+                          {isVideo ? "🎥 Video" : isPpt ? "📊 Slide PPT" : isAudio ? "🎧 Audio" : "📄 Modul Ajar"}
+                        </Badge>
+                      </div>
+
+                      <CardTitle className="text-sm font-bold text-foreground line-clamp-2 leading-snug">
+                        {m.title}
+                      </CardTitle>
+
+                      <CardDescription className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-0.5">
+                        <span className="font-semibold text-foreground/80 truncate">
+                          Oleh: {m.uploaded_by || "Guru Pengampu"}
+                        </span>
+                      </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="p-4 pt-0 space-y-3">
+                      {m.size && (
+                        <div className="text-[10px] text-muted-foreground font-mono">
+                          Ukuran Berkas: {m.size}
+                        </div>
+                      )}
+
+                      <div className="pt-2 border-t border-border flex items-center justify-between gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 rounded-xl h-8 shadow-2xs"
+                          onClick={() => handleOpenMaterial(m)}
+                        >
+                          <Eye className="h-3.5 w-3.5" /> Buka Materi
+                        </Button>
+
+                        {m.file_url && (
+                          <a
+                            href={m.file_url}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition inline-flex items-center justify-center shrink-0"
+                            title="Unduh Berkas Materi"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+      /* Filter Tabs & Task List */
       <Card className="border-border bg-card shadow-xs">
         <CardHeader className="p-3 sm:p-4 pb-3 border-b border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 p-1 bg-muted/70 rounded-xl border border-border text-xs w-full sm:w-auto overflow-x-auto no-scrollbar">
@@ -1917,6 +2162,16 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
           )}
         </CardContent>
       </Card>
+      )}
+
+      {/* Dialog Baca / Pelajari Materi untuk Siswa */}
+      <ViewMaterialDialog
+        isOpen={isViewMaterialOpen}
+        onOpenChange={setIsViewMaterialOpen}
+        material={selectedMaterialForView}
+        activeRombel={studentRombel}
+        activeMapel={selectedMaterialForView?.chapter || "Mata Pelajaran"}
+      />
     </div>
   );
 }

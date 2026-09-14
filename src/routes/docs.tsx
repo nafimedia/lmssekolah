@@ -32,7 +32,6 @@ import {
   Home,
   LogIn,
   Layers,
-  Sparkles,
   ExternalLink,
 } from "lucide-react";
 
@@ -347,7 +346,7 @@ function DocsPage() {
               {/* Version Card Box */}
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800/80 dark:bg-slate-900/60">
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white mb-1">
-                  <Sparkles className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                  <GraduationCap className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                   <span>Kurikulum Merdeka</span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">

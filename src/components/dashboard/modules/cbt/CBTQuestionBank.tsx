@@ -22,7 +22,7 @@ import {
   Check,
   ShieldCheck,
   Lock,
-  Sparkles,
+  Save,
   Trash2,
   Edit3,
   FileCheck,
@@ -712,7 +712,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                 Batal
               </Button>
               <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs">
-                <Sparkles className="h-4 w-4" /> Simpan Ke Bank Soal
+                <Save className="h-4 w-4" /> Simpan Ke Bank Soal
               </Button>
             </DialogFooter>
           </form>

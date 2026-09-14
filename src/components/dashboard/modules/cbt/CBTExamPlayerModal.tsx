@@ -25,7 +25,6 @@ import {
   Send,
   Flag,
   Lock,
-  Sparkles,
   Maximize2,
   Minimize2,
   Wifi,

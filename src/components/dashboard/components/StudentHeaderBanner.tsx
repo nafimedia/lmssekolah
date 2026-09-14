@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, GraduationCap, LucideIcon, Sparkles } from "lucide-react";
+import { CheckCircle2, GraduationCap, LucideIcon } from "lucide-react";
 
 interface StudentHeaderBannerProps {
   title: string;
@@ -68,7 +68,7 @@ export function StudentHeaderBanner({
         <div className="flex items-center gap-2 shrink-0">
           {statusText && statusText.trim() !== "" && (
             <Badge className={`text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 font-semibold flex items-center gap-1 shrink-0 ${getStatusBadgeStyle()}`}>
-              <Sparkles className="h-3 w-3 shrink-0" />
+              <CheckCircle2 className="h-3 w-3 shrink-0" />
               <span className="truncate max-w-[130px] sm:max-w-none">{statusText}</span>
             </Badge>
           )}

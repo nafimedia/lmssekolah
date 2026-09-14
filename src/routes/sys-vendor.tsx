@@ -12,7 +12,6 @@ import {
   Save,
   LogOut,
   Calendar,
-  Sparkles,
   Server,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -258,7 +257,7 @@ function SysVendorComponent() {
 
             <div className="bg-neutral-900/80 border border-neutral-800 rounded-xl p-3 space-y-1">
               <div className="text-[10px] uppercase font-bold text-neutral-500 flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-neutral-400" /> Status Lisensi CBT
+                <CheckCircle2 className="h-3 w-3 text-neutral-400" /> Status Lisensi CBT
               </div>
               <div className="text-xs font-bold text-neutral-200">
                 {config.cbt_enabled ? "🟢 AKTIF (Tahun 1)" : "🔴 NONAKTIF (Terkunci)"}

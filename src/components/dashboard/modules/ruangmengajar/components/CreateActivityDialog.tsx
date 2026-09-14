@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   FileText,
   Plus,
-  Sparkles,
   CheckCircle2,
   Upload,
   Link2,
@@ -433,7 +432,7 @@ export function CreateActivityForm({
             </Button>
             <div className="flex items-center gap-2">
               <Badge className="bg-emerald-600 text-white font-semibold text-[11px] gap-1 px-2.5 py-0.5">
-                <Sparkles className="h-3 w-3" />
+                <FileText className="h-3 w-3" />
               </Badge>
               <span className="text-xs text-muted-foreground font-mono">
                 {activeMapel} · {activeRombel}

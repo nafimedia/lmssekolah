@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, CheckCircle2, Clock, Calendar, DoorOpen, Sparkles, XCircle } from "lucide-react";
+import { Play, CheckCircle2, Clock, Calendar, DoorOpen, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -228,7 +228,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
                   ? "bg-amber-600 text-white"
                   : "bg-slate-500 text-white"
               }`}>
-                {isSessionLive && <><Sparkles className="h-3 w-3" /> SESI KBM BERLANGSUNG (LIVE)</>}
+                {isSessionLive && <><Play className="h-3 w-3 fill-current" /> SESI KBM BERLANGSUNG (LIVE)</>}
                 {sessionCompleted && <><CheckCircle2 className="h-3 w-3" /> SESI KBM SELESAI</>}
                 {!isSessionLive && !sessionCompleted && isScheduledToday && <><Clock className="h-3 w-3" /> KBM SIAP DIMULAI</>}
                 {!isSessionLive && !sessionCompleted && !isScheduledToday && <><XCircle className="h-3 w-3" /> TIDAK ADA JADWAL HARI INI ({currentDayName})</>}
@@ -276,7 +276,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
               </>
             ) : sessionCompleted ? (
               <>
-                <Sparkles className="h-4 w-4" /> Buka Sesi KBM Kembali
+                <Play className="h-4 w-4 fill-current" /> Buka Sesi KBM Kembali
               </>
             ) : (
               <>

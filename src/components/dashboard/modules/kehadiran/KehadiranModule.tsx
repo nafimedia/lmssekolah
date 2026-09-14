@@ -10,7 +10,6 @@ import {
   Clock,
   Send,
   MessageSquare,
-  Sparkles,
   ArrowUpDown,
   BookOpen,
   Users,
@@ -617,7 +616,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                 onClick={handleSetAllDailyHadir}
                 disabled={dailyStudents.length === 0 || isSavingDaily}
               >
-                <Sparkles className="h-3.5 w-3.5" /> Set Semua Hadir
+                <UserCheck className="h-3.5 w-3.5" /> Set Semua Hadir
               </Button>
 
               <Button

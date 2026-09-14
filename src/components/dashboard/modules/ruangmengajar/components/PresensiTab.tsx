@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UserCheck, CheckCircle2, AlertCircle, Clock, Save, Sparkles, MessageSquare, Inbox, Loader2 } from "lucide-react";
+import { UserCheck, CheckCircle2, AlertCircle, Clock, Save, MessageSquare, Inbox, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -162,7 +162,7 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
             disabled={students.length === 0 || isSaving}
             title="Setel semua siswa menjadi Hadir"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <UserCheck className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Set Semua Hadir</span>
             <span className="sm:hidden">Semua Hadir</span>
           </Button>

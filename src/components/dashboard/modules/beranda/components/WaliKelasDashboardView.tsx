@@ -12,7 +12,6 @@ import {
   TrendingUp,
   FileSpreadsheet,
   BookMarked,
-  Sparkles,
   School,
   CheckCircle2,
   PhoneCall,
@@ -328,7 +327,7 @@ export function WaliKelasDashboardView({
           <Card className="border-border shadow-xs bg-gradient-to-b from-card to-muted/20">
             <CardHeader className="p-4 pb-2 border-b border-border/60">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-emerald-600" />
+                <School className="h-4 w-4 text-emerald-600" />
                 Pintasan Wali Kelas {rombelName}
               </CardTitle>
             </CardHeader>

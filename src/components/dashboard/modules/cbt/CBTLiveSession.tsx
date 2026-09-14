@@ -22,7 +22,6 @@ import {
   CheckCircle2,
   Users,
   ShieldAlert,
-  Sparkles,
   RotateCcw,
   ShieldCheck,
   Eye,
@@ -507,7 +506,7 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
                 Batal
               </Button>
               <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs">
-                <Sparkles className="h-4 w-4" /> Terbitkan Sesi Ujian
+                <PlayCircle className="h-4 w-4" /> Terbitkan Sesi Ujian
               </Button>
             </DialogFooter>
           </form>

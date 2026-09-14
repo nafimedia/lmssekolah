@@ -12,7 +12,6 @@ import {
   UserCheck,
   Building2,
   Clock,
-  Sparkles,
   FileText,
   CalendarCheck,
   Medal,
@@ -205,7 +204,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
           <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-start sm:items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-emerald-600 text-white grid place-items-center shrink-0 shadow-2xs animate-pulse">
-                <Sparkles className="h-4 w-4" />
+                <GraduationCap className="h-4 w-4" />
               </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">

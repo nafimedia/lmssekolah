@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Award, AlertTriangle, Star, Sparkles, Plus, Search, MessageSquare, Inbox } from "lucide-react";
+import { Award, AlertTriangle, Star, Plus, Search, MessageSquare, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";

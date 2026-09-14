@@ -5,7 +5,6 @@ import {
   Award,
   Plus,
   Edit,
-  Sparkles,
   CheckCircle2,
   ShieldCheck,
   Sprout,
@@ -275,7 +274,7 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
                           variant="secondary"
                           className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 text-xs font-medium gap-1"
                         >
-                          <Sparkles className="h-3 w-3 text-emerald-500" /> {out}
+                          <Award className="h-3 w-3 text-emerald-500" /> {out}
                         </Badge>
                       ))}
                     </div>

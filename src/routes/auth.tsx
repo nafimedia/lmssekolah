@@ -24,7 +24,7 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  Sparkles,
+  Loader2,
   ArrowRight,
   LogIn,
   UserPlus,
@@ -376,7 +376,7 @@ function AuthPage() {
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
-                        <Sparkles className="h-4 w-4 animate-spin" /> Memeriksa Akun...
+                        <Loader2 className="h-4 w-4 animate-spin" /> Memeriksa Akun...
                       </span>
                     ) : (
                       <span className="flex items-center justify-center gap-1.5">
@@ -565,7 +565,7 @@ function AuthPage() {
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
-                        <Sparkles className="h-4 w-4 animate-spin" /> Mendaftarkan...
+                        <Loader2 className="h-4 w-4 animate-spin" /> Mendaftarkan...
                       </span>
                     ) : (
                       <span>Daftar Akun {regRole === "siswa" ? "Siswa" : "Guru"}</span>

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Users, Brain, CheckCircle2, Sparkles, Save, Check, Lock, ExternalLink, MessageSquare, Send, Star, ChevronDown, ChevronUp, FlaskConical, BookOpen, Target, PenTool } from "lucide-react";
+import { FileText, Users, Brain, CheckCircle2, Save, Check, Lock, ExternalLink, MessageSquare, Send, Star, ChevronDown, ChevronUp, FlaskConical, BookOpen, Target, PenTool } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService, LkpdDiscussionRow, PeerAssessmentRow } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
@@ -298,7 +298,7 @@ export function ViewActivityDialog({
           <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="font-bold text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4" /> Petunjuk & Deskripsi Aktivitas
+                <BookOpen className="h-4 w-4" /> Petunjuk & Deskripsi Aktivitas
               </h4>
 
               {activity.attachment_url && (

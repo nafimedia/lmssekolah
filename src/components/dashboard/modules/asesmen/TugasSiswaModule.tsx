@@ -9,7 +9,7 @@ import {
   Save,
   Download,
   Inbox,
-  Sparkles,
+  GraduationCap,
   UserCheck,
   BookOpen,
   Calendar,
@@ -1817,7 +1817,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
               }`}
           >
-            <Sparkles className="h-4 w-4" /> 1. Kelas Hari Ini
+            <GraduationCap className="h-4 w-4" /> 1. Kelas Hari Ini
           </Button>
           <Button
             type="button"
@@ -1884,7 +1884,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               <CardHeader className="p-4 sm:p-5 border-b border-border bg-muted/20">
                 <div className="flex items-center gap-2.5">
                   <div className="h-8 w-8 rounded-xl bg-emerald-600 text-white grid place-items-center shadow-2xs shrink-0">
-                    <Sparkles className="h-4 w-4" />
+                    <GraduationCap className="h-4 w-4" />
                   </div>
                   <div>
                     <CardTitle className="text-sm sm:text-base font-bold text-foreground">
@@ -1938,7 +1938,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                           size="sm"
                           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 rounded-xl h-8 mt-1 shadow-2xs"
                         >
-                          <Sparkles className="h-3.5 w-3.5" /> Masuk Kelas →
+                          <DoorOpen className="h-3.5 w-3.5" /> Masuk Kelas →
                         </Button>
                       </div>
                     ))}

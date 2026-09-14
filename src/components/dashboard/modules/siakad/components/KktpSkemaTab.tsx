@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sparkles, Award, Edit, Check } from "lucide-react";
+import { Award, Edit, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,7 +99,7 @@ export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
             <CardTitle className="text-base font-bold flex items-center gap-2 text-primary">
-              <Sparkles className="h-5 w-5 text-amber-500" /> Kriteria Ketercapaian Tujuan Pembelajaran (KKTP Standar)
+              <Award className="h-5 w-5 text-amber-500" /> Kriteria Ketercapaian Tujuan Pembelajaran (KKTP Standar)
             </CardTitle>
             <CardDescription className="text-xs">
               Nilai standar ketuntasan belajar minimum Kurikulum Merdeka MTsN 2 Cilacap yang berlaku untuk seluruh Mata Pelajaran.

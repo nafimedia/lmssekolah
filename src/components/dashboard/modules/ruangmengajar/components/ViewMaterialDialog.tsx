@@ -9,7 +9,6 @@ import {
   Library,
   ExternalLink,
   Download,
-  Sparkles,
   CheckCircle2,
   Eye,
   RefreshCw,

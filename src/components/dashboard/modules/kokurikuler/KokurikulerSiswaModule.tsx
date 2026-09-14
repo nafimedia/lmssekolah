@@ -28,7 +28,6 @@ import {
   Upload,
   FileText,
   Printer,
-  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
@@ -385,7 +384,7 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
 
                     <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-2">
                       <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5 text-purple-600" /> Target Dimensi Profil Pelajar:
+                        <Award className="h-3.5 w-3.5 text-purple-600" /> Target Dimensi Profil Pelajar:
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {project.dimensions}

@@ -82,7 +82,6 @@ import {
   ArrowLeft,
   KeyRound,
   CheckCircle2,
-  Sparkles,
   Layers,
   Building2,
   Calendar,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Upload, FileText, Sparkles } from "lucide-react";
+import { Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -149,7 +149,7 @@ export function UploadPerangkatDialog({
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <Badge className="bg-emerald-600 text-white font-bold text-[10px] gap-1">
-              <Sparkles className="h-3 w-3" /> KURIKULUM MERDEKA
+              <FileText className="h-3 w-3" /> KURIKULUM MERDEKA
             </Badge>
             <span className="text-xs text-muted-foreground font-mono">
               {mapel} · {jenjang}

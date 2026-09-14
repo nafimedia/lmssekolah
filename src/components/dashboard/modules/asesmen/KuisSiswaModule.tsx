@@ -5,7 +5,6 @@ import {
   Clock,
   HelpCircle,
   Inbox,
-  Sparkles,
   Trophy,
   Play,
   FileCheck,

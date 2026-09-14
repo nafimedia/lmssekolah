@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Sparkles, Inbox } from "lucide-react";
+import { Trophy, Award, Inbox } from "lucide-react";
 import { UserAchievementRow } from "@/services/mysqlDataService";
 
 interface AchievementsCardProps {
@@ -44,7 +44,7 @@ export function AchievementsCard({ dbAchievements }: AchievementsCardProps) {
 
         <div className="p-3 bg-muted/30 rounded-xl border border-border flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5 font-semibold">
-            <Sparkles className="h-4 w-4 text-amber-500" /> Portofolio terverifikasi resmi oleh Sistem Informasi MTsN 2 Cilacap.
+            <Award className="h-4 w-4 text-amber-500" /> Portofolio terverifikasi resmi oleh Sistem Informasi MTsN 2 Cilacap.
           </span>
           <Badge className="bg-amber-500 text-slate-950 font-bold text-[10px]">✔ E-Portofolio Verifikasi</Badge>
         </div>

@@ -17,7 +17,6 @@ import {
   Search,
   Download,
   Zap,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Users,
@@ -562,7 +561,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
               }`}
             >
               <div className="font-bold flex items-center gap-1.5 text-sm">
-                {isPassed ? <Sparkles className="h-4 w-4 text-emerald-600" /> : <Zap className="h-4 w-4 text-amber-500" />}
+                {isPassed ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Zap className="h-4 w-4 text-amber-500" />}
                 {isPassed ? "🌟 Selamat! Anda Lulus KKM (75)" : "⚡ Tindak Lanjut Program Remedial"}
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -890,7 +889,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                           disabled={!isGuru && !isExecutive}
                           className="gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 border-emerald-300 hover:bg-emerald-500/10 h-7 px-2.5"
                         >
-                          <Sparkles className="h-3 w-3" /> Kirim Pengayaan
+                          <Award className="h-3 w-3" /> Kirim Pengayaan
                         </Button>
                       ) : (
                         <Button
@@ -1113,7 +1112,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
         <DialogContent className="max-w-md bg-background border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
-              <Sparkles className="h-5 w-5 text-emerald-600" /> Penugasan Modul Pengayaan (HOTS)
+              <Award className="h-5 w-5 text-emerald-600" /> Penugasan Modul Pengayaan (HOTS)
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground pt-1">
               Berikan materi tantangan pengayaan untuk siswa tuntas KKM:{" "}

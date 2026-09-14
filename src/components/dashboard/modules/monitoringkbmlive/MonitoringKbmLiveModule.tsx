@@ -14,7 +14,6 @@ import {
   Filter,
   MonitorCheck,
   Send,
-  Sparkles,
   Inbox,
   ClipboardCheck,
   FileSpreadsheet,

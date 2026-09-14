@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   ExternalLink,
   BookOpen,
-  Sparkles,
 } from "lucide-react";
 import { MysqlDataService } from "@/services/mysqlDataService";
 

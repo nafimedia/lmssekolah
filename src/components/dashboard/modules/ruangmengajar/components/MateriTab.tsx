@@ -25,7 +25,6 @@ import {
   Edit3,
   Trash2,
   Layers,
-  Sparkles,
   BookMarked,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";

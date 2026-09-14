@@ -5,7 +5,6 @@ import {
   Users,
   Award,
   Lock,
-  Sparkles,
   CheckCircle2,
   History,
   GraduationCap,
@@ -389,7 +388,7 @@ export function ApresiasiGuruModule({ activeRole }: { activeRole?: string }) {
                         <td className="p-3 text-center">
                           {h.type === "award" ? (
                             <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-500/30 text-[10px] gap-1">
-                              <Sparkles className="h-3 w-3 text-amber-500" /> Award
+                              <Award className="h-3 w-3 text-amber-500" /> Award
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-rose-600 dark:text-rose-400 border-rose-500/30 text-[10px] gap-1">

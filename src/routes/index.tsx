@@ -16,7 +16,6 @@ import {
   GraduationCap,
   ShieldCheck,
   Users,
-  Sparkles,
   ArrowRight,
   ChevronRight,
   Zap,
@@ -700,7 +699,7 @@ function LandingPage() {
             <div className="lg:col-span-6 space-y-5 text-center lg:text-left">
               {/* Official Badge */}
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700/50 text-emerald-800 dark:text-emerald-300 text-xs font-semibold shadow-2xs">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>{t.hero.badge}</span>
               </div>
 

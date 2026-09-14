@@ -16,7 +16,7 @@ import {
   AlertCircle,
   HelpCircle,
   ArrowLeft,
-  Sparkles,
+  GraduationCap,
   ChevronRight,
   Smile,
   Meh,
@@ -323,7 +323,7 @@ export function SesiRuangBelajarView({
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="space-y-1">
               <Badge className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 mb-1 gap-1">
-                <Sparkles className="h-3 w-3" /> ALUR KELAS BELAJAR DIGITAL KBM
+                <GraduationCap className="h-3 w-3" /> ALUR KELAS BELAJAR DIGITAL KBM
               </Badge>
               <h1 className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight">
                 {activeMapel} — {studentRombel}

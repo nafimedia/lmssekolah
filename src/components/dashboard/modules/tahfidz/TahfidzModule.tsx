@@ -10,7 +10,6 @@ import {
   Star,
   FileSpreadsheet,
   Printer,
-  Sparkles,
   Inbox,
   AlertTriangle,
   Clock,
@@ -669,7 +668,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
             <Card className="border-border shadow-xs bg-card">
               <CardHeader className="p-4 pb-2 border-b border-border flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-emerald-600" /> Hafalan Baru (Ziyadah)
+                  <BookMarked className="h-4 w-4 text-emerald-600" /> Hafalan Baru (Ziyadah)
                 </CardTitle>
                 <Badge className="bg-emerald-600 text-white font-bold text-[10px]">{ziyadahRecords.length} Record</Badge>
               </CardHeader>
@@ -1286,7 +1285,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
         <DialogContent className="sm:max-w-lg border-border bg-card">
           <DialogHeader className="border-b border-border pb-3">
             <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-emerald-600" /> Input Setoran Baru (Ziyadah) - {selectedJuz}
+              <BookMarked className="h-5 w-5 text-emerald-600" /> Input Setoran Baru (Ziyadah) - {selectedJuz}
             </DialogTitle>
             <DialogDescription className="text-xs">
               Catat hafalan ayat baru dengan penilaian 5 komponen (Kelancaran, Tajwid, Makhraj, Fashahah, Adab).

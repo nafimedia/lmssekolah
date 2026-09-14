@@ -109,6 +109,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
 
   // Live session and class schedule states
   const [liveSession, setLiveSession] = useState<any | null>(null);
+  const [activeSessionsList, setActiveSessionsList] = useState<any[]>([]);
   const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
   const [classSchedules, setClassSchedules] = useState<any[]>([]);
 
@@ -244,6 +245,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
         (s: any) => s.status === "SEDANG_BERLANGSUNG" && isSameClass(s.rombel || "", studentRombel)
       );
       setLiveSession(liveSess || null);
+      setActiveSessionsList(dbActiveSessions || []);
 
       const todaySched = (dbJadwal || []).filter(
         (j: any) =>
@@ -1899,49 +1901,80 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               <CardContent className="p-4 sm:p-5 space-y-3">
                 {mergedTodayClasses.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {mergedTodayClasses.map((cls, idx) => (
-                      <div
-                        key={cls.id || idx}
-                        onClick={() => {
-                          setSelectedMateriMapel(cls.mapel);
-                          setSelectedMapelFilter(cls.mapel);
-                          if (typeof window !== "undefined") {
-                            const url = new URL(window.location.href);
-                            url.searchParams.set("mapel", cls.mapel);
-                            window.history.pushState({}, "", url.toString());
-                          }
-                        }}
-                        className="p-3.5 rounded-xl border border-border bg-muted/15 hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 cursor-pointer transition-all shadow-2xs space-y-2.5 group flex flex-col justify-between"
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                              ⏰ {cls.jamLabel}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <Badge variant="secondary" className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50">
-                                {cls.jpCount} JP
-                              </Badge>
-                              <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground">
-                                {cls.rombel || studentRombel}
-                              </Badge>
+                    {mergedTodayClasses.map((cls, idx) => {
+                      const isClassLive = (activeSessionsList || []).some(
+                        (s: any) =>
+                          s.status === "SEDANG_BERLANGSUNG" &&
+                          isSameSubject(s.mapel || "", cls.mapel) &&
+                          isSameClass(s.rombel || "", studentRombel)
+                      );
+                      const isClassFinished =
+                        !isClassLive &&
+                        (activeSessionsList || []).some(
+                          (s: any) =>
+                            s.status === "SELESAI" &&
+                            isSameSubject(s.mapel || "", cls.mapel) &&
+                            isSameClass(s.rombel || "", studentRombel)
+                        );
+
+                      return (
+                        <div
+                          key={cls.id || idx}
+                          onClick={() => {
+                            setSelectedMateriMapel(cls.mapel);
+                            setSelectedMapelFilter(cls.mapel);
+                            if (typeof window !== "undefined") {
+                              const url = new URL(window.location.href);
+                              url.searchParams.set("mapel", cls.mapel);
+                              window.history.pushState({}, "", url.toString());
+                            }
+                          }}
+                          className={`p-3.5 rounded-xl border bg-muted/15 cursor-pointer transition-all shadow-2xs space-y-2.5 group flex flex-col justify-between ${
+                            isClassLive
+                              ? "border-emerald-500/80 bg-emerald-50/15 dark:bg-emerald-950/15 shadow-emerald-500/10"
+                              : "border-border hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20"
+                          }`}
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                                ⏰ {cls.jamLabel}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                {isClassLive && (
+                                  <Badge className="bg-emerald-600 text-white text-[10px] font-bold animate-pulse px-1.5 py-0.5">
+                                    ● LIVE
+                                  </Badge>
+                                )}
+                                {isClassFinished && (
+                                  <Badge variant="outline" className="text-[10px] font-bold text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30 px-1.5 py-0.5">
+                                    ● SELESAI
+                                  </Badge>
+                                )}
+                                <Badge variant="secondary" className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50">
+                                  {cls.jpCount} JP
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground">
+                                  {cls.rombel || studentRombel}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="font-bold text-sm text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+                              {cls.mapel}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              👨‍🏫 {cls.guru || "Guru Pengampu"}
                             </div>
                           </div>
-                          <div className="font-bold text-sm text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
-                            {cls.mapel}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            👨‍🏫 {cls.guru || "Guru Pengampu"}
-                          </div>
+                          <Button
+                            size="sm"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 rounded-xl h-8 mt-1 shadow-2xs"
+                          >
+                            <DoorOpen className="h-3.5 w-3.5" /> Masuk Kelas →
+                          </Button>
                         </div>
-                        <Button
-                          size="sm"
-                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 rounded-xl h-8 mt-1 shadow-2xs"
-                        >
-                          <DoorOpen className="h-3.5 w-3.5" /> Masuk Kelas →
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="space-y-3">

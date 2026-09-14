@@ -68,6 +68,17 @@ export function SesiRuangBelajarView({
   const [myKbmPresensi, setMyKbmPresensi] = useState<any | null>(null);
   const [isSubmittingPresensi, setIsSubmittingPresensi] = useState(false);
   const [learningTopics, setLearningTopics] = useState<any[]>([]);
+  const [classStatus, setClassStatus] = useState<{
+    label: string;
+    textColor: string;
+    bgColor: string;
+    borderColor: string;
+  }>({
+    label: "Memuat...",
+    textColor: "text-muted-foreground",
+    bgColor: "bg-muted/20",
+    borderColor: "border-border",
+  });
 
   // Refleksi state
   const [myReflection, setMyReflection] = useState<any | null>(null);
@@ -81,12 +92,13 @@ export function SesiRuangBelajarView({
   const loadSessionData = async () => {
     try {
       setLoading(true);
-      const [allJournals, allPresensi, allSchedules, allNotes, allTopics] = await Promise.all([
+      const [allJournals, allPresensi, allSchedules, allNotes, allTopics, allKbmSessions] = await Promise.all([
         MysqlDataService.getJournals().catch(() => []),
         MysqlDataService.getKbmPresensi(studentRombel, activeMapel, todayStr).catch(() => []),
         MysqlDataService.getJadwalList().catch(() => []),
         MysqlDataService.getStudentKbmNotes(studentRombel, activeMapel).catch(() => []),
         MysqlDataService.getLearningTopics({ subject_name: activeMapel, class_name: studentRombel }).catch(() => []),
+        MysqlDataService.getActiveKbmSessions().catch(() => []),
       ]);
       setLearningTopics(allTopics || []);
 
@@ -152,6 +164,50 @@ export function SesiRuangBelajarView({
         return isRefl && matchName && matchDate;
       });
       setMyReflection(myRefl || null);
+
+      // 5. Status Real-Time KBM Kelas dari active_kbm_sessions & jadwal_pelajaran
+      const liveSessionForClass = (allKbmSessions || []).find((s: any) => {
+        const matchMapel = isSameSubject(s.mapel || "", activeMapel);
+        const matchRombel = isSameClass(s.rombel || "", studentRombel);
+        return matchMapel && matchRombel && s.status === "SEDANG_BERLANGSUNG";
+      });
+
+      const todayCompletedSession = (allKbmSessions || []).find((s: any) => {
+        const matchMapel = isSameSubject(s.mapel || "", activeMapel);
+        const matchRombel = isSameClass(s.rombel || "", studentRombel);
+        const matchDate = !s.date_str || s.date_str === todayStr;
+        return matchMapel && matchRombel && matchDate && s.status === "SELESAI";
+      });
+
+      if (liveSessionForClass) {
+        setClassStatus({
+          label: "● KBM Berlangsung (Live)",
+          textColor: "text-emerald-600 dark:text-emerald-400",
+          bgColor: "bg-emerald-500/10",
+          borderColor: "border-emerald-500/30",
+        });
+      } else if (todayCompletedSession || todayJournal) {
+        setClassStatus({
+          label: "● KBM Selesai",
+          textColor: "text-blue-600 dark:text-blue-400",
+          bgColor: "bg-blue-500/10",
+          borderColor: "border-blue-500/30",
+        });
+      } else if (matchedSchedules.length > 0) {
+        setClassStatus({
+          label: "● Belum Dimulai",
+          textColor: "text-amber-600 dark:text-amber-400",
+          bgColor: "bg-amber-500/10",
+          borderColor: "border-amber-500/30",
+        });
+      } else {
+        setClassStatus({
+          label: "● Tidak Ada Jadwal Hari Ini",
+          textColor: "text-muted-foreground",
+          bgColor: "bg-muted/20",
+          borderColor: "border-border",
+        });
+      }
     } catch (err) {
       console.warn("loadSessionData error:", err);
     } finally {
@@ -334,11 +390,21 @@ export function SesiRuangBelajarView({
               </p>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-card border border-border/80 text-right shadow-2xs">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status Kelas</div>
-              <div className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                {myKbmPresensi?.status === "HADIR" ? "● Siap Belajar (Hadir)" : "● Kelas Dibuka"}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className={`p-2.5 rounded-xl ${classStatus.bgColor} border ${classStatus.borderColor} text-right shadow-2xs`}>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status Kelas</div>
+                <div className={`text-xs font-extrabold mt-0.5 ${classStatus.textColor}`}>
+                  {classStatus.label}
+                </div>
               </div>
+              {myKbmPresensi?.status === "HADIR" && (
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-right shadow-2xs">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Presensi Anda</div>
+                  <div className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    ● Hadir di Kelas
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

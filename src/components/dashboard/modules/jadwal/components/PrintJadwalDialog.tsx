@@ -19,10 +19,21 @@ interface PrintJadwalDialogProps {
   filterKelas: string;
   filterRombel: string;
   jadwalList: JadwalRow[];
+  isGuru?: boolean;
+  teacherName?: string;
   onPrint: () => void;
 }
 
-export function PrintJadwalDialog({ isOpen, onOpenChange, filterKelas, filterRombel, jadwalList, onPrint }: PrintJadwalDialogProps) {
+export function PrintJadwalDialog({
+  isOpen,
+  onOpenChange,
+  filterKelas,
+  filterRombel,
+  jadwalList,
+  isGuru,
+  teacherName,
+  onPrint,
+}: PrintJadwalDialogProps) {
   const hariList = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
   return (
@@ -31,12 +42,17 @@ export function PrintJadwalDialog({ isOpen, onOpenChange, filterKelas, filterRom
         <DialogHeader className="border-b border-border pb-3">
           <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <CalendarClock className="h-5 w-5 text-blue-600" /> Pratinjau Matriks Jadwal Pelajaran KBM
+              <CalendarClock className="h-5 w-5 text-blue-600" />{" "}
+              {isGuru ? "Pratinjau Matriks Jadwal Mengajar Guru" : "Pratinjau Matriks Jadwal Pelajaran KBM"}
             </div>
-            <Badge className="bg-blue-600 text-white font-mono text-xs">{filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}</Badge>
+            <Badge className="bg-blue-600 text-white font-mono text-xs">
+              {isGuru ? teacherName || "Guru Pengampu" : filterRombel === "Semua" ? "Seluruh Rombel" : filterRombel}
+            </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Jadwal Resmi Alokasi Pembelajaran Tatap Muka & KBM MTsN 2 Cilacap (Tahun Ajaran 2025/2026 Ganjil).
+            {isGuru
+              ? `Jadwal Alokasi Mengajar Resmi untuk ${teacherName || "Pendidik"} MTsN 2 Cilacap (Tahun Ajaran 2026/2027).`
+              : "Jadwal Resmi Alokasi Pembelajaran Tatap Muka & KBM MTsN 2 Cilacap (Tahun Ajaran 2026/2027 Ganjil)."}
           </DialogDescription>
         </DialogHeader>
 
@@ -50,21 +66,35 @@ export function PrintJadwalDialog({ isOpen, onOpenChange, filterKelas, filterRom
                 <div className="text-[10px] text-slate-600">Jl. Raya Sindangbarang KM.4 Karangpucung Kode Pos 53255</div>
               </div>
             </div>
-            <div className="mt-2 py-1 bg-blue-900 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs">
-              JADWAL PELAJARAN KBM MADRASAH (SEMESTER GANJIL)
+            <div className="mt-2 py-1 bg-blue-900 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs text-center">
+              {isGuru ? "JADWAL MENGAJAR GURU (SEMESTER GANJIL)" : "JADWAL PELAJARAN KBM MADRASAH (SEMESTER GANJIL)"}
             </div>
           </div>
 
           <div className="flex justify-between items-center text-xs font-medium text-slate-800 bg-slate-50 p-3 rounded-md border border-slate-200">
-            <div>Tingkat Kelas: <strong>{filterKelas}</strong></div>
-            <div>Rombongan Belajar: <strong className="text-blue-900 font-bold">{filterRombel}</strong></div>
-            <div>Tahun Ajaran: <strong>2025/2026 Ganjil</strong></div>
+            {isGuru ? (
+              <>
+                <div>Guru Pengampu: <strong className="text-blue-900 font-bold">{teacherName || "Guru Pengampu"}</strong></div>
+                <div>Filter Kelas: <strong>{filterRombel === "Semua" ? "Seluruh Kelas Ajar" : filterRombel}</strong></div>
+                <div>Total Beban: <strong className="text-emerald-900 font-extrabold">{jadwalList.length} Jam Pelajaran (JP)</strong></div>
+              </>
+            ) : (
+              <>
+                <div>Tingkat Kelas: <strong>{filterKelas}</strong></div>
+                <div>Rombongan Belajar: <strong className="text-blue-900 font-bold">{filterRombel}</strong></div>
+                <div>Tahun Ajaran: <strong>2026/2027 Ganjil</strong></div>
+              </>
+            )}
           </div>
 
           <div className="space-y-3">
             {hariList.map((h) => {
               const listForDay = (jadwalList || []).filter((s) => {
                 if (s.hari !== h) return false;
+                if (isGuru) {
+                  if (filterRombel !== "Semua") return s.rombel === filterRombel || s.rombel?.includes(filterRombel);
+                  return true;
+                }
                 const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
                 const matchRombel = filterRombel === "Semua" || s.rombel === filterRombel;
                 return matchKelas && matchRombel;

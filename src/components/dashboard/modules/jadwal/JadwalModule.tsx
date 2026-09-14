@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService, JadwalRow } from "@/services/mysqlDataService";
 import { toast } from "sonner";
-import { Download, PencilLine, Trash2, Printer, Plus, CalendarClock, Building2 } from "lucide-react";
+import { Download, PencilLine, Trash2, Printer, Plus, CalendarClock, Building2, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +18,45 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
   const isSiswa = activeRole === "siswa";
   const isGuru = activeRole === "guru";
   const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
-  const isRestrictedRole = isSiswa || isWaliKelas;
+  const isRestrictedRole = isSiswa || isWaliKelas || isGuru;
   const isReadOnlyRole = isSiswa || isGuru || isWaliKelas;
   const me = MysqlAuthService.getActiveUser();
+
+  const currentTeacherName = me?.full_name || (me as any)?.name || userProfile?.name || "";
+  const currentTeacherNip = (me?.nis_nip || "").trim();
+
+  const cleanTeacherName = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/\b(s\.pd|m\.pd|s\.ag|m\.pd\.i|s\.p|h\.|hj\.|s\.pd\.i|m\.si|drs|dra|st|kom|s\.kom)\b/gi, "")
+      .replace(/[^a-z0-9\s]/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const isMySchedule = (targetGuruRaw: string) => {
+    const raw = (targetGuruRaw || "").trim();
+    if (!raw) return false;
+    if (currentTeacherNip && raw.includes(currentTeacherNip)) return true;
+
+    const cleanTarget = cleanTeacherName(raw);
+    const cleanMe = cleanTeacherName(currentTeacherName);
+    if (!cleanTarget || !cleanMe) return false;
+
+    if (cleanTarget === cleanMe) return true;
+    if (cleanMe.length >= 4 && cleanTarget.includes(cleanMe)) return true;
+    if (cleanTarget.length >= 4 && cleanMe.includes(cleanTarget)) return true;
+
+    const targetWords = cleanTarget.split(" ").filter((w) => w.length >= 4);
+    const myWords = cleanMe.split(" ").filter((w) => w.length >= 4);
+    if (targetWords.length > 0 && myWords.length > 0) {
+      const matchedWordCount = myWords.filter((w) => targetWords.includes(w)).length;
+      if (matchedWordCount >= 2 || (myWords.length === 1 && matchedWordCount === 1)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
 
   const resolvedInitialRombel = useMemo(() => {
     if (isSiswa) {
@@ -39,6 +75,7 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
   const hariList = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
   const [filterKelas, setFilterKelas] = useState(resolvedInitialGrade);
   const [filterRombel, setFilterRombel] = useState(resolvedInitialRombel);
+  const [filterRombelGuru, setFilterRombelGuru] = useState("Semua");
 
   const [jadwalList, setJadwalList] = useState<JadwalRow[]>([]);
   const [isLoadingJadwal, setIsLoadingJadwal] = useState(true);
@@ -66,6 +103,23 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
     }
   };
 
+  // Filter Jadwal khusus untuk role Guru
+  const teacherScheduleList = useMemo(() => {
+    if (!isGuru) return [];
+    return (jadwalList || []).filter((s) => isMySchedule(s.guru || ""));
+  }, [isGuru, jadwalList, currentTeacherName, currentTeacherNip]);
+
+  const teacherClasses = useMemo(() => {
+    if (!isGuru) return [];
+    return Array.from(new Set(teacherScheduleList.map((s) => normalizeRombelName(s.rombel))));
+  }, [isGuru, teacherScheduleList]);
+
+  const filteredGuruSchedule = useMemo(() => {
+    if (!isGuru) return [];
+    if (filterRombelGuru === "Semua") return teacherScheduleList;
+    return teacherScheduleList.filter((s) => isSameClass(s.rombel, filterRombelGuru));
+  }, [isGuru, teacherScheduleList, filterRombelGuru]);
+
   const checkIsLive = (s: any, h: string) => {
     const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const currentDayName = dayNames[new Date().getDay()] || "";
@@ -87,11 +141,11 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
   }, []);
 
   useEffect(() => {
-    if (isRestrictedRole) {
+    if (isRestrictedRole && !isGuru) {
       setFilterRombel(resolvedInitialRombel);
       setFilterKelas(resolvedInitialGrade);
     }
-  }, [isRestrictedRole, resolvedInitialRombel, resolvedInitialGrade]);
+  }, [isRestrictedRole, isGuru, resolvedInitialRombel, resolvedInitialGrade]);
 
   const handleAdd = async (data: { selectedHari: string; jam: string; mapel: string; inputTingkat: string; inputRombel: string; guru: string }) => {
     const res = await MysqlDataService.saveJadwal({
@@ -141,7 +195,11 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
 
   const handlePrintJadwal = () => {
     window.print();
-    toast.success(`🖨️ Cetak Matriks Jadwal Pelajaran KBM (${filterRombel === "Semua" ? "Seluruh Kelas" : filterRombel}) berhasil diproses!`);
+    if (isGuru) {
+      toast.success(`🖨️ Cetak Matriks Jadwal Mengajar (${currentTeacherName || "Guru"}) berhasil diproses!`);
+    } else {
+      toast.success(`🖨️ Cetak Matriks Jadwal Pelajaran KBM (${filterRombel === "Semua" ? "Seluruh Kelas" : filterRombel}) berhasil diproses!`);
+    }
   };
 
   return (
@@ -160,8 +218,13 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border mb-4">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <CalendarClock className="h-5 w-5 text-primary" /> Jadwal Pelajaran
+              <CalendarClock className="h-5 w-5 text-primary" /> {isGuru ? "Jadwal Mengajar Saya" : "Jadwal Pelajaran"}
             </h1>
+            {isGuru && currentTeacherName && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Alokasi waktu KBM tatap muka untuk pendidik: <strong className="text-foreground font-semibold">{currentTeacherName}</strong>
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs font-semibold border-border px-3" onClick={() => setIsPrintJadwalOpen(true)}>
@@ -176,8 +239,8 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
         </div>
       )}
 
-      {/* Horizontal Compact Metric Strip (~42px) - Only for Admin / Non-Siswa */}
-      {!isSiswa && (
+      {/* Horizontal Compact Metric Strip (~42px) - Hanya untuk Admin, Kamad, Waka */}
+      {!isSiswa && !isGuru && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs mb-4">
           <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
             <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
@@ -221,6 +284,57 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
         </div>
       )}
 
+      {/* Ringkasan Beban Mengajar Personal - Khusus Role Guru */}
+      {isGuru && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/30 border border-border/80 rounded-xl p-2 text-xs mb-4">
+          <div className="flex items-center gap-2.5 px-3 py-1.5 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <CalendarClock className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Jam Mengajar</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{teacherScheduleList.length} JP / Minggu</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-3 py-1.5 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Building2 className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Kelas Ampuan</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
+                {teacherClasses.length || 0} Rombel
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-3 py-1.5 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <BookOpen className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Mata Pelajaran</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5 truncate">
+                {Array.from(new Set(teacherScheduleList.map((s) => s.mapel))).join(", ") || "Guru Pengampu"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-3 py-1.5 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+            <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <CalendarClock className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium leading-none">Hari Mengajar</p>
+              <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
+                {Array.from(new Set(teacherScheduleList.map((s) => s.hari))).length || 0} Hari Aktif
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!isRestrictedRole ? (
         <div className="p-2.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-4 shadow-2xs text-xs">
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -254,6 +368,36 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
             </Badge>
           </div>
         </div>
+      ) : isGuru ? (
+        <div className="p-2.5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-4 shadow-2xs text-xs">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-[11px] font-semibold text-muted-foreground shrink-0">Filter Kelas Ajar:</span>
+            <select
+              className="h-8 rounded-lg border border-border bg-background px-2.5 text-xs font-semibold text-foreground cursor-pointer hover:border-primary/50 transition shrink-0 min-w-[200px]"
+              value={filterRombelGuru}
+              onChange={(e) => setFilterRombelGuru(e.target.value)}
+            >
+              <option value="Semua">Semua Kelas Ajar ({teacherScheduleList.length} Sesi)</option>
+              {teacherClasses.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <span>
+              Menampilkan Jadwal: <strong className="text-foreground">{currentTeacherName || "Guru Pengampu"}</strong>
+            </span>
+            <Badge
+              variant="outline"
+              className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[11px] font-mono font-bold shrink-0"
+            >
+              {filteredGuruSchedule.length} JP Terjadwal
+            </Badge>
+          </div>
+        </div>
       ) : isWaliKelas ? (
         <div className="p-2.5 rounded-xl bg-muted/40 border border-border/80 flex items-center justify-between gap-4 mb-4 shadow-2xs">
           <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
@@ -275,6 +419,14 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
               if (isSiswa) {
                 return isSameClass(s.rombel, resolvedInitialRombel);
               }
+              if (isGuru) {
+                const teacherMatches = isMySchedule(s.guru || "");
+                if (!teacherMatches) return false;
+                if (filterRombelGuru !== "Semua") {
+                  return isSameClass(s.rombel, filterRombelGuru);
+                }
+                return true;
+              }
               const matchKelas = filterKelas === "Semua" || s.tingkat === filterKelas;
               const matchRombel = filterRombel === "Semua" || isSameClass(s.rombel, filterRombel);
               return matchKelas && matchRombel;
@@ -293,7 +445,9 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
                   {listForDay.length === 0 && (
-                    <div className="text-xs text-muted-foreground py-3 text-center">Belum ada jadwal untuk filter ini</div>
+                    <div className="text-xs text-muted-foreground py-3 text-center">
+                      {isGuru ? "Tidak ada jam mengajar di hari ini" : "Belum ada jadwal untuk filter ini"}
+                    </div>
                   )}
                   {listForDay.map((s) => {
                     const isLive = checkIsLive(s, h);
@@ -319,9 +473,11 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                               🏫 {normalizeRombelName(s.rombel)}
                             </Badge>
                           </div>
-                          <div className="text-[11px] text-muted-foreground truncate">
-                            👨‍🏫 {s.guru && s.guru.trim() !== "-" ? s.guru : "Belum Ditentukan"}
-                          </div>
+                          {!isGuru && (
+                            <div className="text-[11px] text-muted-foreground truncate">
+                              👨‍🏫 {s.guru && s.guru.trim() !== "-" ? s.guru : "Belum Ditentukan"}
+                            </div>
+                          )}
                           <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.jam}</div>
                         </div>
 
@@ -375,8 +531,10 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
         isOpen={isPrintJadwalOpen}
         onOpenChange={setIsPrintJadwalOpen}
         filterKelas={filterKelas}
-        filterRombel={filterRombel}
-        jadwalList={jadwalList}
+        filterRombel={isGuru ? filterRombelGuru : filterRombel}
+        jadwalList={isGuru ? teacherScheduleList : jadwalList}
+        isGuru={isGuru}
+        teacherName={currentTeacherName}
         onPrint={handlePrintJadwal}
       />
     </>

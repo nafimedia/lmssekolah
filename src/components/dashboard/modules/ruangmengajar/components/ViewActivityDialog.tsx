@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Users, Brain, CheckCircle2, Save, Check, Lock, ExternalLink, MessageSquare, Send, Star, ChevronDown, ChevronUp, FlaskConical, BookOpen, Target, PenTool } from "lucide-react";
+import { FileText, Users, Brain, CheckCircle2, Save, Check, Lock, ExternalLink, MessageSquare, Send, Star, ChevronDown, ChevronUp, FlaskConical, BookOpen, Target, PenTool, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService, LkpdDiscussionRow, PeerAssessmentRow } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
+import { QuizQuestionType, QUIZ_QUESTION_TYPE_CONFIG } from "@/types/quiz";
 
 export interface ActivityDetail {
   id: string;
@@ -355,26 +356,123 @@ export function ViewActivityDialog({
             </div>
           )}
 
-          {/* Tampilan Soal Kuis Formatif (Jika jenis QUIZ) */}
+          {/* Tampilan Soal Kuis Formatif (Multi-Type / Campuran) */}
           {activity.type === "QUIZ" && parsedQuizQuestions.length > 0 && (
             <div className="p-4 rounded-xl border border-purple-200 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-950/20 space-y-3">
-              <h4 className="font-bold text-xs text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
-                <Brain className="h-4 w-4" /> Daftar Soal Kuis Formatif ({parsedQuizQuestions.length} Soal Pilihan Ganda)
-              </h4>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
-                {parsedQuizQuestions.map((q: any, idx: number) => (
-                  <div key={idx} className="p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-card text-xs space-y-1.5">
-                    <div className="font-bold text-foreground">
-                      #{idx + 1}. {q.question}
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-xs text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
+                  <Brain className="h-4 w-4 text-purple-600" /> Butir Soal Kuis Formatif ({parsedQuizQuestions.length} Butir Soal)
+                </h4>
+                <Badge variant="outline" className="text-[10px] font-bold border-purple-400 text-purple-700 dark:text-purple-300">
+                  Total {parsedQuizQuestions.reduce((acc: number, q: any) => acc + (Number(q.points) || 10), 0)} Poin
+                </Badge>
+              </div>
+
+              <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                {parsedQuizQuestions.map((q: any, idx: number) => {
+                  const qType = (q.type as QuizQuestionType) || "PG";
+                  const cfg = QUIZ_QUESTION_TYPE_CONFIG[qType] || QUIZ_QUESTION_TYPE_CONFIG.PG;
+
+                  return (
+                    <div key={idx} className="p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-card text-xs space-y-2 shadow-2xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-purple-700 dark:text-purple-300">
+                            #{idx + 1}
+                          </span>
+                          <Badge variant="outline" className={`text-[9px] font-semibold ${cfg.badgeColor}`}>
+                            {cfg.shortLabel}
+                          </Badge>
+                        </div>
+                        <Badge className="bg-purple-600/10 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800 font-mono text-[10px]">
+                          {q.points || 10} Poin
+                        </Badge>
+                      </div>
+
+                      <div className="font-medium text-foreground whitespace-pre-wrap leading-relaxed">
+                        {q.question}
+                      </div>
+
+                      {/* Detail per jenis soal */}
+                      {qType === "PG" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-muted-foreground pt-1 border-t border-border/50">
+                          <span className={q.keyAnswer === "A" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
+                            A. {q.optionA} {q.keyAnswer === "A" && "✓ (Kunci)"}
+                          </span>
+                          <span className={q.keyAnswer === "B" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
+                            B. {q.optionB} {q.keyAnswer === "B" && "✓ (Kunci)"}
+                          </span>
+                          <span className={q.keyAnswer === "C" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
+                            C. {q.optionC} {q.keyAnswer === "C" && "✓ (Kunci)"}
+                          </span>
+                          <span className={q.keyAnswer === "D" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
+                            D. {q.optionD} {q.keyAnswer === "D" && "✓ (Kunci)"}
+                          </span>
+                        </div>
+                      )}
+
+                      {qType === "MENJODOHKAN" && Array.isArray(q.pairs) && (
+                        <div className="space-y-1.5 pt-1 border-t border-border/50 text-[11px]">
+                          <span className="font-semibold text-muted-foreground block text-[10px]">Pasangan Premis & Kunci:</span>
+                          <div className="grid grid-cols-1 gap-1">
+                            {q.pairs.map((p: any, pIdx: number) => (
+                              <div key={pIdx} className="flex items-center gap-2 bg-muted/40 p-1.5 rounded">
+                                <span className="font-medium text-foreground">{p.left}</span>
+                                <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400">{p.right}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {qType === "BENAR_SALAH" && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-border/50 text-[11px]">
+                          <span className="text-muted-foreground">Kunci Jawaban:</span>
+                          <Badge className={q.keyAnswer === "BENAR" ? "bg-emerald-600 text-white font-bold" : "bg-rose-600 text-white font-bold"}>
+                            {q.keyAnswer === "BENAR" ? "✓ BENAR" : "✗ SALAH"}
+                          </Badge>
+                        </div>
+                      )}
+
+                      {qType === "ISIAN_SINGKAT" && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-border/50 text-[11px]">
+                          <span className="text-muted-foreground">Kunci Jawaban Singkat:</span>
+                          <span className="font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">
+                            {q.keyAnswer}
+                          </span>
+                        </div>
+                      )}
+
+                      {qType === "ESAI" && (
+                        <div className="space-y-1 pt-1 border-t border-border/50 text-[11px]">
+                          <span className="text-muted-foreground font-semibold text-[10px]">Rubrik Acuan Penilaian:</span>
+                          <p className="text-muted-foreground italic bg-muted/30 p-2 rounded leading-relaxed">
+                            {q.rubrik || "(Belum ada rubrik tertulis - penilaian kualitatif oleh guru)"}
+                          </p>
+                        </div>
+                      )}
+
+                      {qType === "NUMERIK" && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-border/50 text-[11px]">
+                          <span className="text-muted-foreground">Kunci Nilai:</span>
+                          <span className="font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
+                            {q.keyAnswer} {q.tolerance ? `(± ${q.tolerance})` : "(Tepat)"}
+                          </span>
+                        </div>
+                      )}
+
+                      {qType === "MELENGKAPI" && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-border/50 text-[11px]">
+                          <span className="text-muted-foreground">Kunci Kata Pengisi:</span>
+                          <span className="font-bold text-teal-700 dark:text-teal-300 bg-teal-500/10 px-2 py-0.5 rounded">
+                            {q.clozeAnswer || q.keyAnswer}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
-                      <span className={q.keyAnswer === "A" ? "font-bold text-emerald-600" : ""}>A. {q.optionA} {q.keyAnswer === "A" && "✓ (Kunci)"}</span>
-                      <span className={q.keyAnswer === "B" ? "font-bold text-emerald-600" : ""}>B. {q.optionB} {q.keyAnswer === "B" && "✓ (Kunci)"}</span>
-                      <span className={q.keyAnswer === "C" ? "font-bold text-emerald-600" : ""}>C. {q.optionC} {q.keyAnswer === "C" && "✓ (Kunci)"}</span>
-                      <span className={q.keyAnswer === "D" ? "font-bold text-emerald-600" : ""}>D. {q.optionD} {q.keyAnswer === "D" && "✓ (Kunci)"}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

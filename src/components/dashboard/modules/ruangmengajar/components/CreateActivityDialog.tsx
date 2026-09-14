@@ -22,11 +22,25 @@ import {
   Bookmark,
   Users,
   Pencil,
+  ArrowRight,
+  GitCompare,
+  ToggleLeft,
+  CaseSensitive,
+  AlignLeft,
+  Hash,
+  TextCursorInput,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { PickElibraryDialog, ElibraryBookItem } from "./PickElibraryDialog";
+import {
+  FormativeQuizQuestion,
+  QuizQuestionType,
+  QUIZ_QUESTION_TYPE_CONFIG,
+  createNewQuizQuestion,
+} from "@/types/quiz";
 
 export type ActivityTypeOption =
   | "LKPD"
@@ -236,14 +250,19 @@ export function CreateActivityForm({
     return [];
   });
 
-  // Quiz Builder State (Khusus tipe QUIZ)
-  const [quizQuestions, setQuizQuestions] = useState<
-    Array<{ id: number; question: string; optionA: string; optionB: string; optionC: string; optionD: string; keyAnswer: string }>
-  >(() => {
+  // Quiz Builder State (Khusus tipe QUIZ - Campuran / Multi-Type)
+  const [quizQuestions, setQuizQuestions] = useState<FormativeQuizQuestion[]>(() => {
     if (initialData?.quiz_data) {
       try {
         const parsed = JSON.parse(initialData.quiz_data);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          return parsed.map((item, idx) => ({
+            ...item,
+            id: item.id || idx + 1,
+            type: (item.type as QuizQuestionType) || "PG",
+            points: Number(item.points) || 10,
+          }));
+        }
       } catch { }
     }
     return [];
@@ -359,29 +378,69 @@ export function CreateActivityForm({
     );
   };
 
-  // Quiz Questions Handlers
-  const handleAddQuizQuestion = () => {
+  // Quiz Questions Handlers (Multi-Type / Campuran)
+  const handleAddQuizQuestion = (type: QuizQuestionType = "PG") => {
     setQuizQuestions((prev) => [
       ...prev,
-      {
-        id: prev.length + 1,
-        question: "",
-        optionA: "",
-        optionB: "",
-        optionC: "",
-        optionD: "",
-        keyAnswer: "A",
-      },
+      createNewQuizQuestion(type, prev.length + 1),
     ]);
+  };
+
+  const handleQuizQuestionTypeChange = (index: number, newType: QuizQuestionType) => {
+    setQuizQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== index) return q;
+        const base = createNewQuizQuestion(newType, q.id);
+        return {
+          ...base,
+          question: q.question,
+          points: q.points || base.points,
+        };
+      })
+    );
   };
 
   const handleRemoveQuizQuestion = (index: number) => {
     setQuizQuestions((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const handleQuizQuestionChange = (index: number, field: string, value: string) => {
+  const handleQuizQuestionChange = (index: number, field: keyof FormativeQuizQuestion, value: any) => {
     setQuizQuestions((prev) =>
       prev.map((q, idx) => (idx === index ? { ...q, [field]: value } : q))
+    );
+  };
+
+  const handleAddMatchingPair = (qIndex: number) => {
+    setQuizQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qIndex) return q;
+        const currentPairs = q.pairs ? [...q.pairs] : [];
+        currentPairs.push({ id: `p_${Date.now()}_${currentPairs.length + 1}`, left: "", right: "" });
+        return { ...q, pairs: currentPairs };
+      })
+    );
+  };
+
+  const handleRemoveMatchingPair = (qIndex: number, pairIndex: number) => {
+    setQuizQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qIndex) return q;
+        const currentPairs = (q.pairs || []).filter((_, pIdx) => pIdx !== pairIndex);
+        return { ...q, pairs: currentPairs };
+      })
+    );
+  };
+
+  const handleMatchingPairChange = (qIndex: number, pairIndex: number, side: "left" | "right", value: string) => {
+    setQuizQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qIndex) return q;
+        const currentPairs = q.pairs ? [...q.pairs] : [];
+        if (currentPairs[pairIndex]) {
+          currentPairs[pairIndex] = { ...currentPairs[pairIndex], [side]: value };
+        }
+        return { ...q, pairs: currentPairs };
+      })
     );
   };
 
@@ -395,8 +454,19 @@ export function CreateActivityForm({
       if (parsed.length === 0) {
         return toast.error("Tidak ada soal yang valid ditemukan pada berkas Excel.");
       }
-      setQuizQuestions(parsed);
-      toast.success(`✅ Berhasil mengimpor ${parsed.length} butir soal dari "${file.name}"!`);
+      const formatted: FormativeQuizQuestion[] = parsed.map((p, idx) => ({
+        id: p.id || idx + 1,
+        type: "PG",
+        question: p.question,
+        optionA: p.optionA,
+        optionB: p.optionB,
+        optionC: p.optionC,
+        optionD: p.optionD,
+        keyAnswer: p.keyAnswer,
+        points: 10,
+      }));
+      setQuizQuestions(formatted);
+      toast.success(`✅ Berhasil mengimpor ${formatted.length} butir soal dari "${file.name}"!`);
     } catch (err: any) {
       console.error("Gagal import file kuis Excel:", err);
       toast.error(`Gagal membaca berkas Excel: ${err?.message || "Format tidak sesuai"}`);
@@ -415,8 +485,19 @@ export function CreateActivityForm({
       return toast.error("Mohon lengkapi petunjuk / instruksi aktivitas sebelum menerbitkan!");
     }
 
-    if (!isDraft && type === "QUIZ" && quizQuestions.length === 0) {
-      return toast.error("Kuis Formatif membutuhkan minimal 1 soal sebelum diterbitkan!");
+    if (!isDraft && type === "QUIZ") {
+      if (quizQuestions.length === 0) {
+        return toast.error("Kuis Formatif membutuhkan minimal 1 butir soal sebelum diterbitkan!");
+      }
+      for (let i = 0; i < quizQuestions.length; i++) {
+        const q = quizQuestions[i];
+        if (!q.question.trim()) {
+          return toast.error(`Mohon lengkapi teks pertanyaan pada butir soal #${i + 1}!`);
+        }
+        if (q.type === "MENJODOHKAN" && (!q.pairs || q.pairs.some((p) => !p.left.trim() || !p.right.trim()))) {
+          return toast.error(`Mohon lengkapi semua pasangan premis & respon pada butir soal #${i + 1}!`);
+        }
+      }
     }
 
     // Tentukan finalAttachmentUrl: Jika mode upload file lokal, kirim fileBase64
@@ -935,144 +1016,485 @@ export function CreateActivityForm({
               </div>
             )}
 
-            {/* Builder Soal Kuis Formatif (Tampil Khusus Jenis QUIZ) */}
-            {type === "QUIZ" && (
-              <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-3">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                  <div>
-                    <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
-                      <Brain className="h-4 w-4 text-purple-600" /> Pembuat Soal Kuis Formatif ({quizQuestions.length} Soal Pilihan Ganda)
-                    </span>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-                      Susun manual atau import sekaligus dari spreadsheet Excel (.xlsx / .csv).
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <input
-                      type="file"
-                      ref={excelInputRef}
-                      onChange={handleImportExcel}
-                      accept=".xlsx,.xls,.csv"
-                      className="hidden"
-                      id="excel-quiz-input"
-                    />
-
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          const { downloadQuizTemplateExcel } = await import("@/utils/quizExcelHelper");
-                          downloadQuizTemplateExcel();
-                        } catch (err) {
-                          toast.error("Gagal mengunduh template Excel");
-                        }
-                      }}
-                      className="text-xs font-medium gap-1 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 h-7"
-                      title="Unduh format spreadsheet Excel resmi MTsN 2 Cilacap"
-                    >
-                      <Download className="h-3.5 w-3.5" /> Unduh Template
-                    </Button>
-
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => excelInputRef.current?.click()}
-                      className="text-xs font-medium gap-1 border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 h-7"
-                      title="Import soal langsung dari file Excel atau CSV"
-                    >
-                      <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" /> Import Excel
-                    </Button>
-
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={handleAddQuizQuestion}
-                      className="text-xs font-medium gap-1 border-purple-500/40 text-purple-600 hover:bg-purple-500/10 h-7"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> Tambah Soal
-                    </Button>
-                  </div>
-                </div>
-
-                {quizQuestions.length === 0 ? (
-                  <div className="text-center py-5 border border-dashed border-purple-500/25 rounded-lg text-muted-foreground text-xs font-medium">
-                    Belum ada butir soal kuis. Klik <strong>+ Tambah Soal</strong> atau <strong>Import Excel</strong> di atas untuk menyusun soal pilihan ganda.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {quizQuestions.map((q, idx) => (
-                      <div key={idx} className="p-3 rounded-lg border border-purple-200 dark:border-purple-900 bg-card space-y-2 text-xs">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-purple-700 dark:text-purple-300">Soal #{idx + 1}</span>
-                          <div className="flex items-center gap-2">
-                            <label className="text-[11px] font-medium text-muted-foreground">Kunci Jawaban:</label>
-                            <select
-                              value={q.keyAnswer}
-                              onChange={(e) => handleQuizQuestionChange(idx, "keyAnswer", e.target.value)}
-                              className="h-7 px-2 rounded border border-purple-300 text-xs font-medium text-purple-700 bg-background"
-                            >
-                              <option value="A">A</option>
-                              <option value="B">B</option>
-                              <option value="C">C</option>
-                              <option value="D">D</option>
-                            </select>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleRemoveQuizQuestion(idx)}
-                              className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10"
-                              title="Hapus Butir Soal"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <Input
-                          placeholder={`Tulis pertanyaan soal #${idx + 1}...`}
-                          value={q.question}
-                          onChange={(e) => handleQuizQuestionChange(idx, "question", e.target.value)}
-                          className="text-xs font-normal"
-                        />
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            placeholder="Opsi A"
-                            value={q.optionA}
-                            onChange={(e) => handleQuizQuestionChange(idx, "optionA", e.target.value)}
-                            className="text-xs font-normal"
-                          />
-                          <Input
-                            placeholder="Opsi B"
-                            value={q.optionB}
-                            onChange={(e) => handleQuizQuestionChange(idx, "optionB", e.target.value)}
-                            className="text-xs font-normal"
-                          />
-                          <Input
-                            placeholder="Opsi C"
-                            value={q.optionC}
-                            onChange={(e) => handleQuizQuestionChange(idx, "optionC", e.target.value)}
-                            className="text-xs font-normal"
-                          />
-                          <Input
-                            placeholder="Opsi D"
-                            value={q.optionD}
-                            onChange={(e) => handleQuizQuestionChange(idx, "optionD", e.target.value)}
-                            className="text-xs font-normal"
-                          />
-                        </div>
+            {/* Builder Soal Kuis Formatif (Multi-Type / Campuran) */}
+            {type === "QUIZ" && (() => {
+              const totalQuizPoints = quizQuestions.reduce((acc, q) => acc + (Number(q.points) || 0), 0);
+              return (
+                <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-3.5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                          <Brain className="h-4 w-4 text-purple-600" /> Pembuat Soal Kuis Formatif
+                        </span>
+                        <Badge variant="outline" className="text-[10px] font-bold border-purple-400 text-purple-700 dark:text-purple-300">
+                          {quizQuestions.length} Butir Soal
+                        </Badge>
+                        <Badge className="bg-purple-600 text-white font-mono text-[10px]">
+                          Total {totalQuizPoints} Poin
+                        </Badge>
                       </div>
-                    ))}
+                      <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
+                        Mendukung 7 variasi jenis soal (Pilihan Ganda, Menjodohkan, Benar/Salah, Isian Singkat, Esai, Numerik, dan Melengkapi).
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <input
+                        type="file"
+                        ref={excelInputRef}
+                        onChange={handleImportExcel}
+                        accept=".xlsx,.xls,.csv"
+                        className="hidden"
+                        id="excel-quiz-input"
+                      />
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const { downloadQuizTemplateExcel } = await import("@/utils/quizExcelHelper");
+                            downloadQuizTemplateExcel();
+                          } catch (err) {
+                            toast.error("Gagal mengunduh template Excel");
+                          }
+                        }}
+                        className="text-xs font-medium gap-1 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 h-7"
+                        title="Unduh format template Excel"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Template
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => excelInputRef.current?.click()}
+                        className="text-xs font-medium gap-1 border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 h-7"
+                        title="Import soal langsung dari file Excel atau CSV"
+                      >
+                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" /> Import Excel
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
+
+                  {/* Tombol Tambah Soal per Jenis (7 Variasi) */}
+                  <div className="p-2.5 rounded-lg bg-card border border-purple-200 dark:border-purple-900/50 space-y-1.5">
+                    <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                      <Plus className="h-3 w-3 text-purple-600" /> Tambah Butir Soal Baru:
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddQuizQuestion("PG")}
+                        className="text-[11px] font-medium gap-1 h-7 border-blue-400/40 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 cursor-pointer"
+                      >
+                        <CheckCircle2 className="h-3 w-3 text-blue-600" /> + Pilihan Ganda (A-D)
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddQuizQuestion("MENJODOHKAN")}
+                        className="text-[11px] font-medium gap-1 h-7 border-emerald-400/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 cursor-pointer"
+                      >
+                        <GitCompare className="h-3 w-3 text-emerald-600" /> + Menjodohkan
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddQuizQuestion("BENAR_SALAH")}
+                        className="text-[11px] font-medium gap-1 h-7 border-amber-400/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 cursor-pointer"
+                      >
+                        <ToggleLeft className="h-3 w-3 text-amber-600" /> + Benar / Salah
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddQuizQuestion("ISIAN_SINGKAT")}
+                        className="text-[11px] font-medium gap-1 h-7 border-purple-400/40 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 cursor-pointer"
+                      >
+                        <CaseSensitive className="h-3 w-3 text-purple-600" /> + Teks Singkat
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddQuizQuestion("ESAI")}
+                        className="text-[11px] font-medium gap-1 h-7 border-rose-400/40 text-rose-700 dark:text-rose-300 hover:bg-rose-500/10 cursor-pointer"
+                      >
+                        <AlignLeft className="h-3 w-3 text-rose-600" /> + Esai / Paragraf
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddQuizQuestion("NUMERIK")}
+                        className="text-[11px] font-medium gap-1 h-7 border-indigo-400/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10 cursor-pointer"
+                      >
+                        <Hash className="h-3 w-3 text-indigo-600" /> + Numerik
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddQuizQuestion("MELENGKAPI")}
+                        className="text-[11px] font-medium gap-1 h-7 border-teal-400/40 text-teal-700 dark:text-teal-300 hover:bg-teal-500/10 cursor-pointer"
+                      >
+                        <TextCursorInput className="h-3 w-3 text-teal-600" /> + Melengkapi Kalimat
+                      </Button>
+                    </div>
+                  </div>
+
+                  {quizQuestions.length === 0 ? (
+                    <div className="text-center py-6 border border-dashed border-purple-500/25 rounded-lg text-muted-foreground text-xs font-medium space-y-1">
+                      <p>Belum ada butir soal kuis formatif.</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Pilih salah satu tombol jenis soal di atas atau gunakan import Excel untuk menambahkan pertanyaan.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {quizQuestions.map((q, idx) => {
+                        const qType = q.type || "PG";
+                        const typeCfg = QUIZ_QUESTION_TYPE_CONFIG[qType] || QUIZ_QUESTION_TYPE_CONFIG.PG;
+
+                        return (
+                          <div
+                            key={idx}
+                            className="p-3.5 rounded-xl border border-purple-200 dark:border-purple-900 bg-card space-y-3 text-xs shadow-2xs"
+                          >
+                            {/* Baris Atas: Soal #, Type Selector, Points, Delete */}
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-border/60 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-purple-700 dark:text-purple-300">
+                                  Soal #{idx + 1}
+                                </span>
+                                <Badge variant="outline" className={`text-[10px] font-semibold ${typeCfg.badgeColor}`}>
+                                  {typeCfg.shortLabel}
+                                </Badge>
+                              </div>
+
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                  <span>Jenis:</span>
+                                  <select
+                                    value={qType}
+                                    onChange={(e) => handleQuizQuestionTypeChange(idx, e.target.value as QuizQuestionType)}
+                                    className="h-7 px-2 rounded border border-purple-300 dark:border-purple-800 text-[11px] font-medium text-foreground bg-background cursor-pointer"
+                                  >
+                                    <option value="PG">Pilihan Ganda (A-D)</option>
+                                    <option value="MENJODOHKAN">Menjodohkan</option>
+                                    <option value="BENAR_SALAH">Benar / Salah</option>
+                                    <option value="ISIAN_SINGKAT">Teks Singkat</option>
+                                    <option value="ESAI">Esai / Paragraf</option>
+                                    <option value="NUMERIK">Numerik</option>
+                                    <option value="MELENGKAPI">Melengkapi Kalimat</option>
+                                  </select>
+                                </div>
+
+                                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                  <span>Bobot:</span>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    value={q.points ?? 10}
+                                    onChange={(e) => handleQuizQuestionChange(idx, "points", parseInt(e.target.value, 10) || 0)}
+                                    className="h-7 w-16 text-center text-xs font-mono font-medium text-purple-700 dark:text-purple-300"
+                                  />
+                                  <span className="font-mono text-[10px]">Poin</span>
+                                </div>
+
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleRemoveQuizQuestion(idx)}
+                                  className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10 cursor-pointer"
+                                  title="Hapus Butir Soal"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Pertanyaan / Teks Soal */}
+                            <div className="space-y-1">
+                              <label className="text-[11px] font-semibold text-muted-foreground">
+                                {qType === "BENAR_SALAH"
+                                  ? "Pernyataan / Teks Evaluasi:"
+                                  : qType === "MELENGKAPI"
+                                  ? "Teks Kalimat Rumpang (gunakan tanda [...] untuk bagian rumpang):"
+                                  : "Pertanyaan / Instruksi Soal:"}
+                              </label>
+                              <Textarea
+                                placeholder={
+                                  qType === "MELENGKAPI"
+                                    ? "Contoh: Ibu kota Republik Indonesia berada di wilayah [...]."
+                                    : qType === "BENAR_SALAH"
+                                    ? "Tuliskan pernyataan yang perlu dinilai kebenarannya..."
+                                    : `Tuliskan pertanyaan soal #${idx + 1}...`
+                                }
+                                value={q.question}
+                                onChange={(e) => handleQuizQuestionChange(idx, "question", e.target.value)}
+                                className="text-xs font-normal min-h-[50px]"
+                              />
+                            </div>
+
+                            {/* Form Khusus Sesuai Jenis Soal */}
+                            {/* 1. PILIHAN GANDA */}
+                            {qType === "PG" && (
+                              <div className="space-y-2 pt-1 border-t border-border/50">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[11px] font-semibold text-muted-foreground">Opsi Pilihan Jawaban:</label>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">Kunci Benar:</span>
+                                    <select
+                                      value={q.keyAnswer || "A"}
+                                      onChange={(e) => handleQuizQuestionChange(idx, "keyAnswer", e.target.value)}
+                                      className="h-6 px-2 rounded border border-emerald-400 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-background cursor-pointer"
+                                    >
+                                      <option value="A">Opsi A</option>
+                                      <option value="B">Opsi B</option>
+                                      <option value="C">Opsi C</option>
+                                      <option value="D">Opsi D</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`w-5 text-center font-bold ${q.keyAnswer === "A" ? "text-emerald-600" : "text-muted-foreground"}`}>A.</span>
+                                    <Input
+                                      placeholder="Pilihan A"
+                                      value={q.optionA || ""}
+                                      onChange={(e) => handleQuizQuestionChange(idx, "optionA", e.target.value)}
+                                      className={`text-xs ${q.keyAnswer === "A" ? "border-emerald-500 bg-emerald-50/20" : ""}`}
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`w-5 text-center font-bold ${q.keyAnswer === "B" ? "text-emerald-600" : "text-muted-foreground"}`}>B.</span>
+                                    <Input
+                                      placeholder="Pilihan B"
+                                      value={q.optionB || ""}
+                                      onChange={(e) => handleQuizQuestionChange(idx, "optionB", e.target.value)}
+                                      className={`text-xs ${q.keyAnswer === "B" ? "border-emerald-500 bg-emerald-50/20" : ""}`}
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`w-5 text-center font-bold ${q.keyAnswer === "C" ? "text-emerald-600" : "text-muted-foreground"}`}>C.</span>
+                                    <Input
+                                      placeholder="Pilihan C"
+                                      value={q.optionC || ""}
+                                      onChange={(e) => handleQuizQuestionChange(idx, "optionC", e.target.value)}
+                                      className={`text-xs ${q.keyAnswer === "C" ? "border-emerald-500 bg-emerald-50/20" : ""}`}
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`w-5 text-center font-bold ${q.keyAnswer === "D" ? "text-emerald-600" : "text-muted-foreground"}`}>D.</span>
+                                    <Input
+                                      placeholder="Pilihan D"
+                                      value={q.optionD || ""}
+                                      onChange={(e) => handleQuizQuestionChange(idx, "optionD", e.target.value)}
+                                      className={`text-xs ${q.keyAnswer === "D" ? "border-emerald-500 bg-emerald-50/20" : ""}`}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 2. MENJODOHKAN */}
+                            {qType === "MENJODOHKAN" && (
+                              <div className="space-y-2 pt-1 border-t border-border/50">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[11px] font-semibold text-muted-foreground">
+                                    Daftar Pasangan (Premis Kiri ↔ Pasangan Tepat Kanan):
+                                  </label>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleAddMatchingPair(idx)}
+                                    className="text-[11px] font-medium gap-1 h-6 px-2 border-emerald-400 text-emerald-700 dark:text-emerald-300 cursor-pointer"
+                                  >
+                                    <Plus className="h-3 w-3" /> Tambah Pasangan
+                                  </Button>
+                                </div>
+
+                                <div className="space-y-2">
+                                  {(q.pairs || []).map((pair, pIdx) => (
+                                    <div key={pIdx} className="flex items-center gap-2">
+                                      <span className="text-[11px] font-bold text-muted-foreground w-4 text-center">
+                                        {pIdx + 1}.
+                                      </span>
+                                      <Input
+                                        placeholder="Premis / Istilah Kiri..."
+                                        value={pair.left}
+                                        onChange={(e) => handleMatchingPairChange(idx, pIdx, "left", e.target.value)}
+                                        className="text-xs flex-1"
+                                      />
+                                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                      <Input
+                                        placeholder="Pasangan Jawaban Tepat Kanan..."
+                                        value={pair.right}
+                                        onChange={(e) => handleMatchingPairChange(idx, pIdx, "right", e.target.value)}
+                                        className="text-xs flex-1 border-emerald-300 dark:border-emerald-800"
+                                      />
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleRemoveMatchingPair(idx, pIdx)}
+                                        disabled={(q.pairs || []).length <= 2}
+                                        className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10 shrink-0 cursor-pointer"
+                                        title="Hapus Pasangan"
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground italic">
+                                  * Pada tampilan siswa, pilihan respon kanan otomatis diacak untuk dijodohkan.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* 3. BENAR / SALAH */}
+                            {qType === "BENAR_SALAH" && (
+                              <div className="space-y-1.5 pt-1 border-t border-border/50">
+                                <label className="text-[11px] font-semibold text-muted-foreground">Kunci Jawaban Pernyataan:</label>
+                                <div className="flex items-center gap-3">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleQuizQuestionChange(idx, "keyAnswer", "BENAR")}
+                                    variant={q.keyAnswer === "BENAR" ? "default" : "outline"}
+                                    className={`text-xs font-bold gap-1.5 h-8 px-4 cursor-pointer ${
+                                      q.keyAnswer === "BENAR"
+                                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        : "border-border text-foreground hover:bg-muted"
+                                    }`}
+                                  >
+                                    ✓ BENAR
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleQuizQuestionChange(idx, "keyAnswer", "SALAH")}
+                                    variant={q.keyAnswer === "SALAH" ? "default" : "outline"}
+                                    className={`text-xs font-bold gap-1.5 h-8 px-4 cursor-pointer ${
+                                      q.keyAnswer === "SALAH"
+                                        ? "bg-rose-600 hover:bg-rose-700 text-white"
+                                        : "border-border text-foreground hover:bg-muted"
+                                    }`}
+                                  >
+                                    ✗ SALAH
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 4. TEKS SINGKAT */}
+                            {qType === "ISIAN_SINGKAT" && (
+                              <div className="space-y-1.5 pt-1 border-t border-border/50">
+                                <label className="text-[11px] font-semibold text-muted-foreground">Kunci Jawaban Singkat:</label>
+                                <Input
+                                  placeholder="Masukkan kata / frasa jawaban singkat pasti..."
+                                  value={q.keyAnswer || ""}
+                                  onChange={(e) => handleQuizQuestionChange(idx, "keyAnswer", e.target.value)}
+                                  className="text-xs font-medium border-purple-300 dark:border-purple-800"
+                                />
+                                <p className="text-[10px] text-muted-foreground italic">
+                                  * Koreksi otomatis membandingkan teks jawaban siswa secara case-insensitive (mengabaikan huruf besar/kecil & spasi lebih).
+                                </p>
+                              </div>
+                            )}
+
+                            {/* 5. ESAI / PARAGRAF */}
+                            {qType === "ESAI" && (
+                              <div className="space-y-1.5 pt-1 border-t border-border/50">
+                                <label className="text-[11px] font-semibold text-muted-foreground">
+                                  Rubrik Penilaian / Kunci Acuan Guru (Opsional):
+                                </label>
+                                <Textarea
+                                  placeholder="Tuliskan kata kunci / panduan penilaian esai untuk acuan guru..."
+                                  value={q.rubrik || ""}
+                                  onChange={(e) => handleQuizQuestionChange(idx, "rubrik", e.target.value)}
+                                  className="text-xs font-normal min-h-[50px]"
+                                />
+                                <p className="text-[10px] text-muted-foreground italic">
+                                  * Jawaban esai siswa tersimpan dan dinilai secara manual oleh guru melalui lembar penilaian.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* 6. NUMERIK */}
+                            {qType === "NUMERIK" && (
+                              <div className="space-y-2 pt-1 border-t border-border/50">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <label className="text-[11px] font-semibold text-muted-foreground">Nilai Kunci Jawaban (Angka):</label>
+                                    <Input
+                                      type="text"
+                                      placeholder="Contoh: 100 atau 3.14"
+                                      value={q.keyAnswer || ""}
+                                      onChange={(e) => handleQuizQuestionChange(idx, "keyAnswer", e.target.value)}
+                                      className="text-xs font-mono font-medium border-indigo-300 dark:border-indigo-800"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[11px] font-semibold text-muted-foreground">Toleransi Nilai (± Margin):</label>
+                                    <Input
+                                      type="number"
+                                      step="any"
+                                      min={0}
+                                      placeholder="0 (isi 0 jika harus persis)"
+                                      value={q.tolerance ?? 0}
+                                      onChange={(e) => handleQuizQuestionChange(idx, "tolerance", parseFloat(e.target.value) || 0)}
+                                      className="text-xs font-mono"
+                                    />
+                                  </div>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground italic">
+                                  * Jawaban siswa dinilai benar jika nilai berada pada rentang [Kunci - Toleransi, Kunci + Toleransi].
+                                </p>
+                              </div>
+                            )}
+
+                            {/* 7. MELENGKAPI KALIMAT */}
+                            {qType === "MELENGKAPI" && (
+                              <div className="space-y-1.5 pt-1 border-t border-border/50">
+                                <label className="text-[11px] font-semibold text-muted-foreground">
+                                  Kunci Kata / Frasa Pengisi Bagian Kosong:
+                                </label>
+                                <Input
+                                  placeholder="Masukkan kata/frasa pengisi bagian rumpang [...]..."
+                                  value={q.clozeAnswer || q.keyAnswer || ""}
+                                  onChange={(e) => {
+                                    handleQuizQuestionChange(idx, "clozeAnswer", e.target.value);
+                                    handleQuizQuestionChange(idx, "keyAnswer", e.target.value);
+                                  }}
+                                  className="text-xs font-medium border-teal-300 dark:border-teal-800"
+                                />
+                                <p className="text-[10px] text-muted-foreground italic">
+                                  * Siswa akan diminta mengetikkan kata/frasa pengisi pada bagian rumpang kalimat.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
               <Button type="button" variant="outline" size="sm" className="text-xs font-medium px-4" onClick={onCancel}>

@@ -483,6 +483,7 @@ export interface CbtExamRow {
   parent_exam_id?: number | null;
   start_time?: string;
   end_time?: string;
+  questions_data?: string;
   created_at?: string;
 }
 

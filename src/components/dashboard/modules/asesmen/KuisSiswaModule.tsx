@@ -13,10 +13,18 @@ import {
   ArrowRight,
   RotateCcw,
   Send,
+  GitCompare,
+  ToggleLeft,
+  CaseSensitive,
+  AlignLeft,
+  Hash,
+  TextCursorInput,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -26,6 +34,7 @@ import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { CbtExamRow, CbtResultRow } from "@/services/mysqlServerFns";
 import { isSameClass } from "@/utils/classNormalization";
 import { toast } from "sonner";
+import { FormativeQuizQuestion, QuizQuestionType, QUIZ_QUESTION_TYPE_CONFIG } from "@/types/quiz";
 
 interface KuisSiswaModuleProps {
   userProfile?: any;
@@ -39,7 +48,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
 
   // Runner state for interactive quiz modal
   const [activeQuiz, setActiveQuiz] = useState<CbtExamRow | null>(null);
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, any>>({});
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [quizFinishedResult, setQuizFinishedResult] = useState<{ score: number; correct: number; total: number } | null>(null);
@@ -140,59 +149,100 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
     setQuizFinishedResult(null);
   };
 
-  // Sample interactive questions generator for demo quiz runner
-  const generateQuizQuestions = (exam: CbtExamRow) => {
-    return [
-      {
-        id: 1,
-        question: `Berdasarkan materi ${exam.subject_name || "Mata Pelajaran"}, apa prinsip utama yang harus diperhatikan dalam pelaksanaan kaidah pembelajaran?`,
-        options: [
-          "A. Menghafal seluruh materi tanpa pemahaman",
-          "B. Memahami konsep, mempraktikkan, dan menerapkan adab",
-          "C. Mengabaikan instruksi guru pengampu",
-          "D. Hanya mengerjakan saat ujian akhir semester",
-        ],
-        correct: 1, // B
-      },
-      {
-        id: 2,
-        question: `Berapa batas waktu ketuntasan standar KKM Kurikulum Merdeka yang berlaku di MTsN 2 Cilacap?`,
-        options: [
-          "A. 60 Poin",
-          "B. 70 Poin",
-          "C. 75 Poin",
-          "D. 85 Poin",
-        ],
-        correct: 2, // C
-      },
-      {
-        id: 3,
-        question: `Sikap terbaik yang ditunjukkan oleh seorang siswa mulia saat mengikuti sesi kuis interaktif adalah?`,
-        options: [
-          "A. Jujur, teliti, dan berdoa sebelum mengerjakan",
-          "B. Terburu-buru tanpa membaca soal",
-          "C. Bertanya jawaban kepada teman",
-          "D. Mengosongkan lembar jawaban",
-        ],
-        correct: 0, // A
-      },
-    ];
+  // Ambil butir soal asli kuis dari database MySQL
+  const getExamQuizQuestions = (exam: CbtExamRow): FormativeQuizQuestion[] => {
+    if (exam.questions_data) {
+      try {
+        const parsed = JSON.parse(exam.questions_data);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item, idx) => ({
+            ...item,
+            id: item.id || idx + 1,
+            type: (item.type as QuizQuestionType) || "PG",
+            points: Number(item.points) || 10,
+          }));
+        }
+      } catch (e) {}
+    }
+    return [];
   };
 
   const handleFinishQuiz = async () => {
     if (!activeQuiz) return;
-    const questions = generateQuizQuestions(activeQuiz);
+    const questions = getExamQuizQuestions(activeQuiz);
+    if (questions.length === 0) {
+      return toast.error("Tidak ada butir soal kuis untuk dinilai.");
+    }
+
+    let totalMaxPoints = 0;
+    let totalEarnedPoints = 0;
     let correctCount = 0;
 
     questions.forEach((q, idx) => {
-      if (quizAnswers[idx] !== undefined && Number(quizAnswers[idx]) === q.correct) {
-        correctCount++;
+      const qPoints = Number(q.points) || 10;
+      totalMaxPoints += qPoints;
+      const qType: QuizQuestionType = q.type || "PG";
+      const studentAns = quizAnswers[idx];
+
+      if (qType === "PG") {
+        const studentChoice = (studentAns || "").toString().trim().toUpperCase();
+        const correctChoice = (q.keyAnswer || "A").toString().trim().toUpperCase();
+        if (studentChoice && studentChoice === correctChoice) {
+          totalEarnedPoints += qPoints;
+          correctCount++;
+        }
+      } else if (qType === "BENAR_SALAH") {
+        const studentChoice = (studentAns || "").toString().trim().toUpperCase();
+        const correctChoice = (q.keyAnswer || "BENAR").toString().trim().toUpperCase();
+        if (studentChoice && studentChoice === correctChoice) {
+          totalEarnedPoints += qPoints;
+          correctCount++;
+        }
+      } else if (qType === "ISIAN_SINGKAT" || qType === "MELENGKAPI") {
+        const studentText = (studentAns || "").toString().trim().toLowerCase();
+        const targetText = (q.clozeAnswer || q.keyAnswer || "").toString().trim().toLowerCase();
+        if (studentText && targetText && studentText === targetText) {
+          totalEarnedPoints += qPoints;
+          correctCount++;
+        }
+      } else if (qType === "NUMERIK") {
+        const studentNum = parseFloat(String(studentAns || "").replace(",", "."));
+        const targetNum = parseFloat(String(q.keyAnswer || "0").replace(",", "."));
+        const tolerance = parseFloat(String(q.tolerance || "0")) || 0;
+        if (!isNaN(studentNum) && !isNaN(targetNum)) {
+          if (Math.abs(studentNum - targetNum) <= tolerance) {
+            totalEarnedPoints += qPoints;
+            correctCount++;
+          }
+        }
+      } else if (qType === "MENJODOHKAN") {
+        const pairs = q.pairs || [];
+        if (pairs.length > 0 && typeof studentAns === "object" && studentAns !== null) {
+          let matchingCorrect = 0;
+          const pairObj = studentAns as Record<number, any>;
+          pairs.forEach((pair, pIdx) => {
+            const studentPairVal = (pairObj[pIdx] || "").toString().trim().toLowerCase();
+            const correctPairVal = pair.right.trim().toLowerCase();
+            if (studentPairVal && studentPairVal === correctPairVal) {
+              matchingCorrect++;
+            }
+          });
+          const pairEarned = (matchingCorrect / pairs.length) * qPoints;
+          totalEarnedPoints += pairEarned;
+          if (matchingCorrect === pairs.length) {
+            correctCount++;
+          }
+        }
+      } else if (qType === "ESAI") {
+        // Jawaban esai disimpan
       }
     });
 
-    const calculatedScore = Math.round((correctCount / questions.length) * 100);
-    setSubmitting(true);
+    const calculatedScore = totalMaxPoints > 0
+      ? Math.min(100, Math.round((totalEarnedPoints / totalMaxPoints) * 100))
+      : 100;
 
+    setSubmitting(true);
     try {
       await MysqlDataService.saveCbtResult({
         exam_id: String(activeQuiz.id),
@@ -488,27 +538,48 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
               /* Runner Pengerjaan Soal */
               <div className="space-y-4 py-2 text-xs">
                 {(() => {
-                  const questions = generateQuizQuestions(activeQuiz);
+                  const questions = getExamQuizQuestions(activeQuiz);
+                  if (questions.length === 0) {
+                    return (
+                      <div className="py-8 text-center text-muted-foreground space-y-2">
+                        <AlertCircle className="h-8 w-8 mx-auto text-amber-500 opacity-60" />
+                        <p className="font-semibold text-xs">Belum ada butir soal kuis pada sesi ini.</p>
+                      </div>
+                    );
+                  }
+
                   const q = questions[currentQuestionIdx];
+                  const qType: QuizQuestionType = q.type || "PG";
+                  const cfg = QUIZ_QUESTION_TYPE_CONFIG[qType] || QUIZ_QUESTION_TYPE_CONFIG.PG;
+                  const currentAnswer = quizAnswers[currentQuestionIdx];
+
                   return (
                     <div className="space-y-4">
                       {/* Navigation bar indicator */}
                       <div className="flex items-center justify-between p-2.5 bg-muted/60 rounded-xl border border-border">
-                        <span className="font-bold text-xs text-foreground">
-                          Soal Pertanyaan #{currentQuestionIdx + 1} dari {questions.length}
-                        </span>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-foreground">
+                            Soal #{currentQuestionIdx + 1} dari {questions.length}
+                          </span>
+                          <Badge variant="outline" className={`text-[9px] font-semibold ${cfg.badgeColor}`}>
+                            {cfg.shortLabel}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground font-mono">
+                            ({q.points || 10} Poin)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 overflow-x-auto max-w-[200px] sm:max-w-none">
                           {questions.map((_, idx) => (
                             <button
                               key={idx}
                               type="button"
                               onClick={() => setCurrentQuestionIdx(idx)}
-                              className={`w-6 h-6 rounded-md text-[10px] font-bold transition ${
+                              className={`w-6 h-6 rounded-md text-[10px] font-bold transition cursor-pointer ${
                                 currentQuestionIdx === idx
-                                  ? "bg-amber-500 text-slate-950"
+                                  ? "bg-amber-500 text-slate-950 font-extrabold"
                                   : quizAnswers[idx] !== undefined
                                   ? "bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 border border-emerald-500/40"
-                                  : "bg-muted text-muted-foreground"
+                                  : "bg-muted text-muted-foreground hover:bg-muted/80"
                               }`}
                             >
                               {idx + 1}
@@ -518,37 +589,168 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
                       </div>
 
                       {/* Pertanyaan */}
-                      <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-                        <p className="font-bold text-sm text-foreground leading-relaxed">
+                      <div className="p-4 rounded-xl border border-border bg-card space-y-3 shadow-2xs">
+                        <p className="font-bold text-sm text-foreground leading-relaxed whitespace-pre-wrap">
                           {q.question}
                         </p>
 
-                        <RadioGroup
-                          value={quizAnswers[currentQuestionIdx] !== undefined ? String(quizAnswers[currentQuestionIdx]) : ""}
-                          onValueChange={(val) => {
-                            setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: val }));
-                          }}
-                          className="space-y-2 pt-2"
-                        >
-                          {q.options.map((opt, oIdx) => (
-                            <div
-                              key={oIdx}
-                              className={`flex items-center space-x-3 p-3 rounded-xl border transition cursor-pointer ${
-                                quizAnswers[currentQuestionIdx] === String(oIdx)
-                                  ? "border-amber-500 bg-amber-500/10 font-bold"
-                                  : "border-border hover:bg-muted/40"
-                              }`}
-                              onClick={() => {
-                                setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: String(oIdx) }));
-                              }}
-                            >
-                              <RadioGroupItem value={String(oIdx)} id={`opt-${oIdx}`} />
-                              <Label htmlFor={`opt-${oIdx}`} className="text-xs cursor-pointer flex-1">
-                                {opt}
-                              </Label>
+                        {/* Input interaktif sesuai jenis */}
+                        {qType === "PG" && (() => {
+                          const options = [
+                            { key: "A", text: q.optionA },
+                            { key: "B", text: q.optionB },
+                            { key: "C", text: q.optionC },
+                            { key: "D", text: q.optionD },
+                          ].filter((opt) => Boolean(opt.text));
+
+                          return (
+                            <div className="grid grid-cols-1 gap-2 pt-1">
+                              {options.map((opt) => {
+                                const isSelected = currentAnswer === opt.key;
+                                return (
+                                  <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: opt.key }))}
+                                    className={`p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition cursor-pointer text-xs ${
+                                      isSelected
+                                        ? "border-amber-500 bg-amber-500/15 text-amber-950 dark:text-amber-100 font-bold ring-1 ring-amber-500"
+                                        : "border-border hover:bg-muted/40 text-foreground"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`h-5 w-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                                        isSelected ? "bg-amber-500 text-slate-950" : "bg-muted text-muted-foreground"
+                                      }`}
+                                    >
+                                      {opt.key}
+                                    </span>
+                                    <span className="leading-snug">{opt.text}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
-                          ))}
-                        </RadioGroup>
+                          );
+                        })()}
+
+                        {qType === "MENJODOHKAN" && Array.isArray(q.pairs) && (() => {
+                          const currentPairAnswers = (typeof currentAnswer === "object" && currentAnswer !== null) ? (currentAnswer as Record<number, string>) : {};
+                          const rightOptions = Array.from(new Set(q.pairs.map((p) => p.right).filter(Boolean))).sort();
+
+                          return (
+                            <div className="space-y-2 pt-1">
+                              <span className="text-[11px] font-medium text-muted-foreground block">
+                                Pasangkan setiap premis berikut dengan jawaban yang tepat:
+                              </span>
+                              <div className="space-y-2">
+                                {q.pairs.map((pair, pIdx) => {
+                                  const selectedRight = currentPairAnswers[pIdx] || "";
+                                  return (
+                                    <div key={pIdx} className="p-2.5 rounded-lg bg-muted/30 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                      <span className="font-semibold text-foreground flex-1">{pair.left}</span>
+                                      <div className="flex items-center gap-1.5 flex-1 sm:max-w-xs">
+                                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
+                                        <select
+                                          value={selectedRight}
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            setQuizAnswers((prev) => ({
+                                              ...prev,
+                                              [currentQuestionIdx]: {
+                                                ...(typeof prev[currentQuestionIdx] === "object" && prev[currentQuestionIdx] !== null ? prev[currentQuestionIdx] : {}),
+                                                [pIdx]: val,
+                                              },
+                                            }));
+                                          }}
+                                          className="h-8 w-full px-2.5 rounded-md border border-border bg-background text-xs cursor-pointer"
+                                        >
+                                          <option value="">-- Pilih Pasangan --</option>
+                                          {rightOptions.map((opt, optIdx) => (
+                                            <option key={optIdx} value={opt}>
+                                              {opt}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {qType === "BENAR_SALAH" && (
+                          <div className="grid grid-cols-2 gap-3 max-w-sm pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: "BENAR" }))}
+                              className={`p-2.5 rounded-lg border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+                                currentAnswer === "BENAR"
+                                  ? "border-emerald-600 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500"
+                                  : "border-border bg-card hover:bg-muted text-foreground"
+                              }`}
+                            >
+                              ✓ BENAR
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: "SALAH" }))}
+                              className={`p-2.5 rounded-lg border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+                                currentAnswer === "SALAH"
+                                  ? "border-rose-600 bg-rose-500/20 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500"
+                                  : "border-border bg-card hover:bg-muted text-foreground"
+                              }`}
+                            >
+                              ✗ SALAH
+                            </button>
+                          </div>
+                        )}
+
+                        {qType === "ISIAN_SINGKAT" && (
+                          <div className="pt-1">
+                            <Input
+                              placeholder="Ketik jawaban singkat..."
+                              value={typeof currentAnswer === "string" ? currentAnswer : ""}
+                              onChange={(e) => setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: e.target.value }))}
+                              className="text-xs font-medium"
+                            />
+                          </div>
+                        )}
+
+                        {qType === "ESAI" && (
+                          <div className="pt-1">
+                            <Textarea
+                              placeholder="Tuliskan jawaban esai Anda..."
+                              value={typeof currentAnswer === "string" ? currentAnswer : ""}
+                              onChange={(e) => setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: e.target.value }))}
+                              className="text-xs min-h-[90px]"
+                            />
+                          </div>
+                        )}
+
+                        {qType === "NUMERIK" && (
+                          <div className="pt-1">
+                            <Input
+                              type="text"
+                              placeholder="Ketik nilai angka..."
+                              value={currentAnswer !== undefined && currentAnswer !== null ? String(currentAnswer) : ""}
+                              onChange={(e) => setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: e.target.value }))}
+                              className="text-xs font-mono font-medium max-w-xs"
+                            />
+                          </div>
+                        )}
+
+                        {qType === "MELENGKAPI" && (
+                          <div className="pt-1">
+                            <Input
+                              placeholder="Ketik kata / frasa pelengkap [...]..."
+                              value={typeof currentAnswer === "string" ? currentAnswer : ""}
+                              onChange={(e) => setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: e.target.value }))}
+                              className="text-xs font-medium"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Action buttons footer */}
@@ -558,7 +760,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
                           size="sm"
                           disabled={currentQuestionIdx === 0}
                           onClick={() => setCurrentQuestionIdx((prev) => Math.max(0, prev - 1))}
-                          className="text-xs font-bold"
+                          className="text-xs font-bold cursor-pointer"
                         >
                           ← Soal Sebelumnya
                         </Button>
@@ -567,7 +769,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
                           <Button
                             size="sm"
                             onClick={() => setCurrentQuestionIdx((prev) => prev + 1)}
-                            className="text-xs font-bold bg-primary text-primary-foreground"
+                            className="text-xs font-bold bg-primary text-primary-foreground cursor-pointer"
                           >
                             Soal Selanjutnya →
                           </Button>
@@ -576,7 +778,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
                             size="sm"
                             disabled={submitting}
                             onClick={handleFinishQuiz}
-                            className="text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs"
+                            className="text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs cursor-pointer"
                           >
                             <Send className="h-3.5 w-3.5 mr-1" /> Kumpulkan Kuis Live
                           </Button>

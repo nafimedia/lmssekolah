@@ -28,6 +28,7 @@ import { toast } from "sonner";
 
 export function WAGatewayConfigModule() {
   const [config, setConfig] = useState<WaGatewayConfigRow>({
+    is_enabled: false,
     provider: "flowkirim",
     api_token: "",
     sender_phone: "",
@@ -140,9 +141,52 @@ export function WAGatewayConfigModule() {
           Memuat konfigurasi WA Gateway dari database...
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Card 1: Provider & Credentials Settings */}
-          <Card className="border-border shadow-2xs bg-card">
+        <div className="space-y-5">
+          {/* Master Switch Card */}
+          <Card className={`border-2 transition-all ${config.is_enabled ? "border-emerald-500/40 bg-emerald-500/5 shadow-xs" : "border-border bg-muted/20"}`}>
+            <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base font-bold text-foreground">
+                    Status Layanan WA Gateway Madrasah
+                  </span>
+                  {config.is_enabled ? (
+                    <Badge className="bg-emerald-600 text-white font-bold text-xs gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Fitur Aktif
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground font-semibold text-xs border-border bg-background">
+                      ⚪ Fitur Dinonaktifkan (Tidur)
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground max-w-xl leading-relaxed">
+                  {config.is_enabled
+                    ? "Layanan WhatsApp aktif. Notifikasi KBM dan presensi dapat dikirimkan ke wali murid sesuai saluran yang diaktifkan."
+                    : "Saat dinonaktifkan, seluruh elemen WA Gateway disembunyikan dari akun guru/wali kelas/waka/kamad demi keamanan kuota API token dan kerapian tampilan sistem."}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setConfig({ ...config, is_enabled: !config.is_enabled })}
+                  className={`font-bold text-xs px-4 h-9 shadow-xs transition-all ${
+                    config.is_enabled
+                      ? "bg-rose-600 hover:bg-rose-700 text-white"
+                      : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  }`}
+                >
+                  {config.is_enabled ? "Matikan WA Gateway" : "Aktifkan WA Gateway"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Card 1: Provider & Credentials Settings */}
+            <Card className="border-border shadow-2xs bg-card">
             <CardHeader className="p-4 border-b border-border/60 bg-muted/20">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <KeyRound className="h-4 w-4 text-primary" /> Provider & Kredensial API
@@ -372,6 +416,7 @@ export function WAGatewayConfigModule() {
             </CardContent>
           </Card>
         </div>
+      </div>
       )}
     </div>
   );

@@ -48,18 +48,22 @@ export function WaliKelasDashboardView({
   const [todayPresensi, setTodayPresensi] = useState<any[]>([]);
   const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
   const [studentNotes, setStudentNotes] = useState<any[]>([]);
+  const [isWaActive, setIsWaActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadRealData = async () => {
     setIsLoading(true);
     try {
       const todayStr = new Date().toISOString().split("T")[0];
-      const [dbUsers, dbPresensi, dbJadwal, dbNotes] = await Promise.all([
+      const [dbUsers, dbPresensi, dbJadwal, dbNotes, waConfig] = await Promise.all([
         MysqlDataService.getUsers(),
         MysqlDataService.getKbmPresensi("ALL", "ALL", todayStr),
         MysqlDataService.getJadwalList(),
         MysqlDataService.getStudentKbmNotes("ALL", "ALL"),
+        MysqlDataService.getWaGatewayConfig().catch(() => null),
       ]);
+
+      setIsWaActive(Boolean(waConfig?.is_enabled));
 
       // Filter real students for this rombel
       const classStudents = (dbUsers || []).filter((u: any) => {
@@ -306,14 +310,16 @@ export function WaliKelasDashboardView({
                         <p className="text-muted-foreground leading-relaxed">{note.notes}</p>
                       </div>
 
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 shrink-0 gap-1"
-                        onClick={() => handleDirectWaReminder(note)}
-                      >
-                        <PhoneCall className="h-3.5 w-3.5" /> WA Ortus
-                      </Button>
+                      {isWaActive && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 shrink-0 gap-1"
+                          onClick={() => handleDirectWaReminder(note)}
+                        >
+                          <PhoneCall className="h-3.5 w-3.5" /> WA Ortu
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>

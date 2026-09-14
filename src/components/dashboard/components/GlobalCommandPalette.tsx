@@ -38,6 +38,7 @@ interface GlobalCommandPaletteProps {
   assignedRoles: string[];
   allowedMenuKeys?: string[];
   onOpenWaModal?: () => void;
+  isSuperAdmin?: boolean;
 }
 
 export function GlobalCommandPalette({
@@ -49,6 +50,7 @@ export function GlobalCommandPalette({
   assignedRoles,
   allowedMenuKeys,
   onOpenWaModal,
+  isSuperAdmin,
 }: GlobalCommandPaletteProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -143,7 +145,7 @@ export function GlobalCommandPalette({
             <BookMarked className="h-4 w-4 text-emerald-500" />
             <span>Setor Hafalan Tahfidz</span>
           </CommandItem>
-          {onOpenWaModal && activeRole !== "siswa" && (
+          {onOpenWaModal && isSuperAdmin && (
             <CommandItem
               onSelect={() => {
                 onOpenWaModal();

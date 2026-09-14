@@ -69,6 +69,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
   const [selectedStudentForSurat, setSelectedStudentForSurat] = useState<StudentItem | null>(null);
   const [isSuratOpen, setIsSuratOpen] = useState(false);
   const [isPrintDataKelasOpen, setIsPrintDataKelasOpen] = useState(false);
+  const [isWaActive, setIsWaActive] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -78,8 +79,11 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
       MysqlDataService.getMasterRombels().catch(() => []),
       MysqlDataService.getUsers().catch(() => []),
       MysqlDataService.getAnnouncements().catch(() => []),
-    ]).then(([rombelRows, users, anns]) => {
+      MysqlDataService.getWaGatewayConfig().catch(() => null),
+    ]).then(([rombelRows, users, anns, waCfg]) => {
       if (!isMounted) return;
+
+      setIsWaActive(Boolean(waCfg?.is_enabled));
 
       if (anns && anns.length > 0) {
         setAnnouncements(
@@ -427,6 +431,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               onOpenCetakSurat={handleOpenCetakSurat}
               onUpdateStudent={handleUpdateStudentParentData}
               isReadOnly={true}
+              isWaActive={isWaActive}
             />
           )}
         </>
@@ -533,6 +538,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               onSendWa={handleSendWaAlert}
               onOpenCetakSurat={handleOpenCetakSurat}
               onUpdateStudent={handleUpdateStudentParentData}
+              isWaActive={isWaActive}
             />
           )}
 
@@ -542,6 +548,7 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               announcements={announcements}
               onAddAnnouncement={handleAddAnnouncement}
               onBroadcastWaGroup={handleBroadcastWaGroup}
+              isWaActive={isWaActive}
             />
           )}
         </>

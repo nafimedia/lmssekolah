@@ -19,6 +19,7 @@ interface PengumumanKelasTabProps {
   announcements: PengumumanItem[];
   onAddAnnouncement: (item: { title: string; content: string }) => void;
   onBroadcastWaGroup: (title: string, content: string) => void;
+  isWaActive?: boolean;
 }
 
 export function PengumumanKelasTab({
@@ -26,6 +27,7 @@ export function PengumumanKelasTab({
   announcements,
   onAddAnnouncement,
   onBroadcastWaGroup,
+  isWaActive = false,
 }: PengumumanKelasTabProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -78,18 +80,20 @@ export function PengumumanKelasTab({
               <Button type="submit" size="sm" className="w-full bg-primary text-primary-foreground font-bold text-xs gap-1.5">
                 <Plus className="h-4 w-4" /> Terbitkan Pengumuman Kelas
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="w-full text-xs font-bold text-purple-600 dark:text-purple-400 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 gap-1.5"
-                onClick={() => {
-                  if (!title || !content) return;
-                  onBroadcastWaGroup(title, content);
-                }}
-              >
-                <Send className="h-3.5 w-3.5" /> Broadcast WA Group Ortu
-              </Button>
+              {isWaActive && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs font-bold text-purple-600 dark:text-purple-400 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 gap-1.5"
+                  onClick={() => {
+                    if (!title || !content) return;
+                    onBroadcastWaGroup(title, content);
+                  }}
+                >
+                  <Send className="h-3.5 w-3.5" /> Broadcast WA Group Ortu
+                </Button>
+              )}
             </div>
           </form>
         </CardContent>

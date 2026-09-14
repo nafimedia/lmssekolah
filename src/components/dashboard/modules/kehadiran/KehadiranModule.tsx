@@ -69,6 +69,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
   }, [initialClass]);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [isWaActive, setIsWaActive] = useState(false);
   const [isWaLogModalOpen, setIsWaLogModalOpen] = useState(false);
   const [waLogMessage, setWaLogMessage] = useState("");
   const [selectedStudentForWa, setSelectedStudentForWa] = useState<AttendanceStudentRow | null>(null);
@@ -80,6 +81,20 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
   const [activeTab, setActiveTab] = useState<"harian_wali" | "rekap_rekomendasi">("harian_wali");
 
   const todayStr = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    let isMounted = true;
+    MysqlDataService.getWaGatewayConfig()
+      .then((cfg) => {
+        if (isMounted) {
+          setIsWaActive(Boolean(cfg?.is_enabled));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -670,7 +685,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                       <th className="py-3 px-4">Rombel</th>
                       <th className="py-3 px-4 text-center w-64">Status Kehadiran Hari Ini</th>
                       <th className="py-3 px-4">Catatan / Keterangan</th>
-                      <th className="py-3 px-4 text-center w-36">Lapor Ortu WA</th>
+                      {isWaActive && <th className="py-3 px-4 text-center w-36">Lapor Ortu WA</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -736,20 +751,22 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                             onChange={(e) => handleSetDailyNotes(s.id, e.target.value)}
                           />
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          {s.status !== "HADIR" ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 text-[10px] font-bold gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                              onClick={() => handleSendWaAlert(s)}
-                            >
-                              <Send className="h-3 w-3" /> WA Ortu
-                            </Button>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground font-medium">-</span>
-                          )}
-                        </td>
+                        {isWaActive && (
+                          <td className="py-3 px-4 text-center">
+                            {s.status !== "HADIR" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-[10px] font-bold gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                onClick={() => handleSendWaAlert(s)}
+                              >
+                                <Send className="h-3 w-3" /> WA Ortu
+                              </Button>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground font-medium">-</span>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -789,7 +806,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                       <th className="py-3 px-4 text-center">Alpa</th>
                       <th className="py-3 px-4 text-center">% Kehadiran</th>
                       <th className="py-3 px-4 text-center">Status Presensi</th>
-                      <th className="py-3 px-4 text-center">Aksi WA</th>
+                      {isWaActive && <th className="py-3 px-4 text-center">Aksi WA</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -815,29 +832,31 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                             </Badge>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          {row.alpa > 0 || row.sakit > 0 || row.izin > 0 ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-[10px] font-bold gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                              onClick={() =>
-                                handleSendWaAlert({
-                                  name: row.name,
-                                  nisn: row.nisn,
-                                  class: row.class,
-                                  status: row.alpa > 0 ? `Alpa ${row.alpa}x` : row.sakit > 0 ? `Sakit ${row.sakit}x` : `Izin ${row.izin}x`,
-                                  parentWa: row.parentWa,
-                                  notes: `Rekap semester: Hadir ${row.hadir}x, Izin ${row.izin}x, Sakit ${row.sakit}x, Alpa ${row.alpa}x (${row.pct}%)`,
-                                })
-                              }
-                            >
-                              <Send className="h-3 w-3" /> WA Ortu
-                            </Button>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground">-</span>
-                          )}
-                        </td>
+                        {isWaActive && (
+                          <td className="py-3 px-4 text-center">
+                            {row.alpa > 0 || row.sakit > 0 || row.izin > 0 ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-[10px] font-bold gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                onClick={() =>
+                                  handleSendWaAlert({
+                                    name: row.name,
+                                    nisn: row.nisn,
+                                    class: row.class,
+                                    status: row.alpa > 0 ? `Alpa ${row.alpa}x` : row.sakit > 0 ? `Sakit ${row.sakit}x` : `Izin ${row.izin}x`,
+                                    parentWa: row.parentWa,
+                                    notes: `Rekap semester: Hadir ${row.hadir}x, Izin ${row.izin}x, Sakit ${row.sakit}x, Alpa ${row.alpa}x (${row.pct}%)`,
+                                  })
+                                }
+                              >
+                                <Send className="h-3 w-3" /> WA Ortu
+                              </Button>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">-</span>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

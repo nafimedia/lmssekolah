@@ -4929,6 +4929,7 @@ export const saveBulkPeerAssessmentsFn = createServerFn({ method: "POST" })
 
 export interface WaGatewayConfigRow {
   id?: string;
+  is_enabled?: boolean;
   provider: "flowkirim" | "fonnte" | "wablas" | "whacenter" | "custom";
   api_token: string;
   sender_phone: string;
@@ -4980,6 +4981,7 @@ async function ensureWaGatewaySchemaMigrated() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `).catch(() => {});
 
+    await execute("ALTER TABLE wa_gateway_config ADD COLUMN is_enabled TINYINT(1) DEFAULT 0 AFTER id").catch(() => {});
     await execute("ALTER TABLE wa_gateway_config ADD COLUMN template_presensi TEXT").catch(() => {});
     await execute("ALTER TABLE wa_gateway_config ADD COLUMN template_tahfidz TEXT").catch(() => {});
     await execute("ALTER TABLE wa_gateway_config ADD COLUMN template_pengumuman TEXT").catch(() => {});
@@ -5005,6 +5007,7 @@ export async function dispatchWaViaProvider(
         const r = rows[0];
         activeCfg = {
           id: String(r.id),
+          is_enabled: Boolean(r.is_enabled),
           provider: r.provider || "flowkirim",
           api_token: r.api_token || "",
           sender_phone: r.sender_phone || "",
@@ -5019,6 +5022,10 @@ export async function dispatchWaViaProvider(
           template_rapor: r.template_rapor || "",
         };
       }
+    }
+
+    if (activeCfg && activeCfg.is_enabled === false) {
+      return { success: false, message: "Layanan WA Gateway saat ini dinonaktifkan oleh administrator madrasah." };
     }
 
     const token = (activeCfg?.api_token || process.env.FLOWKIRIM_TOKEN || process.env.FONNTE_TOKEN || "").trim();
@@ -5135,6 +5142,7 @@ export async function dispatchWaViaProvider(
 export const getWaGatewayConfigFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<WaGatewayConfigRow> => {
     const defaultConfig: WaGatewayConfigRow = {
+      is_enabled: false,
       provider: "flowkirim",
       api_token: "",
       sender_phone: "0812-3456-7890",
@@ -5157,6 +5165,7 @@ export const getWaGatewayConfigFn = createServerFn({ method: "GET" }).handler(
         const r = rows[0];
         return {
           id: String(r.id),
+          is_enabled: Boolean(r.is_enabled),
           provider: r.provider || "flowkirim",
           api_token: r.api_token || "",
           sender_phone: r.sender_phone || "0812-3456-7890",
@@ -5189,11 +5198,12 @@ export const saveWaGatewayConfigFn = createServerFn({ method: "POST" })
 
       await execute(
         `INSERT INTO wa_gateway_config (
-          provider, api_token, sender_phone, api_url,
+          is_enabled, provider, api_token, sender_phone, api_url,
           is_presensi_active, is_tahfidz_active, is_pengumuman_active, is_rapor_active,
           template_presensi, template_tahfidz, template_pengumuman, template_rapor
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
+          c.is_enabled ? 1 : 0,
           c.provider || "flowkirim",
           c.api_token || "",
           c.sender_phone || "",

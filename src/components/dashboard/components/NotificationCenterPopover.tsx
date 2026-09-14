@@ -49,6 +49,7 @@ export function NotificationCenterPopover({
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isWaActive, setIsWaActive] = useState<boolean>(false);
 
   const fetchRealNotifications = async () => {
     setIsLoading(true);
@@ -62,8 +63,12 @@ export function NotificationCenterPopover({
 
       const items: NotificationItem[] = [];
 
-      // 1. RBAC: WA Gateway Logs (ONLY for Teachers, Wali Kelas, Waka, Kamad, Admin)
-      if (!isSiswa) {
+      // 1. RBAC: WA Gateway Logs (Hanya jika WA Gateway Aktif)
+      const waConfig = await MysqlDataService.getWaGatewayConfig().catch(() => null);
+      const waActive = Boolean(waConfig?.is_enabled);
+      setIsWaActive(waActive);
+
+      if (!isSiswa && waActive) {
         const waLogs = await MysqlDataService.getWaLogs().catch(() => []);
         if (waLogs && waLogs.length > 0) {
           waLogs.slice(0, 3).forEach((w: any) => {
@@ -257,7 +262,7 @@ export function NotificationCenterPopover({
     if (activeRole === "guru" || activeRole === "walikelas" || activeRole === "wali_kelas") {
       return [
         { id: "all", label: "Semua" },
-        { id: "wa", label: "📲 WA Gateway" },
+        ...(isWaActive ? [{ id: "wa", label: "📲 WA Gateway" }] : []),
         { id: "tahfidz", label: "📖 Tahfidz" },
         { id: "akademik", label: "📢 Pengumuman" },
         { id: "presensi", label: "📅 Agenda" },
@@ -266,7 +271,7 @@ export function NotificationCenterPopover({
     return [
       { id: "all", label: "Semua" },
       { id: "monitoring", label: "🏛️ Audit Executive" },
-      { id: "wa", label: "📲 WA Logs" },
+      ...(isWaActive ? [{ id: "wa", label: "📲 WA Logs" }] : []),
       { id: "akademik", label: "📢 Pengumuman" },
       { id: "presensi", label: "📅 Agenda" },
     ];

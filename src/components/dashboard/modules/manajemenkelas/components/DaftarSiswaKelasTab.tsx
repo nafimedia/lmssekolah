@@ -27,6 +27,7 @@ interface DaftarSiswaKelasTabProps {
   onOpenCetakSurat: (student: StudentItem) => void;
   onUpdateStudent?: (studentId: string, parentName: string, parentWa: string) => void;
   isReadOnly?: boolean;
+  isWaActive?: boolean;
 }
 
 export function DaftarSiswaKelasTab({
@@ -36,6 +37,7 @@ export function DaftarSiswaKelasTab({
   onOpenCetakSurat,
   onUpdateStudent,
   isReadOnly = false,
+  isWaActive = false,
 }: DaftarSiswaKelasTabProps) {
   const [search, setSearch] = useState("");
   const [sortColumn, setSortColumn] = useState<string>("name");
@@ -199,15 +201,17 @@ export function DaftarSiswaKelasTab({
                         <Pencil className="h-3 w-3" /> Edit Ortu
                       </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[11px] font-bold text-purple-600 dark:text-purple-400 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 gap-1"
-                        onClick={() => onSendWa(s)}
-                        title="Kirim WA Alert Ke Orang Tua"
-                      >
-                        <Send className="h-3 w-3" /> WA Ortu
-                      </Button>
+                      {isWaActive && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] font-bold text-purple-600 dark:text-purple-400 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 gap-1"
+                          onClick={() => onSendWa(s)}
+                          title="Kirim WA Alert Ke Orang Tua"
+                        >
+                          <Send className="h-3 w-3" /> WA Ortu
+                        </Button>
+                      )}
 
                       <Button
                         size="sm"

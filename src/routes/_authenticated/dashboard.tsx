@@ -1026,7 +1026,7 @@ function DashboardContent({
               </DropdownMenu>
             ) : null}
 
-            {(activeRole === "guru" || activeRole === "walikelas" || activeRole === "wali_kelas" || activeRole === "kamad" || activeRole === "waka" || activeRole === "admin_akademik" || activeRole === "admin") && (
+            {isSuperAdmin && (
               <Button size="sm" variant="outline" className="hidden sm:flex text-xs font-bold gap-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 h-8 sm:h-9 px-2 sm:px-3 shrink-0" onClick={() => setIsWaModalOpen(true)}>
                 <Send className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span>WA Gateway</span>
               </Button>
@@ -1043,7 +1043,8 @@ function DashboardContent({
               handleSwitchRole={handleSwitchRole}
               activeRole={activeRole}
               assignedRoles={myAssignedRoles}
-              onOpenWaModal={() => setIsWaModalOpen(true)}
+              isSuperAdmin={isSuperAdmin}
+              onOpenWaModal={isSuperAdmin ? () => setIsWaModalOpen(true) : undefined}
             />
 
             {/* User Profile Dropdown */}

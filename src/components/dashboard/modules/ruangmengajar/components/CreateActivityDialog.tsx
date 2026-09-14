@@ -80,6 +80,108 @@ export interface CreateActivityDialogProps {
   }) => void;
 }
 
+const categoryConfig: Record<
+  ActivityTypeOption,
+  {
+    titleLabel: string;
+    titlePlaceholder: string;
+    instructionPlaceholder: string;
+    showFileUpload: boolean;
+    showStructuredQuestions: boolean;
+    structuredQuestionsLabel: string;
+    submissionMethods: { value: string; label: string }[];
+  }
+> = {
+  LKPD: {
+    titleLabel: "Judul LKPD:",
+    titlePlaceholder: "Masukkan judul LKPD...",
+    instructionPlaceholder: "Tuliskan petunjuk atau instruksi pengerjaan LKPD...",
+    showFileUpload: true,
+    showStructuredQuestions: true,
+    structuredQuestionsLabel: "Lembar Butir Pertanyaan LKPD",
+    submissionMethods: [
+      { value: "TEXT_AND_FILE", label: "Kombinasi (Teks Digital & Unggah Berkas)" },
+      { value: "TEXT_ONLY", label: "Jawaban Teks Digital Langsung" },
+      { value: "FILE_ONLY", label: "Unggah Berkas PDF / Foto Lembar Kerja" },
+    ],
+  },
+  TUGAS_KELOMPOK: {
+    titleLabel: "Topik Diskusi / Kelompok:",
+    titlePlaceholder: "Masukkan topik diskusi kelompok...",
+    instructionPlaceholder: "Tuliskan petunjuk diskusi kelompok dan pembagian tugas...",
+    showFileUpload: true,
+    showStructuredQuestions: false,
+    structuredQuestionsLabel: "Butir Tugas Kelompok",
+    submissionMethods: [
+      { value: "TEXT_AND_FILE", label: "Kombinasi (Teks Digital & Unggah Berkas)" },
+      { value: "TEXT_ONLY", label: "Jawaban Teks Digital Langsung" },
+      { value: "FILE_ONLY", label: "Unggah Berkas / Dokumen Kelompok" },
+    ],
+  },
+  TUGAS_MANDIRI: {
+    titleLabel: "Judul Tugas Mandiri:",
+    titlePlaceholder: "Masukkan judul tugas mandiri...",
+    instructionPlaceholder: "Tuliskan petunjuk atau instruksi tugas mandiri...",
+    showFileUpload: true,
+    showStructuredQuestions: false,
+    structuredQuestionsLabel: "Butir Tugas Mandiri",
+    submissionMethods: [
+      { value: "TEXT_AND_FILE", label: "Kombinasi (Teks Digital & Unggah Berkas)" },
+      { value: "TEXT_ONLY", label: "Jawaban Teks Digital Langsung" },
+      { value: "FILE_ONLY", label: "Unggah Berkas Hasil Pengerjaan" },
+    ],
+  },
+  QUIZ: {
+    titleLabel: "Nama Kuis Formatif:",
+    titlePlaceholder: "Masukkan nama kuis formatif...",
+    instructionPlaceholder: "Tuliskan petunjuk atau aturan pengerjaan kuis...",
+    showFileUpload: false,
+    showStructuredQuestions: false,
+    structuredQuestionsLabel: "Butir Soal Kuis",
+    submissionMethods: [
+      { value: "QUIZ_ONLINE", label: "Pengerjaan Kuis Interaktif di Aplikasi" },
+    ],
+  },
+  PRAKTIKUM: {
+    titleLabel: "Judul Praktikum & Lab:",
+    titlePlaceholder: "Masukkan judul praktikum atau percobaan...",
+    instructionPlaceholder: "Tuliskan tujuan praktikum, alat/bahan, dan langkah kerja...",
+    showFileUpload: true,
+    showStructuredQuestions: true,
+    structuredQuestionsLabel: "Lembar Langkah & Pengamatan Praktikum",
+    submissionMethods: [
+      { value: "TEXT_AND_FILE", label: "Kombinasi (Teks Digital & Unggah Laporan)" },
+      { value: "FILE_ONLY", label: "Unggah Berkas Laporan Praktikum (PDF / Foto)" },
+      { value: "TEXT_ONLY", label: "Isian Teks Data Pengamatan Langsung" },
+    ],
+  },
+  HAFALAN: {
+    titleLabel: "Materi / Target Hafalan:",
+    titlePlaceholder: "Masukkan materi atau target hafalan...",
+    instructionPlaceholder: "Tuliskan kriteria kelancaran, tajwid, dan ketentuan setoran hafalan...",
+    showFileUpload: false,
+    showStructuredQuestions: true,
+    structuredQuestionsLabel: "Daftar Rincian Target Butir Hafalan",
+    submissionMethods: [
+      { value: "TATAP_MUKA", label: "Setoran Langsung di Kelas (Tatap Muka)" },
+      { value: "AUDIO_RECORDING", label: "Rekaman Audio / Suara" },
+      { value: "VIDEO_RECORDING", label: "Rekaman Video" },
+      { value: "KOMBINASI", label: "Bebas (Langsung / Rekaman)" },
+    ],
+  },
+  PROYEK_P5: {
+    titleLabel: "Judul Aktivitas:",
+    titlePlaceholder: "Masukkan judul aktivitas...",
+    instructionPlaceholder: "Tuliskan instruksi aktivitas...",
+    showFileUpload: true,
+    showStructuredQuestions: false,
+    structuredQuestionsLabel: "Lembar Butir Aktivitas",
+    submissionMethods: [
+      { value: "TEXT_AND_FILE", label: "Kombinasi (Teks Digital & Unggah Berkas)" },
+    ],
+  },
+};
+
 export function CreateActivityForm({
   activeRombel,
   activeMapel,
@@ -91,6 +193,7 @@ export function CreateActivityForm({
   const isEditing = Boolean(initialData?.id);
   const [title, setTitle] = useState(initialData?.title || "");
   const [type, setType] = useState<ActivityTypeOption>(initialData?.type || "LKPD");
+  const currentConfig = categoryConfig[type] || categoryConfig.LKPD;
   const [instructions, setInstructions] = useState(initialData?.instructions || "");
   const [dueDateDate, setDueDateDate] = useState("");
   const [dueDateTime, setDueDateTime] = useState("23:59");
@@ -178,12 +281,6 @@ export function CreateActivityForm({
       disabled: false,
     },
     {
-      id: "PROYEK_P5",
-      label: "🎯 Proyek Kokurikuler",
-      color: "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
-      disabled: false,
-    },
-    {
       id: "HAFALAN",
       label: "📖 Setoran Hafalan",
       color: "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300",
@@ -194,10 +291,14 @@ export function CreateActivityForm({
   const handleSelectType = (opt: typeof activityOptions[0]) => {
     if (opt.disabled) return;
     setType(opt.id);
+    const config = categoryConfig[opt.id] || categoryConfig.LKPD;
     if (opt.id === "TUGAS_KELOMPOK") {
       setPeerAssessmentEnabled(true);
     } else {
       setPeerAssessmentEnabled(false);
+    }
+    if (config.submissionMethods[0]) {
+      setSubmissionType(config.submissionMethods[0].value);
     }
   };
 
@@ -326,8 +427,8 @@ export function CreateActivityForm({
       finalAttachment = attachmentUrl.trim();
     }
 
-    // Format questions_data jika tipe LKPD / Praktikum / Tugas Mandiri / Proyek / Hafalan
-    const isQuestionType = type === "LKPD" || type === "PRAKTIKUM" || type === "TUGAS_MANDIRI" || type === "PROYEK_P5" || type === "HAFALAN";
+    // Format questions_data jika tipe mendukung butir pertanyaan terstruktur
+    const isQuestionType = categoryConfig[type]?.showStructuredQuestions ?? false;
     const questionsDataStr = isQuestionType && lkpdQuestions.length > 0 ? JSON.stringify(lkpdQuestions) : "";
 
     const activeUser = MysqlAuthService.getActiveUser();
@@ -409,12 +510,7 @@ export function CreateActivityForm({
     await handleSaveActivity(false);
   };
 
-  const isQuestionType =
-    type === "LKPD" ||
-    type === "PRAKTIKUM" ||
-    type === "TUGAS_MANDIRI" ||
-    type === "PROYEK_P5" ||
-    type === "HAFALAN";
+  const isQuestionType = categoryConfig[type]?.showStructuredQuestions ?? false;
 
   return (
     <>
@@ -547,9 +643,9 @@ export function CreateActivityForm({
 
             {/* Judul Aktivitas */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground block">Judul Tugas / LKPD:</label>
+              <label className="text-xs font-medium text-foreground block">{currentConfig.titleLabel}</label>
               <Input
-                placeholder="Contoh: LKPD 2 — Analisis Teks Ulasan & Kaidah Kebahasaan"
+                placeholder={currentConfig.titlePlaceholder}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-xs font-normal"
@@ -580,9 +676,7 @@ export function CreateActivityForm({
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium truncate">
                     🗓️ {formatDueDateTime(dueDateDate, dueDateTime)}
                   </p>
-                ) : (
-                  <p className="text-[10px] text-muted-foreground"></p>
-                )}
+                ) : null}
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-foreground block">Nilai Maksimal:</label>
@@ -605,202 +699,186 @@ export function CreateActivityForm({
                 <select
                   value={submissionType}
                   onChange={(e) => setSubmissionType(e.target.value)}
-                  className="h-9 w-full rounded-md border border-border bg-background px-3 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  disabled={type === "QUIZ"}
+                  className="h-9 w-full rounded-md border border-border bg-background px-3 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-75 disabled:bg-muted"
                 >
-                  <option value="TEXT_AND_FILE">Kombinasi (Teks Digital & Unggah Berkas)</option>
-                  <option value="TEXT_ONLY">Jawaban Teks Digital Langsung</option>
-                  <option value="FILE_ONLY">Unggah Berkas PDF / Foto Lembar Kerja</option>
+                  {currentConfig.submissionMethods.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
             {/* Lampiran Berkas LKPD Fisik vs E-Library vs URL Eksternal */}
-            <div className="space-y-3 p-3.5 rounded-xl border border-border/80 bg-muted/20">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
-                  <FileText className="h-4 w-4 text-emerald-600" /> Lembar Kerja / Bahan Ajar Pendukung (Opsional):
-                </label>
+            {currentConfig.showFileUpload && (
+              <div className="space-y-2.5 p-3 rounded-xl border border-border/80 bg-muted/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-emerald-600" /> Lembar Kerja / Bahan Pendukung (Opsional):
+                  </label>
 
-                {/* Tab Selector Mode Upload */}
-                <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg border border-border">
-                  <button
-                    type="button"
-                    onClick={() => setUploadMode("FILE")}
-                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "FILE"
-                      ? "bg-background text-foreground shadow-2xs font-semibold"
-                      : "text-muted-foreground hover:text-foreground font-medium"
-                      }`}
-                  >
-                    <Upload className="h-3.5 w-3.5" /> Unggah Berkas
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUploadMode("ELIBRARY")}
-                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "ELIBRARY"
-                      ? "bg-background text-purple-700 dark:text-purple-300 shadow-2xs font-semibold"
-                      : "text-muted-foreground hover:text-foreground font-medium"
-                      }`}
-                  >
-                    <Library className="h-3.5 w-3.5 text-purple-600" /> Dari E-Library
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUploadMode("URL")}
-                    className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "URL"
-                      ? "bg-background text-foreground shadow-2xs font-semibold"
-                      : "text-muted-foreground hover:text-foreground font-medium"
-                      }`}
-                  >
-                    <Link2 className="h-3.5 w-3.5" /> Tautan Web
-                  </button>
-                </div>
-              </div>
-
-              {uploadMode === "FILE" && (
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                    className="hidden"
-                    id="lkpd-file-input"
-                  />
-
-                  {!selectedFile ? (
-                    <label
-                      htmlFor="lkpd-file-input"
-                      className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-emerald-500/40 hover:border-emerald-500 rounded-xl cursor-pointer bg-card/60 hover:bg-emerald-500/5 transition text-center"
+                  {/* Tab Selector Mode Upload */}
+                  <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg border border-border">
+                    <button
+                      type="button"
+                      onClick={() => setUploadMode("FILE")}
+                      className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "FILE"
+                        ? "bg-background text-foreground shadow-2xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground font-medium"
+                        }`}
                     >
-                      <Upload className="h-6 w-6 text-emerald-600 mb-1" />
-                      <span className="text-xs font-medium text-foreground">Klik untuk memilih berkas LKPD</span>
-                      <span className="text-[11px] text-muted-foreground mt-0.5">
-                        Berkas fisik otomatis disimpan ke File Server (`/uploads/lkpd/`)
-                      </span>
-                    </label>
-                  ) : (
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/30">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <FileCheck className="h-5 w-5 text-emerald-600 shrink-0" />
-                        <div className="truncate">
-                          <p className="text-xs font-semibold text-foreground truncate">{selectedFile.name}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {(selectedFile.size / 1024 / 1024).toFixed(2)} MB · Berkas siap disimpan ke File Server
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleClearFile}
-                        className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10 shrink-0"
+                      <Upload className="h-3.5 w-3.5" /> Unggah Berkas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUploadMode("ELIBRARY")}
+                      className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "ELIBRARY"
+                        ? "bg-background text-purple-700 dark:text-purple-300 shadow-2xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground font-medium"
+                        }`}
+                    >
+                      <Library className="h-3.5 w-3.5 text-purple-600" /> Dari E-Library
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUploadMode("URL")}
+                      className={`px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1.5 ${uploadMode === "URL"
+                        ? "bg-background text-foreground shadow-2xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground font-medium"
+                        }`}
+                    >
+                      <Link2 className="h-3.5 w-3.5" /> Tautan Web
+                    </button>
+                  </div>
+                </div>
+
+                {uploadMode === "FILE" && (
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      className="hidden"
+                      id="lkpd-file-input"
+                    />
+
+                    {!selectedFile ? (
+                      <label
+                        htmlFor="lkpd-file-input"
+                        className="flex items-center justify-center gap-2 p-2.5 border border-dashed border-border hover:border-emerald-500 rounded-lg cursor-pointer bg-card/60 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 transition text-center"
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {uploadMode === "ELIBRARY" && (
-                <div className="space-y-2">
-                  {!selectedElibraryBook ? (
-                    <div
-                      onClick={() => setIsPickElibOpen(true)}
-                      className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-purple-500/40 hover:border-purple-500 rounded-xl cursor-pointer bg-purple-500/5 hover:bg-purple-500/10 transition text-center"
-                    >
-                      <Library className="h-6 w-6 text-purple-600 mb-1" />
-                      <span className="text-xs font-medium text-foreground">Klik untuk memilih Referensi / Buku dari E-Library</span>
-                      <span className="text-[11px] text-muted-foreground mt-0.5">
-                        Pilih koleksi buku paket digital, modul, audio, atau video MTsN 2 Cilacap tanpa upload ulang
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-purple-500/40 bg-purple-50 dark:bg-purple-950/30">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <Library className="h-5 w-5 text-purple-600 shrink-0" />
-                        <div className="truncate">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-xs font-semibold text-foreground truncate">{selectedElibraryBook.title}</p>
-                            <Badge variant="outline" className="text-[9px] uppercase font-semibold text-purple-600 border-purple-300">
-                              {selectedElibraryBook.type || "PDF"}
-                            </Badge>
+                        <Upload className="h-4 w-4 text-emerald-600" />
+                        <span className="text-xs font-medium text-foreground">Pilih berkas pendukung dari perangkat (PDF, Word, Gambar)</span>
+                      </label>
+                    ) : (
+                      <div className="flex items-center justify-between p-2.5 rounded-lg border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/30">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <FileCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <div className="truncate">
+                            <p className="text-xs font-semibold text-foreground truncate">{selectedFile.name}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
                           </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            {selectedElibraryBook.tag || "Umum"} · {selectedElibraryBook.size || "Koleksi E-Library"}
-                          </p>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsPickElibOpen(true)}
-                          className="h-7 px-2.5 text-xs font-medium text-purple-700 dark:text-purple-300"
-                        >
-                          Ganti
-                        </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={handleClearElibraryBook}
-                          className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10 shrink-0"
+                          onClick={handleClearFile}
+                          className="h-6 w-6 p-0 text-red-500 hover:bg-red-500/10 shrink-0"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
 
-              {uploadMode === "URL" && (
-                <div className="space-y-1.5">
-                  <Input
-                    placeholder="Contoh: https://drive.google.com/... atau https://canva.com/..."
-                    value={attachmentUrl}
-                    onChange={(e) => setAttachmentUrl(e.target.value)}
-                    className="text-xs font-normal"
-                  />
-                  <p className="text-[11px] text-muted-foreground font-medium">
-                    Tempel tautan Google Drive, Canva, atau lembar kerja digital online lainnya.
-                  </p>
-                </div>
-              )}
-            </div>
+                {uploadMode === "ELIBRARY" && (
+                  <div className="space-y-2">
+                    {!selectedElibraryBook ? (
+                      <div
+                        onClick={() => setIsPickElibOpen(true)}
+                        className="flex items-center justify-center gap-2 p-2.5 border border-dashed border-purple-500/40 hover:border-purple-500 rounded-lg cursor-pointer bg-purple-500/5 hover:bg-purple-500/10 transition text-center"
+                      >
+                        <Library className="h-4 w-4 text-purple-600" />
+                        <span className="text-xs font-medium text-foreground">Pilih referensi buku/modul dari E-Library madrasah</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between p-2.5 rounded-lg border border-purple-500/40 bg-purple-50 dark:bg-purple-950/30">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Library className="h-4 w-4 text-purple-600 shrink-0" />
+                          <div className="truncate">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-semibold text-foreground truncate">{selectedElibraryBook.title}</p>
+                              <Badge variant="outline" className="text-[9px] uppercase font-semibold text-purple-600 border-purple-300">
+                                {selectedElibraryBook.type || "PDF"}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsPickElibOpen(true)}
+                            className="h-6 px-2 text-[11px] font-medium text-purple-700 dark:text-purple-300"
+                          >
+                            Ganti
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleClearElibraryBook}
+                            className="h-6 w-6 p-0 text-red-500 hover:bg-red-500/10 shrink-0"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {uploadMode === "URL" && (
+                  <div className="space-y-1">
+                    <Input
+                      placeholder="Masukkan tautan Google Drive atau materi online..."
+                      value={attachmentUrl}
+                      onChange={(e) => setAttachmentUrl(e.target.value)}
+                      className="text-xs font-normal"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Petunjuk & Deskripsi Aktivitas */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground block">Petunjuk & Deskripsi Tugas:</label>
+              <label className="text-xs font-medium text-foreground block">Petunjuk & Deskripsi:</label>
               <Textarea
-                placeholder="Tuliskan petunjuk pengerjaan, instruksi kelompok, atau panduan tugas bagi siswa..."
+                placeholder={currentConfig.instructionPlaceholder}
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                className="text-xs font-normal min-h-[80px]"
+                className="text-xs font-normal min-h-[75px]"
               />
             </div>
 
-            {/* Builder Lembar Soal / Butir Pertanyaan LKPD Terstruktur */}
+            {/* Builder Lembar Soal / Butir Pertanyaan Terstruktur */}
             {isQuestionType && (
               <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                       <ListOrdered className="h-4 w-4 text-emerald-600" />
-                      {type === "PRAKTIKUM"
-                        ? `Lembar Langkah & Pengamatan Praktikum (${lkpdQuestions.length} Butir)`
-                        : type === "HAFALAN"
-                          ? `Target Ayat & Butir Setoran Hafalan (${lkpdQuestions.length} Butir)`
-                          : type === "PROYEK_P5"
-                            ? `Tahapan & Lembar Kerja Proyek (${lkpdQuestions.length} Butir)`
-                            : `Lembar Butir Pertanyaan / Tugas Terstruktur (${lkpdQuestions.length} Butir)`}
+                      {currentConfig.structuredQuestionsLabel} ({lkpdQuestions.length} Butir)
                     </span>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-
-                    </p>
                   </div>
                   <Button
                     type="button"
@@ -814,15 +892,15 @@ export function CreateActivityForm({
                 </div>
 
                 {lkpdQuestions.length === 0 ? (
-                  <div className="text-center py-4 border border-dashed border-emerald-500/20 rounded-lg text-muted-foreground text-xs font-medium">
-                    Tidak ada butir soal spesifik (siswa menjawab bebas sesuai petunjuk umum). Klik tombol di atas jika ingin menambah butir soal esai.
+                  <div className="text-center py-3.5 border border-dashed border-emerald-500/20 rounded-lg text-muted-foreground text-xs font-medium">
+                    Belum ada butir pertanyaan spesifik. Klik "+ Tambah Butir" jika ingin menambahkan butir soal.
                   </div>
                 ) : (
                   <div className="space-y-2.5">
                     {lkpdQuestions.map((q, idx) => (
                       <div key={idx} className="p-3 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-card space-y-2 text-xs">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-emerald-700 dark:text-emerald-300">Pertanyaan #{idx + 1}</span>
+                          <span className="font-semibold text-emerald-700 dark:text-emerald-300">Butir #{idx + 1}</span>
                           <div className="flex items-center gap-2">
                             <label className="text-[11px] font-medium text-muted-foreground">Bobot Poin:</label>
                             <Input
@@ -837,7 +915,7 @@ export function CreateActivityForm({
                               variant="ghost"
                               onClick={() => handleRemoveLkpdQuestion(idx)}
                               className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10"
-                              title="Hapus Butir Soal"
+                              title="Hapus Butir"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>

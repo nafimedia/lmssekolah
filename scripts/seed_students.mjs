@@ -38,7 +38,6 @@ async function seedStudents() {
   console.log('===============================================================');
 
   const excelPath = path.join(process.cwd(), 'DAFTAR KELAS 7, 8 DAN 9.xlsx');
-  const patchSqlPath = path.join(process.cwd(), 'patch_siswa_7a_7b_8a.sql');
 
   const targetStudentsK7 = [];
   let wafiqStudent = null;
@@ -146,32 +145,8 @@ async function seedStudents() {
         }
       }
     }
-  } else if (fs.existsSync(patchSqlPath)) {
-    console.log(`📂 Berkas Excel tidak ada di direktori, membaca data riil dari ${patchSqlPath}...`);
-    const sqlContent = fs.readFileSync(patchSqlPath, 'utf-8');
-    const insertRegex = /VALUES \('([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)'/g;
-    let match;
-    while ((match = insertRegex.exec(sqlContent)) !== null) {
-      const [, id, email, pass, fullName, idType, nisn, className] = match;
-      const s = {
-        fullName,
-        noInduk: nisn,
-        nisn,
-        gender: 'L',
-        className,
-        rombelCode: className.toLowerCase().replace(/[^a-z0-9]/g, ''),
-      };
-      if (className === 'VII-A' || className === 'VII-B') {
-        targetStudentsK7.push(s);
-      } else if (className === 'VIII-A') {
-        wafiqStudent = s;
-      }
-    }
-    console.log(`✅ Berhasil mengekstrak ${targetStudentsK7.length} siswa Kelas 7 dari berkas patch SQL:`);
-    console.log(`   - 7A: ${targetStudentsK7.filter((s) => s.className === 'VII-A').length} siswa`);
-    console.log(`   - 7B: ${targetStudentsK7.filter((s) => s.className === 'VII-B').length} siswa`);
   } else {
-    throw new Error('Tidak ditemukan berkas Excel DAFTAR KELAS 7, 8 DAN 9.xlsx ataupun patch_siswa_7a_7b_8a.sql!');
+    throw new Error('Berkas Excel "DAFTAR KELAS 7, 8 DAN 9.xlsx" tidak ditemukan! Harap pastikan berkas Excel berada di folder utama proyek.');
   }
 
   if (zainunStudent) {

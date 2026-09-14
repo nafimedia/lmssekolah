@@ -6,6 +6,7 @@ import {
   Plus,
   Check,
   Eye,
+  EyeOff,
   Library,
   Upload,
   Music,
@@ -255,6 +256,33 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
     }
   };
 
+  // Toggle Show / Hide akses Bab (Tingkat Bab seperti di Moodle)
+  const handleToggleTopicStatus = async (topic: LearningTopicRow, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const nextStatus = topic.status === "Terkunci" ? "Aktif" : "Terkunci";
+    setTopics((prev) =>
+      prev.map((t) => (t.id === topic.id ? { ...t, status: nextStatus } : t))
+    );
+    if (selectedTopic && selectedTopic.id === topic.id) {
+      setSelectedTopic((prev) => (prev ? { ...prev, status: nextStatus } : null));
+    }
+
+    try {
+      const ok = await MysqlDataService.updateLearningTopicStatus(topic.id, nextStatus);
+      if (ok) {
+        if (nextStatus === "Aktif") {
+          toast.success(`🔓 Bab "${topic.title}" sekarang DIBUKA untuk siswa.`);
+        } else {
+          toast.success(`🔒 Bab "${topic.title}" DISEMBUNYIKAN (Hide) dari siswa.`);
+        }
+      } else {
+        toast.error("Gagal memperbarui status akses Bab.");
+      }
+    } catch (err) {
+      toast.error("Terjadi kendala saat mengubah status Bab.");
+    }
+  };
+
   // Upload Material to Selected Topic
   const handleUploadModul = async (data: UploadModulPayload) => {
     if (!data.title.trim()) {
@@ -483,25 +511,54 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                       <div
                         key={t.id}
                         onClick={() => setSelectedTopic(t)}
-                        className="group relative p-3.5 rounded-xl border border-border bg-card hover:border-emerald-500/50 hover:bg-emerald-50/15 dark:hover:bg-emerald-950/15 transition-all shadow-xs cursor-pointer flex flex-col justify-between"
+                        className={`group relative p-3.5 rounded-xl border transition-all shadow-xs cursor-pointer flex flex-col justify-between ${
+                          t.status === "Terkunci"
+                            ? "border-amber-500/40 bg-amber-500/5 hover:border-amber-500/60"
+                            : "border-border bg-card hover:border-emerald-500/50 hover:bg-emerald-50/15 dark:hover:bg-emerald-950/15"
+                        }`}
                       >
                         <div>
                           <div className="flex items-center justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50/50 dark:bg-emerald-950/50">
                                 Bab #{t.sequence_order || idx + 1}
                               </Badge>
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
                                 {topicMats.length} Bahan Ajar
                               </Badge>
-                              {openMats.length > 0 && (
-                                <Badge className="bg-emerald-600 text-white text-[9px] px-1.5 py-0">
-                                  🔓 {openMats.length} Terbuka
+                              {t.status === "Terkunci" ? (
+                                <Badge variant="outline" className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[9px] px-1.5 py-0 flex items-center gap-0.5">
+                                  <EyeOff className="h-2.5 w-2.5" /> Bab Tersembunyi (Hide)
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-emerald-600 text-white text-[9px] px-1.5 py-0 flex items-center gap-0.5">
+                                  <Eye className="h-2.5 w-2.5" /> Bab Terbuka
                                 </Badge>
                               )}
                             </div>
 
                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={`h-6 px-1.5 text-[10px] font-semibold gap-1 rounded-md transition-all ${
+                                  t.status === "Terkunci"
+                                    ? "border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 bg-amber-50/50 dark:bg-amber-950/50"
+                                    : "border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/15 bg-emerald-50/50 dark:bg-emerald-950/50"
+                                }`}
+                                onClick={(e) => handleToggleTopicStatus(t, e)}
+                                title={t.status === "Terkunci" ? "Buka akses Bab ini untuk siswa" : "Sembunyikan Bab ini dari siswa (seperti di Moodle)"}
+                              >
+                                {t.status === "Terkunci" ? (
+                                  <>
+                                    <EyeOff className="h-2.5 w-2.5 text-amber-600" /> Hide
+                                  </>
+                                ) : (
+                                  <>
+                                    <Eye className="h-2.5 w-2.5 text-emerald-600" /> Show
+                                  </>
+                                )}
+                              </Button>
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -625,6 +682,29 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-semibold">
                       {currentTopicMaterials.length} Materi
                     </Badge>
+                    {selectedTopic.id !== "unassigned" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`h-5.5 px-2 text-[10px] font-semibold gap-1 rounded-md ${
+                          selectedTopic.status === "Terkunci"
+                            ? "border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 bg-amber-50/50 dark:bg-amber-950/50"
+                            : "border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 bg-emerald-50/50 dark:bg-emerald-950/50"
+                        }`}
+                        onClick={() => handleToggleTopicStatus(selectedTopic)}
+                        title={selectedTopic.status === "Terkunci" ? "Buka akses Bab ini untuk siswa" : "Sembunyikan Bab ini dari siswa (seperti di Moodle)"}
+                      >
+                        {selectedTopic.status === "Terkunci" ? (
+                          <>
+                            <EyeOff className="h-3 w-3 text-amber-600" /> Bab Tersembunyi (Hide)
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-3 w-3 text-emerald-600" /> Bab Terbuka (Show)
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                   <p className="text-[10px] text-muted-foreground truncate">
                     {activeMapel} · {activeRombel}

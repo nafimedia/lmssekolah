@@ -33,5 +33,14 @@ export async function runLearningTopicsTests() {
   assert.equal(studentVisibleMaterials.length, 1, "Only unlocked materials should be visible to students");
   assert.equal(studentVisibleMaterials[0].id, "m1");
 
+  // 4. Test Bab-Level Hide (Moodle Section-level hiding)
+  const lockedTopicIds = new Set(["top_2"]); // Bab 2 is hidden (like Moodle eye-off icon)
+  const studentFilteredAll = sampleMaterials.filter((m) => {
+    if (m.topic_id && lockedTopicIds.has(m.topic_id)) return false;
+    return m.status.toLowerCase() !== "terkunci";
+  });
+  assert.equal(studentFilteredAll.some((m) => m.id === "m2"), false, "Materials in locked topic must be hidden from students");
+  assert.equal(studentFilteredAll.some((m) => m.id === "m1"), true, "Materials in active topic must be visible");
+
   console.log("✅ [PASS] Learning Topics & Bab Grouping Unit Tests Passed!");
 }

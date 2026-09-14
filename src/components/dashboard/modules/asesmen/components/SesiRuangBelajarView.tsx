@@ -66,6 +66,7 @@ export function SesiRuangBelajarView({
   const [sessionJam, setSessionJam] = useState<string>("Jam KBM Terjadwal");
   const [myKbmPresensi, setMyKbmPresensi] = useState<any | null>(null);
   const [isSubmittingPresensi, setIsSubmittingPresensi] = useState(false);
+  const [learningTopics, setLearningTopics] = useState<any[]>([]);
 
   // Refleksi state
   const [myReflection, setMyReflection] = useState<any | null>(null);
@@ -79,12 +80,14 @@ export function SesiRuangBelajarView({
   const loadSessionData = async () => {
     try {
       setLoading(true);
-      const [allJournals, allPresensi, allSchedules, allNotes] = await Promise.all([
+      const [allJournals, allPresensi, allSchedules, allNotes, allTopics] = await Promise.all([
         MysqlDataService.getJournals().catch(() => []),
         MysqlDataService.getKbmPresensi(studentRombel, activeMapel, todayStr).catch(() => []),
         MysqlDataService.getJadwalList().catch(() => []),
         MysqlDataService.getStudentKbmNotes(studentRombel, activeMapel).catch(() => []),
+        MysqlDataService.getLearningTopics({ subject_name: activeMapel, class_name: studentRombel }).catch(() => []),
       ]);
+      setLearningTopics(allTopics || []);
 
       // 1. Cari Jurnal Pembelajaran Guru Hari Ini atau Jurnal Terakhir untuk Mapel + Rombel ini
       const matchedJournals = (allJournals || []).filter((j: any) => {
@@ -225,9 +228,17 @@ export function SesiRuangBelajarView({
     }
   };
 
-  // 4. Filter Materi KBM yang aktif / Show oleh guru
+  // 4. Filter Materi KBM yang aktif / Show oleh guru (termasuk Bab Hide seperti di Moodle)
+  const lockedTopicIds = new Set(
+    learningTopics
+      .filter((t: any) => (t.status || "Aktif").toLowerCase() === "terkunci")
+      .map((t: any) => String(t.id))
+  );
+
   const activeMaterials = materialsList.filter((m: any) => {
     if (!isSameSubject(m.subject_name || "", activeMapel)) return false;
+    // Jika Bab induk disembunyikan (Hide di Moodle), sembunyikan semua materi di Bab ini
+    if (m.topic_id && lockedTopicIds.has(String(m.topic_id))) return false;
     const rawStatus = (m.status || "Aktif").toLowerCase().trim();
     return rawStatus !== "terkunci" && rawStatus !== "sembunyi" && rawStatus !== "draf";
   });

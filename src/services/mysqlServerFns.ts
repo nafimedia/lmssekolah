@@ -2408,6 +2408,19 @@ export const deleteLearningTopicFn = createServerFn({ method: "POST" })
     }
   });
 
+export const updateLearningTopicStatusFn = createServerFn({ method: "POST" })
+  .validator((data: { id: string; status: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("UPDATE learning_topics SET status = ? WHERE id = ?", [data.status, data.id]);
+      return { success: true };
+    } catch (e) {
+      console.error("[updateLearningTopicStatusFn Error]:", e);
+      return { success: false };
+    }
+  });
+
 export const markMaterialCompletedFn = createServerFn({ method: "POST" })
   .validator((data: { material_id: string; student_id?: string; student_nisn: string; student_name?: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean; message?: string }> => {

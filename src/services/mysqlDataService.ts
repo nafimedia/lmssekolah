@@ -47,6 +47,7 @@ import {
   getLearningTopicsFn,
   saveLearningTopicFn,
   deleteLearningTopicFn,
+  updateLearningTopicStatusFn,
   markMaterialCompletedFn,
   getMaterialCompletionsFn,
   getHafalanFn,
@@ -815,6 +816,16 @@ export class MysqlDataService {
       return res.success;
     } catch (e) {
       console.warn("deleteLearningTopicFn failed:", e);
+      return false;
+    }
+  }
+
+  static async updateLearningTopicStatus(id: string, status: string): Promise<boolean> {
+    try {
+      const res = await updateLearningTopicStatusFn({ data: { id, status } });
+      return res.success;
+    } catch (e) {
+      console.warn("updateLearningTopicStatusFn failed:", e);
       return false;
     }
   }

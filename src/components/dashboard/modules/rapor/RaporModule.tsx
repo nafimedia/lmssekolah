@@ -912,7 +912,7 @@ export function RaporModule({
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-emerald-600" /> Pratinjau Lembar Hasil Belajar Siswa
             </div>
-            <Badge className="bg-emerald-600 text-white font-mono text-xs">
+            <Badge className="bg-emerald-600 text-white font-semibold text-xs tabular-nums">
               {targetStudent?.rombel || defaultRombel}
             </Badge>
           </DialogTitle>
@@ -958,7 +958,7 @@ export function RaporModule({
               </div>
               <div>
                 NISN / NIS:{" "}
-                <span className="font-mono">{targetStudent?.nis || "-"}</span>
+                <span className="font-medium text-slate-800 tabular-nums">{targetStudent?.nis || "-"}</span>
               </div>
             </div>
             <div>
@@ -994,17 +994,17 @@ export function RaporModule({
               <tbody>
                 {subjectLegerBreakdown.map((m, idx) => (
                   <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
-                    <td className="border border-slate-300 p-2 text-center font-mono">
+                    <td className="border border-slate-300 p-2 text-center tabular-nums font-medium">
                       {idx + 1}
                     </td>
                     <td className="border border-slate-300 p-2 font-bold">{m.mapel}</td>
                     <td className="border border-slate-300 p-2 text-center text-slate-700">
                       {m.teacher}
                     </td>
-                    <td className="border border-slate-300 p-2 text-center font-mono">
+                    <td className="border border-slate-300 p-2 text-center tabular-nums font-medium">
                       {m.tugas}
                     </td>
-                    <td className="border border-slate-300 p-2 text-center font-mono">
+                    <td className="border border-slate-300 p-2 text-center tabular-nums font-medium">
                       {m.cbt}
                     </td>
                     <td className="border border-slate-300 p-2 text-center font-bold text-emerald-900 text-xs">
@@ -1066,15 +1066,15 @@ export function RaporModule({
                 <tbody>
                   <tr className="border-b border-slate-200">
                     <td className="py-1">Sakit (S)</td>
-                    <td className="py-1 text-right font-mono font-bold">0 Hari</td>
+                    <td className="py-1 text-right font-bold tabular-nums">0 Hari</td>
                   </tr>
                   <tr className="border-b border-slate-200">
                     <td className="py-1">Izin (I)</td>
-                    <td className="py-1 text-right font-mono font-bold">0 Hari</td>
+                    <td className="py-1 text-right font-bold tabular-nums">0 Hari</td>
                   </tr>
                   <tr>
                     <td className="py-1">Tanpa Keterangan (A)</td>
-                    <td className="py-1 text-right font-mono font-bold text-emerald-600">
+                    <td className="py-1 text-right font-bold text-emerald-600 tabular-nums">
                       0 Hari
                     </td>
                   </tr>
@@ -1249,7 +1249,7 @@ export function RaporModule({
                 <CardTitle className="text-base font-bold">
                   Rekap Nilai Mata Pelajaran
                 </CardTitle>
-                <Badge variant="outline" className="font-mono text-xs border-emerald-500/40 text-emerald-700 dark:text-emerald-300">
+                <Badge variant="outline" className="text-xs font-semibold tabular-nums border-emerald-500/40 text-emerald-700 dark:text-emerald-300">
                   Target KKTP: 75
                 </Badge>
               </CardHeader>
@@ -1271,27 +1271,27 @@ export function RaporModule({
                       {subjectLegerBreakdown.map((m, i) => (
                         <tr key={i} className="hover:bg-muted/30 transition">
                           <td className="p-3 font-bold text-foreground flex items-center gap-2">
-                            <span className="font-mono text-[11px] text-muted-foreground w-12 shrink-0">
+                            <span className="text-[11px] font-semibold text-muted-foreground w-12 shrink-0">
                               {m.code}
                             </span>
                             <span>{m.mapel}</span>
                           </td>
                           <td className="p-3 text-muted-foreground">{m.teacher}</td>
-                          <td className="p-3 text-center font-mono font-bold">
+                          <td className="p-3 text-center font-bold tabular-nums">
                             {m.tugas > 0 ? (
                               <span className="text-foreground">{m.tugas}</span>
                             ) : (
                               <span className="text-muted-foreground/60">-</span>
                             )}
                           </td>
-                          <td className="p-3 text-center font-mono font-bold">
+                          <td className="p-3 text-center font-bold tabular-nums">
                             {m.cbt > 0 ? (
                               <span className="text-foreground">{m.cbt}</span>
                             ) : (
                               <span className="text-muted-foreground/60">-</span>
                             )}
                           </td>
-                          <td className="p-3 text-center font-mono font-bold">
+                          <td className="p-3 text-center font-bold tabular-nums">
                             <span
                               className={
                                 m.avg >= 75
@@ -1334,7 +1334,7 @@ export function RaporModule({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0">
+                            <Badge variant="secondary" className="font-semibold text-[10px] px-1.5 py-0 tabular-nums">
                               {m.code}
                             </Badge>
                             <span className="font-bold text-xs text-foreground">{m.mapel}</span>
@@ -1358,20 +1358,20 @@ export function RaporModule({
                       <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50 text-center">
                         <div className="bg-background p-1.5 rounded-lg border border-border/60">
                           <div className="text-[10px] text-muted-foreground">Formatif</div>
-                          <div className="font-mono font-bold text-xs text-foreground mt-0.5">
+                          <div className="font-bold text-xs text-foreground mt-0.5 tabular-nums">
                             {m.tugas > 0 ? m.tugas : "-"}
                           </div>
                         </div>
                         <div className="bg-background p-1.5 rounded-lg border border-border/60">
                           <div className="text-[10px] text-muted-foreground">Sumatif</div>
-                          <div className="font-mono font-bold text-xs text-foreground mt-0.5">
+                          <div className="font-bold text-xs text-foreground mt-0.5 tabular-nums">
                             {m.cbt > 0 ? m.cbt : "-"}
                           </div>
                         </div>
                         <div className="bg-background p-1.5 rounded-lg border border-border/60">
                           <div className="text-[10px] text-muted-foreground">Nilai Akhir</div>
                           <div
-                            className={`font-mono font-extrabold text-xs mt-0.5 ${m.avg >= 75
+                            className={`font-extrabold text-xs mt-0.5 tabular-nums ${m.avg >= 75
                               ? "text-emerald-600 dark:text-emerald-400"
                               : m.avg > 0
                                 ? "text-amber-600"
@@ -1411,10 +1411,10 @@ export function RaporModule({
                           variant="outline"
                           className={
                             isOptimal
-                              ? "text-xs font-mono font-bold border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
+                              ? "text-xs font-bold border-emerald-500/30 text-emerald-600 bg-emerald-500/5 tabular-nums"
                               : inProgress
-                                ? "text-xs font-mono font-bold border-amber-500/30 text-amber-600 bg-amber-500/5"
-                                : "text-xs font-mono font-medium border-border text-muted-foreground"
+                                ? "text-xs font-bold border-amber-500/30 text-amber-600 bg-amber-500/5 tabular-nums"
+                                : "text-xs font-medium border-border text-muted-foreground tabular-nums"
                           }
                         >
                           {x.progressPct}% Dicapai
@@ -1474,8 +1474,8 @@ export function RaporModule({
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Award className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <Award className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
             {selectedClass === "ALL"
               ? "Laporan Pembelajaran & Rekap Leger Seluruh Kelas"
               : `Laporan Pembelajaran & Rekap Leger ${selectedClass}`}
@@ -1624,15 +1624,15 @@ export function RaporModule({
                   {classSummaries.map((c) => (
                     <tr key={c.rombel} className="hover:bg-muted/30 transition">
                       <td className="p-3 font-bold text-foreground flex items-center gap-2">
-                        <Badge variant="outline" className="font-mono font-bold bg-muted/40">
+                        <Badge variant="outline" className="font-semibold bg-muted/40 border-border">
                           {c.rombel}
                         </Badge>
                       </td>
                       <td className="p-3 text-muted-foreground font-medium">{c.waliKelas}</td>
-                      <td className="p-3 text-center font-bold text-foreground">
+                      <td className="p-3 text-center font-bold text-foreground tabular-nums">
                         {c.totalSiswa} Siswa
                       </td>
-                      <td className="p-3 text-center font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                      <td className="p-3 text-center font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                         {c.avgScore} Poin
                       </td>
                       <td className="p-3 text-center">
@@ -1683,13 +1683,13 @@ export function RaporModule({
       {/* SECTION 2: TABEL LEGER NILAI SISWA REAL */}
       <Card className="border-border shadow-xs bg-card">
         <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
-          <CardTitle className="text-base font-bold flex items-center gap-2">
+          <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
             <Award className="h-5 w-5 text-emerald-600" />
             <span>
               Leger Nilai Siswa - {selectedClass === "ALL" ? "Seluruh Kelas" : selectedClass}
             </span>
           </CardTitle>
-          <Badge className="bg-emerald-600 text-white font-bold text-xs">
+          <Badge className="bg-emerald-600 text-white font-bold text-xs tabular-nums">
             {filteredStudents.length} Siswa
           </Badge>
         </CardHeader>
@@ -1711,7 +1711,7 @@ export function RaporModule({
               <thead className="bg-muted/50 text-muted-foreground font-bold text-left border-b border-border">
                 <tr>
                   <th className="p-3">Nama Siswa</th>
-                  <th className="p-3 font-mono">NISN</th>
+                  <th className="p-3">NISN</th>
                   <th className="p-3">Rombel / Kelas</th>
                   <th className="p-3 text-center">Submisi Tugas</th>
                   <th className="p-3 text-center">Ujian CBT</th>
@@ -1724,19 +1724,19 @@ export function RaporModule({
                 {filteredStudents.map((s) => (
                   <tr key={s.id} className="hover:bg-muted/30 transition">
                     <td className="p-3 font-bold text-foreground">{s.name}</td>
-                    <td className="p-3 font-mono text-muted-foreground">{s.nis}</td>
+                    <td className="p-3 font-medium text-muted-foreground tabular-nums">{s.nis}</td>
                     <td className="p-3 font-bold">
-                      <Badge variant="outline" className="font-mono text-[11px] bg-muted/40">
+                      <Badge variant="outline" className="text-[11px] font-semibold bg-muted/40 border-border">
                         {s.rombel}
                       </Badge>
                     </td>
-                    <td className="p-3 text-center font-mono font-bold">
+                    <td className="p-3 text-center font-semibold text-foreground tabular-nums">
                       {s.tugasCount} Submisi
                     </td>
-                    <td className="p-3 text-center font-mono font-bold">
+                    <td className="p-3 text-center font-semibold text-foreground tabular-nums">
                       {s.cbtCount} CBT
                     </td>
-                    <td className="p-3 text-center font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                    <td className="p-3 text-center font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                       {s.avgScore} Poin
                     </td>
                     <td className="p-3 text-center">

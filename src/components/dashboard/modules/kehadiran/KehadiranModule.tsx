@@ -420,7 +420,7 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
         {/* Read-Only Status Banner */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-border pb-3 bg-card p-3 rounded-xl shadow-xs">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="font-mono text-xs font-bold">
+            <Badge variant="outline" className="text-xs font-semibold tabular-nums">
               🎓 {studentClass} • NISN: {studentNis}
             </Badge>
             <Badge className="bg-emerald-600 text-white font-bold flex items-center gap-1">
@@ -483,8 +483,8 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <CalendarCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Presensi & Kehadiran Siswa
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <CalendarCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" /> Presensi & Kehadiran Siswa
           </h1>
         </div>
 
@@ -676,8 +676,8 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                   <tbody className="divide-y divide-border">
                     {filteredDailyStudents.map((s, idx) => (
                       <tr key={s.id} className="hover:bg-muted/30 transition">
-                        <td className="py-3 px-4 text-center font-mono font-medium">{idx + 1}</td>
-                        <td className="py-3 px-4 font-mono font-semibold text-muted-foreground">{s.nisn}</td>
+                        <td className="py-3 px-4 text-center font-medium text-muted-foreground tabular-nums">{idx + 1}</td>
+                        <td className="py-3 px-4 font-medium text-muted-foreground tabular-nums">{s.nisn}</td>
                         <td className="py-3 px-4 font-bold text-foreground">{s.name}</td>
                         <td className="py-3 px-4 font-semibold text-muted-foreground">{s.class}</td>
                         <td className="py-3 px-4 text-center">
@@ -795,15 +795,15 @@ export function KehadiranModule({ activeRole, userProfile }: { activeRole?: stri
                   <tbody className="divide-y divide-border">
                     {filteredData.map((row, idx) => (
                       <tr key={row.id} className="hover:bg-muted/30 transition">
-                        <td className="py-3 px-4 text-center font-mono font-medium">{idx + 1}</td>
-                        <td className="py-3 px-4 font-mono font-semibold text-muted-foreground">{row.nisn}</td>
+                        <td className="py-3 px-4 text-center font-medium text-muted-foreground tabular-nums">{idx + 1}</td>
+                        <td className="py-3 px-4 font-medium text-muted-foreground tabular-nums">{row.nisn}</td>
                         <td className="py-3 px-4 font-bold text-foreground">{row.name}</td>
                         <td className="py-3 px-4 font-semibold text-muted-foreground">{row.class}</td>
-                        <td className="py-3 px-4 text-center font-mono text-emerald-600 font-bold">{row.hadir}</td>
-                        <td className="py-3 px-4 text-center font-mono text-blue-600 font-bold">{row.izin}</td>
-                        <td className="py-3 px-4 text-center font-mono text-amber-600 font-bold">{row.sakit}</td>
-                        <td className="py-3 px-4 text-center font-mono text-rose-600 font-bold">{row.alpa}</td>
-                        <td className="py-3 px-4 text-center font-mono font-extrabold text-foreground">{row.pct}%</td>
+                        <td className="py-3 px-4 text-center text-emerald-600 font-bold tabular-nums">{row.hadir}</td>
+                        <td className="py-3 px-4 text-center text-blue-600 font-bold tabular-nums">{row.izin}</td>
+                        <td className="py-3 px-4 text-center text-amber-600 font-bold tabular-nums">{row.sakit}</td>
+                        <td className="py-3 px-4 text-center text-rose-600 font-bold tabular-nums">{row.alpa}</td>
+                        <td className="py-3 px-4 text-center font-extrabold text-foreground tabular-nums">{row.pct}%</td>
                         <td className="py-3 px-4 text-center">
                           {row.pct > 0 ? (
                             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-bold text-[10px]">

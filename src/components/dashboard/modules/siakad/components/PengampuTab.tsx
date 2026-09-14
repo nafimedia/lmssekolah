@@ -75,7 +75,7 @@ export function PengampuTab({ pengampuList, onOpenAddModal, onDeletePengampu, is
                   </Badge>
                 </td>
                 <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">{item.guru}</td>
-                <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">{item.jam || "4 JP"}</td>
+                <td className="py-3 px-3 text-center font-bold tabular-nums text-emerald-600">{item.jam || "4 JP"}</td>
                 <td className="py-3 px-4 text-center">
                   {!isKamad ? (
                     <Button

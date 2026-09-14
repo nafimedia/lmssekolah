@@ -730,13 +730,13 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
       {/* Header Halaman Compact Single-Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <CalendarDays className="h-4 w-4" />
+          <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <CalendarDays className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold tracking-tight text-foreground">Kalender Akademik & Hari Besar</h1>
-              <Badge variant="outline" className="text-[10px] font-semibold h-5 px-1.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Kalender Akademik & Hari Besar</h1>
+              <Badge variant="outline" className="text-xs font-semibold tabular-nums h-5 px-1.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
                 {currentMonthAgendas.length} Agenda
               </Badge>
             </div>

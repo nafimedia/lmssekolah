@@ -339,8 +339,8 @@ export function SdmGtkModule({
       {/* 1. Header Ringkas (1 Baris Lega) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" /> Manajemen SDM & Akun Madrasah
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <Users className="h-6 w-6 text-primary shrink-0" /> Manajemen SDM & Akun Madrasah
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Pusat terpadu kepegawaian GTK, beban mengajar (≥24 JP), layanan cuti, dan akun pengguna.
@@ -566,7 +566,7 @@ export function SdmGtkModule({
                             {item.tugasTambahan && <span className="text-primary font-semibold">• {item.tugasTambahan}</span>}
                           </div>
                         </td>
-                        <td className="py-3 px-3 font-mono text-muted-foreground">{item.nip || "-"}</td>
+                        <td className="py-3 px-3 font-medium text-muted-foreground tabular-nums">{item.nip || "-"}</td>
                         <td className="py-3 px-3 text-muted-foreground">{item.email}</td>
                         <td className="py-3 px-3 font-medium">{item.mapelUtama}</td>
                         <td className="py-3 px-3">
@@ -663,7 +663,7 @@ export function SdmGtkModule({
                     <tr key={l.id} className="hover:bg-muted/30 transition">
                       <td className="py-3 px-4 font-bold text-foreground">{l.guru_name}</td>
                       <td className="py-3 px-3 font-semibold">{l.leave_type}</td>
-                      <td className="py-3 px-3 font-mono">{l.start_date} s/d {l.end_date}</td>
+                      <td className="py-3 px-3 font-medium text-muted-foreground tabular-nums">{l.start_date} s/d {l.end_date}</td>
                       <td className="py-3 px-3 text-muted-foreground">{l.reason}</td>
                       <td className="py-3 px-4 text-center">
                         <Badge className="bg-emerald-600 text-white font-bold text-[10px]">

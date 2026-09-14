@@ -92,13 +92,13 @@ export function PengumumanModule() {
       {/* Header Halaman Compact Single-Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Megaphone className="h-4 w-4" />
+          <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Megaphone className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold tracking-tight text-foreground">Pengumuman & Informasi</h1>
-              <Badge variant="outline" className="text-[10px] font-semibold h-5 px-1.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Pengumuman & Informasi</h1>
+              <Badge variant="outline" className="text-xs font-semibold tabular-nums h-5 px-1.5">
                 {list.length} Berita
               </Badge>
             </div>

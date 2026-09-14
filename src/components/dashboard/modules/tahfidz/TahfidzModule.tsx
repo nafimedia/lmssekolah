@@ -450,8 +450,8 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground">
-              <BookMarked className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2.5 text-foreground">
+              <BookMarked className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
               {selectedRombel === "ALL"
                 ? "Monitoring Laporan Tahfidz Al-Qur'an (Seluruh Kelas)"
                 : `Monitoring Tahfidz - ${selectedRombel}`}
@@ -651,12 +651,12 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               <div className="flex items-center gap-3 shrink-0">
                 <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-center min-w-[90px]">
                   <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase">RATA-RATA</div>
-                  <div className="text-xl font-bold font-mono text-emerald-600">{avgGrade > 0 ? `${avgGrade} Poin` : "0 Poin"}</div>
+                  <div className="text-xl font-bold tabular-nums text-emerald-600">{avgGrade > 0 ? `${avgGrade} Poin` : "0 Poin"}</div>
                 </div>
 
                 <div className="p-3 rounded-xl border border-teal-500/30 bg-teal-500/10 text-center min-w-[90px]">
                   <div className="text-[10px] font-bold text-teal-700 dark:text-teal-300 uppercase">MUTQIN</div>
-                  <div className="text-xl font-bold font-mono text-teal-600">{mutqinCount} Record</div>
+                  <div className="text-xl font-bold tabular-nums text-teal-600">{mutqinCount} Record</div>
                 </div>
               </div>
             </CardContent>
@@ -744,7 +744,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Users className="h-5 w-5 text-emerald-600" /> Matrix Capaian Tahfidz Per Siswa
               </CardTitle>
-            <Badge variant="outline" className="text-xs font-mono font-bold border-emerald-500/30 text-emerald-600">
+            <Badge variant="outline" className="text-xs font-semibold tabular-nums border-emerald-500/30 text-emerald-600">
               {studentTahfidzSummary.length} Siswa Terdaftar
             </Badge>
           </CardHeader>
@@ -775,15 +775,15 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                 <tbody className="divide-y divide-border">
                   {studentTahfidzSummary.map((s, idx) => (
                     <tr key={s.id || idx} className="hover:bg-muted/30 transition">
-                      <td className="py-3 px-4 text-center font-mono font-medium">{idx + 1}</td>
+                      <td className="py-3 px-4 text-center font-medium text-muted-foreground tabular-nums">{idx + 1}</td>
                       <td className="py-3 px-4 font-bold text-foreground">{s.name}</td>
-                      <td className="py-3 px-4 text-muted-foreground font-mono">{s.nis}</td>
+                      <td className="py-3 px-4 text-muted-foreground font-medium tabular-nums">{s.nis}</td>
                       <td className="py-3 px-4 font-semibold text-foreground">{s.rombel}</td>
-                      <td className="py-3 px-4 text-center font-bold text-emerald-700 dark:text-emerald-300">
+                      <td className="py-3 px-4 text-center font-bold text-emerald-700 dark:text-emerald-300 tabular-nums">
                         {s.totalSetoran} Record
                       </td>
                       <td className="py-3 px-4 font-medium text-slate-700 dark:text-slate-300">{s.surahTerakhir}</td>
-                      <td className="py-3 px-4 text-center font-mono font-extrabold text-emerald-600">
+                      <td className="py-3 px-4 text-center font-bold tabular-nums text-emerald-600">
                         {s.avgScore > 0 ? `${s.avgScore} Poin` : "0 Poin"}
                       </td>
                       <td className="py-3 px-4 text-center">
@@ -878,7 +878,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold text-muted-foreground">No. {surah.number}</span>
+                      <span className="text-xs font-semibold text-muted-foreground tabular-nums">No. {surah.number}</span>
                       {isCompleted ? (
                         <Badge className="bg-emerald-600 text-white text-[10px]">✅ Mutqin</Badge>
                       ) : isInProgress ? (
@@ -940,10 +940,10 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                 <tbody className="divide-y divide-border">
                   {filteredByJuz.map((item, idx) => (
                     <tr key={item.id || idx} className="hover:bg-muted/30 transition">
-                      <td className="py-3 px-4 text-center font-mono font-medium">{idx + 1}</td>
+                      <td className="py-3 px-4 text-center font-medium text-muted-foreground tabular-nums">{idx + 1}</td>
                       {!isSiswa && <td className="py-3 px-4 font-bold text-foreground">{item.student_name || "Siswa"}</td>}
                       {!isSiswa && <td className="py-3 px-4 text-muted-foreground font-semibold">{item.class_name || activeRombel}</td>}
-                      <td className="py-3 px-4 text-muted-foreground font-mono">{item.tgl}</td>
+                      <td className="py-3 px-4 text-muted-foreground font-medium tabular-nums">{item.tgl}</td>
                       <td className="py-3 px-4 font-bold text-foreground">QS. {item.surah} ({item.ayat})</td>
                       <td className="py-3 px-4 text-center">
                         <Badge
@@ -957,7 +957,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                           {(item.jenis_setoran || "Ziyadah").toUpperCase()}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-center font-mono font-extrabold text-emerald-600">{item.nilai}</td>
+                      <td className="py-3 px-4 text-center font-bold tabular-nums text-emerald-600">{item.nilai}</td>
                       <td className="py-3 px-4 text-center">
                         <Badge className="bg-emerald-600 text-white font-bold text-[10px]">{item.status}</Badge>
                       </td>
@@ -1039,7 +1039,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                     <tr>
                       <td className="py-1 font-semibold text-slate-600">NISN / NIS</td>
                       <td className="py-1 font-bold">:</td>
-                      <td className="py-1 font-mono font-bold text-slate-900">
+                      <td className="py-1 font-bold text-slate-900 tabular-nums">
                         {userProfile?.nis_nip || userProfile?.nis || activeUser?.nis_nip || "-"}
                       </td>
                     </tr>
@@ -1119,7 +1119,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                     ) : (
                       filteredHafalan.map((item, idx) => (
                         <tr key={idx} className="border-b border-slate-300">
-                          <td className="p-2 border-r border-slate-300 text-center font-mono">{idx + 1}</td>
+                          <td className="p-2 border-r border-slate-300 text-center font-medium tabular-nums">{idx + 1}</td>
                           <td className="p-2 border-r border-slate-300 text-slate-700">{item.tgl}</td>
                           <td className="p-2 border-r border-slate-300 font-bold text-slate-900">
                             QS. {item.surah} ({item.ayat})
@@ -1345,14 +1345,14 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                 <Label className="text-xs font-semibold">Cakupan Ayat</Label>
                 <div className="flex items-center gap-1">
                   <Input
-                    className="h-8 text-xs font-mono text-center"
+                    className="h-8 text-xs font-medium tabular-nums text-center"
                     placeholder="Awal"
                     value={ayatStart}
                     onChange={(e) => setAyatStart(e.target.value)}
                   />
                   <span>-</span>
                   <Input
-                    className="h-8 text-xs font-mono text-center"
+                    className="h-8 text-xs font-medium tabular-nums text-center"
                     placeholder="Akhir"
                     value={ayatEnd}
                     onChange={(e) => setAyatEnd(e.target.value)}
@@ -1365,7 +1365,7 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
             <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-3">
               <div className="font-bold text-xs text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
                 <span>Penilaian 5 Komponen Tajwid & Adab</span>
-                <span className="font-mono text-sm font-extrabold">{calculatedNilaiAkhir} Poin</span>
+                <span className="text-sm font-bold tabular-nums">{calculatedNilaiAkhir} Poin</span>
               </div>
 
               <div className="grid grid-cols-5 gap-2 text-center text-[10px]">
@@ -1517,14 +1517,14 @@ export function TahfidzModule({ activeRole, userProfile }: TahfidzModuleProps = 
                 <Label className="text-xs font-semibold">Cakupan Ayat</Label>
                 <div className="flex items-center gap-1">
                   <Input
-                    className="h-8 text-xs font-mono text-center"
+                    className="h-8 text-xs font-medium tabular-nums text-center"
                     placeholder="Awal"
                     value={murojaahAyatStart}
                     onChange={(e) => setMurojaahAyatStart(e.target.value)}
                   />
                   <span>-</span>
                   <Input
-                    className="h-8 text-xs font-mono text-center"
+                    className="h-8 text-xs font-medium tabular-nums text-center"
                     placeholder="Akhir"
                     value={murojaahAyatEnd}
                     onChange={(e) => setMurojaahAyatEnd(e.target.value)}

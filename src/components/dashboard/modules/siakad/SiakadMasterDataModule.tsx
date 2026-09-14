@@ -207,8 +207,8 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Database className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Data Pokok Akademik
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <Database className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" /> Data Pokok Akademik
           </h1>
         </div>
 
@@ -321,7 +321,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
                     </div>
                     <div className="flex items-center justify-between pt-1 border-t border-border">
                       <span className="text-muted-foreground">Jumlah Siswa:</span>
-                      <strong className="font-mono text-emerald-600 dark:text-emerald-400">{r.studentCount} Siswa</strong>
+                      <strong className="font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{r.studentCount} Siswa</strong>
                     </div>
                   </CardContent>
                 </Card>

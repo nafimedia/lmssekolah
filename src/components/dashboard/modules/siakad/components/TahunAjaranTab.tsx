@@ -97,7 +97,7 @@ export function TahunAjaranTab({ isKamad }: TahunAjaranTabProps) {
             <h3 className="text-lg font-black tracking-tight text-foreground mt-0.5">
               Tahun Ajaran {activeYearItem?.year || "2026/2027"} — Semester {activeYearItem?.semester || "Ganjil"}
             </h3>
-            <p className="text-xs text-muted-foreground font-mono">
+            <p className="text-xs text-muted-foreground font-medium tabular-nums">
               Periode Efektif: {activeYearItem?.startDate || "13 Juli 2026"} s/d {activeYearItem?.endDate || "19 Desember 2026"}
             </p>
           </div>
@@ -148,11 +148,11 @@ export function TahunAjaranTab({ isKamad }: TahunAjaranTabProps) {
                     <span>{item.year}</span>
                   </td>
                   <td className="py-3 px-3">
-                    <Badge variant="outline" className="font-mono text-[10px] font-bold">
+                    <Badge variant="outline" className="text-[10px] font-semibold border-border">
                       Semester {item.semester}
                     </Badge>
                   </td>
-                  <td className="py-3 px-4 text-muted-foreground font-mono">
+                  <td className="py-3 px-4 text-muted-foreground font-medium tabular-nums">
                     {item.startDate} — {item.endDate}
                   </td>
                   <td className="py-3 px-3 text-center">
@@ -184,7 +184,7 @@ export function TahunAjaranTab({ isKamad }: TahunAjaranTabProps) {
                           ⚡ Set Periode Aktif
                         </Button>
                       ) : (
-                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                           ✓ Periode Aktif Utama
                         </span>
                       )}

@@ -277,7 +277,7 @@ export function ViewActivityDialog({
                   ? "📖 Setoran Hafalan"
                   : activity.type}
               </Badge>
-              <span className="text-xs text-muted-foreground font-mono">
+              <span className="text-xs text-muted-foreground font-medium">
                 {activeMapel} · {activeRombel}
               </span>
             </div>
@@ -345,7 +345,7 @@ export function ViewActivityDialog({
                       <span className="font-bold text-emerald-700 dark:text-emerald-300">
                         Pertanyaan #{idx + 1}
                       </span>
-                      <Badge className="bg-emerald-600 text-white font-mono text-[10px]">
+                      <Badge className="bg-emerald-600 text-white font-semibold text-[10px] tabular-nums">
                         Bobot: {q.points || 0} Poin
                       </Badge>
                     </div>
@@ -384,7 +384,7 @@ export function ViewActivityDialog({
                             {cfg.shortLabel}
                           </Badge>
                         </div>
-                        <Badge className="bg-purple-600/10 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800 font-mono text-[10px]">
+                        <Badge className="bg-purple-600/10 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800 font-semibold text-[10px] tabular-nums">
                           {q.points || 10} Poin
                         </Badge>
                       </div>
@@ -456,7 +456,7 @@ export function ViewActivityDialog({
                       {qType === "NUMERIK" && (
                         <div className="flex items-center gap-2 pt-1 border-t border-border/50 text-[11px]">
                           <span className="text-muted-foreground">Kunci Nilai:</span>
-                          <span className="font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
+                          <span className="font-bold tabular-nums text-indigo-700 dark:text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
                             {q.keyAnswer} {q.tolerance ? `(± ${q.tolerance})` : "(Tepat)"}
                           </span>
                         </div>
@@ -481,7 +481,7 @@ export function ViewActivityDialog({
           <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-950/10 space-y-3">
             <h4 className="font-bold text-xs text-blue-800 dark:text-blue-300 flex items-center justify-between">
               <span className="flex items-center gap-1.5"><MessageSquare className="h-4 w-4 text-blue-600" /> Ruang Diskusi & Tanya Jawab Interaktif</span>
-              <span className="text-[11px] font-mono text-muted-foreground">{discussions.length} Tanggapan</span>
+              <span className="text-[11px] font-medium tabular-nums text-muted-foreground">{discussions.length} Tanggapan</span>
             </h4>
 
             <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
@@ -535,7 +535,7 @@ export function ViewActivityDialog({
                     </p>
                   </div>
                 </div>
-                <Badge className="bg-amber-600 text-white font-mono text-[10px]">
+                <Badge className="bg-amber-600 text-white font-semibold text-[10px] tabular-nums">
                   {peerAssessments.length} Total Penilaian Masuk
                 </Badge>
               </div>
@@ -554,14 +554,14 @@ export function ViewActivityDialog({
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-border/60 pb-2">
                           <div>
                             <span className="font-bold text-foreground text-xs">{studentName}</span>
-                            <span className="text-[10px] text-muted-foreground font-mono ml-2">NISN: {studentNisn}</span>
+                            <span className="text-[10px] text-muted-foreground font-medium tabular-nums ml-2">NISN: {studentNisn}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-[10px] font-bold text-amber-600 dark:text-amber-400 border-amber-300 gap-1">
                               <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
                               {data.avgScore} / 4.0 ({data.evaluations.length} Teman Menilai)
                             </Badge>
-                            <Badge className="bg-emerald-600 text-white text-[10px] font-mono font-bold">
+                            <Badge className="bg-emerald-600 text-white text-[10px] font-bold tabular-nums">
                               Konversi: {Math.round((data.avgScore / 4) * 100)} / 100
                             </Badge>
                           </div>
@@ -611,7 +611,7 @@ export function ViewActivityDialog({
           <div className="space-y-2">
             <h4 className="font-semibold text-xs text-foreground flex items-center justify-between">
               <span>Lembar Pemeriksaan & Input Nilai Siswa ({activeRombel}):</span>
-              <span className="text-[11px] text-emerald-600 font-mono">
+              <span className="text-[11px] text-emerald-600 font-semibold tabular-nums">
                 {grades.filter((g) => g.score !== "").length}/{grades.length} Terpasang Nilai
               </span>
             </h4>
@@ -638,7 +638,7 @@ export function ViewActivityDialog({
                       <tr key={g.id} className="hover:bg-muted/30 transition">
                         <td className="py-2.5 px-3">
                           <div className="font-semibold text-foreground">{g.name}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">{g.nisn}</div>
+                          <div className="text-[10px] text-muted-foreground font-medium tabular-nums">{g.nisn}</div>
                         </td>
                         <td className="py-2.5 px-3 text-center">
                           <select
@@ -665,7 +665,7 @@ export function ViewActivityDialog({
                             disabled={!isAllowed}
                             value={g.score}
                             onChange={(e) => handleScoreChange(g.id, e.target.value)}
-                            className={`h-7 text-xs font-mono font-normal text-center border-emerald-300 dark:border-emerald-800 ${
+                            className={`h-7 text-xs font-semibold tabular-nums text-center border-emerald-300 dark:border-emerald-800 ${
                               !isAllowed ? "opacity-60 cursor-not-allowed bg-muted" : ""
                             }`}
                           />

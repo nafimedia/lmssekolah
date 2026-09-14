@@ -17,7 +17,7 @@ import { EditUserDialog, UserItem } from "./components/EditUserDialog";
 function SectionHeader({ title }: { title: string; sub?: string }) {
   return (
     <div className="mb-6">
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">{title}</h1>
     </div>
   );
 }
@@ -256,7 +256,7 @@ export function UserManagementModule({ activeRole, userProfile, hideHeader = fal
       <Card className="border-border shadow-sm">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
+            <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" /> Data Akun Pengguna & Hak Akses
             </CardTitle>
             <CardDescription>
@@ -421,10 +421,10 @@ export function UserManagementModule({ activeRole, userProfile, hideHeader = fal
                             </Badge>
                           )}
                         </div>
-                        <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{u.nis}</div>
+                        <div className="text-[11px] text-muted-foreground font-medium tabular-nums mt-0.5">{u.nis}</div>
                       </td>
 
-                      <td className="py-3 px-4 font-mono text-muted-foreground text-xs">{u.email}</td>
+                      <td className="py-3 px-4 text-muted-foreground text-xs">{u.email}</td>
 
                       <td className="py-3 px-3">
                         <Badge variant="outline" className="text-[11px] font-semibold border-border">
@@ -457,7 +457,7 @@ export function UserManagementModule({ activeRole, userProfile, hideHeader = fal
 
                       <td className="py-3 px-4 text-right">
                         {isKamad ? (
-                          <span className="text-xs text-muted-foreground/50 font-mono pr-2 select-none">-</span>
+                          <span className="text-xs text-muted-foreground/50 pr-2 select-none">-</span>
                         ) : (
                           <div className="flex items-center justify-end gap-1.5 flex-wrap">
                             <Button

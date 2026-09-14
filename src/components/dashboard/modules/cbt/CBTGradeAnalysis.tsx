@@ -824,12 +824,12 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                 return (
                   <tr key={g.id} className="hover:bg-muted/30 transition-colors">
                     <td className="p-3 pl-4 font-bold text-foreground">{g.name}</td>
-                    <td className="p-3 text-muted-foreground font-mono">{g.nis}</td>
+                    <td className="p-3 text-muted-foreground font-medium tabular-nums">{g.nis}</td>
                     <td className="p-3 font-medium">{g.classRombel}</td>
-                    <td className="p-3 text-center font-semibold">{g.pgScore}</td>
-                    <td className="p-3 text-center font-semibold">{g.essayScore}</td>
+                    <td className="p-3 text-center font-semibold tabular-nums">{g.pgScore}</td>
+                    <td className="p-3 text-center font-semibold tabular-nums">{g.essayScore}</td>
                     <td className="p-3 text-center">
-                      <span className="font-extrabold text-sm text-foreground">{g.totalScore}</span>
+                      <span className="font-extrabold text-sm text-foreground tabular-nums">{g.totalScore}</span>
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap items-center gap-1.5">
@@ -978,7 +978,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
           <CardTitle className="text-sm font-bold flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-emerald-600" /> Matriks Analisis Butir Soal (Tingkat Kesukaran & Daya Beda)
           </CardTitle>
-          <Badge variant="outline" className="text-xs font-mono font-bold bg-primary/10 text-primary border-primary/30 w-fit">
+          <Badge variant="outline" className="text-xs font-semibold tabular-nums bg-primary/10 text-primary border-primary/30 w-fit">
             Rata-rata Daya Serap: {avgScore}%
           </Badge>
         </CardHeader>
@@ -1000,7 +1000,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             <tbody className="divide-y divide-border">
               {itemAnalysisList.map((item) => (
                 <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="p-3 pl-4 text-center font-mono font-bold text-muted-foreground">{item.no}</td>
+                  <td className="p-3 pl-4 text-center font-medium tabular-nums text-muted-foreground">{item.no}</td>
                   <td className="p-3">
                     <div className="font-semibold text-foreground max-w-md truncate" title={item.pertanyaan}>
                       {item.pertanyaan}
@@ -1012,16 +1012,16 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                     </Badge>
                   </td>
                   <td className="p-3 text-center">
-                    <span className="font-mono font-extrabold text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    <span className="font-bold tabular-nums text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                       {item.kunci}
                     </span>
                   </td>
-                  <td className="p-3 text-center font-mono font-semibold">
+                  <td className="p-3 text-center font-semibold tabular-nums">
                     {item.correctCount} / {item.totalPeserta}
                   </td>
                   <td className="p-3 text-center">
                     <div className="space-y-0.5">
-                      <span className="font-mono font-extrabold text-xs text-foreground">{item.pct}%</span>
+                      <span className="font-extrabold text-xs text-foreground tabular-nums">{item.pct}%</span>
                       <div>
                         <Badge variant="outline" className={`text-[10px] font-bold ${item.kesukaranColor}`}>
                           {item.kesukaran}
@@ -1029,7 +1029,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                       </div>
                     </div>
                   </td>
-                  <td className="p-3 text-center font-mono text-muted-foreground font-semibold">
+                  <td className="p-3 text-center text-muted-foreground font-semibold">
                     <span className="font-bold text-xs text-foreground">{item.dayaBedaLabel}</span>
                   </td>
                   <td className="p-3 text-center">
@@ -1041,7 +1041,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                             title={`Opsi ${d.option}: ${d.count} siswa (${d.pct}%) ${
                               d.isKey ? "— Kunci Jawaban Benar" : d.isEffective ? "— Pengecoh Efektif" : "— Kurang Berfungsi"
                             }`}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums border ${
                               d.isKey
                                 ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-bold"
                                 : d.count > 0
@@ -1346,7 +1346,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                 {sortedGrades.map((item, idx) => (
                   <tr key={item.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900">
                     <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center">{idx + 1}</td>
-                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center font-mono">{item.nis}</td>
+                    <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center tabular-nums">{item.nis}</td>
                     <td className="border border-zinc-300 dark:border-zinc-700 p-2 font-medium">{item.name}</td>
                     <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center">{item.pgScore}</td>
                     <td className="border border-zinc-300 dark:border-zinc-700 p-2 text-center">{item.essayScore}</td>

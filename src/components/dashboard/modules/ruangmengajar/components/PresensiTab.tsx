@@ -185,19 +185,19 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
         <div className="grid grid-cols-4 gap-1.5 sm:gap-3 p-1.5 bg-muted/25 rounded-xl border border-border/70 text-center">
           <div className="py-1 px-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 dark:text-emerald-300 block">HADIR</span>
-            <span className="text-sm sm:text-lg font-extrabold font-mono text-emerald-600 dark:text-emerald-400">{countHadir}</span>
+            <span className="text-sm sm:text-lg font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400">{countHadir}</span>
           </div>
           <div className="py-1 px-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <span className="text-[9px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-300 block">SAKIT</span>
-            <span className="text-sm sm:text-lg font-extrabold font-mono text-amber-600 dark:text-amber-400">{countSakit}</span>
+            <span className="text-sm sm:text-lg font-extrabold tabular-nums text-amber-600 dark:text-amber-400">{countSakit}</span>
           </div>
           <div className="py-1 px-1 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <span className="text-[9px] sm:text-[10px] font-bold text-blue-700 dark:text-blue-300 block">IZIN</span>
-            <span className="text-sm sm:text-lg font-extrabold font-mono text-blue-600 dark:text-blue-400">{countIzin}</span>
+            <span className="text-sm sm:text-lg font-extrabold tabular-nums text-blue-600 dark:text-blue-400">{countIzin}</span>
           </div>
           <div className="py-1 px-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
             <span className="text-[9px] sm:text-[10px] font-bold text-rose-700 dark:text-rose-300 block">ALPA</span>
-            <span className="text-sm sm:text-lg font-extrabold font-mono text-rose-600 dark:text-rose-400">{countAlpa}</span>
+            <span className="text-sm sm:text-lg font-extrabold tabular-nums text-rose-600 dark:text-rose-400">{countAlpa}</span>
           </div>
         </div>
 
@@ -222,12 +222,12 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-mono font-bold text-muted-foreground w-4 shrink-0">
+                        <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-4 shrink-0">
                           {index + 1}.
                         </span>
                         <h5 className="font-bold text-xs text-foreground truncate">{student.name}</h5>
                       </div>
-                      <p className="text-[10px] text-muted-foreground font-mono pl-5.5">{student.nis}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium tabular-nums pl-5.5">{student.nis}</p>
                     </div>
 
                     <Badge
@@ -295,8 +295,8 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
                 <tbody className="divide-y divide-border">
                   {students.map((student, index) => (
                     <tr key={student.id} className="hover:bg-muted/30 transition">
-                      <td className="py-2.5 px-3 text-center font-mono font-medium">{index + 1}</td>
-                      <td className="py-2.5 px-3 font-mono font-semibold text-muted-foreground">{student.nis}</td>
+                      <td className="py-2.5 px-3 text-center font-medium text-muted-foreground tabular-nums">{index + 1}</td>
+                      <td className="py-2.5 px-3 font-medium text-muted-foreground tabular-nums">{student.nis}</td>
                       <td className="py-2.5 px-3 font-bold text-foreground">{student.name}</td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center justify-center gap-1">

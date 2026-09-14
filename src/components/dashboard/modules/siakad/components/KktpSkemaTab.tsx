@@ -109,7 +109,7 @@ export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
           <div className="flex items-center gap-3 bg-muted/50 p-2.5 rounded-xl border border-border">
             <div className="text-xs">
               <span className="text-muted-foreground block text-[10px]">KKTP Standar Utama:</span>
-              <strong className="text-lg font-black font-mono text-emerald-600">{defaultKktp} / 100</strong>
+              <strong className="text-lg font-black tabular-nums text-emerald-600">{defaultKktp} / 100</strong>
             </div>
             {isKamad ? null : !isEditingKktp ? (
               <Button
@@ -129,7 +129,7 @@ export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
                   type="number"
                   value={tempKktp}
                   onChange={(e) => setTempKktp(e.target.value)}
-                  className="w-16 h-8 text-xs font-bold text-center font-mono"
+                  className="w-16 h-8 text-xs font-bold text-center tabular-nums"
                 />
                 <Button size="sm" className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2.5" onClick={handleSaveKktp}>
                   <Check className="h-4 w-4" /> Simpan
@@ -160,12 +160,12 @@ export function KktpSkemaTab({ isKamad }: KktpSkemaTabProps) {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black font-mono">{scale.grade}</span>
+                    <span className="text-2xl font-black">{scale.grade}</span>
                     <Badge variant="outline" className="font-bold text-xs">
                       {scale.label}
                     </Badge>
                   </div>
-                  <Badge className="font-mono font-bold text-xs bg-background text-foreground border border-border">
+                  <Badge className="font-bold text-xs tabular-nums bg-background text-foreground border border-border">
                     Rentang: {scale.range}
                   </Badge>
                 </div>

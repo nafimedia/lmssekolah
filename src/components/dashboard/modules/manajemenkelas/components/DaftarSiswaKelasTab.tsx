@@ -166,19 +166,19 @@ export function DaftarSiswaKelasTab({
             <tbody className="divide-y divide-border">
               {filtered.map((s, idx) => (
                 <tr key={s.id} className="hover:bg-muted/30 transition">
-                  <td className="py-3 px-4 font-mono text-muted-foreground">{idx + 1}</td>
+                  <td className="py-3 px-4 font-medium text-muted-foreground tabular-nums">{idx + 1}</td>
                   <td className="py-3 px-4 font-semibold">
                     <div className="font-bold text-foreground flex items-center gap-1.5">
                       {s.name}
                     </div>
-                    <div className="text-[10px] text-muted-foreground font-mono">NISN: {s.nisn}</div>
+                    <div className="text-[10px] text-muted-foreground font-medium tabular-nums">NISN: {s.nisn}</div>
                   </td>
                   <td className="py-3 px-3 font-bold">{s.gender || "-"}</td>
                   <td className="py-3 px-4 text-muted-foreground font-medium">{s.parentName || "-"}</td>
-                  <td className="py-3 px-3 text-center font-mono font-semibold text-foreground">{s.parentWa || "-"}</td>
+                  <td className="py-3 px-3 text-center font-medium tabular-nums text-foreground">{s.parentWa || "-"}</td>
                   <td className="py-3 px-3 text-center">
                     {s.hadirPct > 0 ? (
-                      <Badge className="bg-emerald-600 text-white font-mono font-bold text-[11px]">
+                      <Badge className="bg-emerald-600 text-white font-bold text-[11px] tabular-nums">
                         {s.hadirPct}%
                       </Badge>
                     ) : (

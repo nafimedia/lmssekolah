@@ -92,14 +92,28 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   const [materialsList, setMaterialsList] = useState<any[]>([]);
   const [selectedMaterialForView, setSelectedMaterialForView] = useState<MaterialDetail | null>(null);
   const [isViewMaterialOpen, setIsViewMaterialOpen] = useState(false);
-  const [selectedMateriMapel, setSelectedMateriMapel] = useState<string>("SEMUA");
+  const [selectedMateriMapel, setSelectedMateriMapel] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const qMapel = params.get("mapel");
+      if (qMapel && qMapel.trim()) return qMapel.trim();
+    }
+    return "SEMUA";
+  });
   const [searchMateriQuery, setSearchMateriQuery] = useState<string>("");
 
   // Live session and class schedule states
   const [liveSession, setLiveSession] = useState<any | null>(null);
   const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
   const [classSchedules, setClassSchedules] = useState<any[]>([]);
-  const [selectedMapelFilter, setSelectedMapelFilter] = useState<string>("SEMUA");
+  const [selectedMapelFilter, setSelectedMapelFilter] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const qMapel = params.get("mapel");
+      if (qMapel && qMapel.trim()) return qMapel.trim();
+    }
+    return "SEMUA";
+  });
 
   // Selected assignment for detail & submission modal
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentRow | null>(null);
@@ -393,6 +407,34 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     uniqueSubjects.forEach((s) => set.add(s));
     return Array.from(set).sort();
   }, [materialsList, uniqueSubjects]);
+
+  // Synchronize filter when navigating with URL query (?mapel=...)
+  useEffect(() => {
+    const syncMapelFromUrl = () => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const qMapel = params.get("mapel");
+        if (qMapel && qMapel.trim()) {
+          const rawTarget = qMapel.trim();
+          const matchedMateri =
+            materiSubjects.find((s) => isSameSubject(s, rawTarget)) ||
+            normalizeSubjectName(rawTarget) ||
+            rawTarget;
+          setSelectedMateriMapel(matchedMateri);
+
+          const matchedTugas =
+            uniqueSubjects.find((s) => isSameSubject(s, rawTarget)) ||
+            normalizeSubjectName(rawTarget) ||
+            rawTarget;
+          setSelectedMapelFilter(matchedTugas);
+        }
+      }
+    };
+
+    syncMapelFromUrl();
+    window.addEventListener("popstate", syncMapelFromUrl);
+    return () => window.removeEventListener("popstate", syncMapelFromUrl);
+  }, [materiSubjects, uniqueSubjects]);
 
   // Filter Tasks
   const filteredAssignments = assignments.filter((a) => {
@@ -1811,7 +1853,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Filter Mapel:</span>
               <select
                 value={selectedMateriMapel}
@@ -1819,10 +1861,32 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                 className="h-8.5 rounded-xl border border-border bg-background px-3 text-xs font-bold text-emerald-700 dark:text-emerald-300 shadow-2xs cursor-pointer min-w-[160px]"
               >
                 <option value="SEMUA">Semua Mapel ({materiSubjects.length})</option>
+                {selectedMateriMapel !== "SEMUA" && !materiSubjects.includes(selectedMateriMapel) && (
+                  <option value={selectedMateriMapel}>{selectedMateriMapel}</option>
+                )}
                 {materiSubjects.map((sub: string) => (
                   <option key={sub} value={sub}>{sub}</option>
                 ))}
               </select>
+
+              {selectedMateriMapel !== "SEMUA" && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-[11px] font-bold text-muted-foreground hover:text-foreground px-2 rounded-xl"
+                  onClick={() => {
+                    setSelectedMateriMapel("SEMUA");
+                    if (typeof window !== "undefined") {
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete("mapel");
+                      window.history.pushState({}, "", url.toString());
+                    }
+                  }}
+                >
+                  ✕ Reset Filter
+                </Button>
+              )}
             </div>
           </div>
 
@@ -1976,7 +2040,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
           </div>
 
           {/* Filter Mapel Dropdown */}
-          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0">
+          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0 flex-wrap">
             <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Filter Mapel:</span>
             <select
               value={selectedMapelFilter}
@@ -1984,10 +2048,31 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
               className="h-8 flex-1 sm:flex-initial sm:min-w-[180px] rounded-lg border border-border bg-background px-2.5 text-xs font-bold text-primary shadow-2xs cursor-pointer"
             >
               <option value="SEMUA">Semua Mapel ({uniqueSubjects.length})</option>
+              {selectedMapelFilter !== "SEMUA" && !uniqueSubjects.includes(selectedMapelFilter) && (
+                <option value={selectedMapelFilter}>{selectedMapelFilter}</option>
+              )}
               {uniqueSubjects.map((sub: string) => (
                 <option key={sub} value={sub}>{sub}</option>
               ))}
             </select>
+            {selectedMapelFilter !== "SEMUA" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 text-[11px] font-bold text-muted-foreground hover:text-foreground px-2 rounded-lg"
+                onClick={() => {
+                  setSelectedMapelFilter("SEMUA");
+                  if (typeof window !== "undefined") {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("mapel");
+                    window.history.pushState({}, "", url.toString());
+                  }
+                }}
+              >
+                ✕ Reset Filter
+              </Button>
+            )}
           </div>
         </CardHeader>
 

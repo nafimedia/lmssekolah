@@ -14,7 +14,15 @@ import { StudentHeaderBanner } from "@/components/dashboard/components/StudentHe
 
 import { isSameClass, formatClassForDisplay, resolveWaliKelasRombel, normalizeRombelName } from "@/utils/classNormalization";
 
-export function JadwalModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
+export function JadwalModule({
+  activeRole,
+  userProfile,
+  setActiveTab,
+}: {
+  activeRole?: string;
+  userProfile?: any;
+  setActiveTab?: (key: string) => void;
+}) {
   const isSiswa = activeRole === "siswa";
   const isGuru = activeRole === "guru";
   const isWaliKelas = activeRole === "walikelas" || activeRole === "wali_kelas";
@@ -480,6 +488,28 @@ export function JadwalModule({ activeRole, userProfile }: { activeRole?: string;
                           )}
                           <div className="text-[10px] font-mono font-bold text-primary mt-1">⏰ {s.jam}</div>
                         </div>
+
+                        {isSiswa && (
+                          <Button
+                            size="sm"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 px-2.5 rounded-lg text-[10px] font-bold gap-1 self-center shrink-0 shadow-2xs transition"
+                            onClick={() => {
+                              if (typeof window !== "undefined") {
+                                const url = new URL(window.location.href);
+                                url.searchParams.set("tab", "ruangbelajar");
+                                if (s.mapel) {
+                                  url.searchParams.set("mapel", s.mapel.trim());
+                                }
+                                window.history.pushState({}, "", url.toString());
+                                window.dispatchEvent(new Event("popstate"));
+                              }
+                              setActiveTab?.("tugas");
+                            }}
+                            title={`Buka Ruang Belajar ${s.mapel}`}
+                          >
+                            <BookOpen className="h-3 w-3" /> Ruang Belajar →
+                          </Button>
+                        )}
 
                         {!isReadOnlyRole && (
                           <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100 transition">

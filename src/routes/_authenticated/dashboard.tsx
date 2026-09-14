@@ -1117,7 +1117,7 @@ function DashboardContent({
               {active === "mapel" && <MataPelajaranModule activeRole={activeRole} userProfile={userProfile} />}
               {active === "users" && activeRole !== "siswa" && <SdmGtkModule activeRole={activeRole} userProfile={userProfile} initialTab="akun" />}
               {active === "kehadiran" && activeRole !== "siswa" && <KehadiranModule activeRole={activeRole} userProfile={userProfile} />}
-              {active === "jadwal" && <JadwalModule activeRole={activeRole} userProfile={userProfile} />}
+              {active === "jadwal" && <JadwalModule activeRole={activeRole} userProfile={userProfile} setActiveTab={(key: string) => setActive(key as MenuKey)} />}
               {active === "modul_ajar" && <ModulAjarModule activeRole={activeRole} userProfile={userProfile} />}
               {(active === "apresiasi" || active === "apresiasi_guru") && <ApresiasiGuruModule activeRole={activeRole} />}
               {active === "apresiasi_siswa" && <ApresiasiSiswaModule />}

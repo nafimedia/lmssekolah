@@ -42,6 +42,21 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
   const [myBadges, setMyBadges] = useState<any[]>([]);
   const [liveSession, setLiveSession] = useState<any | null>(null);
 
+  const handleOpenRuangBelajar = (mapel?: string) => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", "ruangbelajar");
+      if (mapel && mapel.trim()) {
+        url.searchParams.set("mapel", mapel.trim());
+      } else {
+        url.searchParams.delete("mapel");
+      }
+      window.history.pushState({}, "", url.toString());
+      window.dispatchEvent(new Event("popstate"));
+    }
+    setActiveTab?.("tugas");
+  };
+
   useEffect(() => {
     async function loadSiswaRealData() {
       try {
@@ -207,11 +222,11 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
             <Button
               size="sm"
               className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs gap-1.5 shrink-0 shadow-2xs px-3"
-              onClick={() => setActiveTab?.("tugas")}
+              onClick={() => handleOpenRuangBelajar(liveSession.mapel)}
             >
               <BookOpen className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Buka Tugas & LKPD</span>
-              <span className="sm:hidden">Buka KBM</span>
+              <span className="hidden sm:inline">Masuk Ruang Belajar</span>
+              <span className="sm:hidden">Ruang Belajar</span>
             </Button>
           </CardContent>
         </Card>
@@ -410,8 +425,8 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
               return (
                 <div
                   key={j.id || idx}
-                  className="p-3 sm:p-3.5 rounded-xl border border-border bg-muted/20 hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 cursor-pointer transition-all shadow-2xs space-y-2.5"
-                  onClick={() => setActiveTab?.("tugas")}
+                  className="p-3 sm:p-3.5 rounded-xl border border-border bg-muted/20 hover:border-emerald-500/80 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 cursor-pointer transition-all shadow-2xs space-y-2.5 group"
+                  onClick={() => handleOpenRuangBelajar(displayMapel)}
                 >
                   {/* Baris Atas: Jam KBM (Kiri) & Ruang / Kelas (Kanan) */}
                   <div className="flex items-center justify-between gap-2">
@@ -428,7 +443,7 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                   {/* Baris Bawah: Mapel, Guru & Tombol Aksi */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
                     <div className="min-w-0">
-                      <div className="font-bold text-sm text-foreground truncate">
+                      <div className="font-bold text-sm text-foreground truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                         {displayMapel}
                       </div>
                       <div className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 mt-0.5">
@@ -437,9 +452,16 @@ export function SiswaDashboardView({ userName, currentDayName, formattedTime, se
                       </div>
                     </div>
 
-                    <Badge className="bg-emerald-600 text-white border border-emerald-500/30 text-[11px] font-bold self-start sm:self-center gap-1.5 shadow-2xs shrink-0 hover:bg-emerald-700">
-                      <BookOpen className="h-3.5 w-3.5" /> Buka Mapel / Tugas →
-                    </Badge>
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold self-start sm:self-center gap-1.5 shadow-2xs shrink-0 h-7 px-2.5 rounded-lg transition"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenRuangBelajar(displayMapel);
+                      }}
+                    >
+                      <BookOpen className="h-3.5 w-3.5" /> Buka Ruang Belajar →
+                    </Button>
                   </div>
                 </div>
               );

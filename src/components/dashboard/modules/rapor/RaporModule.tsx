@@ -895,14 +895,14 @@ export function RaporModule({
         <DialogHeader className="border-b border-border pb-3">
           <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-emerald-600" /> Pratinjau E-Rapor Kurikulum Merdeka
+              <FileText className="h-5 w-5 text-emerald-600" /> Pratinjau Lembar Hasil Belajar Siswa
             </div>
             <Badge className="bg-emerald-600 text-white font-mono text-xs">
               {targetStudent?.rombel || defaultRombel}
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Lembar Rapor Hasil Belajar Resmi Peserta Didik MTsN 2 Cilacap.
+            Lembar Laporan Hasil Belajar Peserta Didik MTsN 2 Cilacap.
           </DialogDescription>
         </DialogHeader>
 
@@ -928,7 +928,7 @@ export function RaporModule({
               </div>
             </div>
             <div className="mt-2 py-1 bg-emerald-800 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs text-center">
-              RAPOR HASIL BELAJAR PESERTA DIDIK
+              LAPORAN HASIL BELAJAR PESERTA DIDIK
             </div>
           </div>
 
@@ -1131,10 +1131,10 @@ export function RaporModule({
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5"
             onClick={() => {
               window.print();
-              toast.success("🖨️ E-Rapor diproses untuk dicetak!");
+              toast.success("🖨️ Lembar Hasil Belajar diproses untuk dicetak!");
             }}
           >
-            <Printer className="h-4 w-4" /> Cetak E-Rapor PDF
+            <Printer className="h-4 w-4" /> Cetak Lembar Hasil Belajar (PDF)
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1156,7 +1156,7 @@ export function RaporModule({
               onClick={() => setIsPrintRaporOpen(true)}
               className="h-8 gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs px-3"
             >
-              <FileText className="h-3.5 w-3.5" /> Cetak E-Rapor PDF
+              <FileText className="h-3.5 w-3.5" /> Cetak Lembar Hasil Belajar (PDF)
             </Button>
           }
         />
@@ -1702,7 +1702,7 @@ export function RaporModule({
                   <th className="p-3 text-center">Ujian CBT</th>
                   <th className="p-3 text-center">Rata-Rata Nilai</th>
                   <th className="p-3 text-center">Status KKTP</th>
-                  <th className="p-3 text-right">E-Rapor</th>
+                  <th className="p-3 text-right">Laporan Belajar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -1745,7 +1745,7 @@ export function RaporModule({
                         className="h-7 text-xs font-bold gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
                         onClick={() => openStudentRaporModal(s)}
                       >
-                        <FileText className="h-3.5 w-3.5" /> Cetak E-Rapor
+                        <FileText className="h-3.5 w-3.5" /> Cetak Lembar Nilai
                       </Button>
                     </td>
                   </tr>

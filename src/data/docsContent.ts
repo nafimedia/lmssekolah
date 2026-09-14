@@ -492,7 +492,7 @@ export const DOCS_DATA: DocCategory[] = [
         screenshot: {
           src: "/docs/screenshots/guru_ruangmengajar.png",
           alt: "Ruang Mengajar Guru MTsN 2 Cilacap",
-          caption: "Ruang Mengajar KBM Live: Pemilihan rombel ampunan, navigasi 1–18 pertemuan, dan bilah tab ringkas.",
+          caption: "Ruang Mengajar: Pemilihan rombel ampunan, navigasi 1–18 pertemuan, dan bilah tab ringkas.",
         },
         steps: [
           {
@@ -805,7 +805,7 @@ export const DOCS_DATA: DocCategory[] = [
         steps: [
           {
             number: 1,
-            title: "Pilih Menu 'Rekap Nilai & Leger Rapor'",
+            title: "Pilih Menu 'Laporan Hasil Belajar'",
             description: "Akses lembar penilaian mata pelajaran ampunan Anda.",
           },
           {
@@ -816,7 +816,7 @@ export const DOCS_DATA: DocCategory[] = [
           {
             number: 3,
             title: "Kirim Nilai ke Wali Kelas",
-            description: "Klik tombol 'Finalisasi & Setor ke Wali Kelas' untuk mengunci nilai raport rombel.",
+            description: "Klik tombol 'Finalisasi & Setor ke Wali Kelas' untuk mengunci nilai rombel.",
           },
         ],
         subsections: [

@@ -309,7 +309,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       )}
 
       {activeTab === "materi" && (
-        <MateriTab activeRombel={activeRombel} activeMapel={activeMapel} />
+        <MateriTab activeRombel={activeRombel} activeMapel={activeMapel} activeRole={activeRole} />
       )}
 
       {activeTab === "aktivitas" && (

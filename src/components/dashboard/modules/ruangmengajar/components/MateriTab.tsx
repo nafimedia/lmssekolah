@@ -43,6 +43,8 @@ import {
 import { toast } from "sonner";
 import { MysqlDataService, LearningTopicRow } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
+import { isSameSubject } from "@/utils/subjectNormalization";
+import { isSameClass } from "@/utils/classNormalization";
 import { ViewMaterialDialog, MaterialDetail } from "./ViewMaterialDialog";
 import { UploadModulDialog, UploadModulPayload } from "@/components/dashboard/modules/modulajar/components/UploadModulDialog";
 import { PickElibraryDialog, ElibraryBookItem } from "./PickElibraryDialog";
@@ -67,9 +69,41 @@ export interface TeachingMaterialItem {
 interface MateriTabProps {
   activeRombel: string;
   activeMapel: string;
+  activeRole?: string;
 }
 
-export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
+export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabProps) {
+  const me = MysqlAuthService.getActiveUser();
+  const currentTeacherName = me?.full_name || "Guru Pengampu";
+  const isExecutive = activeRole === "kamad" || activeRole === "waka" || activeRole === "admin" || activeRole === "admin_akademik";
+
+  const cleanTeacherName = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/\b(s\.pd|m\.pd|s\.ag|m\.pd\.i|s\.p|h\.|hj\.|s\.pd\.i|m\.si|drs|dra|st|kom)\b/gi, "")
+      .replace(/[^a-z0-9\s]/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const myCleanName = cleanTeacherName(currentTeacherName);
+  const myNip = (me?.nis_nip || "").trim();
+
+  const isTeacherMatch = (targetGuruRaw?: string | null) => {
+    if (isExecutive) return true; // Supervisor / Kamad can view all teachers' materials
+    const raw = (targetGuruRaw || "").trim();
+    if (!raw) return true;
+    if (myNip && raw.includes(myNip)) return true;
+
+    const cleanTarget = cleanTeacherName(raw);
+    if (!cleanTarget || !myCleanName) return true;
+
+    if (cleanTarget === myCleanName) return true;
+    if (myCleanName.length >= 4 && cleanTarget.includes(myCleanName)) return true;
+    if (cleanTarget.length >= 4 && myCleanName.includes(cleanTarget)) return true;
+
+    return false;
+  };
+
   const [topics, setTopics] = useState<LearningTopicRow[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<LearningTopicRow | null>(null);
   const [materials, setMaterials] = useState<TeachingMaterialItem[]>([]);
@@ -97,25 +131,39 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
         MysqlDataService.getMaterialCompletions().catch(() => []),
       ]);
 
-      // Filter topics matching activeMapel
-      const cleanActiveMapel = activeMapel.toLowerCase().trim();
+      // Filter topics matching activeMapel, activeRombel, and teacher ownership
       const filteredTopics = (allTopics || []).filter((t) => {
-        const itemSubject = (t.subject_name || "").toLowerCase().trim();
-        if (!itemSubject) return true;
-        return itemSubject.includes(cleanActiveMapel) || cleanActiveMapel.includes(itemSubject);
+        const matchSubject = isSameSubject(t.subject_name || "", activeMapel);
+        if (!matchSubject) return false;
+
+        const matchClass = !t.class_name || isSameClass(t.class_name, activeRombel);
+        if (!matchClass) return false;
+
+        const matchTeacher = isTeacherMatch(t.teacher_name);
+        if (!matchTeacher) return false;
+
+        return true;
       });
       setTopics(filteredTopics);
 
       if (dbItems && dbItems.length > 0) {
         const filteredMaterials = dbItems.filter((item) => {
-          const itemSubject = (item.subject_name || "").toLowerCase().trim();
-          if (!itemSubject) return true;
-          return itemSubject.includes(cleanActiveMapel) || cleanActiveMapel.includes(itemSubject);
+          // 1. Filter Mapel ketat
+          const matchSubject = isSameSubject(item.subject_name || "", activeMapel);
+          if (!matchSubject) return false;
+
+          // 2. Filter Kelas/Rombel ketat
+          const matchClass = !item.class_name || isSameClass(item.class_name, activeRombel);
+          if (!matchClass) return false;
+
+          // 3. Filter Kepemilikan Guru (Opsi B: Isolasi per Akun Guru)
+          const matchTeacher = isTeacherMatch(item.uploaded_by || item.teacher_name);
+          if (!matchTeacher) return false;
+
+          return true;
         });
 
-        const sourceItems = filteredMaterials.length > 0 ? filteredMaterials : dbItems;
-
-        const formatted: TeachingMaterialItem[] = sourceItems.map((item, idx) => {
+        const formatted: TeachingMaterialItem[] = filteredMaterials.map((item, idx) => {
           const rawType = (item.type || "").toUpperCase();
           let parsedType: "MODUL_AJAR" | "VIDEO" | "SLIDE_PPT" | "EBOOK" | "AUDIO" | "GAMBAR" | "URL" | "TEKS" = "MODUL_AJAR";
 
@@ -166,7 +214,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
       console.warn("Error fetching data in MateriTab:", err);
       setMaterials([]);
     }
-  }, [activeMapel, activeRombel]);
+  }, [activeMapel, activeRombel, currentTeacherName, isExecutive]);
 
   useEffect(() => {
     loadData();
@@ -417,6 +465,29 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
   const handleOpenViewMaterial = (m: TeachingMaterialItem) => {
     setSelectedMaterialForView(m);
     setIsViewOpen(true);
+  };
+
+  const handleDeleteMaterial = async (materialId: string, materialTitle: string) => {
+    if (
+      !confirm(
+        `Apakah Anda yakin ingin menghapus bahan ajar "${materialTitle}"? Berkas di database dan server akan dihapus permanen.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const ok = await MysqlDataService.deleteMaterial(materialId);
+      if (ok) {
+        toast.success(`🗑️ Bahan ajar "${materialTitle}" berhasil dihapus!`);
+        await loadData();
+      } else {
+        toast.error(`Gagal menghapus bahan ajar "${materialTitle}".`);
+      }
+    } catch (err) {
+      console.warn("Delete material error:", err);
+      toast.error("Terjadi kesalahan saat menghapus bahan ajar.");
+    }
   };
 
   // Materials under current selected topic (or unassigned materials)
@@ -836,7 +907,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                         </Badge>
                       </div>
 
-                      {/* Tombol Aksi: Buka & Kunci/Buka Akses (Requirement #4) */}
+                      {/* Tombol Aksi: Buka, Kunci/Buka Akses, dan Hapus */}
                       <div className="mt-2.5 pt-2 border-t border-border/60 flex items-center justify-between gap-2">
                         <Button
                           size="sm"
@@ -847,27 +918,39 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
                           <Eye className="h-3.5 w-3.5" /> Buka
                         </Button>
 
-                        <Button
-                          size="sm"
-                          variant={m.selectedForToday ? "outline" : "default"}
-                          className={`h-7 px-2.5 text-xs font-semibold gap-1.5 ${
-                            m.selectedForToday
-                              ? "border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
-                              : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                          }`}
-                          onClick={() => handleToggleSelect(m)}
-                          title={m.selectedForToday ? "Kunci materi agar siswa fokus ke materi sebelumnya" : "Buka materi ini untuk diakses siswa"}
-                        >
-                          {m.selectedForToday ? (
-                            <>
-                              <Lock className="h-3 w-3" /> Kunci Akses
-                            </>
-                          ) : (
-                            <>
-                              <Unlock className="h-3 w-3" /> Buka Akses
-                            </>
-                          )}
-                        </Button>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant={m.selectedForToday ? "outline" : "default"}
+                            className={`h-7 px-2.5 text-xs font-semibold gap-1.5 ${
+                              m.selectedForToday
+                                ? "border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
+                                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                            }`}
+                            onClick={() => handleToggleSelect(m)}
+                            title={m.selectedForToday ? "Kunci materi agar siswa fokus ke materi sebelumnya" : "Buka materi ini untuk diakses siswa"}
+                          >
+                            {m.selectedForToday ? (
+                              <>
+                                <Lock className="h-3 w-3" /> Kunci Akses
+                              </>
+                            ) : (
+                              <>
+                                <Unlock className="h-3 w-3" /> Buka Akses
+                              </>
+                            )}
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            title={`Hapus bahan ajar "${m.title}"`}
+                            onClick={() => handleDeleteMaterial(m.id, m.title)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -968,6 +1051,7 @@ export function MateriTab({ activeRombel, activeMapel }: MateriTabProps) {
         isOpen={isUploadOpen}
         onOpenChange={setIsUploadOpen}
         defaultMapel={activeMapel}
+        defaultJenjang={activeRombel}
         defaultTopicId={selectedTopic?.id !== "unassigned" ? selectedTopic?.id : undefined}
         defaultChapter={selectedTopic ? selectedTopic.title : undefined}
         onUpload={handleUploadModul}

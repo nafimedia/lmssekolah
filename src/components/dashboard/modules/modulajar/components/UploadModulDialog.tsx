@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Upload,
   FileText,
@@ -50,16 +50,32 @@ interface UploadModulDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   defaultMapel: string;
+  defaultJenjang?: string;
   defaultTopicId?: string;
   defaultChapter?: string;
   onUpload: (newModul: UploadModulPayload) => void;
 }
 
-export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, defaultTopicId, defaultChapter, onUpload }: UploadModulDialogProps) {
+const getInitialJenjang = (raw?: string) => {
+  if (!raw) return "Kelas VII";
+  if (raw.includes("IX") || raw.includes("9")) return "Kelas IX";
+  if (raw.includes("VIII") || raw.includes("8")) return "Kelas VIII";
+  if (raw.includes("VII") || raw.includes("7")) return "Kelas VII";
+  return raw;
+};
+
+export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, defaultJenjang, defaultTopicId, defaultChapter, onUpload }: UploadModulDialogProps) {
   const allowedMapels = filterSubjectsForUser(ALL_SCHOOL_SUBJECTS);
   const [newTitle, setNewTitle] = useState("");
   const [newMapel, setNewMapel] = useState(defaultMapel || allowedMapels[0] || "Al Qur'an Hadis");
-  const [newJenjang, setNewJenjang] = useState("Kelas VIII");
+  const [newJenjang, setNewJenjang] = useState(getInitialJenjang(defaultJenjang));
+
+  useEffect(() => {
+    if (isOpen) {
+      if (defaultMapel) setNewMapel(defaultMapel);
+      if (defaultJenjang) setNewJenjang(getInitialJenjang(defaultJenjang));
+    }
+  }, [isOpen, defaultMapel, defaultJenjang]);
   const [jenisBahan, setJenisBahan] = useState<JenisBahanAjarType>("DOKUMEN");
   const [selectedUploadFile, setSelectedUploadFile] = useState<File | null>(null);
   const [uploadedFileDataUrl, setUploadedFileDataUrl] = useState<string>("");

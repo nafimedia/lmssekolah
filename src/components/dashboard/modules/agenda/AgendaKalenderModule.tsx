@@ -550,7 +550,7 @@ export function AgendaKalenderModule({ activeRole }: { activeRole?: string }) {
                 : cat === "rapat"
                   ? "🟣 Rapat Dinas"
                   : cat === "kokurikuler"
-                    ? "🟡 Kokurikuler P5"
+                    ? "🟡 Projek Kokurikuler"
                     : cat === "libur"
                       ? "🔴 Libur Resmi"
                       : "🟢 KBM Efektif");

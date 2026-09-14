@@ -50,7 +50,7 @@ export function AddAgendaDialog({ isOpen, onOpenChange, onAddAgenda }: AddAgenda
     else if (cat === "cuti") defaultBadge = "🟡 Cuti Bersama";
     else if (cat === "cbt") defaultBadge = "🔵 Ujian CBT";
     else if (cat === "rapat") defaultBadge = "🟣 Rapat Dinas";
-    else if (cat === "kokurikuler") defaultBadge = "🟡 Peringatan / P5";
+    else if (cat === "kokurikuler") defaultBadge = "🟡 Kegiatan Kokurikuler";
     else if (cat === "kbm") defaultBadge = "🟢 KBM Efektif";
 
     onAddAgenda({
@@ -102,7 +102,7 @@ export function AddAgendaDialog({ isOpen, onOpenChange, onAddAgenda }: AddAgenda
                 <option value="cbt">🔵 Ujian CBT</option>
                 <option value="libur">🔴 Libur Resmi / Tanggal Merah</option>
                 <option value="cuti">🟡 Cuti Bersama</option>
-                <option value="kokurikuler">🟡 Peringatan / P5</option>
+                <option value="kokurikuler">🟡 Kegiatan Kokurikuler</option>
                 <option value="rapat">🟣 Rapat Dinas</option>
                 <option value="kbm">🟢 KBM Efektif</option>
               </select>

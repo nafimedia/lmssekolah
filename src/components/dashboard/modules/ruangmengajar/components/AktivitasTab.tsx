@@ -204,7 +204,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                       {act.type === "QUIZ" && <><Brain className="h-2.5 w-2.5 text-purple-600" /> KUIS</>}
                       {act.type === "TUGAS_MANDIRI" && <><PenTool className="h-2.5 w-2.5 text-amber-600" /> MANDIRI</>}
                       {act.type === "PRAKTIKUM" && <><FlaskConical className="h-2.5 w-2.5 text-teal-600" /> PRAKTIKUM</>}
-                      {act.type === "PROYEK_P5" && <><Target className="h-2.5 w-2.5 text-rose-600" /> P5</>}
+                      {act.type === "PROYEK_P5" && <><Target className="h-2.5 w-2.5 text-rose-600" /> PROJEK</>}
                       {act.type === "HAFALAN" && <><BookCheck className="h-2.5 w-2.5 text-indigo-600" /> HAFALAN</>}
                       {!["LKPD", "TUGAS_KELOMPOK", "QUIZ", "TUGAS_MANDIRI", "PRAKTIKUM", "PROYEK_P5", "HAFALAN"].includes(act.type) && (
                         <><FileText className="h-2.5 w-2.5 text-primary" /> {act.type}</>

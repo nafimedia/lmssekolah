@@ -252,7 +252,7 @@ export function ApresiasiSiswaModule({ activeRole }: ApresiasiSiswaModuleProps) 
                     <option value="⭐ Siswa Aktif">⭐ Siswa Aktif KBM</option>
                     <option value="🏆 Nilai Perfect 100">🏆 Nilai Perfect 100</option>
                     <option value="🌟 Hafalan Mutqin">🌟 Hafalan Mutqin Tahfidz</option>
-                    <option value="💡 Solutif & Kreatif">💡 Solutif & Kreatif Projek P5</option>
+                    <option value="💡 Solutif & Kreatif">💡 Solutif & Kreatif Projek Kokurikuler</option>
                   </select>
                 ) : (
                   <select

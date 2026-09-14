@@ -131,12 +131,12 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
         const mapped: P5ProjectItem[] = (filtered.length > 0 ? filtered : dbProjects).map((item, idx) => ({
           id: String(item.id || `p-${idx + 1}`),
           title: item.title,
-          theme: item.theme || "P5-PPRA",
+          theme: item.theme || "Kokurikuler",
           target: item.class_name || `Kelas ${studentRombel}`,
-          coordinator: (item as any).coordinator || "Fasilitator Projek P5",
+          coordinator: (item as any).coordinator || "Fasilitator Projek Kokurikuler",
           progress: item.progress_pct || 0,
           status: item.status || "Dalam Proses",
-          dimensions: item.target_dimension || "Profil Pelajar Pancasila & Rahmatan Lil 'Alamin",
+          dimensions: item.target_dimension || "Penguatan Karakter & Nilai Rahmatan Lil 'Alamin",
           dateStr: item.date_str || "Semester Berjalan",
         }));
         setProjectsList(mapped);
@@ -339,7 +339,7 @@ export function KokurikulerSiswaModule({ userProfile }: { userProfile?: any } = 
                   <Inbox className="h-6 w-6" />
                 </div>
                 <div>
-                  <div className="font-bold text-foreground text-sm">Belum Ada Tema Projek P5 Diterbitkan</div>
+                  <div className="font-bold text-foreground text-sm">Belum Ada Tema Projek Kokurikuler Diterbitkan</div>
 
                 </div>
                 <Button

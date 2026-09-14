@@ -293,7 +293,7 @@ export const DOCS_DATA: DocCategory[] = [
         lead: "Panduan memberikan evaluasi dan apresiasi objektif kepada rekan sekelompok dalam aktivitas tugas kelompok digital.",
         content: [
           "Pada tugas kelompok yang mengaktifkan fitur Penilaian Antarteman, siswa berkesempatan memberikan evaluasi dan apresiasi terhadap peran serta anggota kelompoknya.",
-          "Penilaian antarteman bertujuan menumbuhkan budaya refleksi, kejujuran, sportivitas, dan rasa saling menghargai sesuai Profil Pelajar Pancasila dan Profil Pelajar Rahmatan Lil 'Alamin (P5-PPRA).",
+          "Penilaian antarteman bertujuan menumbuhkan budaya refleksi, kejujuran, sportivitas, dan rasa saling menghargai sesuai pilar karakter pelajar madrasah (Projek Kokurikuler & Pembiasaan Karakter).",
           "Setiap siswa menilai rekannya berdasarkan 4 pilar dimensi utama: (1) Keaktifan & Inisiatif Ide, (2) Kerjasama & Kontribusi Tim, (3) Tanggung Jawab Penyelesaian Tugas, dan (4) Sikap Menghargai Pendapat Rekan.",
           "Penilaian yang Anda berikan bersifat rahasia antar-siswa untuk menjaga kenyamanan dan objektivitas, namun dapat ditinjau oleh guru pengampu sebagai salah satu komponen asesmen proses.",
         ],

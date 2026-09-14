@@ -106,15 +106,15 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
       return;
     }
     window.print();
-    toast.success(`Laporan Portofolio P5 (${activeProject.title}) berhasil dicetak!`);
+    toast.success(`Laporan Portofolio Kokurikuler (${activeProject.title}) berhasil dicetak!`);
   };
 
   const handleExportExcelP5 = () => {
     if (projectsList.length === 0) {
-      toast.error("Belum ada data projek P5 untuk di-export.");
+      toast.error("Belum ada data projek kokurikuler untuk di-export.");
       return;
     }
-    const headers = ["No", "Judul Tema Projek P5", "Sasaran Tingkat", "Koordinator Utama", "Total Siswa", "Capaian Progress", "Status Evaluasi", "Hasil Produk Karya"];
+    const headers = ["No", "Judul Tema Projek", "Sasaran Tingkat", "Koordinator Utama", "Total Siswa", "Capaian Progress", "Status Evaluasi", "Hasil Produk Karya"];
     const rows = projectsList.map((p, idx) => [
       idx + 1,
       String(p.title || ""),
@@ -125,8 +125,8 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
       String(p.status || ""),
       (p.outcomes || []).join(", "),
     ]);
-    exportToExcelXml("Rekap_Laporan_P5_PPA_RA_MTsN2Cilacap", "Laporan_P5", headers, rows);
-    toast.success("File Rekap Excel Laporan P5 & PPA-RA Berhasil Diunduh!");
+    exportToExcelXml("Rekap_Laporan_Projek_Kokurikuler_MTsN2Cilacap", "Laporan_Kokurikuler", headers, rows);
+    toast.success("File Rekap Excel Laporan Projek Kokurikuler Berhasil Diunduh!");
   };
 
   const totalStudentsInvolved = useMemo(() => {
@@ -142,7 +142,7 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FolderKanban className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Laporan Eksekutif Kokurikuler (P5 & PPA-RA)
+            <FolderKanban className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Laporan Eksekutif Projek Kokurikuler
           </h1>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -160,14 +160,14 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
             className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
             onClick={() => {
               if (projectsList.length === 0) {
-                toast.error("Belum ada data projek P5 untuk dicetak.");
+                toast.error("Belum ada data projek kokurikuler untuk dicetak.");
                 return;
               }
               setIsPrintP5ModalOpen(true);
             }}
             disabled={projectsList.length === 0}
           >
-            <Printer className="h-3.5 w-3.5" /> Cetak Portofolio P5 PDF
+            <Printer className="h-3.5 w-3.5" /> Cetak Portofolio Kokurikuler PDF
           </Button>
         </div>
       </div>
@@ -212,11 +212,11 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-xs text-muted-foreground">Memuat Laporan P5 & PPA-RA dari Database...</div>
+        <div className="p-8 text-center text-xs text-muted-foreground">Memuat Laporan Projek Kokurikuler dari Database...</div>
       ) : projectsList.length === 0 ? (
         <div className="p-12 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-2">
           <FolderKanban className="h-8 w-8 text-muted-foreground/50 mx-auto" />
-          <div className="font-semibold text-foreground text-sm">Belum Ada Data Projek P5 & PPA-RA Terdaftar</div>
+          <div className="font-semibold text-foreground text-sm">Belum Ada Data Projek Kokurikuler Terdaftar</div>
           <p>Database saat ini tidak memiliki rekam data projek kokurikuler.</p>
         </div>
       ) : (
@@ -287,24 +287,24 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
         </div>
       )}
 
-      {/* Modal Dialog Pratinjau & Cetak PDF Portfolio P5 */}
+      {/* Modal Dialog Pratinjau & Cetak PDF Portfolio Kokurikuler */}
       {activeProject && (
         <Dialog open={isPrintP5ModalOpen} onOpenChange={setIsPrintP5ModalOpen}>
           <DialogContent className="sm:max-w-3xl border-border bg-card p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
             <DialogHeader className="border-b border-border pb-3">
               <DialogTitle className="text-lg font-bold flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <FolderKanban className="h-5 w-5 text-emerald-600" /> Pratinjau Portofolio P5 & PPA-RA
+                  <FolderKanban className="h-5 w-5 text-emerald-600" /> Pratinjau Portofolio Projek Kokurikuler
                 </div>
                 <Badge className="bg-emerald-600 text-white text-xs">{activeProject.target}</Badge>
               </DialogTitle>
               <DialogDescription className="text-xs">
-                Format Laporan Portofolio Capaian Projek Penguatan Profil Pelajar Pancasila & Rahmatan Lil Alamin MTsN 2 Cilacap.
+                Format Laporan Portofolio Capaian Projek Kokurikuler & Pembiasaan Karakter MTsN 2 Cilacap.
               </DialogDescription>
             </DialogHeader>
 
             <div className="p-3 bg-muted/40 rounded-xl border border-border text-xs">
-              <Label className="text-[11px] font-semibold text-muted-foreground">Pilih Tema Projek P5</Label>
+              <Label className="text-[11px] font-semibold text-muted-foreground">Pilih Tema Projek Kokurikuler</Label>
               <select
                 className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs mt-1 font-bold"
                 value={selectedProjectId}
@@ -329,7 +329,7 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
                   </div>
                 </div>
                 <div className="mt-2 py-1 bg-emerald-800 text-white font-extrabold text-xs uppercase tracking-widest rounded-xs text-center">
-                  PORTOFOLIO CAPAIAN PROJEK P5 & PPA-RA
+                  PORTOFOLIO CAPAIAN PROJEK KOKURIKULER
                 </div>
               </div>
 
@@ -380,7 +380,7 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
 
               <div className="grid grid-cols-2 gap-4 text-xs pt-4 text-slate-800 border-t border-slate-200">
                 <div className="text-center space-y-8">
-                  <div>Koordinator Projek P5</div>
+                  <div>Koordinator Projek Kokurikuler</div>
                   <div className="font-bold underline text-slate-950">{activeProject.coordinator}</div>
                 </div>
                 <div className="text-center space-y-8">
@@ -395,7 +395,7 @@ export function KokurikulerModule({ activeRole }: { activeRole?: string }) {
                 Tutup
               </Button>
               <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5" onClick={handlePrintP5}>
-                <Printer className="h-4 w-4" /> Cetak Portofolio P5 PDF
+                <Printer className="h-4 w-4" /> Cetak Portofolio Kokurikuler PDF
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -433,13 +433,13 @@ export function KokurikulerSiswaModule() {
         <Card className="border-border shadow-xs">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Award className="h-5 w-5 text-amber-500" /> Penilaian Karakter Profil Pelajar Pancasila
+              <Award className="h-5 w-5 text-amber-500" /> Penilaian Karakter & Dimensi Profil Pelajar
             </CardTitle>
             <CardDescription className="text-xs">Evaluasi pembiasaan karakter & dimensi Rahmatan Lil 'Alamin.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="p-4 border border-dashed border-border rounded-xl text-center text-xs text-muted-foreground">
-              Belum ada evaluasi nilai dimensi P5 yang diinput oleh Koordinator Projek.
+              Belum ada evaluasi nilai dimensi karakter yang diinput oleh Koordinator Projek.
             </div>
           </CardContent>
         </Card>

@@ -365,16 +365,24 @@ export function SesiRuangBelajarView({
             </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-5">
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 space-y-2">
-              <div className="text-base sm:text-lg font-bold text-foreground leading-snug">
-                {sessionJournal?.materi || sessionJournal?.topic || `Pembelajaran Tematik & Penguasaan Kompetensi ${activeMapel}`}
-              </div>
-              {sessionJournal?.catatan && (
-                <div className="text-xs text-muted-foreground border-t border-emerald-500/20 pt-2 leading-relaxed">
-                  <strong className="text-foreground">Apersepsi / Pengantar Guru:</strong> {sessionJournal.catatan}
+            {sessionJournal?.materi || sessionJournal?.topic ? (
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 space-y-2">
+                <div className="text-base sm:text-lg font-bold text-foreground leading-snug">
+                  {sessionJournal.materi || sessionJournal.topic}
                 </div>
-              )}
-            </div>
+                {sessionJournal?.catatan && (
+                  <div className="text-xs text-muted-foreground border-t border-emerald-500/20 pt-2 leading-relaxed">
+                    <strong className="text-foreground">Catatan Guru:</strong> {sessionJournal.catatan}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-dashed border-border bg-muted/10 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Belum ada materi atau topik pembelajaran yang dicatat oleh guru.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -394,15 +402,22 @@ export function SesiRuangBelajarView({
             </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-5">
-            <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2.5 shadow-2xs">
-              <div className="flex items-start gap-2.5">
-                <Target className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="text-xs sm:text-sm font-medium text-foreground leading-relaxed">
-                  {sessionJournal?.tujuan_pembelajaran ||
-                    `Siswa mampu memahami konsep dasar, menganalisis materi ajar, serta menerapkan pemahaman pada penugasan LKPD ${activeMapel} secara mandiri dan kritis.`}
+            {sessionJournal?.tujuan_pembelajaran ? (
+              <div className="p-4 rounded-xl bg-card border border-border/80 space-y-2.5 shadow-2xs">
+                <div className="flex items-start gap-2.5">
+                  <Target className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="text-xs sm:text-sm font-medium text-foreground leading-relaxed">
+                    {sessionJournal.tujuan_pembelajaran}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-dashed border-border bg-muted/10 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Tujuan pembelajaran belum dicantumkan oleh guru.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

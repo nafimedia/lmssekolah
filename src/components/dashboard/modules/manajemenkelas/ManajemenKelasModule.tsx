@@ -262,9 +262,6 @@ export function ManajemenKelasModule({ activeRole, userProfile }: { activeRole?:
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
                 <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> Supervisi Manajemen Kelas
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Monitoring terpadu {totalClassesCount} Kelas MTsN 2 Cilacap: Kehadiran siswa, kelengkapan Wali Kelas, & progres rapor.
-              </p>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">

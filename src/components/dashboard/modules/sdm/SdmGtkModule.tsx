@@ -342,9 +342,6 @@ export function SdmGtkModule({
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
             <Users className="h-6 w-6 text-primary shrink-0" /> Manajemen SDM & Akun Madrasah
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Pusat terpadu kepegawaian GTK, beban mengajar (≥24 JP), layanan cuti, dan akun pengguna.
-          </p>
           {isKamad && (
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5 font-semibold">
               🏛️ Mode Supervisi Kepala Madrasah — Monitoring TPG Kemenag & penugasan akun.

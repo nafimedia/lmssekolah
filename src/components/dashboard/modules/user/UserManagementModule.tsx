@@ -259,9 +259,6 @@ export function UserManagementModule({ activeRole, userProfile, hideHeader = fal
             <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" /> Data Akun Pengguna & Hak Akses
             </CardTitle>
-            <CardDescription>
-              Kelola akun terdaftar ({usersList.length} total) berdasarkan pengelompokan peran dan wewenang.
-            </CardDescription>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-64">

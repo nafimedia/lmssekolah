@@ -31,12 +31,10 @@ export function DetailKbmSessionDialog({
   isEditMode = false,
   onSaveUpdatedTopic,
 }: DetailKbmSessionDialogProps) {
-  if (!sessionItem) return null;
-
-  const [topic, setTopic] = useState(sessionItem.topic || "");
-  const [tujuan, setTujuan] = useState(sessionItem.tujuan_pembelajaran || "");
-  const [kegiatan, setKegiatan] = useState(sessionItem.kegiatan || "");
-  const [kendala, setKendala] = useState(sessionItem.kendala || sessionItem.catatan || "");
+  const [topic, setTopic] = useState(sessionItem?.topic || "");
+  const [tujuan, setTujuan] = useState(sessionItem?.tujuan_pembelajaran || "");
+  const [kegiatan, setKegiatan] = useState(sessionItem?.kegiatan || "");
+  const [kendala, setKendala] = useState(sessionItem?.kendala || sessionItem?.catatan || "");
 
   useEffect(() => {
     if (sessionItem) {
@@ -46,6 +44,8 @@ export function DetailKbmSessionDialog({
       setKendala(sessionItem.kendala || sessionItem.catatan || "");
     }
   }, [sessionItem]);
+
+  if (!isOpen || !sessionItem) return null;
 
   const handleSave = () => {
     if (onSaveUpdatedTopic) {

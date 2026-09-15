@@ -125,6 +125,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
       MysqlDataService.getKbmPresensi(activeRombel, activeMapel, todayStr),
       MysqlDataService.getJournals(),
     ]).then(([presRows, journals]) => {
+      if (!isMounted) return;
       const presDone = Boolean(presRows && presRows.length > 0);
       setIsPresensiDone(presDone);
       let countStr = "Isi Kehadiran";

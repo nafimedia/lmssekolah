@@ -297,7 +297,7 @@ export function ViewActivityDialog({
                   : activity.type === "PRAKTIKUM"
                   ? "🔬 Praktikum & Lab"
                   : activity.type === "PROYEK_P5"
-                  ? "🎯 Proyek Kokurikuler"
+                  ? "🎯 Kegiatan Kokurikuler"
                   : activity.type === "HAFALAN"
                   ? "📖 Setoran Hafalan"
                   : activity.type}

@@ -169,31 +169,15 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
           <div className="flex items-center gap-2 shrink-0">
             <Button
               size="sm"
-              className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+              className="h-8 px-3 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
               onClick={() => {
                 setCreateType("LKPD");
                 setIsCreateOpen(true);
               }}
-              title="Buat Lembar Kerja Siswa (LKPD / Berkas / Tugas)"
+              title="Buat Aktivitas Pembelajaran Baru (LKPD, Kuis, Hafalan, Kokurikuler, Praktikum, Diskusi Kelompok, Tugas Mandiri)"
             >
-              <FileText className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">+ Buat LKPD</span>
-              <span className="sm:hidden">+ LKPD</span>
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 shadow-xs"
-              onClick={() => {
-                setCreateType("QUIZ");
-                setIsCreateOpen(true);
-              }}
-              title="Buat Kuis Interaktif Formatif (Pilihan Ganda / Isian)"
-            >
-              <Zap className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-              <span className="hidden sm:inline">+ Kuis Interaktif</span>
-              <span className="sm:hidden">+ Kuis</span>
+              <Plus className="h-3.5 w-3.5" />
+              <span>+ Buat Aktivitas Pembelajaran</span>
             </Button>
           </div>
         </div>
@@ -202,7 +186,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
           {activities.length === 0 ? (
             <div className="py-8 text-center border border-dashed border-border rounded-xl bg-muted/20">
               <FileText className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-              <h4 className="font-bold text-xs text-foreground">Belum Ada Aktivitas / LKPD Digital</h4>
+              <h4 className="font-bold text-xs text-foreground">Belum Ada Aktivitas Pembelajaran</h4>
               <p className="text-[11px] text-muted-foreground mt-1 max-w-sm mx-auto font-medium">
                 Belum ada aktivitas pembelajaran untuk <strong>{activeRombel}</strong> ({activeMapel}).
               </p>
@@ -215,18 +199,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                     setIsCreateOpen(true);
                   }}
                 >
-                  <FileText className="h-3.5 w-3.5" /> Buat LKPD
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs font-semibold border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 gap-1"
-                  onClick={() => {
-                    setCreateType("QUIZ");
-                    setIsCreateOpen(true);
-                  }}
-                >
-                  <Zap className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> Kuis Interaktif
+                  <Plus className="h-3.5 w-3.5" /> Buat Aktivitas Pembelajaran
                 </Button>
               </div>
             </div>
@@ -241,7 +214,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                       {act.type === "QUIZ" && <><Brain className="h-2.5 w-2.5 text-purple-600" /> KUIS</>}
                       {act.type === "TUGAS_MANDIRI" && <><PenTool className="h-2.5 w-2.5 text-amber-600" /> MANDIRI</>}
                       {act.type === "PRAKTIKUM" && <><FlaskConical className="h-2.5 w-2.5 text-teal-600" /> PRAKTIKUM</>}
-                      {act.type === "PROYEK_P5" && <><Target className="h-2.5 w-2.5 text-rose-600" /> PROJEK</>}
+                      {act.type === "PROYEK_P5" && <><Target className="h-2.5 w-2.5 text-rose-600" /> KOKURIKULER</>}
                       {act.type === "HAFALAN" && <><BookCheck className="h-2.5 w-2.5 text-indigo-600" /> HAFALAN</>}
                       {!["LKPD", "TUGAS_KELOMPOK", "QUIZ", "TUGAS_MANDIRI", "PRAKTIKUM", "PROYEK_P5", "HAFALAN"].includes(act.type) && (
                         <><FileText className="h-2.5 w-2.5 text-primary" /> {act.type}</>

@@ -190,14 +190,14 @@ const categoryConfig: Record<
     ],
   },
   PROYEK_P5: {
-    titleLabel: "Judul Aktivitas:",
-    titlePlaceholder: "Masukkan judul aktivitas...",
-    instructionPlaceholder: "Tuliskan instruksi aktivitas...",
+    titleLabel: "Judul Kegiatan Kokurikuler:",
+    titlePlaceholder: "Contoh: Kokurikuler Kearifan Lokal - Pembuatan Kompos...",
+    instructionPlaceholder: "Tuliskan tujuan, panduan pelaksanaan, dan output kegiatan kokurikuler...",
     showFileUpload: true,
     showStructuredQuestions: false,
-    structuredQuestionsLabel: "Lembar Butir Aktivitas",
+    structuredQuestionsLabel: "Lembar Panduan Kokurikuler",
     submissionMethods: [
-      { value: "TEXT_AND_FILE", label: "Kombinasi (Teks Digital & Unggah Berkas)" },
+      { value: "TEXT_AND_FILE", label: "Kombinasi (Laporan Teks Digital & Unggah Dokumen)" },
     ],
   },
   REFLEKSI: {
@@ -333,7 +333,7 @@ export function CreateActivityForm({
     },
     {
       id: "PROYEK_P5",
-      label: "🌱 Proyek P5-PPRA Madrasah",
+      label: "🌱 Kegiatan Kokurikuler",
       color: "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
       disabled: false,
     },

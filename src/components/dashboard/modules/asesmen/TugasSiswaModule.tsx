@@ -1138,7 +1138,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                         : selectedAssignment.type === "HAFALAN"
                           ? `Target Ayat & Butir Setoran Hafalan (${parsedQuestions.length} Butir)`
                           : selectedAssignment.type === "PROYEK_P5"
-                            ? `Tahapan & Lembar Kerja Proyek (${parsedQuestions.length} Butir)`
+                            ? `Tahapan & Lembar Kegiatan Kokurikuler (${parsedQuestions.length} Butir)`
                             : `Lembar Butir Soal Terstruktur (${parsedQuestions.length} Butir)`}
                     </CardTitle>
                     <Badge variant="outline" className="text-[10px] font-bold border-emerald-400 text-emerald-700 dark:text-emerald-300">
@@ -1925,7 +1925,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                       : selectedAssignment.type === "PRAKTIKUM"
                         ? "Lembar Laporan Praktikum & Dokumen Uji"
                         : selectedAssignment.type === "PROYEK_P5"
-                          ? "Lembar Laporan & Artefak Proyek"
+                          ? "Lembar Laporan & Bukti Kegiatan Kokurikuler"
                           : "Lembar Jawaban & Submisi Siswa"}
                   </CardTitle>
                   <CardDescription className="text-[11px]">
@@ -1934,7 +1934,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                       : selectedAssignment.type === "PRAKTIKUM"
                         ? "Ketikkan hasil pengamatan/analisis praktikum atau unggah berkas laporan praktikum."
                         : selectedAssignment.type === "PROYEK_P5"
-                          ? "Ketikkan ringkasan kemajuan proyek atau lampirkan berkas dokumentasi/artefak karya."
+                          ? "Ketikkan ringkasan kemajuan kegiatan kokurikuler atau lampirkan berkas dokumentasi/artefak hasil kegiatan."
                           : "Ketikkan jawaban tugas Anda di bawah, atau lampirkan berkas dokumen jawaban."}
                   </CardDescription>
                 </CardHeader>

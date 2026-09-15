@@ -261,17 +261,14 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
               <DoorOpen className="h-5 w-5 text-primary" /> {activeRombel} — {activeMapel}
             </h2>
             <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 flex-wrap">
-              <span>{activeRombel}</span>
-              <span>—</span>
-              <span>{activeMapel}</span>
-              <span>—</span>
+              <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               {isScheduledToday ? (
                 <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                  Hari ini Pukul {scheduleTimeStr ? (scheduleTimeStr.toLowerCase().startsWith("pukul") ? scheduleTimeStr.replace(/pukul/i, "").trim() : scheduleTimeStr) : "07.30 - 08.50"}
+                  Jadwal Mengajar: {scheduleTimeStr ? (scheduleTimeStr.toLowerCase().startsWith("pukul") ? scheduleTimeStr.replace(/pukul/i, "").trim() : scheduleTimeStr) : "07.30 - 08.50"}
                 </span>
               ) : (
                 <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                  Tidak Ada Jadwal Hari Ini
+                  Tidak Ada Jadwal Mengajar Hari Ini
                 </span>
               )}
             </p>

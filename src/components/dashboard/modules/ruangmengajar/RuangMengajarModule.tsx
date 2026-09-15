@@ -165,8 +165,13 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       meeting: newEntry.meeting,
       date: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
       notes: newEntry.notes,
+      rombel: newEntry.rombel,
+      mapel: newEntry.mapel,
     };
     setJournalList((prev) => [item, ...prev]);
+    if (isSameClass(newEntry.rombel, activeRombel) && newEntry.mapel.toLowerCase().trim() === activeMapel.toLowerCase().trim()) {
+      setKbmProgress((prev) => ({ ...prev, isJurnalDone: true }));
+    }
     MysqlDataService.saveJournal({
       guru_name: currentTeacherName,
       rombel: newEntry.rombel,
@@ -181,7 +186,17 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
 
   const handleDeleteJurnal = async (id: string, title: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus jurnal "${title}"?`)) {
-      setJournalList((prev) => prev.filter((j) => j.id !== id));
+      setJournalList((prev) => {
+        const nextList = prev.filter((j) => j.id !== id);
+        const hasOtherJournalToday = nextList.some((j) => {
+          const rombelVal = j.rombel || j.kelas || "";
+          const matchRombel = isSameClass(rombelVal, activeRombel);
+          const matchMapel = j.mapel && j.mapel.toLowerCase().trim() === activeMapel.toLowerCase().trim();
+          return matchRombel && matchMapel;
+        });
+        setKbmProgress((prevKbm) => ({ ...prevKbm, isJurnalDone: hasOtherJournalToday }));
+        return nextList;
+      });
       await MysqlDataService.deleteJournal(id);
       toast.success(`🗑️ Jurnal "${title}" berhasil dihapus dari Database!`);
     }

@@ -31,6 +31,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
   const [scheduleTimeStr, setScheduleTimeStr] = useState<string>("");
 
   const todayStr = new Date().toISOString().split("T")[0];
+  const formattedTodayDate = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 
   useEffect(() => {
     let isMounted = true;
@@ -136,11 +137,27 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
       const jurDone = Boolean(
         journals &&
           journals.length > 0 &&
-          journals.some(
-            (j: any) =>
-              isSameClass(j.rombel || "", activeRombel) &&
-              (j.mapel?.toLowerCase() === activeMapel.toLowerCase() || j.topic || j.materi)
-          )
+          journals.some((j: any) => {
+            const rombelVal = j.rombel || j.kelas || "";
+            const isRombelMatch = isSameClass(rombelVal, activeRombel);
+            const isMapelMatch =
+              Boolean(j.mapel) &&
+              (j.mapel.toLowerCase().trim() === activeMapel.toLowerCase().trim() ||
+                activeMapel.toLowerCase().trim().includes(j.mapel.toLowerCase().trim()) ||
+                j.mapel.toLowerCase().trim().includes(activeMapel.toLowerCase().trim()));
+
+            const jDate = (j.tanggal || j.date || "").toLowerCase().trim();
+            const todayId = formattedTodayDate.toLowerCase().trim();
+            const isDateMatch =
+              !jDate ||
+              jDate === todayId ||
+              jDate === todayStr ||
+              jDate.includes(todayId) ||
+              jDate.includes(todayStr) ||
+              (j.created_at && String(j.created_at).startsWith(todayStr));
+
+            return isRombelMatch && isMapelMatch && isDateMatch;
+          })
       );
       setIsJurnalDone(jurDone);
 
@@ -205,7 +222,6 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
 
   const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
   const currentDayName = dayNames[new Date().getDay()];
-  const formattedTodayDate = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <Card className={`border transition-all shadow-sm ${

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
-import { MysqlDataService } from "@/services/mysqlDataService";
+import { MysqlDataService, LearningTopicRow } from "@/services/mysqlDataService";
+import { filterSubjectsForUser, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSubjectAccess";
+import { isSameSubject } from "@/utils/subjectNormalization";
 import { toast } from "sonner";
 import {
   FileText,
@@ -8,24 +10,38 @@ import {
   Eye,
   Download,
   Trash2,
-  Music,
-  Image as ImageIcon,
-  Globe,
   ExternalLink,
-  Video,
-  FileEdit,
   Lock,
-  Unlock,
   CheckCircle2,
-  ListOrdered,
+  FolderPlus,
+  Folder,
+  ArrowLeft,
+  BookOpen,
+  Layers,
+  ChevronRight,
+  Plus,
+  Pencil,
+  AlertCircle,
+  Clock,
+  Sparkles,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 import { UploadModulDialog, UploadModulPayload } from "./components/UploadModulDialog";
 import { PreviewModulDialog } from "./components/PreviewModulDialog";
 import { DeleteModulDialog } from "./components/DeleteModulDialog";
+import { ManageTopicDialog } from "./components/ManageTopicDialog";
 
 export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isSiswa = activeRole === "siswa";
@@ -37,18 +53,49 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
   const currentTeacherName = me?.full_name || "Guru Pengampu";
   const currentSubject = (me as any)?.subject_specialty || userProfile?.assignedSubject || "";
 
-  const [selectedJenjang, setSelectedJenjang] = useState<string>("semua");
+  // Available subjects based on user role
+  const allowedMapels = useMemo(() => {
+    return filterSubjectsForUser(ALL_SCHOOL_SUBJECTS, me);
+  }, [me]);
+
+  // Active Filters & State
+  const [selectedJenjang, setSelectedJenjang] = useState<string>("Kelas VIII");
+  const [selectedMapel, setSelectedMapel] = useState<string>(() => {
+    if (isGuru && allowedMapels.length > 0) return allowedMapels[0];
+    return "semua";
+  });
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("semua");
 
-  // Dialog States
+  // Bab / Topik State (Hierarki Kurikulum)
+  const [topics, setTopics] = useState<LearningTopicRow[]>([]);
+  const [selectedTopic, setSelectedTopic] = useState<LearningTopicRow | null>(null);
+  const [isManageTopicOpen, setIsManageTopicOpen] = useState(false);
+  const [topicToEdit, setTopicToEdit] = useState<LearningTopicRow | null>(null);
+  const [topicToDelete, setTopicToDelete] = useState<LearningTopicRow | null>(null);
+
+  // Dialog States for Materials
   const [previewModul, setPreviewModul] = useState<any | null>(null);
   const [deleteConfirmModul, setDeleteConfirmModul] = useState<{ id: string; title: string } | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
+  // Data States
   const [modulList, setModulList] = useState<Array<any>>([]);
   const [completions, setCompletions] = useState<Array<any>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showUnassignedSection, setShowUnassignedSection] = useState(false);
 
+  // Fetch Bab / Learning Topics
+  const fetchTopics = async () => {
+    try {
+      const topicData = await MysqlDataService.getLearningTopics();
+      setTopics(topicData || []);
+    } catch (e) {
+      console.warn("fetchTopics error:", e);
+      setTopics([]);
+    }
+  };
+
+  // Fetch Materials / Modul Ajar
   const fetchMaterials = async () => {
     setIsLoading(true);
     try {
@@ -58,7 +105,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       ]);
       setCompletions(compList || []);
       if (items && items.length > 0) {
-        // Hanya ambil materi bahan ajar belajar (bukan dokumen perangkat kurikulum prota/promes/silabus/atp/kktp)
+        // Hanya ambil materi bahan ajar belajar (bukan dokumen kurikulum prota/promes/silabus/atp/kktp)
         const learningMaterialsOnly = items.filter((m) => {
           const typeLower = (m.type || "").toLowerCase().trim();
           const isTeacherAdmin =
@@ -89,6 +136,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           sequence_order: Number(m.sequence_order) || 1,
           access_mode: m.access_mode || "GURU_KONTROL",
           content_text: m.content_text || "",
+          topic_id: m.topic_id || null,
+          chapter: m.chapter || null,
         }));
 
         dbFormatted.sort((a, b) => (a.sequence_order || 1) - (b.sequence_order || 1));
@@ -97,6 +146,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         setModulList([]);
       }
     } catch (e) {
+      console.warn("fetchMaterials error:", e);
       setModulList([]);
     } finally {
       setIsLoading(false);
@@ -105,7 +155,15 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
 
   useEffect(() => {
     fetchMaterials();
+    fetchTopics();
   }, []);
+
+  // Update selectedMapel if user is Guru and allowedMapels loads
+  useEffect(() => {
+    if (isGuru && allowedMapels.length > 0 && selectedMapel === "semua") {
+      setSelectedMapel(allowedMapels[0]);
+    }
+  }, [isGuru, allowedMapels, selectedMapel]);
 
   const studentNisn = me?.nis_nip || me?.id || "";
   const completedMaterialIds = useMemo(() => {
@@ -118,6 +176,153 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     return set;
   }, [completions, studentNisn, me]);
 
+  // Filter bahan ajar yang dapat diakses:
+  // Guru hanya mengelola bahan ajar miliknya atau mapelnya, Pimpinan melihat semua
+  const availableModulList = useMemo(() => {
+    if (!isGuru) return modulList;
+    return modulList.filter((m) => {
+      const uploader = (m.teacher || "").toLowerCase().trim();
+      const myName = currentTeacherName.toLowerCase().trim();
+      const matchTeacher = !uploader || uploader === "guru pengampu" || uploader === myName || uploader.includes(myName) || myName.includes(uploader);
+      const matchMapel = allowedMapels.some((s) => isSameSubject(s, m.mapel));
+      return matchTeacher || matchMapel;
+    });
+  }, [modulList, isGuru, currentTeacherName, allowedMapels]);
+
+  // Filter Bab berdasarkan Jenjang Kelas & Mapel yang dipilih
+  const filteredTopics = useMemo(() => {
+    return topics
+      .filter((t) => {
+        const matchJenjang = selectedJenjang === "semua" || t.class_name === selectedJenjang;
+        const matchMapel = selectedMapel === "semua" || isSameSubject(t.subject_name, selectedMapel);
+        return matchJenjang && matchMapel;
+      })
+      .sort((a, b) => (a.sequence_order || 1) - (b.sequence_order || 1));
+  }, [topics, selectedJenjang, selectedMapel]);
+
+  // Materi di dalam Bab yang sedang dibuka (saat selectedTopic aktif)
+  const currentTopicMaterials = useMemo(() => {
+    if (!selectedTopic) return [];
+    return availableModulList
+      .filter((m) => m.topic_id === selectedTopic.id || (m.chapter && m.chapter.trim().toLowerCase() === selectedTopic.title.trim().toLowerCase()))
+      .filter((m) => {
+        if (selectedStatusFilter === "verified") return m.status === "Terverifikasi Waka";
+        if (selectedStatusFilter === "pending") return m.status !== "Terverifikasi Waka";
+        return true;
+      })
+      .sort((a, b) => (a.sequence_order || 1) - (b.sequence_order || 1));
+  }, [availableModulList, selectedTopic, selectedStatusFilter]);
+
+  // Siswa gating / sequence lock untuk materi di dalam Bab aktif
+  const materialsWithLockState = useMemo(() => {
+    if (!isSiswa) return currentTopicMaterials;
+
+    const list = [...currentTopicMaterials].sort((a, b) => (a.sequence_order || 1) - (b.sequence_order || 1));
+    return list.map((m, idx) => {
+      const isCompleted = completedMaterialIds.has(String(m.id));
+      const rawStatus = (m.status || "").toLowerCase().trim();
+      const isTeacherLocked = rawStatus === "terkunci" || rawStatus === "sembunyi";
+
+      let isUnlocked = true;
+      let lockReason = "";
+
+      if (isTeacherLocked) {
+        isUnlocked = false;
+        lockReason = "Materi ini sedang dibatasi aksesnya oleh Guru Pengampu.";
+      } else if (m.access_mode === "SISWA_MANDIRI") {
+        if (idx > 0) {
+          const prevItem = list[idx - 1];
+          const isPrevDone = completedMaterialIds.has(String(prevItem.id));
+          if (!isPrevDone) {
+            isUnlocked = false;
+            lockReason = `Selesaikan Langkah #${prevItem.sequence_order || idx} ("${prevItem.title}") terlebih dahulu untuk membuka materi ini.`;
+          }
+        }
+      }
+
+      return {
+        ...m,
+        isCompleted,
+        isUnlocked,
+        lockReason,
+      };
+    });
+  }, [currentTopicMaterials, isSiswa, completedMaterialIds]);
+
+  // Materi legacy atau lepas yang belum dikelompokkan ke dalam Bab
+  const unassignedMaterials = useMemo(() => {
+    return availableModulList.filter((m) => {
+      const matchJenjang = selectedJenjang === "semua" || m.jenjang === selectedJenjang;
+      const matchMapel = selectedMapel === "semua" || isSameSubject(m.mapel, selectedMapel);
+      if (!matchJenjang || !matchMapel) return false;
+      // Cek apakah memiliki topic_id yang valid di tabel topics
+      if (!m.topic_id) return true;
+      const topicExists = topics.some((t) => t.id === m.topic_id);
+      return !topicExists;
+    });
+  }, [availableModulList, selectedJenjang, selectedMapel, topics]);
+
+  // Handlers untuk Bab (Topic)
+  const handleSaveTopic = async (payload: { id?: string; title: string; description: string; sequence_order: number }) => {
+    try {
+      const topicId = payload.id || `top_${Date.now()}`;
+      const activeJenjangForTopic = selectedJenjang === "semua" ? "Kelas VIII" : selectedJenjang;
+      const activeMapelForTopic = selectedMapel === "semua" ? (allowedMapels[0] || "Al Qur'an Hadis") : selectedMapel;
+
+      const res = await MysqlDataService.saveLearningTopic({
+        id: topicId,
+        title: payload.title,
+        description: payload.description || null,
+        sequence_order: payload.sequence_order || 1,
+        subject_name: activeMapelForTopic,
+        class_name: activeJenjangForTopic,
+        status: "Aktif",
+        teacher_name: currentTeacherName || "Guru Pengampu",
+      });
+
+      if (res) {
+        toast.success(payload.id ? `Bab "${payload.title}" berhasil diperbarui!` : `Bab "${payload.title}" berhasil dibuat!`);
+        await fetchTopics();
+        setIsManageTopicOpen(false);
+        setTopicToEdit(null);
+        if (selectedTopic && selectedTopic.id === topicId) {
+          setSelectedTopic({
+            ...selectedTopic,
+            title: payload.title,
+            description: payload.description,
+            sequence_order: payload.sequence_order,
+          });
+        }
+      } else {
+        toast.error("Gagal menyimpan Bab ke database.");
+      }
+    } catch (e) {
+      console.warn("handleSaveTopic error:", e);
+      toast.error("Terjadi kesalahan saat menyimpan Bab.");
+    }
+  };
+
+  const handleDeleteTopic = async (topic: LearningTopicRow) => {
+    try {
+      const res = await MysqlDataService.deleteLearningTopic(topic.id);
+      if (res) {
+        toast.success(`Bab "${topic.title}" berhasil dihapus.`);
+        if (selectedTopic?.id === topic.id) {
+          setSelectedTopic(null);
+        }
+        await Promise.all([fetchTopics(), fetchMaterials()]);
+      } else {
+        toast.error("Gagal menghapus Bab.");
+      }
+    } catch (e) {
+      console.warn("handleDeleteTopic error:", e);
+      toast.error("Terjadi kesalahan saat menghapus Bab.");
+    } finally {
+      setTopicToDelete(null);
+    }
+  };
+
+  // Handlers untuk Materi / Bahan Ajar
   const handleDownloadModulPdf = (m: any) => {
     const fileUrl = m.file_url;
     const fileName = m.file_name || `${m.title}.pdf`;
@@ -176,6 +381,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           sequence_order: targetModul.sequence_order,
           access_mode: targetModul.access_mode,
           content_text: targetModul.content_text,
+          topic_id: targetModul.topic_id || null,
+          chapter: targetModul.chapter || null,
         } as any);
       } catch (err) {
         console.warn("Update verification status DB warning:", err);
@@ -219,6 +426,9 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       ext = "mp4";
     }
 
+    const assignedTopicId = data.topic_id || (selectedTopic ? selectedTopic.id : null);
+    const assignedChapter = data.chapter || (selectedTopic ? selectedTopic.title : null);
+
     try {
       const res = await MysqlDataService.saveMaterial({
         id: newId,
@@ -235,6 +445,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         sequence_order: data.sequence_order || 1,
         access_mode: data.access_mode || "GURU_KONTROL",
         content_text: data.content_text || null,
+        topic_id: assignedTopicId,
+        chapter: assignedChapter,
       } as any);
 
       if (res === false) {
@@ -242,83 +454,13 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         return;
       }
 
-      toast.success(`Bahan Ajar "${data.title}" berhasil diunggah (Langkah #${data.sequence_order || 1})!`);
+      toast.success(`Bahan Ajar "${data.title}" berhasil disimpan ke Bab!`);
       await fetchMaterials();
     } catch (err) {
       console.warn("Save material DB warning:", err);
       toast.error("Gagal mengunggah Bahan Ajar ke database.");
     }
   };
-
-  // Filter bahan ajar yang dapat diakses:
-  // Guru hanya mengelola bahan ajar miliknya (Opsi B: Isolasi per akun guru), sedangkan Pimpinan (Waka/Kamad/Admin) melihat semua
-  const availableModulList = useMemo(() => {
-    if (!isGuru) return modulList;
-    return modulList.filter((m) => {
-      const uploader = (m.teacher || "").toLowerCase().trim();
-      const myName = currentTeacherName.toLowerCase().trim();
-      return !uploader || uploader === "guru pengampu" || uploader === myName || uploader.includes(myName) || myName.includes(uploader);
-    });
-  }, [modulList, isGuru, currentTeacherName]);
-
-  const filteredModul = useMemo(() => {
-    return availableModulList.filter((m) => {
-      const matchJenjang = selectedJenjang === "semua" || m.jenjang === selectedJenjang;
-      const matchStatus =
-        selectedStatusFilter === "semua" ||
-        (selectedStatusFilter === "verified" && m.status === "Terverifikasi Waka") ||
-        (selectedStatusFilter === "pending" && m.status !== "Terverifikasi Waka");
-      return matchJenjang && matchStatus;
-    });
-  }, [availableModulList, selectedJenjang, selectedStatusFilter]);
-
-  // Calculate student gating / sequence lock
-  const materialsWithLockState = useMemo(() => {
-    if (!isSiswa) return filteredModul;
-
-    const mapelGroups: Record<string, any[]> = {};
-    for (const m of filteredModul) {
-      const mapelKey = (m.mapel || "Umum").toLowerCase().trim();
-      if (!mapelGroups[mapelKey]) mapelGroups[mapelKey] = [];
-      mapelGroups[mapelKey].push(m);
-    }
-
-    const result: any[] = [];
-    for (const mapelKey in mapelGroups) {
-      const list = mapelGroups[mapelKey].sort((a, b) => (a.sequence_order || 1) - (b.sequence_order || 1));
-      list.forEach((m, idx) => {
-        const isCompleted = completedMaterialIds.has(String(m.id));
-        const rawStatus = (m.status || "").toLowerCase().trim();
-        const isTeacherLocked = rawStatus === "terkunci" || rawStatus === "sembunyi";
-
-        let isUnlocked = true;
-        let lockReason = "";
-
-        if (isTeacherLocked) {
-          isUnlocked = false;
-          lockReason = "Materi ini sedang dibatasi aksesnya oleh Guru Pengampu.";
-        } else if (m.access_mode === "SISWA_MANDIRI") {
-          if (idx > 0) {
-            const prevItem = list[idx - 1];
-            const isPrevDone = completedMaterialIds.has(String(prevItem.id));
-            if (!isPrevDone) {
-              isUnlocked = false;
-              lockReason = `Selesaikan Langkah #${prevItem.sequence_order || idx} ("${prevItem.title}") terlebih dahulu untuk membuka materi ini.`;
-            }
-          }
-        }
-
-        result.push({
-          ...m,
-          isCompleted,
-          isUnlocked,
-          lockReason,
-        });
-      });
-    }
-
-    return result.sort((a, b) => (a.sequence_order || 1) - (b.sequence_order || 1));
-  }, [filteredModul, isSiswa, completedMaterialIds]);
 
   const verifiedCount = availableModulList.filter((m) => m.status === "Terverifikasi Waka").length;
   const pendingCount = availableModulList.length - verifiedCount;
@@ -329,30 +471,59 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <Layers className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             {isSiswa
               ? "Bahan Ajar & Materi Belajar KBM"
               : isGuru
-              ? "Pustaka Bahan Ajar Saya"
+              ? "Pustaka Bahan Ajar Guru"
               : "Pustaka Bahan Ajar & Modul Kurikulum"}
           </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Wadah kurikulum bahan ajar berjenjang: Pilih Tingkat Kelas → Pilih Bab → Buka Materi Pembelajaran.
+          </p>
         </div>
 
-        {!isSiswa && (
-          <Button
-            size="sm"
-            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-2xs px-3"
-            onClick={() => setIsUploadOpen(true)}
-          >
-            <Upload className="h-3.5 w-3.5" /> + Unggah Bahan Ajar
-          </Button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {!isSiswa && !selectedTopic && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 border-emerald-600/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 text-xs font-bold gap-1.5 shadow-2xs"
+              onClick={() => {
+                setTopicToEdit(null);
+                setIsManageTopicOpen(true);
+              }}
+            >
+              <FolderPlus className="h-3.5 w-3.5 text-emerald-600" /> + Tambah Bab Baru
+            </Button>
+          )}
+
+          {!isSiswa && selectedTopic && (
+            <Button
+              size="sm"
+              className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-2xs px-3"
+              onClick={() => setIsUploadOpen(true)}
+            >
+              <Upload className="h-3.5 w-3.5" /> + Unggah ke Bab Ini
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Metric Quick Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
           <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Layers className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Bab Terdaftar</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{filteredTopics.length} Bab</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
             <FileText className="h-3.5 w-3.5" />
           </div>
           <div className="min-w-0">
@@ -366,7 +537,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           onClick={() => setSelectedStatusFilter("pending")}
         >
           <div className="h-7 w-7 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold">⏳</span>
+            <Clock className="h-3.5 w-3.5" />
           </div>
           <div className="min-w-0">
             <p className="text-[10px] text-muted-foreground font-medium leading-none">Menunggu Verifikasi</p>
@@ -379,258 +550,639 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           onClick={() => setSelectedStatusFilter("verified")}
         >
           <div className="h-7 w-7 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <span className="text-xs">✅</span>
+            <CheckCircle2 className="h-3.5 w-3.5" />
           </div>
           <div className="min-w-0">
             <p className="text-[10px] text-muted-foreground font-medium leading-none">Telah Terverifikasi</p>
             <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{verifiedCount} Modul</p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2.5 px-3 py-1 bg-background/90 rounded-lg border border-border/50 shadow-2xs">
-          <div className="h-7 w-7 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold">🏫</span>
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground font-medium leading-none">Jenjang Filter</p>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5 truncate">{selectedJenjang === "semua" ? "Semua Jenjang" : selectedJenjang}</p>
-          </div>
-        </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="p-2.5 rounded-xl bg-card border border-border flex flex-wrap items-center justify-between gap-2.5 shadow-2xs text-xs">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[11px] font-semibold text-muted-foreground mr-1">Filter Jenjang:</span>
-          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70 h-8">
-            {["semua", "Kelas VII", "Kelas VIII", "Kelas IX"].map((j) => (
+      {/* FILTER CONTROLS: Pilih Tingkat Kelas & Pilih Mata Pelajaran */}
+      <div className="p-3 rounded-xl bg-card border border-border flex flex-wrap items-center justify-between gap-3 shadow-2xs text-xs">
+        {/* Pilih Tingkat Kelas */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] font-bold text-muted-foreground">Pilih Tingkat Kelas:</span>
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/70">
+            {["Kelas VII", "Kelas VIII", "Kelas IX"].map((j) => (
               <Button
                 key={j}
                 size="sm"
                 variant={selectedJenjang === j ? "default" : "ghost"}
-                className={`text-xs font-bold h-6 px-2.5 rounded-lg ${selectedJenjang === j ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"}`}
-                onClick={() => setSelectedJenjang(j)}
+                className={`text-xs font-bold h-7 px-3 rounded-lg ${
+                  selectedJenjang === j ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => {
+                  setSelectedJenjang(j);
+                  setSelectedTopic(null); // Reset ke daftar bab saat ganti kelas
+                }}
               >
-                {j === "semua" ? "Semua" : j}
+                {j}
               </Button>
             ))}
+            {isWakaOrAdmin && (
+              <Button
+                size="sm"
+                variant={selectedJenjang === "semua" ? "default" : "ghost"}
+                className={`text-xs font-bold h-7 px-3 rounded-lg ${
+                  selectedJenjang === "semua" ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => {
+                  setSelectedJenjang("semua");
+                  setSelectedTopic(null);
+                }}
+              >
+                Semua Kelas
+              </Button>
+            )}
           </div>
         </div>
 
-        {isWakaOrAdmin && (
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-muted-foreground">Status:</span>
+        {/* Pilih Mata Pelajaran */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] font-bold text-muted-foreground">Mata Pelajaran:</span>
+          {isGuru && allowedMapels.length === 1 ? (
+            <Badge variant="outline" className="h-8 px-3 font-semibold text-xs border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300">
+              📖 {allowedMapels[0]}
+            </Badge>
+          ) : (
             <select
-              className="h-8 bg-background text-xs font-semibold text-foreground border border-input rounded-lg px-2.5 cursor-pointer hover:border-primary/50 transition"
-              value={selectedStatusFilter}
-              onChange={(e) => setSelectedStatusFilter(e.target.value)}
+              className="h-8 bg-background text-xs font-semibold text-foreground border border-input rounded-lg px-2.5 cursor-pointer hover:border-primary/50 transition max-w-[220px]"
+              value={selectedMapel}
+              onChange={(e) => {
+                setSelectedMapel(e.target.value);
+                setSelectedTopic(null); // Reset ke daftar bab saat ganti mapel
+              }}
             >
-              <option value="semua">Semua Status</option>
-              <option value="pending">⏳ Menunggu Verifikasi</option>
-              <option value="verified">✅ Terverifikasi Waka</option>
+              {isWakaOrAdmin && <option value="semua">Semua Mata Pelajaran</option>}
+              {allowedMapels.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
             </select>
-          </div>
-        )}
+          )}
+
+          {isWakaOrAdmin && selectedTopic && (
+            <div className="flex items-center gap-1.5 ml-2">
+              <span className="text-[11px] font-semibold text-muted-foreground">Status:</span>
+              <select
+                className="h-8 bg-background text-xs font-semibold text-foreground border border-input rounded-lg px-2 cursor-pointer hover:border-primary/50 transition"
+                value={selectedStatusFilter}
+                onChange={(e) => setSelectedStatusFilter(e.target.value)}
+              >
+                <option value="semua">Semua Status</option>
+                <option value="pending">⏳ Menunggu Verifikasi</option>
+                <option value="verified">✅ Terverifikasi Waka</option>
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
-      {materialsWithLockState.length === 0 ? (
-        <Card className="border-border border-dashed p-12 text-center bg-card">
-          <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
-          <h3 className="text-base font-bold text-foreground">Belum Ada Bahan Ajar Terdaftar</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-            {isLoading
-              ? "Sedang memuat berkas Bahan Ajar..."
-              : isSiswa
-              ? "Belum ada bahan ajar yang diterbitkan untuk kelas Anda. Silakan hubungi guru pengampu."
-              : "Belum ada berkas Bahan Ajar yang diunggah. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk mengunggah berkas baru."}
-          </p>
-        </Card>
-      ) : (
-        <div className="grid sm:grid-cols-2 gap-4">
-          {materialsWithLockState.map((m) => {
-            const typeStr = (m.type || "").toUpperCase();
-            const isAudio = typeStr.includes("AUDIO") || m.file_name?.endsWith(".mp3") || m.file_url?.endsWith(".mp3");
-            const isTeks = typeStr.includes("TEKS") || Boolean(m.content_text);
-            const isImage = typeStr.includes("GAMBAR") || m.file_url?.match(/\.(png|jpg|jpeg|webp)$/i);
-            const isUrl = typeStr.includes("URL") || m.file_url?.startsWith("http");
-            const isVideo = typeStr.includes("VIDEO");
+      {/* ========================================================================= */}
+      {/* TAMPILAN LEVEL 2: DETAIL BAB (Klik Bab tertentu untuk lihat bahan ajar)  */}
+      {/* ========================================================================= */}
+      {selectedTopic ? (
+        <div className="space-y-4">
+          {/* Breadcrumb Navigation Bar */}
+          <div className="p-3.5 rounded-xl bg-card border border-border shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs font-bold text-muted-foreground hover:text-foreground gap-1 px-2 -ml-1"
+                  onClick={() => setSelectedTopic(null)}
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Daftar Bab
+                </Button>
+                <span className="text-muted-foreground text-xs">/</span>
+                <Badge variant="outline" className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 border-emerald-500/40">
+                  Bab #{selectedTopic.sequence_order || 1}
+                </Badge>
+              </div>
 
-            const isLocked = isSiswa && !m.isUnlocked;
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Folder className="h-5 w-5 text-emerald-600" />
+                {selectedTopic.title}
+              </h2>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                <span>{selectedTopic.class_name}</span>
+                <span>•</span>
+                <span className="font-semibold text-foreground">{selectedTopic.subject_name}</span>
+                {selectedTopic.description && (
+                  <>
+                    <span>•</span>
+                    <span className="italic">{selectedTopic.description}</span>
+                  </>
+                )}
+              </div>
+            </div>
 
-            return (
-              <Card
-                key={m.id}
-                className={`border-border transition shadow-xs flex flex-col justify-between ${
-                  isLocked
-                    ? "opacity-70 bg-muted/40 border-dashed"
-                    : m.isCompleted
-                    ? "border-emerald-500/40 bg-emerald-50/15 dark:bg-emerald-950/15"
-                    : "hover:border-emerald-500/50"
-                }`}
-              >
-                <CardContent className="p-4 flex items-start gap-3">
-                  <div
-                    className={`h-12 w-12 rounded-xl grid place-items-center shrink-0 font-bold text-xl ${
+            <div className="flex items-center gap-2">
+              {!isSiswa && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs font-semibold gap-1.5"
+                    onClick={() => {
+                      setTopicToEdit(selectedTopic);
+                      setIsManageTopicOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" /> Edit Info Bab
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-2xs px-3"
+                    onClick={() => setIsUploadOpen(true)}
+                  >
+                    <Upload className="h-3.5 w-3.5" /> + Unggah Bahan Ajar
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Daftar Materi di dalam Bab ini */}
+          {materialsWithLockState.length === 0 ? (
+            <Card className="border-border border-dashed p-10 text-center bg-card">
+              <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
+              <h3 className="text-base font-bold text-foreground">Belum Ada Bahan Ajar di Bab Ini</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                {isLoading
+                  ? "Sedang memuat berkas Bahan Ajar..."
+                  : isSiswa
+                  ? "Guru pengampu belum mengunggah materi pembelajaran untuk bab ini."
+                  : "Bab ini belum memiliki berkas materi. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk melengkapi materi pembelajaran."}
+              </p>
+              {!isSiswa && (
+                <div className="mt-4">
+                  <Button
+                    size="sm"
+                    className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+                    onClick={() => setIsUploadOpen(true)}
+                  >
+                    <Upload className="h-3.5 w-3.5" /> + Unggah Bahan Ajar Pertama
+                  </Button>
+                </div>
+              )}
+            </Card>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {materialsWithLockState.map((m) => {
+                const typeStr = (m.type || "").toUpperCase();
+                const isAudio = typeStr.includes("AUDIO") || m.file_name?.endsWith(".mp3") || m.file_url?.endsWith(".mp3");
+                const isTeks = typeStr.includes("TEKS") || Boolean(m.content_text);
+                const isImage = typeStr.includes("GAMBAR") || m.file_url?.match(/\.(png|jpg|jpeg|webp)$/i);
+                const isUrl = typeStr.includes("URL") || m.file_url?.startsWith("http");
+                const isVideo = typeStr.includes("VIDEO");
+
+                const isLocked = isSiswa && !m.isUnlocked;
+
+                return (
+                  <Card
+                    key={m.id}
+                    className={`border-border transition shadow-xs flex flex-col justify-between ${
                       isLocked
-                        ? "bg-muted text-muted-foreground"
-                        : isAudio
-                        ? "bg-amber-500/15 text-amber-600"
-                        : isTeks
-                        ? "bg-purple-500/15 text-purple-600"
-                        : isVideo
-                        ? "bg-blue-500/15 text-blue-600"
-                        : isImage
-                        ? "bg-rose-500/15 text-rose-600"
-                        : isUrl
-                        ? "bg-sky-500/15 text-sky-600"
-                        : "bg-emerald-500/15 text-emerald-600"
+                        ? "opacity-70 bg-muted/40 border-dashed"
+                        : m.isCompleted
+                        ? "border-emerald-500/40 bg-emerald-50/15 dark:bg-emerald-950/15"
+                        : "hover:border-emerald-500/50"
                     }`}
                   >
-                    {isLocked ? "🔒" : isTeks ? "📝" : isVideo ? "🎥" : isAudio ? "🎵" : isImage ? "🖼️" : isUrl ? "🔗" : "📄"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <Badge variant="outline" className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 border-emerald-500/40">
-                          Langkah #{m.sequence_order || 1}
-                        </Badge>
-                        <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground border-border">
-                          {m.jenjang} • {m.mapel}
-                        </Badge>
-                        <Badge
-                          variant="secondary"
-                          className={`text-[9px] px-1.5 py-0 font-medium ${
-                            m.access_mode === "SISWA_MANDIRI"
-                              ? "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
-                              : "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <div
+                        className={`h-12 w-12 rounded-xl grid place-items-center shrink-0 font-bold text-xl ${
+                          isLocked
+                            ? "bg-muted text-muted-foreground"
+                            : isAudio
+                            ? "bg-amber-500/15 text-amber-600"
+                            : isTeks
+                            ? "bg-purple-500/15 text-purple-600"
+                            : isVideo
+                            ? "bg-blue-500/15 text-blue-600"
+                            : isImage
+                            ? "bg-rose-500/15 text-rose-600"
+                            : isUrl
+                            ? "bg-sky-500/15 text-sky-600"
+                            : "bg-emerald-500/15 text-emerald-600"
+                        }`}
+                      >
+                        {isLocked ? "🔒" : isTeks ? "📝" : isVideo ? "🎥" : isAudio ? "🎵" : isImage ? "🖼️" : isUrl ? "🔗" : "📄"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant="outline" className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 border-emerald-500/40">
+                              Langkah #{m.sequence_order || 1}
+                            </Badge>
+                            <Badge
+                              variant="secondary"
+                              className={`text-[9px] px-1.5 py-0 font-medium ${
+                                m.access_mode === "SISWA_MANDIRI"
+                                  ? "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
+                                  : "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                              }`}
+                            >
+                              {m.access_mode === "SISWA_MANDIRI" ? "📚 Mandiri" : "🏫 Kendali Guru"}
+                            </Badge>
+                          </div>
+
+                          {isSiswa ? (
+                            m.isCompleted ? (
+                              <Badge className="bg-emerald-600 text-white text-[10px] font-bold gap-0.5">
+                                <CheckCircle2 className="h-3 w-3" /> Selesai
+                              </Badge>
+                            ) : isLocked ? (
+                              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 text-[10px] font-bold gap-1">
+                                <Lock className="h-3 w-3" /> Terkunci
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/30 dark:text-emerald-400 text-[10px] font-bold">
+                                Siap Dipelajari
+                              </Badge>
+                            )
+                          ) : (
+                            <Badge className={m.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-[10px] font-bold" : "bg-amber-500 text-white text-[10px] font-bold"}>
+                              {m.status === "Terverifikasi Waka" ? "✓ Terverifikasi" : "⏳ Menunggu"}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="font-bold text-sm text-foreground mt-1.5 leading-snug line-clamp-2">{m.title}</div>
+                        <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-between gap-2 flex-wrap">
+                          <span>Penyusun: <strong className="text-foreground font-semibold">{m.teacher}</strong></span>
+                          <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">
+                            {isUrl ? "🔗 Link Web" : isTeks ? "📝 Teks Langsung" : `💾 ${m.size}`}
+                          </span>
+                        </div>
+
+                        {isLocked && m.lockReason && (
+                          <div className="mt-2 p-2 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                            <Lock className="h-3.5 w-3.5 shrink-0" />
+                            <span>{m.lockReason}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+
+                    <div className="px-4 pb-3 pt-2.5 border-t border-border/80 flex items-center justify-between flex-wrap gap-2 bg-muted/20">
+                      <div className="flex items-center gap-1.5 flex-wrap flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isLocked}
+                          className={`h-7 text-xs font-bold px-2.5 gap-1 ${
+                            isLocked
+                              ? "opacity-50 cursor-not-allowed"
+                              : "border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50"
                           }`}
+                          onClick={() => {
+                            if (isLocked) {
+                              toast.warning(m.lockReason || "Materi ini belum dapat dibuka.");
+                              return;
+                            }
+                            setPreviewModul(m);
+                          }}
                         >
-                          {m.access_mode === "SISWA_MANDIRI" ? "📚 Progres Mandiri" : "🏫 Kendali Guru"}
-                        </Badge>
+                          <Eye className="h-3.5 w-3.5" /> {isSiswa ? "Pelajari Materi" : "Pratinjau"}
+                        </Button>
+
+                        {isWakaOrAdmin && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={`h-7 text-xs font-semibold px-2.5 ${
+                              m.status === "Terverifikasi Waka"
+                                ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
+                                : "bg-emerald-600 text-white hover:bg-emerald-700 font-semibold shadow-xs"
+                            }`}
+                            onClick={() => handleToggleVerification(m.id, m.status, m.title)}
+                          >
+                            {m.status === "Terverifikasi Waka" ? "✓ Sah" : "✅ Sahkan"}
+                          </Button>
+                        )}
+
+                        {!isTeks && !isLocked && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className={`h-7 text-xs font-bold px-2.5 gap-1 ${
+                              isUrl ? "text-sky-600 hover:bg-sky-500/10" : "text-emerald-600 hover:bg-emerald-500/10"
+                            }`}
+                            onClick={() => handleDownloadModulPdf(m)}
+                          >
+                            {isUrl ? (
+                              <>
+                                <ExternalLink className="h-3.5 w-3.5" /> Buka Link
+                              </>
+                            ) : (
+                              <>
+                                <Download className="h-3.5 w-3.5" /> Unduh
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
 
-                      {isSiswa ? (
-                        m.isCompleted ? (
-                          <Badge className="bg-emerald-600 text-white text-[10px] font-bold gap-0.5">
-                            <CheckCircle2 className="h-3 w-3" /> Selesai
-                          </Badge>
-                        ) : isLocked ? (
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 text-[10px] font-bold gap-1">
-                            <Lock className="h-3 w-3" /> Terkunci
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/30 dark:text-emerald-400 text-[10px] font-bold">
-                            Siap Dipelajari
-                          </Badge>
-                        )
-                      ) : (
-                        <Badge className={m.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-[10px] font-bold" : "bg-amber-500 text-white text-[10px] font-bold"}>
-                          {m.status === "Terverifikasi Waka" ? "✓ Terverifikasi" : "⏳ Perlu Verifikasi"}
-                        </Badge>
+                      {(isWakaOrAdmin || isGuru) && !isKamad && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/15 hover:text-rose-700 border border-rose-500/30 rounded-lg shrink-0"
+                          onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
+                          title="Hapus Bahan Ajar"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       )}
                     </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ========================================================================= */
+        /* TAMPILAN LEVEL 1: DAFTAR BAB (Pilih Kelas -> Tampil Bab)                  */
+        /* ========================================================================= */
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-emerald-600" />
+              Daftar Bab Pembelajaran: <span className="text-emerald-600 dark:text-emerald-400">{selectedJenjang}</span>
+              {selectedMapel !== "semua" && <span className="text-muted-foreground font-normal">({selectedMapel})</span>}
+            </h2>
+            <span className="text-xs text-muted-foreground font-medium">
+              {filteredTopics.length} Bab Ditemukan
+            </span>
+          </div>
 
-                    <div className="font-bold text-sm text-foreground mt-1.5 leading-snug line-clamp-2">{m.title}</div>
-                    <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-between gap-2 flex-wrap">
-                      <span>Penyusun: <strong className="text-foreground font-semibold">{m.teacher}</strong></span>
-                      <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">
-                        {isUrl ? "🔗 Link Web" : isTeks ? "📝 Teks Langsung" : `💾 ${m.size}`}
-                      </span>
-                    </div>
-
-                    {isLocked && m.lockReason && (
-                      <div className="mt-2 p-2 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                        <Lock className="h-3.5 w-3.5 shrink-0" />
-                        <span>{m.lockReason}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-
-                <div className="px-4 pb-3 pt-2.5 border-t border-border/80 flex items-center justify-between flex-wrap gap-2 bg-muted/20">
-                  <div className="flex items-center gap-1.5 flex-wrap flex-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={isLocked}
-                      className={`h-7 text-xs font-bold px-2.5 gap-1 ${
-                        isLocked
-                          ? "opacity-50 cursor-not-allowed"
-                          : "border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50"
-                      }`}
-                      onClick={() => {
-                        if (isLocked) {
-                          toast.warning(m.lockReason || "Materi ini belum dapat dibuka.");
-                          return;
-                        }
-                        setPreviewModul(m);
-                      }}
-                    >
-                      <Eye className="h-3.5 w-3.5" /> {isSiswa ? "Pelajari Materi" : "Pratinjau"}
-                    </Button>
-
-                    {isWakaOrAdmin && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className={`h-7 text-xs font-semibold px-2.5 ${
-                          m.status === "Terverifikasi Waka"
-                            ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
-                            : "bg-emerald-600 text-white hover:bg-emerald-700 font-semibold shadow-xs"
-                        }`}
-                        onClick={() => handleToggleVerification(m.id, m.status, m.title)}
-                      >
-                        {m.status === "Terverifikasi Waka" ? "✓ Sah Terverifikasi" : "✅ Sahkan"}
-                      </Button>
-                    )}
-
-                    {!isTeks && !isLocked && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className={`h-7 text-xs font-bold px-2.5 gap-1 ${
-                          isUrl ? "text-sky-600 hover:bg-sky-500/10" : "text-emerald-600 hover:bg-emerald-500/10"
-                        }`}
-                        onClick={() => handleDownloadModulPdf(m)}
-                      >
-                        {isUrl ? (
-                          <>
-                            <ExternalLink className="h-3.5 w-3.5" /> Buka Link
-                          </>
-                        ) : (
-                          <>
-                            <Download className="h-3.5 w-3.5" /> Unduh Berkas
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-
-                  {(isWakaOrAdmin || isGuru) && !isKamad && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/15 hover:text-rose-700 border border-rose-500/30 rounded-lg shrink-0"
-                      onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
-                      title="Hapus Bahan Ajar"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
+          {filteredTopics.length === 0 ? (
+            <Card className="border-border border-dashed p-10 text-center bg-card">
+              <Layers className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
+              <h3 className="text-base font-bold text-foreground">Belum Ada Bab Terdaftar</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                {isLoading
+                  ? "Sedang memuat data Bab..."
+                  : isSiswa
+                  ? "Belum ada Bab pembelajaran yang diterbitkan untuk tingkat kelas dan mapel ini."
+                  : `Belum ada Bab pembelajaran untuk ${selectedJenjang} ${selectedMapel !== "semua" ? `pada mapel ${selectedMapel}` : ""}. Silakan buat Bab baru untuk mengelompokkan bahan ajar.`}
+              </p>
+              {!isSiswa && (
+                <div className="mt-4">
+                  <Button
+                    size="sm"
+                    className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
+                    onClick={() => {
+                      setTopicToEdit(null);
+                      setIsManageTopicOpen(true);
+                    }}
+                  >
+                    <FolderPlus className="h-3.5 w-3.5" /> + Buat Bab Pertama Sekarang
+                  </Button>
                 </div>
-              </Card>
-            );
-          })}
+              )}
+            </Card>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {filteredTopics.map((topic, idx) => {
+                // Hitung bahan ajar yang terdaftar di dalam Bab ini
+                const countMaterials = availableModulList.filter(
+                  (m) => m.topic_id === topic.id || (m.chapter && m.chapter.trim().toLowerCase() === topic.title.trim().toLowerCase())
+                ).length;
+
+                return (
+                  <Card
+                    key={topic.id}
+                    className="border-border hover:border-emerald-500/60 transition shadow-xs flex flex-col justify-between bg-card group"
+                  >
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge variant="outline" className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/20">
+                            Bab #{topic.sequence_order || idx + 1}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] font-semibold text-muted-foreground">
+                            {topic.class_name}
+                          </Badge>
+                        </div>
+
+                        {!isSiswa && (
+                          <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                              title="Edit Bab"
+                              onClick={() => {
+                                setTopicToEdit(topic);
+                                setIsManageTopicOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            {!isKamad && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                                title="Hapus Bab"
+                                onClick={() => setTopicToDelete(topic)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-sm text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition line-clamp-2">
+                          {topic.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[32px]">
+                          {topic.description || "Topik dan capaian pembelajaran terpadu untuk bahan ajar."}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] pt-2 border-t border-border/60">
+                        <span className="font-semibold text-foreground truncate max-w-[150px]">
+                          {topic.subject_name}
+                        </span>
+                        <Badge
+                          variant="secondary"
+                          className={`text-[10px] font-semibold ${
+                            countMaterials > 0
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {countMaterials} Bahan Ajar
+                        </Badge>
+                      </div>
+                    </CardContent>
+
+                    <div className="px-4 pb-3 pt-1">
+                      <Button
+                        size="sm"
+                        className="w-full h-8 bg-emerald-600/90 hover:bg-emerald-600 text-white font-bold text-xs gap-1 shadow-2xs group-hover:shadow-xs transition"
+                        onClick={() => setSelectedTopic(topic)}
+                      >
+                        Buka Bahan Ajar Bab Ini <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Section Cadangan: Berkas Bahan Ajar Belum Masuk Bab (Data Legacy Aman 100%) */}
+          {unassignedMaterials.length > 0 && (
+            <div className="mt-8 pt-4 border-t border-border">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-foreground">
+                      Bahan Ajar Umum / Belum Masuk Bab ({unassignedMaterials.length} Berkas)
+                    </h4>
+                    <p className="text-[11px] text-muted-foreground">
+                      Berkas bahan ajar pada tingkat {selectedJenjang} yang belum dikelompokkan ke dalam Bab spesifik.
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs font-semibold"
+                  onClick={() => setShowUnassignedSection(!showUnassignedSection)}
+                >
+                  {showUnassignedSection ? "Sembunyikan" : "Tampilkan Berkas"}
+                </Button>
+              </div>
+
+              {showUnassignedSection && (
+                <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                  {unassignedMaterials.map((m) => (
+                    <Card key={m.id} className="border-border p-3.5 bg-card flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <Badge variant="outline" className="text-[10px] font-mono">
+                            {m.jenjang} • {m.mapel}
+                          </Badge>
+                          <Badge className={m.status === "Terverifikasi Waka" ? "bg-emerald-600 text-white text-[9px]" : "bg-amber-500 text-white text-[9px]"}>
+                            {m.status === "Terverifikasi Waka" ? "✓ Sah" : "⏳ Menunggu"}
+                          </Badge>
+                        </div>
+                        <h5 className="text-xs font-bold text-foreground line-clamp-2">{m.title}</h5>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Penyusun: {m.teacher}</p>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 text-xs px-2"
+                          onClick={() => setPreviewModul(m)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" /> Pratinjau
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 text-xs px-2 text-emerald-600"
+                          onClick={() => handleDownloadModulPdf(m)}
+                        >
+                          <Download className="h-3 w-3 mr-1" /> Unduh
+                        </Button>
+                        {!isSiswa && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-rose-600 hover:bg-rose-50"
+                            onClick={() => setDeleteConfirmModul({ id: m.id, title: m.title })}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
+      {/* Dialog Manage Bab (Tambah / Edit) */}
+      <ManageTopicDialog
+        isOpen={isManageTopicOpen}
+        onOpenChange={setIsManageTopicOpen}
+        topicToEdit={topicToEdit}
+        activeMapel={selectedMapel === "semua" ? (allowedMapels[0] || "Al Qur'an Hadis") : selectedMapel}
+        activeJenjang={selectedJenjang === "semua" ? "Kelas VIII" : selectedJenjang}
+        onSave={handleSaveTopic}
+      />
+
+      {/* Dialog Konfirmasi Hapus Bab */}
+      <Dialog open={!!topicToDelete} onOpenChange={(open) => !open && setTopicToDelete(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-rose-600 text-base font-bold">
+              <AlertCircle className="h-5 w-5" /> Hapus Bab Pembelajaran?
+            </DialogTitle>
+            <DialogDescription className="text-xs pt-1">
+              Apakah Anda yakin ingin menghapus Bab <strong>"{topicToDelete?.title}"</strong>?
+              <br />
+              <span className="text-muted-foreground block mt-1">
+                Catatan: Berkas bahan ajar di dalam bab ini tidak akan terhapus, melainkan ikatannya dengan bab ini dilepas (masuk ke bahan ajar umum).
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 pt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs"
+              onClick={() => setTopicToDelete(null)}
+            >
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="text-xs font-bold gap-1"
+              onClick={() => topicToDelete && handleDeleteTopic(topicToDelete)}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Ya, Hapus Bab
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Upload Bahan Ajar */}
       <UploadModulDialog
         isOpen={isUploadOpen}
         onOpenChange={setIsUploadOpen}
-        defaultMapel={currentSubject}
+        defaultMapel={selectedTopic?.subject_name || (selectedMapel !== "semua" ? selectedMapel : (allowedMapels[0] || "Al Qur'an Hadis"))}
+        defaultJenjang={selectedTopic?.class_name || (selectedJenjang !== "semua" ? selectedJenjang : "Kelas VIII")}
+        defaultTopicId={selectedTopic?.id}
+        defaultChapter={selectedTopic?.title}
         onUpload={handleUploadSubmit}
       />
 
+      {/* Dialog Preview Bahan Ajar */}
       <PreviewModulDialog
         previewModul={previewModul}
         isOpen={!!previewModul}
@@ -639,6 +1191,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         onMaterialCompleted={() => fetchMaterials()}
       />
 
+      {/* Dialog Konfirmasi Hapus Berkas Bahan Ajar */}
       <DeleteModulDialog
         deleteConfirmModul={deleteConfirmModul}
         isOpen={!!deleteConfirmModul}

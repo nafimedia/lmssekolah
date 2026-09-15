@@ -41,7 +41,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
         return sub;
       }
     }
-    return "jurnal";
+    return "presensi";
   });
   const me = MysqlAuthService.getActiveUser();
   const currentTeacherName = me?.full_name || userProfile?.name || "Guru Pengampu";

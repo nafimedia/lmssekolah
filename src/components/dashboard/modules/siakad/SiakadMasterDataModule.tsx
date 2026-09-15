@@ -335,7 +335,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
 
       {/* Tab 2: Master Mata Pelajaran */}
       {activeTab === "master_mapel" && (
-        <MasterMapelTab isKamad={isKamad} teachersList={dbTeachersList} />
+        <MasterMapelTab isKamad={isKamad} />
       )}
 
       {/* Tab 3: Tahun Ajaran */}

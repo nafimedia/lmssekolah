@@ -5,9 +5,7 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Clock,
   ShieldCheck,
-  UserCheck,
   Layers,
   Inbox,
   Sparkles,
@@ -25,7 +23,6 @@ import { SubjectRow } from "@/services/mysqlServerFns";
 
 interface MasterMapelTabProps {
   isKamad?: boolean;
-  teachersList?: string[];
 }
 
 const CATEGORY_OPTIONS = [
@@ -35,7 +32,7 @@ const CATEGORY_OPTIONS = [
   "Pengembangan Diri",
 ] as const;
 
-export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabProps) {
+export function MasterMapelTab({ isKamad }: MasterMapelTabProps) {
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,11 +47,8 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [category, setCategory] = useState<string>("Umum");
-  const [teacherName, setTeacherName] = useState("");
-  const [jp, setJp] = useState<number>(2);
   const [kkm, setKkm] = useState<number>(75);
   const [status, setStatus] = useState<string>("AKTIF");
-  const [icon, setIcon] = useState("📖");
   const [gradeLevel, setGradeLevel] = useState("Semua Tingkat");
 
   const [saving, setSaving] = useState(false);
@@ -85,11 +79,8 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
     setCode("");
     setName("");
     setCategory("Umum");
-    setTeacherName(teachersList[0] || "");
-    setJp(2);
     setKkm(75);
     setStatus("AKTIF");
-    setIcon("📖");
     setGradeLevel("Semua Tingkat");
     setIsDialogOpen(true);
   };
@@ -103,11 +94,8 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
     setCode(sub.code);
     setName(sub.name);
     setCategory(sub.category || "Umum");
-    setTeacherName(sub.teacher_name || "");
-    setJp(Number(sub.jp) || 2);
     setKkm(Number(sub.kkm) || 75);
     setStatus(sub.status || "AKTIF");
-    setIcon(sub.icon || "📖");
     setGradeLevel(sub.grade_level || "Semua Tingkat");
     setIsDialogOpen(true);
   };
@@ -123,16 +111,17 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
 
     setSaving(true);
     try {
+      const existing = subjects.find((s) => s.id === editingId);
       const payload: SubjectRow = {
         id: editingId,
         code: code.trim().toUpperCase(),
         name: name.trim(),
         category,
-        teacher_name: teacherName || "-",
-        jp: Number(jp) || 2,
+        teacher_name: existing?.teacher_name || "-",
+        jp: existing?.jp || 2,
         kkm: Number(kkm) || 75,
         status,
-        icon: icon || "📖",
+        icon: "",
         grade_level: gradeLevel,
       };
 
@@ -181,8 +170,7 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
     return subjects.filter((s) => {
       const matchesSearch =
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (s.teacher_name && s.teacher_name.toLowerCase().includes(searchQuery.toLowerCase()));
+        s.code.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCat =
         categoryFilter === "semua" ||
@@ -196,7 +184,7 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
   const totalMapel = subjects.length;
   const mapelKeagamaan = subjects.filter((s) => (s.category || "").toLowerCase() === "keagamaan").length;
   const mapelUmum = subjects.filter((s) => (s.category || "").toLowerCase() === "umum").length;
-  const totalJp = subjects.reduce((acc, curr) => acc + (Number(curr.jp) || 0), 0);
+  const mapelAktif = subjects.filter((s) => (s.status || "AKTIF").toUpperCase() === "AKTIF").length;
 
   const getCategoryBadgeClass = (cat?: string) => {
     const c = (cat || "").toLowerCase();
@@ -247,12 +235,12 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
         </div>
 
         <div className="p-3 rounded-xl border border-border bg-card shadow-2xs flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 shrink-0">
-            <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">
+            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground font-semibold">Alokasi Mingguan</p>
-            <h3 className="text-base sm:text-lg font-extrabold text-amber-600 dark:text-amber-400">{totalJp} JP / Mg</h3>
+            <p className="text-[10px] text-muted-foreground font-semibold">Status Aktif</p>
+            <h3 className="text-base sm:text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{mapelAktif} Mapel</h3>
           </div>
         </div>
       </div>
@@ -266,7 +254,7 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
               Master Mata Pelajaran MTsN 2 Cilacap
             </CardTitle>
             <CardDescription className="text-xs">
-              Daftar resmi mata pelajaran kurikulum madrasah, alokasi beban jam (JP), KKM, dan guru pengampu utama.
+              Daftar resmi mata pelajaran kurikulum madrasah, rumpun kategori, dan standar ketuntasan minimal (KKTP).
             </CardDescription>
           </div>
 
@@ -275,7 +263,7 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
               <Button
                 size="sm"
                 onClick={openCreateDialog}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs shrink-0"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs shrink-0 cursor-pointer"
               >
                 <Plus className="h-4 w-4" /> Tambah Mata Pelajaran
               </Button>
@@ -288,7 +276,7 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
           <div className="relative flex-1 max-w-sm">
             <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Cari kode, nama mapel, atau guru..."
+              placeholder="Cari kode atau nama mapel..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 text-xs h-8 bg-background"
@@ -334,13 +322,11 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
               <thead className="bg-muted/60 text-muted-foreground font-bold border-b border-border">
                 <tr>
                   <th className="p-3.5 w-14 text-center">No</th>
-                  <th className="p-3.5 w-24">Kode</th>
+                  <th className="p-3.5 w-28">Kode Mapel</th>
                   <th className="p-3.5">Nama Mata Pelajaran</th>
-                  <th className="p-3.5">Rumpun Kategori</th>
-                  <th className="p-3.5 text-center">Beban JP</th>
-                  <th className="p-3.5 text-center">KKM</th>
-                  <th className="p-3.5">Guru Pengampu / Koordinator</th>
-                  <th className="p-3.5 text-center">Status</th>
+                  <th className="p-3.5 w-44">Rumpun Kategori</th>
+                  <th className="p-3.5 text-center w-28">Standar KKM</th>
+                  <th className="p-3.5 text-center w-28">Status</th>
                   {!isKamad && <th className="p-3.5 text-right w-24">Aksi</th>}
                 </tr>
               </thead>
@@ -358,10 +344,7 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
                     </td>
 
                     <td className="p-3.5 font-bold text-foreground text-xs sm:text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{sub.icon || "📖"}</span>
-                        <span>{sub.name}</span>
-                      </div>
+                      {sub.name}
                     </td>
 
                     <td className="p-3.5">
@@ -370,19 +353,8 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
                       </Badge>
                     </td>
 
-                    <td className="p-3.5 text-center font-mono font-bold text-foreground">
-                      {sub.jp || 2} JP
-                    </td>
-
                     <td className="p-3.5 text-center font-mono font-bold text-emerald-600">
                       {sub.kkm || 75}
-                    </td>
-
-                    <td className="p-3.5">
-                      <div className="font-semibold text-foreground flex items-center gap-1.5">
-                        <UserCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                        <span>{sub.teacher_name || "Belum Ditentukan"}</span>
-                      </div>
                     </td>
 
                     <td className="p-3.5 text-center">
@@ -468,47 +440,22 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="space-y-1">
-                <Label className="text-[11px] font-bold">Rumpun Kategori</Label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full h-8 px-2.5 rounded-md border border-border bg-background text-xs cursor-pointer font-medium"
-                >
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-[11px] font-bold">Ikon Emoji</Label>
-                <Input
-                  placeholder="📖 / 💻 / 🕌"
-                  value={icon}
-                  onChange={(e) => setIcon(e.target.value)}
-                  className="text-xs text-center"
-                />
-              </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] font-bold">Rumpun Kategori</Label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full h-8 px-2.5 rounded-md border border-border bg-background text-xs cursor-pointer font-medium"
+              >
+                {CATEGORY_OPTIONS.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="space-y-1">
-                <Label className="text-[11px] font-bold">Beban JP (Jam/Minggu)</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={jp}
-                  onChange={(e) => setJp(Number(e.target.value))}
-                  className="text-xs font-mono font-bold"
-                  required
-                />
-              </div>
-
               <div className="space-y-1">
                 <Label className="text-[11px] font-bold">Standar KKM / KKTP</Label>
                 <Input
@@ -521,34 +468,7 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
                   required
                 />
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <Label className="text-[11px] font-bold">Guru Pengampu Utama / Koordinator</Label>
-              {teachersList.length > 0 ? (
-                <select
-                  value={teacherName}
-                  onChange={(e) => setTeacherName(e.target.value)}
-                  className="w-full h-8 px-2.5 rounded-md border border-border bg-background text-xs cursor-pointer"
-                >
-                  <option value="-">-- Pilih Guru Pengampu --</option>
-                  {teachersList.map((t, tIdx) => (
-                    <option key={tIdx} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <Input
-                  placeholder="Nama guru pengampu..."
-                  value={teacherName}
-                  onChange={(e) => setTeacherName(e.target.value)}
-                  className="text-xs"
-                />
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1">
                 <Label className="text-[11px] font-bold">Status Keaktifan</Label>
                 <select
@@ -560,16 +480,16 @@ export function MasterMapelTab({ isKamad, teachersList = [] }: MasterMapelTabPro
                   <option value="NONAKTIF">NONAKTIF</option>
                 </select>
               </div>
+            </div>
 
-              <div className="space-y-1">
-                <Label className="text-[11px] font-bold">Sasaran Tingkat</Label>
-                <Input
-                  placeholder="Semua Tingkat"
-                  value={gradeLevel}
-                  onChange={(e) => setGradeLevel(e.target.value)}
-                  className="text-xs"
-                />
-              </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] font-bold">Sasaran Tingkat</Label>
+              <Input
+                placeholder="Semua Tingkat"
+                value={gradeLevel}
+                onChange={(e) => setGradeLevel(e.target.value)}
+                className="text-xs"
+              />
             </div>
 
             <DialogFooter className="pt-3 border-t border-border flex items-center justify-end gap-2">

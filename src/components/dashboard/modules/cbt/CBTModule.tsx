@@ -464,10 +464,19 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 text-xs font-semibold border-border px-3 text-muted-foreground hover:text-foreground"
-              onClick={() => toast.success("Template Bank Soal Excel Diunduh!")}
+              className="h-8 gap-1.5 text-xs font-semibold border-border px-3 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10"
+              onClick={async () => {
+                try {
+                  const { downloadCbtTemplateExcel } = await import("@/utils/quizExcelHelper");
+                  downloadCbtTemplateExcel("Template_Bank_Soal_CBT_AKM_MTsN2.xlsx");
+                  toast.success("Format template Excel resmi CBT (9 Ragam AKM) berhasil diunduh!");
+                } catch (err) {
+                  toast.error("Gagal mengunduh template Excel CBT");
+                }
+              }}
+              title="Unduh format template Excel resmi Bank Soal CBT (9 Ragam Soal AKM)"
             >
-              <Download className="h-3.5 w-3.5" /> Template Excel
+              <Download className="h-3.5 w-3.5" /> Template Excel (AKM)
             </Button>
           </div>
         </div>

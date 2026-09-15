@@ -660,21 +660,28 @@ export function CreateActivityForm({
     if (!file) return;
 
     try {
-      const { parseQuizExcelFile } = await import("@/utils/quizExcelHelper");
-      const parsed = await parseQuizExcelFile(file);
+      const { parseFormativeQuizExcelFile } = await import("@/utils/quizExcelHelper");
+      const parsed = await parseFormativeQuizExcelFile(file);
       if (parsed.length === 0) {
         return toast.error("Tidak ada soal yang valid ditemukan pada berkas Excel.");
       }
       const formatted: FormativeQuizQuestion[] = parsed.map((p, idx) => ({
         id: p.id || idx + 1,
-        type: "PG",
+        type: p.type || "PG",
         question: p.question,
+        points: p.points || 10,
         optionA: p.optionA,
         optionB: p.optionB,
         optionC: p.optionC,
         optionD: p.optionD,
         keyAnswer: p.keyAnswer,
-        points: 10,
+        keyAnswers: p.keyAnswers,
+        optionScores: p.optionScores,
+        pairs: p.pairs,
+        targetSentence: p.targetSentence,
+        scrambledWords: p.scrambledWords,
+        tolerance: p.tolerance,
+        clozeAnswer: p.clozeAnswer,
       }));
       setQuizQuestions(formatted);
       toast.success(`✅ Berhasil mengimpor ${formatted.length} butir soal dari "${file.name}"!`);
@@ -1289,15 +1296,16 @@ export function CreateActivityForm({
                         onClick={async () => {
                           try {
                             const { downloadQuizTemplateExcel } = await import("@/utils/quizExcelHelper");
-                            downloadQuizTemplateExcel();
+                            downloadQuizTemplateExcel("Template_Kuis_LKPD_AKM_MTsN2.xlsx");
+                            toast.success("Format template Excel resmi Kuis LKPD (9 Ragam AKM) berhasil diunduh!");
                           } catch (err) {
                             toast.error("Gagal mengunduh template Excel");
                           }
                         }}
                         className="text-xs font-medium gap-1 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 h-7"
-                        title="Unduh format template Excel"
+                        title="Unduh format template Excel resmi kuis formatif LKPD (9 Ragam Soal AKM)"
                       >
-                        <Download className="h-3.5 w-3.5" /> Template
+                        <Download className="h-3.5 w-3.5" /> Template AKM
                       </Button>
 
                       <Button

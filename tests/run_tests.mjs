@@ -4,6 +4,7 @@ import { runPaginationTests } from "./unit/pagination_math.test.mjs";
 import { runLearningTopicsTests } from "./unit/learning_topics.test.mjs";
 import { runScheduleHelperTests } from "./unit/schedule_helper.test.mjs";
 import { runServerCacheTests } from "./unit/server_cache.test.mjs";
+import { runExcelAkmParserTests } from "./unit/excel_akm_parser.test.mjs";
 
 async function runAllTests() {
   console.log("=================================================");
@@ -59,6 +60,14 @@ async function runAllTests() {
     passedCount++;
   } catch (err) {
     console.error("❌ [FAIL] Server Cache Tests Failed:", err);
+    failedCount++;
+  }
+
+  try {
+    await runExcelAkmParserTests();
+    passedCount++;
+  } catch (err) {
+    console.error("❌ [FAIL] Excel AKM Parser Tests Failed:", err);
     failedCount++;
   }
 

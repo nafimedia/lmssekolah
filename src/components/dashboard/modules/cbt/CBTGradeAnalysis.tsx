@@ -33,11 +33,13 @@ import {
   Edit3,
   Printer,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTGradeAnalysisItem, CBTQuestion } from "@/types/cbt";
 import { exportToExcelXml } from "@/utils/excelExporter";
 import { isArabicText } from "@/utils/arabicHelper";
+import { MysqlDataService } from "@/services/mysqlDataService";
 
 interface CBTGradeAnalysisProps {
   grades: CBTGradeAnalysisItem[];
@@ -82,6 +84,12 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
   // Remedial & Enrichment Form State
   const [remedialNote, setRemedialNote] = useState("Kerjakan Ujian Susulan / LKPD Remedial Bab 1");
   const [enrichmentNote, setEnrichmentNote] = useState("Materi Tantangan Soal HOTS & Modul Pengayaan");
+
+  // Sync to SIAKAD / Buku Nilai State
+  const [isSyncSiakadOpen, setIsSyncSiakadOpen] = useState(false);
+  const [syncCategory, setSyncCategory] = useState<"PH" | "PTS" | "PAS">("PH");
+  const [syncSubCategory, setSyncSubCategory] = useState<string>("Penilaian Harian Bab 1");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const isSiswa = userRole === "siswa";
   const isWaliKelas = userRole === "walikelas" || userRole === "wali_kelas";
@@ -514,6 +522,67 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
     setIsEnrichmentModalOpen(false);
   };
 
+  const handleOpenEssayModal = (g: CBTGradeAnalysisItem) => {
+    setGradingStudent(g);
+    try {
+      const answers = g.studentAnswers ? JSON.parse(g.studentAnswers) : {};
+      const list = Object.entries(answers)
+        .filter(([_, val]: any) => val.questionType === "essay")
+        .map(([key, val]: any) => ({
+          key,
+          ...val,
+        }));
+      setParsedEssayList(list);
+      const initialScores: Record<string, number> = {};
+      list.forEach((item: any) => {
+        initialScores[item.key] = item.score || 0;
+      });
+      setEssayScores(initialScores);
+    } catch {
+      setParsedEssayList([]);
+    }
+    setIsEssayModalOpen(true);
+  };
+
+  const handleSyncToSiakad = async () => {
+    if (filteredGrades.length === 0) {
+      return toast.error("Tidak ada nilai siswa untuk disinkronkan ke Buku Nilai SIAKAD.");
+    }
+    setIsSyncing(true);
+    const toastId = toast.loading(`⏳ Menyinkronkan nilai ${filteredGrades.length} siswa ke Buku Nilai SIAKAD...`);
+    try {
+      const targetMapel = filteredGrades[0]?.subjectName || "Umum";
+      const targetExamId = filteredGrades[0]?.examId || "1";
+
+      const res = await MysqlDataService.syncCbtGradesToSiakad({
+        exam_id: targetExamId,
+        subject_name: targetMapel,
+        category: syncCategory,
+        rombel: selectedRombel !== "all" ? selectedRombel : (filteredGrades[0]?.classRombel || "Semua Kelas"),
+        items: filteredGrades.map((g) => ({
+          student_name: g.name,
+          student_nis: g.nis !== "-" ? g.nis : undefined,
+          score: g.totalScore,
+        })),
+      });
+
+      if (res.success) {
+        toast.success(`🎉 Berhasil menyinkronkan nilai ${res.count} siswa ke Buku Nilai SIAKAD!`, {
+          id: toastId,
+          description: `Kategori: ${syncCategory === "PH" ? "Penilaian Harian (PH)" : syncCategory === "PTS" ? "Sumatif Tengah Semester (PTS)" : "Sumatif Akhir Semester (PAS)"} | Mapel: ${targetMapel}`,
+        });
+        setIsSyncSiakadOpen(false);
+      } else {
+        toast.error("Gagal menyinkronkan nilai ke SIAKAD. Periksa koneksi server.", { id: toastId });
+      }
+    } catch (err: any) {
+      console.error("Sync CBT to SIAKAD error:", err);
+      toast.error(`Kendala saat sinkronisasi: ${err?.message || err}`, { id: toastId });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   // Siswa View Layout (Personal Result Card)
   if (isSiswa) {
     const myGrade = filteredGrades[0] || grades[0];
@@ -659,6 +728,18 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             <Printer className="h-4 w-4" /> Cetak Berita Acara CBT
           </Button>
 
+          {canManage && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsSyncSiakadOpen(true)}
+              className="gap-1.5 font-bold text-xs border-purple-500/40 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 shadow-2xs"
+              title="Kirim dan Sinkronkan nilai hasil CBT ini ke Buku Nilai SIAKAD / Rapor"
+            >
+              <Send className="h-4 w-4 text-purple-600" /> Kirim ke Buku Nilai SIAKAD
+            </Button>
+          )}
+
           <Button
             size="sm"
             variant="outline"
@@ -763,8 +844,98 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
             </div>
           </div>
 
-      {/* Grade Table Card */}
-      <Card className="border-border bg-card overflow-hidden">
+      {/* Mobile Card List View for Teachers on Smartphones (< sm) */}
+      <div className="space-y-3 sm:hidden">
+        {sortedGrades.map((g) => {
+          const isPassed = g.status === "Lulus KKM";
+          const isPendingEssay = g.status === "Perlu Dikoreksi";
+
+          return (
+            <Card key={g.id} className="border-border bg-card p-3.5 space-y-3 shadow-2xs">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-foreground leading-snug">{g.name}</h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    NIS: <span className="font-medium">{g.nis}</span> • <span className="font-semibold text-primary">{g.classRombel}</span>
+                  </p>
+                </div>
+                <Badge
+                  variant={isPassed ? "default" : isPendingEssay ? "outline" : "destructive"}
+                  className={`text-[10px] font-bold shrink-0 ${
+                    isPassed
+                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-300 dark:border-emerald-800"
+                      : isPendingEssay
+                      ? "bg-blue-500/10 text-blue-600 border-blue-300 dark:border-blue-800"
+                      : "bg-amber-500/10 text-amber-600 border-amber-300 dark:border-amber-800"
+                  }`}
+                >
+                  {isPassed ? "✓ Lulus" : isPendingEssay ? "✍️ Koreksi" : "⚠ Remedial"}
+                </Badge>
+              </div>
+
+              {/* Score Breakdown */}
+              <div className="grid grid-cols-3 gap-2 bg-muted/40 p-2.5 rounded-lg text-center border border-border/50">
+                <div>
+                  <span className="text-[10px] text-muted-foreground block font-medium">Skor PG</span>
+                  <span className="text-xs font-bold text-foreground tabular-nums">{g.pgScore}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-muted-foreground block font-medium">Skor Essay</span>
+                  <span className="text-xs font-bold text-foreground tabular-nums">{g.essayScore}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-muted-foreground block font-medium">Total Nilai</span>
+                  <span className="text-sm font-extrabold text-foreground tabular-nums">{g.totalScore}</span>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
+                {g.violationsCount && g.violationsCount > 0 ? (
+                  <Badge variant="outline" className="text-[10px] font-semibold text-red-600 bg-red-500/10 border-red-300">
+                    ⚠️ {g.violationsCount}x tab
+                  </Badge>
+                ) : (
+                  <span className="text-[10px] text-emerald-600 font-medium">✓ Integritas Baik</span>
+                )}
+
+                {isPendingEssay ? (
+                  <Button
+                    size="sm"
+                    onClick={() => handleOpenEssayModal(g)}
+                    className="gap-1 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white h-7 px-3 shadow-xs"
+                  >
+                    <Edit3 className="h-3 w-3" /> Koreksi Essay
+                  </Button>
+                ) : isPassed ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleOpenEnrichmentModal(g)}
+                    disabled={!isGuru && !isExecutive}
+                    className="gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 border-emerald-300 hover:bg-emerald-500/10 h-7 px-3"
+                  >
+                    <Award className="h-3 w-3" /> Pengayaan
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleOpenRemedialModal(g)}
+                    disabled={!isGuru && !isExecutive}
+                    className="gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 border-amber-300 hover:bg-amber-500/10 h-7 px-3"
+                  >
+                    <Zap className="h-3 w-3 text-amber-500" /> Remedial
+                  </Button>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Grade Table Card (Hidden on small screens, shown on tablet/desktop) */}
+      <Card className="hidden sm:block border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-muted/50 text-muted-foreground font-semibold uppercase tracking-wider border-b border-border">
@@ -873,27 +1044,7 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
                       {isPendingEssay ? (
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setGradingStudent(g);
-                            try {
-                              const answers = g.studentAnswers ? JSON.parse(g.studentAnswers) : {};
-                              const list = Object.entries(answers)
-                                .filter(([_, val]: any) => val.questionType === "essay")
-                                .map(([key, val]: any) => ({
-                                  key,
-                                  ...val,
-                                }));
-                              setParsedEssayList(list);
-                              const initialScores: Record<string, number> = {};
-                              list.forEach((item: any) => {
-                                initialScores[item.key] = item.score || 0;
-                              });
-                              setEssayScores(initialScores);
-                            } catch {
-                              setParsedEssayList([]);
-                            }
-                            setIsEssayModalOpen(true);
-                          }}
+                          onClick={() => handleOpenEssayModal(g)}
                           className="gap-1 text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white h-7 px-2.5 shadow-xs"
                         >
                           <Edit3 className="h-3 w-3" /> Koreksi Essay
@@ -1412,6 +1563,173 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5"
             >
               <Printer className="h-4 w-4" /> Cetak Berita Acara
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sync to SIAKAD / Buku Nilai Modal */}
+      <Dialog open={isSyncSiakadOpen} onOpenChange={setIsSyncSiakadOpen}>
+        <DialogContent className="max-w-md bg-background border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Send className="h-5 w-5 text-purple-600" /> Sinkronisasi Nilai CBT ke Buku Nilai SIAKAD
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
+              Kirimkan dan sinkronkan hasil nilai ujian CBT ini ke buku nilai rapor siswa secara otomatis di database MySQL.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            {/* Context Info Card */}
+            <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Mata Pelajaran:</span>
+                <span className="font-bold text-foreground">{filteredGrades[0]?.subjectName || "Umum"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Rombel Target:</span>
+                <span className="font-semibold text-primary">
+                  {selectedRombel === "all" ? "Semua Rombel Terpilih" : selectedRombel}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Jumlah Siswa:</span>
+                <Badge variant="outline" className="font-bold tabular-nums">
+                  {filteredGrades.length} Siswa
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Rata-rata Nilai:</span>
+                <span className="font-bold text-emerald-600 tabular-nums">{stats.avg} / 100</span>
+              </div>
+            </div>
+
+            {/* Category Selector */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Pilih Komponen Penilaian Rapor SIAKAD:</Label>
+              <div className="grid grid-cols-1 gap-2">
+                <label
+                  onClick={() => setSyncCategory("PH")}
+                  className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                    syncCategory === "PH"
+                      ? "border-purple-500 bg-purple-500/10 text-purple-950 dark:text-purple-100"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="syncCategory"
+                    checked={syncCategory === "PH"}
+                    onChange={() => setSyncCategory("PH")}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <div className="font-bold text-xs flex items-center gap-1.5">
+                      Penilaian Harian (PH) / Nilai Tugas
+                      <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-300">
+                        Bobot 30%
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Disinkronkan ke kolom tugas/formatif harian di Rapor SIAKAD.
+                    </p>
+                  </div>
+                </label>
+
+                <label
+                  onClick={() => setSyncCategory("PTS")}
+                  className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                    syncCategory === "PTS"
+                      ? "border-purple-500 bg-purple-500/10 text-purple-950 dark:text-purple-100"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="syncCategory"
+                    checked={syncCategory === "PTS"}
+                    onChange={() => setSyncCategory("PTS")}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <div className="font-bold text-xs flex items-center gap-1.5">
+                      Sumatif Tengah Semester (PTS / UTS)
+                      <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-300">
+                        Bobot 30%
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Disinkronkan ke kolom UTS/PTS di buku nilai & rapor siswa.
+                    </p>
+                  </div>
+                </label>
+
+                <label
+                  onClick={() => setSyncCategory("PAS")}
+                  className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                    syncCategory === "PAS"
+                      ? "border-purple-500 bg-purple-500/10 text-purple-950 dark:text-purple-100"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="syncCategory"
+                    checked={syncCategory === "PAS"}
+                    onChange={() => setSyncCategory("PAS")}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <div className="font-bold text-xs flex items-center gap-1.5">
+                      Sumatif Akhir Semester (PAS / SAS / PAT)
+                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-300">
+                        Bobot 30%
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Disinkronkan ke kolom PAS di buku nilai & rapor semester.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-[11px] text-blue-800 dark:text-blue-300 flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
+              <span>
+                Sistem akan mengupdate tabel <code className="font-bold">rapor_records</code> secara otomatis dan menghitung ulang Nilai Akhir serta Predikat (A/B/C/D) setiap siswa di database.
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSyncSiakadOpen(false)}
+              disabled={isSyncing}
+              className="text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSyncToSiakad}
+              disabled={isSyncing || filteredGrades.length === 0}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+            >
+              {isSyncing ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Menyinkronkan...
+                </>
+              ) : (
+                <>
+                  <Send className="h-3.5 w-3.5" /> Mulai Sinkronisasi
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

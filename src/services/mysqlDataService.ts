@@ -72,6 +72,8 @@ import {
   saveCbtResultFn,
   deleteCbtResultFn,
   gradeCbtEssayFn,
+  syncCbtGradesToSiakadFn,
+  SyncCbtToSiakadPayload,
   uploadCbtImageFn,
   uploadCbtAudioFn,
   batchInsertCbtQuestionsFn,
@@ -1144,6 +1146,15 @@ export class MysqlDataService {
     }
   }
 
+  static async syncCbtGradesToSiakad(data: SyncCbtToSiakadPayload): Promise<{ success: boolean; count: number }> {
+    try {
+      return await syncCbtGradesToSiakadFn({ data });
+    } catch (e) {
+      console.warn("syncCbtGradesToSiakadFn failed:", e);
+      return { success: false, count: 0 };
+    }
+  }
+
   // Master KKTP Config
   static async getKktpConfig(): Promise<KktpConfigRow> {
     try {
@@ -1620,4 +1631,4 @@ export class MysqlDataService {
   }
 }
 
-export type { WaGatewayConfigRow, AuditLogItem, LkpdDiscussionRow, KamadExecutiveMetrics, CbtQuestionDbRow };
+export type { WaGatewayConfigRow, AuditLogItem, LkpdDiscussionRow, KamadExecutiveMetrics, CbtQuestionDbRow, SyncCbtToSiakadPayload };

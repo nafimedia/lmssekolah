@@ -3264,6 +3264,94 @@ export const deleteCbtResultFn = createServerFn({ method: "POST" })
     }
   });
 
+export interface SyncCbtToSiakadPayload {
+  exam_id: string | number;
+  subject_name: string;
+  category: "PH" | "PTS" | "PAS";
+  rombel?: string;
+  items: Array<{
+    student_name: string;
+    student_nis?: string;
+    score: number;
+  }>;
+}
+
+export const syncCbtGradesToSiakadFn = createServerFn({ method: "POST" })
+  .validator((data: SyncCbtToSiakadPayload) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; count: number }> => {
+    try {
+      const { execute, query } = await import("@/lib/db");
+      await execute(`
+        CREATE TABLE IF NOT EXISTS rapor_records (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id VARCHAR(64) DEFAULT NULL,
+          student_name VARCHAR(191) NOT NULL,
+          subject_name VARCHAR(191) NOT NULL,
+          presensi_score INT DEFAULT 85,
+          tugas_score INT DEFAULT NULL,
+          uts_score INT DEFAULT NULL,
+          pas_score INT DEFAULT NULL,
+          final_score INT DEFAULT 0,
+          predicate VARCHAR(4) DEFAULT 'B',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `).catch(() => {});
+
+      let successCount = 0;
+      for (const item of data.items) {
+        const studentName = (item.student_name || "").trim();
+        if (!studentName) continue;
+        const score = Math.max(0, Math.min(100, Math.round(Number(item.score) || 0)));
+
+        const existing = await query<any[]>(
+          "SELECT * FROM rapor_records WHERE student_name = ? AND subject_name = ? LIMIT 1",
+          [studentName, data.subject_name]
+        );
+
+        if (existing && existing.length > 0) {
+          const row = existing[0];
+          let tugas = row.tugas_score !== null ? row.tugas_score : score;
+          let uts = row.uts_score !== null ? row.uts_score : score;
+          let pas = row.pas_score !== null ? row.pas_score : score;
+
+          if (data.category === "PH") tugas = score;
+          else if (data.category === "PTS") uts = score;
+          else if (data.category === "PAS") pas = score;
+
+          const presensi = row.presensi_score || 85;
+          const finalScore = Math.round(presensi * 0.1 + tugas * 0.3 + uts * 0.3 + pas * 0.3);
+          const predicate = finalScore >= 90 ? "A" : finalScore >= 80 ? "B" : finalScore >= 70 ? "C" : "D";
+
+          await execute(
+            `UPDATE rapor_records 
+             SET tugas_score = ?, uts_score = ?, pas_score = ?, final_score = ?, predicate = ?
+             WHERE id = ?`,
+            [tugas, uts, pas, finalScore, predicate, row.id]
+          );
+        } else {
+          let tugas = data.category === "PH" ? score : 80;
+          let uts = data.category === "PTS" ? score : 80;
+          let pas = data.category === "PAS" ? score : 80;
+          const presensi = 85;
+          const finalScore = Math.round(presensi * 0.1 + tugas * 0.3 + uts * 0.3 + pas * 0.3);
+          const predicate = finalScore >= 90 ? "A" : finalScore >= 80 ? "B" : finalScore >= 70 ? "C" : "D";
+
+          await execute(
+            `INSERT INTO rapor_records (user_id, student_name, subject_name, presensi_score, tugas_score, uts_score, pas_score, final_score, predicate)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [item.student_nis || null, studentName, data.subject_name, presensi, tugas, uts, pas, finalScore, predicate]
+          );
+        }
+        successCount++;
+      }
+
+      return { success: true, count: successCount };
+    } catch (err) {
+      console.error("[syncCbtGradesToSiakadFn Error]:", err);
+      return { success: false, count: 0 };
+    }
+  });
+
 // 18. PENGATURAN KKTP & SKEMA PENILAIAN (MASTER KKTP CONFIG)
 export const getKktpConfigFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<KktpConfigRow> => {

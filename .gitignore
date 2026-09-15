@@ -38,3 +38,7 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Scratch folder
+scratch/
+

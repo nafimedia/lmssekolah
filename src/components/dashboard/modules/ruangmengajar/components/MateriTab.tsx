@@ -228,7 +228,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
   // Handle Create / Edit Topic
   const handleOpenAddTopic = () => {
     setEditingTopic(null);
-    setTopicTitle(`Bab ${topics.length + 1}: `);
+    setTopicTitle(`Topik ${topics.length + 1}: `);
     setTopicDescription("");
     setTopicOrder(topics.length + 1);
     setIsTopicDialogOpen(true);
@@ -246,7 +246,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
   const handleSaveTopic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topicTitle.trim()) {
-      toast.error("Judul Bab / Topik wajib diisi!");
+      toast.error("Judul Topik Pembelajaran wajib diisi!");
       return;
     }
 
@@ -268,7 +268,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
     try {
       const ok = await MysqlDataService.saveLearningTopic(topicPayload);
       if (ok) {
-        toast.success(editingTopic ? `Bab "${topicTitle}" berhasil diperbarui!` : `Bab baru "${topicTitle}" berhasil ditambahkan!`);
+        toast.success(editingTopic ? `Topik "${topicTitle}" berhasil diperbarui!` : `Topik baru "${topicTitle}" berhasil ditambahkan!`);
         setIsTopicDialogOpen(false);
         await loadData();
         // If editing current selected topic, update state
@@ -276,11 +276,11 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
           setSelectedTopic(topicPayload);
         }
       } else {
-        toast.error("Gagal menyimpan Bab / Topik ke database.");
+        toast.error("Gagal menyimpan Topik ke database.");
       }
     } catch (err) {
       console.warn("Save topic error:", err);
-      toast.error("Terjadi kesalahan saat menyimpan Bab.");
+      toast.error("Terjadi kesalahan saat menyimpan Topik.");
     } finally {
       setIsSavingTopic(false);
     }
@@ -288,27 +288,27 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
 
   const handleDeleteTopic = async (topicId: string, topicTitleName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Hapus Bab "${topicTitleName}"? Bahan ajar di dalamnya tidak akan terhapus, tetapi statusnya menjadi materi umum.`)) {
+    if (!confirm(`Hapus Topik "${topicTitleName}"? Bahan ajar di dalamnya tidak akan terhapus, tetapi statusnya menjadi materi mandiri.`)) {
       return;
     }
 
     try {
       const ok = await MysqlDataService.deleteLearningTopic(topicId);
       if (ok) {
-        toast.success(`Bab "${topicTitleName}" berhasil dihapus.`);
+        toast.success(`Topik "${topicTitleName}" berhasil dihapus.`);
         if (selectedTopic && selectedTopic.id === topicId) {
           setSelectedTopic(null);
         }
         await loadData();
       } else {
-        toast.error("Gagal menghapus Bab dari database.");
+        toast.error("Gagal menghapus Topik dari database.");
       }
     } catch (err) {
-      toast.error("Terjadi kesalahan saat menghapus Bab.");
+      toast.error("Terjadi kesalahan saat menghapus Topik.");
     }
   };
 
-  // Toggle Show / Hide akses Bab (Tingkat Bab seperti di Moodle)
+  // Toggle Show / Hide akses Topik
   const handleToggleTopicStatus = async (topic: LearningTopicRow, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const nextStatus = topic.status === "Terkunci" ? "Aktif" : "Terkunci";
@@ -323,15 +323,15 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
       const ok = await MysqlDataService.updateLearningTopicStatus(topic.id, nextStatus);
       if (ok) {
         if (nextStatus === "Aktif") {
-          toast.success(`🔓 Bab "${topic.title}" sekarang DIBUKA untuk siswa.`);
+          toast.success(`🔓 Topik "${topic.title}" sekarang DIBUKA untuk siswa.`);
         } else {
-          toast.success(`🔒 Bab "${topic.title}" DISEMBUNYIKAN (Hide) dari siswa.`);
+          toast.success(`🔒 Topik "${topic.title}" DISEMBUNYIKAN (Hide) dari siswa.`);
         }
       } else {
-        toast.error("Gagal memperbarui status akses Bab.");
+        toast.error("Gagal memperbarui status akses Topik.");
       }
     } catch (err) {
-      toast.error("Terjadi kendala saat mengubah status Bab.");
+      toast.error("Terjadi kendala saat mengubah status Topik.");
     }
   };
 
@@ -559,10 +559,10 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <h3 className="text-xs sm:text-sm font-bold truncate text-foreground">
-                      Bab & Topik Pembelajaran
+                      Topik Pembelajaran
                     </h3>
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-semibold">
-                      {topics.length} Bab
+                      {topics.length} Topik
                     </Badge>
                   </div>
                   <p className="text-[10px] text-muted-foreground truncate hidden sm:block">
@@ -596,10 +596,10 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                   size="sm"
                   className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                   onClick={handleOpenAddTopic}
-                  title="Tambah Bab / Topik Baru"
+                  title="Tambah Topik Pembelajaran Baru"
                 >
                   <FolderPlus className="h-3.5 w-3.5" />
-                  <span>+ Tambah Bab</span>
+                  <span>+ Tambah Topik</span>
                 </Button>
               </div>
             </div>
@@ -609,9 +609,9 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                 <div className="p-6 sm:p-10 text-center border border-dashed border-border rounded-xl space-y-3 bg-muted/5">
                   <FolderPlus className="h-10 w-10 text-emerald-500/50 mx-auto" />
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-foreground">Belum Ada Bab / Topik Pembelajaran</h4>
+                    <h4 className="text-sm font-bold text-foreground">Belum Ada Topik Pembelajaran</h4>
                     <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                      Susun materi belajar Anda secara terstruktur per Bab/Topik untuk memudahkan proses KBM mata pelajaran <strong>{activeMapel}</strong>.
+                      Susun materi belajar Anda secara terstruktur per Topik Pembelajaran untuk memudahkan proses KBM mata pelajaran <strong>{activeMapel}</strong>.
                     </p>
                   </div>
                   <div className="pt-2">
@@ -620,13 +620,13 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 shadow-xs"
                       onClick={handleOpenAddTopic}
                     >
-                      <Plus className="h-3.5 w-3.5" /> Buat Bab Pertama
+                      <Plus className="h-3.5 w-3.5" /> Buat Topik Pertama
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Kartu Deretan Bab/Topik */}
+                  {/* Kartu Deretan Topik */}
                   {topics.map((t, idx) => {
                     const topicMats = materials.filter((m) => m.topic_id === t.id);
                     const openMats = topicMats.filter((m) => m.selectedForToday);
@@ -645,18 +645,18 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                           <div className="flex items-center justify-between gap-2 mb-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50/50 dark:bg-emerald-950/50">
-                                Bab #{t.sequence_order || idx + 1}
+                                Topik #{t.sequence_order || idx + 1}
                               </Badge>
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
                                 {topicMats.length} Bahan Ajar
                               </Badge>
                               {t.status === "Terkunci" ? (
                                 <Badge variant="outline" className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 text-[9px] px-1.5 py-0 flex items-center gap-0.5">
-                                  <EyeOff className="h-2.5 w-2.5" /> Bab Tersembunyi (Hide)
+                                  <EyeOff className="h-2.5 w-2.5" /> Topik Tersembunyi (Hide)
                                 </Badge>
                               ) : (
                                 <Badge className="bg-emerald-600 text-white text-[9px] px-1.5 py-0 flex items-center gap-0.5">
-                                  <Eye className="h-2.5 w-2.5" /> Bab Terbuka
+                                  <Eye className="h-2.5 w-2.5" /> Topik Terbuka
                                 </Badge>
                               )}
                             </div>
@@ -671,7 +671,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                                     : "border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/15 bg-emerald-50/50 dark:bg-emerald-950/50"
                                 }`}
                                 onClick={(e) => handleToggleTopicStatus(t, e)}
-                                title={t.status === "Terkunci" ? "Buka akses Bab ini untuk siswa" : "Sembunyikan Bab ini dari siswa (seperti di Moodle)"}
+                                title={t.status === "Terkunci" ? "Buka akses Topik ini untuk siswa" : "Sembunyikan Topik ini dari siswa (seperti di Moodle)"}
                               >
                                 {t.status === "Terkunci" ? (
                                   <>
@@ -688,7 +688,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                                 variant="ghost"
                                 className="h-6 w-6 text-muted-foreground hover:text-foreground"
                                 onClick={(e) => handleOpenEditTopic(t, e)}
-                                title="Edit Bab"
+                                title="Edit Topik"
                               >
                                 <Edit3 className="h-3 w-3" />
                               </Button>
@@ -697,7 +697,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                                 variant="ghost"
                                 className="h-6 w-6 text-muted-foreground hover:text-destructive"
                                 onClick={(e) => handleDeleteTopic(t.id, t.title, e)}
-                                title="Hapus Bab"
+                                title="Hapus Topik"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
@@ -714,7 +714,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                             </p>
                           ) : (
                             <p className="text-[11px] text-muted-foreground/70 italic mt-1">
-                              Klik untuk masuk dan mengelola bahan ajar pada bab ini.
+                              Klik untuk masuk dan mengelola bahan ajar pada topik ini.
                             </p>
                           )}
                         </div>
@@ -724,7 +724,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                             {topicMats.length === 0 ? "Belum ada materi" : `${topicMats.length} materi terdaftar`}
                           </span>
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">
-                            Masuk ke Bab <ArrowRight className="h-3.5 w-3.5" />
+                            Masuk ke Topik <ArrowRight className="h-3.5 w-3.5" />
                           </span>
                         </div>
                       </div>
@@ -740,7 +740,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                           title: "Materi Umum / Belum Terkategori",
                           subject_name: activeMapel,
                           class_name: activeRombel,
-                          description: "Kumpulan bahan ajar yang belum dikelompokkan ke dalam bab tertentu.",
+                          description: "Kumpulan bahan ajar yang belum dikelompokkan ke dalam topik tertentu.",
                           sequence_order: 99,
                         })
                       }
@@ -765,7 +765,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
 
                       <div className="mt-3 pt-2.5 border-t border-amber-500/20 flex items-center justify-between gap-2">
                         <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300">
-                          Perlu penataan bab
+                          Perlu penataan topik
                         </span>
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
                           Buka Materi <ArrowRight className="h-3.5 w-3.5" />
@@ -782,7 +782,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
           /* LEVEL 2: WORKSPACE DI DALAM BAB YANG DIKLIK               */
           /* ========================================================= */
           <>
-            {/* Header Di Dalam Bab (Breadcrumb & Action Buttons) */}
+            {/* Header Di Dalam Topik (Breadcrumb & Action Buttons) */}
             <div className="p-3 sm:p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-muted/15">
               <div className="flex items-center gap-2 min-w-0">
                 <Button
@@ -790,10 +790,10 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                   variant="ghost"
                   className="h-8 px-2 text-xs font-semibold gap-1 text-muted-foreground hover:text-foreground shrink-0"
                   onClick={() => setSelectedTopic(null)}
-                  title="Kembali ke Daftar Bab"
+                  title="Kembali ke Daftar Topik"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  <span>Daftar Bab</span>
+                  <span>Daftar Topik</span>
                 </Button>
 
                 <div className="h-4 w-[1px] bg-border shrink-0" />
@@ -816,15 +816,15 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                             : "border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 bg-emerald-50/50 dark:bg-emerald-950/50"
                         }`}
                         onClick={() => handleToggleTopicStatus(selectedTopic)}
-                        title={selectedTopic.status === "Terkunci" ? "Buka akses Bab ini untuk siswa" : "Sembunyikan Bab ini dari siswa (seperti di Moodle)"}
+                        title={selectedTopic.status === "Terkunci" ? "Buka akses Topik ini untuk siswa" : "Sembunyikan Topik ini dari siswa (seperti di Moodle)"}
                       >
                         {selectedTopic.status === "Terkunci" ? (
                           <>
-                            <EyeOff className="h-3 w-3 text-amber-600" /> Bab Tersembunyi (Hide)
+                            <EyeOff className="h-3 w-3 text-amber-600" /> Topik Tersembunyi (Hide)
                           </>
                         ) : (
                           <>
-                            <Eye className="h-3 w-3 text-emerald-600" /> Bab Terbuka (Show)
+                            <Eye className="h-3 w-3 text-emerald-600" /> Topik Terbuka (Show)
                           </>
                         )}
                       </Button>
@@ -861,7 +861,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                   size="sm"
                   className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                   onClick={() => setIsUploadOpen(true)}
-                  title="Unggah Bahan Ajar ke Bab ini"
+                  title="Unggah Bahan Ajar ke Topik ini"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   <span>+ Unggah Materi</span>
@@ -1025,26 +1025,26 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
         )}
       </Card>
 
-      {/* Dialog Tambah / Edit Bab */}
+      {/* Dialog Tambah / Edit Topik Pembelajaran */}
       <Dialog open={isTopicDialogOpen} onOpenChange={setIsTopicDialogOpen}>
         <DialogContent className="sm:max-w-md border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <FolderPlus className="h-5 w-5 text-emerald-600" />
-              {editingTopic ? "Edit Bab / Topik Pembelajaran" : "Tambah Bab / Topik Baru"}
+              {editingTopic ? "Edit Topik Pembelajaran" : "Tambah Topik Pembelajaran Baru"}
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSaveTopic} className="space-y-3 py-2">
             <div>
               <Label htmlFor="topic-title" className="text-xs font-semibold">
-                Judul Bab / Topik <span className="text-destructive">*</span>
+                Judul Topik Pembelajaran <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="topic-title"
                 value={topicTitle}
                 onChange={(e) => setTopicTitle(e.target.value)}
-                placeholder="Contoh: Bab 1 - Bilangan Bulat dan Pecahan"
+                placeholder="Contoh: Topik 1 - Bilangan Bulat dan Pecahan"
                 className="mt-1 text-xs"
                 required
               />
@@ -1052,7 +1052,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
 
             <div>
               <Label htmlFor="topic-order" className="text-xs font-semibold">
-                Nomor Urut Bab
+                Nomor Urut Topik
               </Label>
               <Input
                 id="topic-order"
@@ -1066,13 +1066,13 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
 
             <div>
               <Label htmlFor="topic-desc" className="text-xs font-semibold">
-                Deskripsi / Capaian Bab (Opsional)
+                Deskripsi / Capaian Topik (Opsional)
               </Label>
               <Textarea
                 id="topic-desc"
                 value={topicDescription}
                 onChange={(e) => setTopicDescription(e.target.value)}
-                placeholder="Penjelasan ringkas materi dan tujuan yang dipelajari pada bab ini..."
+                placeholder="Penjelasan ringkas materi dan tujuan yang dipelajari pada topik ini..."
                 rows={3}
                 className="mt-1 text-xs resize-none"
               />
@@ -1094,7 +1094,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5"
                 disabled={isSavingTopic}
               >
-                {isSavingTopic ? "Menyimpan..." : editingTopic ? "Simpan Perubahan" : "Buat Bab"}
+                {isSavingTopic ? "Menyimpan..." : editingTopic ? "Simpan Perubahan" : "Buat Topik"}
               </Button>
             </DialogFooter>
           </form>

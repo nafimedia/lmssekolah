@@ -65,7 +65,7 @@ export function ManageTopicDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-bold">
             <FolderPlus className="h-5 w-5 text-emerald-600" />
-            {topicToEdit ? "Perbarui Bab / Topik Pembelajaran" : "Tambah Bab / Topik Baru"}
+            {topicToEdit ? "Perbarui Topik Pembelajaran" : "Tambah Topik Pembelajaran Baru"}
           </DialogTitle>
           <DialogDescription className="text-xs">
             Kelompokkan bahan ajar untuk mata pelajaran <strong>{activeMapel}</strong> ({activeJenjang}).
@@ -74,10 +74,10 @@ export function ManageTopicDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Judul Bab / Capaian Pembelajaran <span className="text-rose-500">*</span></Label>
+            <Label className="text-xs font-semibold">Judul Topik / Capaian Pembelajaran <span className="text-rose-500">*</span></Label>
             <Input
               required
-              placeholder="Contoh: Bab 1 - Bilangan Bulat dan Pecahan"
+              placeholder="Contoh: Topik 1 - Bilangan Bulat dan Pecahan"
               className="text-xs h-9"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -85,7 +85,7 @@ export function ManageTopicDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Nomor Urut Bab</Label>
+            <Label className="text-xs font-semibold">Nomor Urut Topik</Label>
             <Input
               type="number"
               min={1}
@@ -94,13 +94,13 @@ export function ManageTopicDialog({
               value={sequenceOrder}
               onChange={(e) => setSequenceOrder(Number(e.target.value) || 1)}
             />
-            <p className="text-[10px] text-muted-foreground">Urutan penampilan bab pada daftar bahan ajar.</p>
+            <p className="text-[10px] text-muted-foreground">Urutan penampilan topik pada daftar bahan ajar.</p>
           </div>
 
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Deskripsi / Tujuan Pembelajaran (Opsional)</Label>
             <Textarea
-              placeholder="Tuliskan ringkasan materi pokok atau capaian pembelajaran pada bab ini..."
+              placeholder="Tuliskan ringkasan materi pokok atau capaian pembelajaran pada topik ini..."
               className="text-xs min-h-[70px] resize-none"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -124,7 +124,7 @@ export function ManageTopicDialog({
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
             >
               <Save className="h-3.5 w-3.5" />
-              {isSubmitting ? "Menyimpan..." : topicToEdit ? "Simpan Perubahan" : "Buat Bab Baru"}
+              {isSubmitting ? "Menyimpan..." : topicToEdit ? "Simpan Perubahan" : "Buat Topik Baru"}
             </Button>
           </DialogFooter>
         </form>

@@ -308,7 +308,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       });
 
       if (res) {
-        toast.success(payload.id ? `Bab "${payload.title}" berhasil diperbarui!` : `Bab "${payload.title}" berhasil dibuat!`);
+        toast.success(payload.id ? `Topik "${payload.title}" berhasil diperbarui!` : `Topik "${payload.title}" berhasil dibuat!`);
         await fetchTopics();
         setIsManageTopicOpen(false);
         setTopicToEdit(null);
@@ -321,11 +321,11 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           });
         }
       } else {
-        toast.error("Gagal menyimpan Bab ke database.");
+        toast.error("Gagal menyimpan Topik ke database.");
       }
     } catch (e) {
       console.warn("handleSaveTopic error:", e);
-      toast.error("Terjadi kesalahan saat menyimpan Bab.");
+      toast.error("Terjadi kesalahan saat menyimpan Topik.");
     }
   };
 
@@ -333,17 +333,17 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     try {
       const res = await MysqlDataService.deleteLearningTopic(topic.id);
       if (res) {
-        toast.success(`Bab "${topic.title}" berhasil dihapus.`);
+        toast.success(`Topik "${topic.title}" berhasil dihapus.`);
         if (selectedTopic?.id === topic.id) {
           setSelectedTopic(null);
         }
         await Promise.all([fetchTopics(), fetchMaterials()]);
       } else {
-        toast.error("Gagal menghapus Bab.");
+        toast.error("Gagal menghapus Topik.");
       }
     } catch (e) {
       console.warn("handleDeleteTopic error:", e);
-      toast.error("Terjadi kesalahan saat menghapus Bab.");
+      toast.error("Terjadi kesalahan saat menghapus Topik.");
     } finally {
       setTopicToDelete(null);
     }
@@ -672,7 +672,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                   setIsManageTopicOpen(true);
                 }}
               >
-                <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" /> + Kelola / Tambah Bab
+                <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" /> + Kelola / Tambah Topik
               </Button>
               <Button
                 size="sm"
@@ -693,7 +693,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
               className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-2xs px-3 cursor-pointer"
               onClick={() => setIsUploadOpen(true)}
             >
-              <Upload className="h-3.5 w-3.5" /> + Unggah ke Bab Ini
+              <Upload className="h-3.5 w-3.5" /> + Unggah ke Topik Ini
             </Button>
           )}
         </div>
@@ -706,8 +706,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
             <Layers className="h-3.5 w-3.5" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Bab Terdaftar</p>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{filteredTopics.length} Bab</p>
+            <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Topik Terdaftar</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{filteredTopics.length} Topik</p>
           </div>
         </div>
 
@@ -829,7 +829,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       </div>
 
       {/* ========================================================================= */}
-      {/* TAMPILAN LEVEL 2: DETAIL BAB (Klik Bab tertentu untuk lihat bahan ajar)  */}
+      {/* TAMPILAN LEVEL 2: DETAIL TOPIK (Klik Topik tertentu untuk lihat bahan ajar)*/}
       {/* ========================================================================= */}
       {selectedTopic ? (
         <div className="space-y-4">
@@ -843,11 +843,11 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                   className="h-7 text-xs font-bold text-muted-foreground hover:text-foreground gap-1 px-2 -ml-1"
                   onClick={() => setSelectedTopic(null)}
                 >
-                  <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Daftar Bab
+                  <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Daftar Topik
                 </Button>
                 <span className="text-muted-foreground text-xs">/</span>
                 <Badge variant="outline" className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 border-emerald-500/40">
-                  Bab #{selectedTopic.sequence_order || 1}
+                  Topik #{selectedTopic.sequence_order || 1}
                 </Badge>
               </div>
 
@@ -880,7 +880,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                       setIsManageTopicOpen(true);
                     }}
                   >
-                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" /> Edit Info Bab
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" /> Edit Info Topik
                   </Button>
                   <Button
                     size="sm"
@@ -894,17 +894,17 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
             </div>
           </div>
 
-          {/* Daftar Materi di dalam Bab ini */}
+          {/* Daftar Materi di dalam Topik ini */}
           {materialsWithLockState.length === 0 ? (
             <Card className="border-border border-dashed p-10 text-center bg-card">
               <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
-              <h3 className="text-base font-bold text-foreground">Belum Ada Bahan Ajar di Bab Ini</h3>
+              <h3 className="text-base font-bold text-foreground">Belum Ada Bahan Ajar di Topik Ini</h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
                 {isLoading
                   ? "Sedang memuat berkas Bahan Ajar..."
                   : isSiswa
-                    ? "Guru pengampu belum mengunggah materi pembelajaran untuk bab ini."
-                    : "Bab ini belum memiliki berkas materi. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk melengkapi materi pembelajaran."}
+                    ? "Guru pengampu belum mengunggah materi pembelajaran untuk topik ini."
+                    : "Topik ini belum memiliki berkas materi. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk melengkapi materi pembelajaran."}
               </p>
               {!isSiswa && (
                 <div className="mt-4">
@@ -1108,7 +1108,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                   )}
                 </h2>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                  <span>{filteredTopics.length} Bab Terstruktur</span>
+                  <span>{filteredTopics.length} Topik Pembelajaran</span>
                   <span>•</span>
                   <span>{currentFilteredMaterials.length} Berkas Bahan Ajar</span>
                 </div>
@@ -1121,7 +1121,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                 <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Cari materi / bab..."
+                  placeholder="Cari materi / topik..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-8 pl-8 pr-2.5 text-xs bg-background border border-input rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -1140,7 +1140,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                     }}
                   >
                     <FolderPlus className="h-3.5 w-3.5 text-emerald-600" />
-                    + Bab
+                    + Topik
                   </Button>
                   <Button
                     size="sm"
@@ -1158,7 +1158,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
             </div>
           </div>
 
-          {/* Kondisi 1: Tidak ada Bab dan Tidak ada Bahan Ajar sama sekali */}
+          {/* Kondisi 1: Tidak ada Topik dan Tidak ada Bahan Ajar sama sekali */}
           {filteredTopics.length === 0 && currentFilteredMaterials.length === 0 ? (
             <Card className="border-border border-dashed p-10 text-center bg-card">
               <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
@@ -1168,7 +1168,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                   ? "Sedang memuat data bahan ajar..."
                   : isSiswa
                     ? "Guru pengampu belum mengunggah materi pembelajaran untuk tingkat kelas dan mapel ini."
-                    : `Belum ada Bab maupun berkas bahan ajar untuk ${selectedJenjang} ${selectedMapel !== "semua" ? `pada mapel ${selectedMapel}` : ""}. Silakan unggah bahan ajar atau buat Bab baru.`}
+                    : `Belum ada Topik maupun berkas bahan ajar untuk ${selectedJenjang} ${selectedMapel !== "semua" ? `pada mapel ${selectedMapel}` : ""}. Silakan unggah bahan ajar atau buat Topik baru.`}
               </p>
               {!isSiswa && (
                 <div className="mt-5 flex items-center justify-center gap-2.5 flex-wrap">
@@ -1191,14 +1191,14 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                       setIsManageTopicOpen(true);
                     }}
                   >
-                    <FolderPlus className="h-3.5 w-3.5 text-emerald-600" /> + Buat Bab Baru
+                    <FolderPlus className="h-3.5 w-3.5 text-emerald-600" /> + Buat Topik Baru
                   </Button>
                 </div>
               )}
             </Card>
           ) : (
             <div className="space-y-4">
-              {/* Kondisi Khusus: Belum ada Bab, tapi ada materi mandiri */}
+              {/* Kondisi Khusus: Belum ada Topik, tapi ada materi mandiri */}
               {filteredTopics.length === 0 && unassignedMaterials.length > 0 && (
                 <div className="p-3.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-500/30 flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2.5">
@@ -1206,9 +1206,9 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                       <FolderPlus className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-foreground">Belum ada Bab pembelajaran yang dibuat</p>
+                      <p className="text-xs font-bold text-foreground">Belum ada Topik pembelajaran yang dibuat</p>
                       <p className="text-[11px] text-muted-foreground">
-                        Seluruh {unassignedMaterials.length} bahan ajar di bawah adalah berkas mandiri. Anda dapat membuat Bab untuk mengelompokkan materi dengan rapi.
+                        Seluruh {unassignedMaterials.length} bahan ajar di bawah adalah berkas mandiri. Anda dapat membuat Topik untuk mengelompokkan materi dengan rapi.
                       </p>
                     </div>
                   </div>
@@ -1222,13 +1222,13 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                         setIsManageTopicOpen(true);
                       }}
                     >
-                      <FolderPlus className="h-3.5 w-3.5" /> + Buat Bab Baru
+                      <FolderPlus className="h-3.5 w-3.5" /> + Buat Topik Baru
                     </Button>
                   )}
                 </div>
               )}
 
-              {/* Daftar Bab beserta bahan ajar di dalamnya */}
+              {/* Daftar Topik beserta bahan ajar di dalamnya */}
               {filteredTopics.map((topic, idx) => {
                 const topicMaterials = currentFilteredMaterials.filter(
                   (m) =>
@@ -1236,7 +1236,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                     (m.chapter && m.chapter.trim().toLowerCase() === topic.title.trim().toLowerCase())
                 );
 
-                // Jika sedang melakukan search dan bab ini tidak punya materi yang cocok serta judul bab tidak cocok, lewati
+                // Jika sedang melakukan search dan topik ini tidak punya materi yang cocok serta judul topik tidak cocok, lewati
                 if (
                   searchQuery.trim() &&
                   topicMaterials.length === 0 &&
@@ -1247,7 +1247,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
 
                 return (
                   <Card key={topic.id} className="border-border bg-card shadow-2xs overflow-hidden">
-                    {/* Header Bab */}
+                    {/* Header Topik */}
                     <div className="p-4 bg-muted/30 border-b border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -1255,7 +1255,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                             variant="outline"
                             className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/30"
                           >
-                            Bab #{topic.sequence_order || idx + 1}
+                            Topik #{topic.sequence_order || idx + 1}
                           </Badge>
                           <span className="text-xs text-muted-foreground font-semibold">
                             {topic.class_name} • {topic.subject_name}
@@ -1275,7 +1275,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                         )}
                       </div>
 
-                      {/* Aksi Bab */}
+                      {/* Aksi Topik */}
                       <div className="flex items-center gap-1.5 flex-wrap self-start sm:self-auto">
                         {!isSiswa && (
                           <>
@@ -1287,13 +1287,13 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                                 setIsUploadOpen(true);
                               }}
                             >
-                              <Upload className="h-3 w-3" /> + Unggah ke Bab Ini
+                              <Upload className="h-3 w-3" /> + Unggah ke Topik Ini
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                              title="Edit Bab"
+                              title="Edit Topik"
                               onClick={() => {
                                 setTopicToEdit(topic);
                                 setIsManageTopicOpen(true);
@@ -1306,7 +1306,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                                 size="sm"
                                 variant="outline"
                                 className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-50 border-rose-200 cursor-pointer"
-                                title="Hapus Bab"
+                                title="Hapus Topik"
                                 onClick={() => setTopicToDelete(topic)}
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -1319,20 +1319,20 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                           variant="ghost"
                           className="h-7 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 cursor-pointer gap-1"
                           onClick={() => setSelectedTopic(topic)}
-                          title="Buka tampilan detail bab"
+                          title="Buka tampilan detail topik"
                         >
-                          Detail Bab <ChevronRight className="h-3 w-3" />
+                          Detail Topik <ChevronRight className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
 
-                    {/* Bahan Ajar di dalam Bab */}
+                    {/* Bahan Ajar di dalam Topik */}
                     <div className="p-4">
                       {topicMaterials.length === 0 ? (
                         <div className="py-6 text-center border border-dashed border-border rounded-xl bg-muted/15">
                           <FileText className="h-7 w-7 text-muted-foreground mx-auto mb-1.5 opacity-50" />
                           <p className="text-xs font-semibold text-muted-foreground">
-                            Belum ada bahan ajar di bab ini
+                            Belum ada bahan ajar di topik ini
                           </p>
                           {!isSiswa && (
                             <Button
@@ -1344,7 +1344,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                                 setIsUploadOpen(true);
                               }}
                             >
-                              <Upload className="h-3 w-3" /> Unggah Berkas Pertama ke Bab Ini
+                              <Upload className="h-3 w-3" /> Unggah Berkas Pertama ke Topik Ini
                             </Button>
                           )}
                         </div>
@@ -1358,7 +1358,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                 );
               })}
 
-              {/* Section Bahan Ajar Mandiri / Umum (Yang belum terikat ke Bab) */}
+              {/* Section Bahan Ajar Mandiri / Umum (Yang belum terikat ke Topik) */}
               {unassignedMaterials.length > 0 && (
                 <Card className="border-border bg-card shadow-2xs overflow-hidden">
                   <div className="p-4 bg-amber-500/10 border-b border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1377,7 +1377,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                           </Badge>
                         </h4>
                         <p className="text-[11px] text-muted-foreground">
-                          Bahan ajar pada tingkat {selectedJenjang} yang tidak dikelompokkan ke dalam Bab spesifik.
+                          Bahan ajar pada tingkat {selectedJenjang} yang tidak dikelompokkan ke dalam Topik spesifik.
                         </p>
                       </div>
                     </div>
@@ -1409,7 +1409,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         </div>
       )}
 
-      {/* Dialog Manage Bab (Tambah / Edit) */}
+      {/* Dialog Manage Topik (Tambah / Edit) */}
       <ManageTopicDialog
         isOpen={isManageTopicOpen}
         onOpenChange={setIsManageTopicOpen}
@@ -1419,18 +1419,18 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         onSave={handleSaveTopic}
       />
 
-      {/* Dialog Konfirmasi Hapus Bab */}
+      {/* Dialog Konfirmasi Hapus Topik */}
       <Dialog open={!!topicToDelete} onOpenChange={(open) => !open && setTopicToDelete(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-rose-600 text-base font-bold">
-              <AlertCircle className="h-5 w-5" /> Hapus Bab Pembelajaran?
+              <AlertCircle className="h-5 w-5" /> Hapus Topik Pembelajaran?
             </DialogTitle>
             <DialogDescription className="text-xs pt-1">
-              Apakah Anda yakin ingin menghapus Bab <strong>"{topicToDelete?.title}"</strong>?
+              Apakah Anda yakin ingin menghapus Topik <strong>"{topicToDelete?.title}"</strong>?
               <br />
               <span className="text-muted-foreground block mt-1">
-                Catatan: Berkas bahan ajar di dalam bab ini tidak akan terhapus, melainkan ikatannya dengan bab ini dilepas (masuk ke bahan ajar umum).
+                Catatan: Berkas bahan ajar di dalam topik ini tidak akan terhapus, melainkan ikatannya dengan topik ini dilepas (masuk ke bahan ajar mandiri).
               </span>
             </DialogDescription>
           </DialogHeader>
@@ -1449,7 +1449,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
               className="text-xs font-bold gap-1"
               onClick={() => topicToDelete && handleDeleteTopic(topicToDelete)}
             >
-              <Trash2 className="h-3.5 w-3.5" /> Ya, Hapus Bab
+              <Trash2 className="h-3.5 w-3.5" /> Ya, Hapus Topik
             </Button>
           </DialogFooter>
         </DialogContent>

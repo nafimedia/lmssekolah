@@ -186,7 +186,7 @@ export function UploadModulDialog({
 
     if (selectedTopicMode === "new") {
       finalTopicId = `top_${Date.now()}`;
-      finalChapter = newTopicCustomTitle.trim() || "Bab Baru";
+      finalChapter = newTopicCustomTitle.trim() || "Topik Baru";
     } else if (selectedTopicMode !== "none") {
       finalTopicId = selectedTopicMode;
       const foundTopic = availableTopics.find((t) => t.id === selectedTopicMode);
@@ -242,17 +242,17 @@ export function UploadModulDialog({
             />
           </div>
 
-          {/* Kelompokkan ke Bab / Topik (Opsional) */}
+          {/* Kelompokkan ke Topik Pembelajaran (Opsional) */}
           <div className="p-3 rounded-xl border border-border/80 bg-muted/20 space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="topic-selector" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <span>📚 Kelompokkan ke Bab:</span>
+                <span>📚 Kelompokkan ke Topik:</span>
                 <span className="text-[10px] text-muted-foreground font-normal">(Opsional)</span>
               </Label>
               {selectedTopicMode === "none" ? (
-                <Badge variant="outline" className="text-[9px] text-muted-foreground">Materi Lepas</Badge>
+                <Badge variant="outline" className="text-[9px] text-muted-foreground">Materi Mandiri</Badge>
               ) : (
-                <Badge variant="outline" className="text-[9px] border-emerald-500/40 text-emerald-700 dark:text-emerald-300">Masuk Bab</Badge>
+                <Badge variant="outline" className="text-[9px] border-emerald-500/40 text-emerald-700 dark:text-emerald-300">Masuk Topik</Badge>
               )}
             </div>
 
@@ -262,23 +262,23 @@ export function UploadModulDialog({
               value={selectedTopicMode}
               onChange={(e) => setSelectedTopicMode(e.target.value)}
             >
-              <option value="none">Tanpa Bab (Materi Bebas / Rangkuman Cepat)</option>
+              <option value="none">Tanpa Topik (Materi Mandiri / Rangkuman Cepat)</option>
               {availableTopics.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.sequence_order ? `Bab #${t.sequence_order} - ` : ""}{t.title}
+                  {t.sequence_order ? `Topik #${t.sequence_order} - ` : ""}{t.title}
                 </option>
               ))}
-              <option value="new">+ Buat Bab Baru Langsung...</option>
+              <option value="new">+ Buat Topik Baru Langsung...</option>
             </select>
 
             {selectedTopicMode === "new" && (
               <div className="pt-1 space-y-1">
                 <Label htmlFor="custom-topic-title" className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
-                  Judul Bab Baru:
+                  Judul Topik Baru:
                 </Label>
                 <Input
                   id="custom-topic-title"
-                  placeholder="Contoh: Bab 1 - Mengenal Teks Berita"
+                  placeholder="Contoh: Topik 1 - Mengenal Teks Berita"
                   value={newTopicCustomTitle}
                   onChange={(e) => setNewTopicCustomTitle(e.target.value)}
                   className="text-xs h-8 bg-background"

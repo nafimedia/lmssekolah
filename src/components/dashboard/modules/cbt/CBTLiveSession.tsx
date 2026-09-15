@@ -39,6 +39,7 @@ interface CBTLiveSessionProps {
   onStartExam: (exam: CBTExam) => void;
   onCreateExam?: (newExam: Partial<CBTExam>) => void;
   onDeleteExam?: (examId: string) => void;
+  availableRombels?: string[];
 }
 
 export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
@@ -47,6 +48,7 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
   onStartExam,
   onCreateExam,
   onDeleteExam,
+  availableRombels,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedExam, setSelectedExam] = useState<CBTExam | null>(null);
@@ -73,10 +75,18 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
       .catch(() => {});
   }, []);
 
-  // New Exam Form State
+  // Standard Rombels for MTsN 2 Cilacap
+  const defaultRombels = [
+    "Kelas 7A", "Kelas 7B", "Kelas 7C", "Kelas 7D", "Kelas 7E", "Kelas 7F", "Kelas 7G", "Kelas 7H",
+    "Kelas 8A", "Kelas 8B", "Kelas 8C", "Kelas 8D", "Kelas 8E", "Kelas 8F", "Kelas 8G", "Kelas 8H",
+    "Kelas 9A", "Kelas 9B", "Kelas 9C", "Kelas 9D", "Kelas 9E", "Kelas 9F", "Kelas 9G", "Kelas 9H",
+  ];
+  const allAvailableRombels = availableRombels && availableRombels.length > 0 ? availableRombels : defaultRombels;
+
+  // New Exam Form State with Multi-Rombel Support
   const [newTitle, setNewTitle] = useState("");
   const [newMapel, setNewMapel] = useState("Matematika");
-  const [newKelas, setNewKelas] = useState("Semua Kelas");
+  const [selectedClasses, setSelectedClasses] = useState<string[]>(["Semua Kelas"]);
   const [newDurasi, setNewDurasi] = useState("60");
   const [newToken, setNewToken] = useState("MTS2-NEW");
   const [newPassingScore, setNewPassingScore] = useState("75");
@@ -89,6 +99,20 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
   const rawClass = me?.class_name || "Rombel 8A";
   const binaanRombel = normalizeRombelName(rawClass);
 
+  // Helper matching Multi-Rombel (e.g. "Kelas 7A, Kelas 7B" or "Semua Kelas")
+  const isExamTargetMatch = (examKelas: string, targetRombel: string) => {
+    if (!examKelas || examKelas === "Semua" || examKelas === "Semua Rombel" || examKelas === "Semua Kelas") {
+      return true;
+    }
+    const cleanTarget = normalizeRombelName(targetRombel).toLowerCase().replace("rombel", "").replace("kelas", "").trim();
+    const parts = examKelas.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+    return parts.some((p) => {
+      if (isSameClass(p, targetRombel)) return true;
+      const cleanP = normalizeRombelName(p).toLowerCase().replace("rombel", "").replace("kelas", "").trim();
+      return cleanP === cleanTarget || cleanP.includes(cleanTarget) || cleanTarget.includes(cleanP);
+    });
+  };
+
   const filteredExams = exams.filter((e) => {
     const matchesSearch =
       e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -96,19 +120,11 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
       e.token.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (isWaliKelas) {
-      const examClass = normalizeRombelName(e.kelas || "");
-      const isClassMatch = isSameClass(examClass, binaanRombel) || examClass.toLowerCase().includes(binaanRombel.toLowerCase().replace("rombel", "").trim());
-      return matchesSearch && isClassMatch;
+      return matchesSearch && isExamTargetMatch(e.kelas || "", binaanRombel);
     }
 
     if (userRole === "siswa") {
-      const examClass = normalizeRombelName(e.kelas || "");
-      const isClassMatch =
-        !e.kelas ||
-        e.kelas === "Semua" ||
-        e.kelas === "Semua Rombel" ||
-        isSameClass(examClass, rawClass) ||
-        examClass.toLowerCase().includes(rawClass.toLowerCase().replace("rombel", "").trim());
+      const isClassMatch = isExamTargetMatch(e.kelas || "", rawClass);
       return matchesSearch && (e.status === "Dibuka" || e.status === "Terjadwal") && isClassMatch;
     }
     return matchesSearch;
@@ -141,11 +157,16 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
       return toast.error("Judul ujian tidak boleh kosong!");
     }
 
+    const targetKelas =
+      selectedClasses.includes("Semua Kelas") || selectedClasses.length === 0
+        ? "Semua Kelas"
+        : selectedClasses.join(", ");
+
     const created: Partial<CBTExam> = {
       id: String(Date.now()),
       title: newTitle,
       mapel: newMapel,
-      kelas: newKelas,
+      kelas: targetKelas,
       token: newToken.toUpperCase(),
       durationMinutes: parseInt(newDurasi, 10) || 60,
       passingScore: parseInt(newPassingScore, 10) || 75,
@@ -410,23 +431,96 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold">Mata Pelajaran</Label>
-                <Input
-                  value={newMapel}
-                  onChange={(e) => setNewMapel(e.target.value)}
-                  className="text-xs"
-                />
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Mata Pelajaran</Label>
+              <Input
+                value={newMapel}
+                onChange={(e) => setNewMapel(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+
+            {/* Pemilih Multi-Rombel Paralel */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Rombel / Kelas Target (Multi-Select Paralel)</Label>
+                <Badge variant="secondary" className="text-[10px] font-mono">
+                  {selectedClasses.includes("Semua Kelas")
+                    ? "Semua Kelas"
+                    : `${selectedClasses.length} Rombel Terpilih`}
+                </Badge>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold">Rombel / Kelas Target</Label>
-                <Input
-                  value={newKelas}
-                  onChange={(e) => setNewKelas(e.target.value)}
-                  className="text-xs"
-                />
+              {/* Tombol Preset Cepat */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={selectedClasses.includes("Semua Kelas") ? "default" : "outline"}
+                  className={`h-6 text-[10px] px-2 py-0 ${selectedClasses.includes("Semua Kelas") ? "bg-emerald-600 text-white" : ""}`}
+                  onClick={() => setSelectedClasses(["Semua Kelas"])}
+                >
+                  Semua Kelas
+                </Button>
+                {(["7", "8", "9"] as const).map((lvl) => {
+                  const classesOfLvl = allAvailableRombels.filter((r) => r.includes(lvl));
+                  const isAllOfLvl = classesOfLvl.length > 0 && classesOfLvl.every((c) => selectedClasses.includes(c));
+                  return (
+                    <Button
+                      key={lvl}
+                      type="button"
+                      size="sm"
+                      variant={isAllOfLvl ? "default" : "outline"}
+                      className={`h-6 text-[10px] px-2 py-0 ${isAllOfLvl ? "bg-emerald-600 text-white" : ""}`}
+                      onClick={() => {
+                        if (isAllOfLvl) {
+                          setSelectedClasses((prev) => prev.filter((c) => !classesOfLvl.includes(c)));
+                        } else {
+                          setSelectedClasses((prev) => [
+                            ...prev.filter((c) => c !== "Semua Kelas"),
+                            ...classesOfLvl.filter((c) => !prev.includes(c)),
+                          ]);
+                        }
+                      }}
+                    >
+                      + Semua Kelas {lvl}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {/* Grid Rombel Checkbox Chips */}
+              <div className="p-2 rounded-lg border border-border bg-muted/20 max-h-32 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                {allAvailableRombels.map((rombel) => {
+                  const isSelected = selectedClasses.includes("Semua Kelas") || selectedClasses.includes(rombel);
+                  return (
+                    <label
+                      key={rombel}
+                      className={`flex items-center gap-1.5 p-1.5 rounded-md border text-[11px] font-medium cursor-pointer transition-all select-none ${
+                        isSelected
+                          ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/40 shadow-2xs"
+                          : "bg-background text-muted-foreground border-border/70 hover:bg-muted"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          if (selectedClasses.includes("Semua Kelas")) {
+                            setSelectedClasses(allAvailableRombels.filter((r) => r !== rombel));
+                          } else if (selectedClasses.includes(rombel)) {
+                            const remaining = selectedClasses.filter((r) => r !== rombel);
+                            setSelectedClasses(remaining.length === 0 ? ["Semua Kelas"] : remaining);
+                          } else {
+                            setSelectedClasses([...selectedClasses.filter((r) => r !== "Semua Kelas"), rombel]);
+                          }
+                        }}
+                        className="h-3 w-3 rounded text-emerald-600 focus:ring-emerald-500 shrink-0"
+                      />
+                      <span className="truncate">{rombel.replace("Kelas", "").trim()}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 

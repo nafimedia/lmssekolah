@@ -393,7 +393,12 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
   const visibleExams = useMemo(() => {
     return exams.filter((e) => {
       const matchSubject = !isGuruRole || isSubjectAllowedForUser(e.mapel || "");
-      const matchRombel = selectedRombel === "ALL" || isSameClass(e.kelas || "", selectedRombel);
+      const matchRombel =
+        selectedRombel === "ALL" ||
+        e.kelas === "Semua Kelas" ||
+        e.kelas === "Semua Rombel" ||
+        isSameClass(e.kelas || "", selectedRombel) ||
+        (e.kelas || "").split(/[,;\n]+/).some((c) => isSameClass(c.trim(), selectedRombel));
       const q = searchQuery.toLowerCase().trim();
       const matchQuery =
         !q ||
@@ -592,6 +597,7 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         <CBTLiveSession
           exams={visibleExams}
           userRole={userRole}
+          availableRombels={rombelOptions}
           onStartExam={handleStartExam}
           onCreateExam={handleCreateExam}
           onDeleteExam={handleDeleteExam}

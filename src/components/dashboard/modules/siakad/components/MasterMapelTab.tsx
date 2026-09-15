@@ -11,7 +11,7 @@ import {
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -253,9 +253,6 @@ export function MasterMapelTab({ isKamad }: MasterMapelTabProps) {
               <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               Master Mata Pelajaran MTsN 2 Cilacap
             </CardTitle>
-            <CardDescription className="text-xs">
-              Daftar resmi mata pelajaran kurikulum madrasah, rumpun kategori, dan standar ketuntasan minimal (KKTP).
-            </CardDescription>
           </div>
 
           <div className="flex items-center gap-2">

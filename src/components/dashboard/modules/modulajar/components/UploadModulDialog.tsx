@@ -14,6 +14,7 @@ import {
   ListOrdered,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +54,7 @@ interface UploadModulDialogProps {
   defaultJenjang?: string;
   defaultTopicId?: string;
   defaultChapter?: string;
+  availableTopics?: Array<{ id: string; title: string; sequence_order?: number }>;
   onUpload: (newModul: UploadModulPayload) => void;
 }
 
@@ -64,18 +66,31 @@ const getInitialJenjang = (raw?: string) => {
   return raw;
 };
 
-export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, defaultJenjang, defaultTopicId, defaultChapter, onUpload }: UploadModulDialogProps) {
+export function UploadModulDialog({
+  isOpen,
+  onOpenChange,
+  defaultMapel,
+  defaultJenjang,
+  defaultTopicId,
+  defaultChapter,
+  availableTopics = [],
+  onUpload,
+}: UploadModulDialogProps) {
   const allowedMapels = filterSubjectsForUser(ALL_SCHOOL_SUBJECTS);
   const [newTitle, setNewTitle] = useState("");
   const [newMapel, setNewMapel] = useState(defaultMapel || allowedMapels[0] || "Al Qur'an Hadis");
   const [newJenjang, setNewJenjang] = useState(getInitialJenjang(defaultJenjang));
+  const [selectedTopicMode, setSelectedTopicMode] = useState<string>(defaultTopicId || "none");
+  const [newTopicCustomTitle, setNewTopicCustomTitle] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       if (defaultMapel) setNewMapel(defaultMapel);
       if (defaultJenjang) setNewJenjang(getInitialJenjang(defaultJenjang));
+      setSelectedTopicMode(defaultTopicId || "none");
+      setNewTopicCustomTitle("");
     }
-  }, [isOpen, defaultMapel, defaultJenjang]);
+  }, [isOpen, defaultMapel, defaultJenjang, defaultTopicId]);
   const [jenisBahan, setJenisBahan] = useState<JenisBahanAjarType>("DOKUMEN");
   const [selectedUploadFile, setSelectedUploadFile] = useState<File | null>(null);
   const [uploadedFileDataUrl, setUploadedFileDataUrl] = useState<string>("");
@@ -166,6 +181,18 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, defaultJ
       }
     }
 
+    let finalTopicId: string | null = null;
+    let finalChapter: string | null = null;
+
+    if (selectedTopicMode === "new") {
+      finalTopicId = `top_${Date.now()}`;
+      finalChapter = newTopicCustomTitle.trim() || "Bab Baru";
+    } else if (selectedTopicMode !== "none") {
+      finalTopicId = selectedTopicMode;
+      const foundTopic = availableTopics.find((t) => t.id === selectedTopicMode);
+      finalChapter = foundTopic ? foundTopic.title : defaultChapter || null;
+    }
+
     onUpload({
       title: newTitle.trim(),
       mapel: newMapel,
@@ -177,8 +204,8 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, defaultJ
       sequence_order: Number(sequenceOrder) || 1,
       access_mode: accessMode,
       content_text: jenisBahan === "TEKS" ? contentText.trim() : undefined,
-      topic_id: defaultTopicId || null,
-      chapter: defaultChapter || null,
+      topic_id: finalTopicId,
+      chapter: finalChapter,
     });
 
     resetForm();
@@ -193,7 +220,7 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, defaultJ
             <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Upload className="h-5 w-5 text-emerald-600" /> Unggah & Susun Bahan Ajar KBM
             </DialogTitle>
-            {defaultChapter && (
+            {defaultChapter && selectedTopicMode !== "none" && (
               <p className="text-xs text-muted-foreground">
                 Materi ini akan ditautkan ke: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{defaultChapter}</span>
               </p>
@@ -207,12 +234,58 @@ export function UploadModulDialog({ isOpen, onOpenChange, defaultMapel, defaultJ
             <Label htmlFor="modul-title" className="text-xs font-semibold">Judul Bahan Ajar</Label>
             <Input
               id="modul-title"
-              placeholder="Contoh: Bab 2 - Mengenal Hukum Bacaan Idgham & Iqlab"
+              placeholder="Contoh: Modul Ringkasan Teks Berita & Unsur 5W+1H"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               required
               className="mt-1 text-xs"
             />
+          </div>
+
+          {/* Kelompokkan ke Bab / Topik (Opsional) */}
+          <div className="p-3 rounded-xl border border-border/80 bg-muted/20 space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="topic-selector" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span>📚 Kelompokkan ke Bab:</span>
+                <span className="text-[10px] text-muted-foreground font-normal">(Opsional)</span>
+              </Label>
+              {selectedTopicMode === "none" ? (
+                <Badge variant="outline" className="text-[9px] text-muted-foreground">Materi Lepas</Badge>
+              ) : (
+                <Badge variant="outline" className="text-[9px] border-emerald-500/40 text-emerald-700 dark:text-emerald-300">Masuk Bab</Badge>
+              )}
+            </div>
+
+            <select
+              id="topic-selector"
+              className="w-full h-8.5 rounded-lg border border-input bg-background px-2.5 text-xs font-medium cursor-pointer"
+              value={selectedTopicMode}
+              onChange={(e) => setSelectedTopicMode(e.target.value)}
+            >
+              <option value="none">Tanpa Bab (Materi Bebas / Rangkuman Cepat)</option>
+              {availableTopics.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.sequence_order ? `Bab #${t.sequence_order} - ` : ""}{t.title}
+                </option>
+              ))}
+              <option value="new">+ Buat Bab Baru Langsung...</option>
+            </select>
+
+            {selectedTopicMode === "new" && (
+              <div className="pt-1 space-y-1">
+                <Label htmlFor="custom-topic-title" className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+                  Judul Bab Baru:
+                </Label>
+                <Input
+                  id="custom-topic-title"
+                  placeholder="Contoh: Bab 1 - Mengenal Teks Berita"
+                  value={newTopicCustomTitle}
+                  onChange={(e) => setNewTopicCustomTitle(e.target.value)}
+                  className="text-xs h-8 bg-background"
+                  required
+                />
+              </div>
+            )}
           </div>
 
           {/* Jenis / Format Bahan Ajar (Variatif) */}

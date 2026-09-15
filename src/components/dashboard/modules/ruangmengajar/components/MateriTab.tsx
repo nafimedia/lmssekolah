@@ -21,6 +21,7 @@ import {
   ArrowLeft,
   ArrowRight,
   FolderPlus,
+  FolderDown,
   FolderCheck,
   Edit3,
   Trash2,
@@ -49,6 +50,7 @@ import { isSameTeacher } from "@/utils/teacherNameResolver";
 import { ViewMaterialDialog, MaterialDetail } from "./ViewMaterialDialog";
 import { UploadModulDialog, UploadModulPayload } from "@/components/dashboard/modules/modulajar/components/UploadModulDialog";
 import { PickElibraryDialog, ElibraryBookItem } from "./PickElibraryDialog";
+import { PickPustakaMaterialDialog } from "./PickPustakaMaterialDialog";
 
 export interface TeachingMaterialItem {
   id: string;
@@ -115,6 +117,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isElibraryOpen, setIsElibraryOpen] = useState(false);
+  const [isPickPustakaOpen, setIsPickPustakaOpen] = useState(false);
 
   // Topic Dialog (Tambah / Edit Bab)
   const [isTopicDialogOpen, setIsTopicDialogOpen] = useState(false);
@@ -441,6 +444,45 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
     }
   };
 
+  // Ambil dan kaitkan bahan ajar dari Pustaka Bahan Ajar Guru
+  const handleSelectPustakaMaterial = async (pustakaItem: any) => {
+    const cloneId = "mat_" + Date.now();
+    const activeUser = MysqlAuthService.getActiveUser();
+    const currentTeacher = activeUser?.full_name || currentTeacherName;
+
+    try {
+      const res = await MysqlDataService.saveMaterial({
+        id: cloneId,
+        title: pustakaItem.title,
+        subject_name: activeMapel,
+        class_name: activeRombel,
+        type: pustakaItem.type || "DOKUMEN",
+        status: "Aktif",
+        uploaded_by: pustakaItem.uploaded_by || currentTeacher,
+        teacher_name: currentTeacher,
+        filename: pustakaItem.filename,
+        file_url: pustakaItem.file_url,
+        size: pustakaItem.size || "1.5 MB",
+        sequence_order: (materials.length || 0) + 1,
+        access_mode: pustakaItem.access_mode || "GURU_KONTROL",
+        content_text: pustakaItem.content_text || null,
+        topic_id: selectedTopic ? selectedTopic.id : pustakaItem.topic_id || null,
+        chapter: selectedTopic ? selectedTopic.title : pustakaItem.chapter || null,
+      } as any);
+
+      if (res === false) {
+        toast.error("Gagal mengaitkan bahan ajar ke kelas ini.");
+        return;
+      }
+
+      toast.success(`Materi "${pustakaItem.title}" berhasil diaktifkan untuk ${activeRombel}!`);
+      await loadData();
+    } catch (err) {
+      console.warn("handleSelectPustakaMaterial error:", err);
+      toast.error("Gagal mengaitkan bahan ajar ke kelas ini.");
+    }
+  };
+
   // Toggle Show/Hide Material Access (Preserves revision requirement #4)
   const handleToggleSelect = async (m: TeachingMaterialItem) => {
     const nextStatus = m.selectedForToday ? "Terkunci" : "Aktif";
@@ -530,6 +572,16 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/50 cursor-pointer"
+                  onClick={() => setIsPickPustakaOpen(true)}
+                  title="Ambil materi dari Pustaka Bahan Ajar Guru"
+                >
+                  <FolderDown className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span className="hidden sm:inline">Ambil dari Pustaka</span>
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -785,6 +837,16 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/50 cursor-pointer"
+                  onClick={() => setIsPickPustakaOpen(true)}
+                  title="Ambil materi dari Pustaka Bahan Ajar Guru"
+                >
+                  <FolderDown className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span className="hidden sm:inline">Ambil dari Pustaka</span>
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -1056,6 +1118,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
         defaultJenjang={activeRombel}
         defaultTopicId={selectedTopic?.id !== "unassigned" ? selectedTopic?.id : undefined}
         defaultChapter={selectedTopic ? selectedTopic.title : undefined}
+        availableTopics={topics.map((t) => ({ id: t.id, title: t.title, sequence_order: t.sequence_order }))}
         onUpload={handleUploadModul}
       />
 
@@ -1066,6 +1129,16 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
         activeRombel={activeRombel}
         activeMapel={activeMapel}
         onSelectBook={handleSelectElibraryBook}
+      />
+
+      {/* Dialog Ambil Materi dari Pustaka Guru */}
+      <PickPustakaMaterialDialog
+        isOpen={isPickPustakaOpen}
+        onOpenChange={setIsPickPustakaOpen}
+        activeRombel={activeRombel}
+        activeMapel={activeMapel}
+        alreadyAttachedIds={materials.map((m) => m.id)}
+        onSelectMaterial={handleSelectPustakaMaterial}
       />
     </>
   );

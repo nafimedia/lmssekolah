@@ -1244,42 +1244,47 @@ export function CreateActivityForm({
             {(type === "QUIZ" || type === "REFLEKSI") && (() => {
               const totalQuizPoints = quizQuestions.reduce((acc, q) => acc + (Number(q.points) || 0), 0);
               return (
-                <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-3.5">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-                    <div>
-                      <div className="flex items-center gap-2">
+                <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-3">
+                  {/* Header & Badges */}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
                           {type === "REFLEKSI" ? (
                             <>
-                              <MessageSquare className="h-4 w-4 text-rose-600" /> Instrumen Refleksi & Umpan Balik
+                              <MessageSquare className="h-4 w-4 text-rose-600 shrink-0" /> Instrumen Refleksi & Umpan Balik
                             </>
                           ) : (
                             <>
-                              <Brain className="h-4 w-4 text-purple-600" /> Pembuat Soal Kuis Formatif
+                              <Brain className="h-4 w-4 text-purple-600 shrink-0" /> Pembuat Soal Kuis Formatif
                             </>
                           )}
                         </span>
-                        <Badge variant="outline" className="text-[10px] font-bold border-purple-400 text-purple-700 dark:text-purple-300">
-                          {quizQuestions.length} Butir Pertanyaan
-                        </Badge>
-                        {type === "REFLEKSI" ? (
-                          <Badge className="bg-rose-600 text-white font-sans text-[10px]">
-                            Non-Graded (Refleksi)
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px] font-bold border-purple-400 text-purple-700 dark:text-purple-300 bg-purple-50/50 dark:bg-purple-950/40">
+                            {quizQuestions.length} Butir Pertanyaan
                           </Badge>
-                        ) : (
-                          <Badge className="bg-purple-600 text-white font-mono text-[10px]">
-                            Total {totalQuizPoints} Poin
-                          </Badge>
-                        )}
+                          {type === "REFLEKSI" ? (
+                            <Badge className="bg-rose-600 text-white font-sans text-[10px]">
+                              Non-Graded (Refleksi)
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-purple-600 text-white font-mono text-[10px]">
+                              Total {totalQuizPoints} Poin
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-                        {type === "REFLEKSI"
-                          ? "Instrumen umpan balik, refleksi materi KBM, dan angket pemahaman siswa (tanpa penilaian skor)."
-                          : ""}
-                      </p>
                     </div>
 
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    {type === "REFLEKSI" && (
+                      <p className="text-[11px] text-muted-foreground font-medium">
+                        Instrumen umpan balik, refleksi materi KBM, dan angket pemahaman siswa (tanpa penilaian skor).
+                      </p>
+                    )}
+
+                    {/* Toolbar Aksi: 2 Kolom di Mobile, Flex di Desktop */}
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-1.5 w-full pt-0.5">
                       <input
                         type="file"
                         ref={excelInputRef}
@@ -1302,10 +1307,10 @@ export function CreateActivityForm({
                             toast.error("Gagal mengunduh template Excel");
                           }
                         }}
-                        className="text-xs font-medium gap-1 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 h-7"
+                        className="text-xs font-semibold gap-1.5 border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 h-8 w-full sm:w-auto justify-center truncate"
                         title="Unduh format template Excel resmi kuis formatif LKPD (9 Ragam Soal AKM)"
                       >
-                        <Download className="h-3.5 w-3.5" /> Template AKM
+                        <Download className="h-3.5 w-3.5 shrink-0" /> Template AKM
                       </Button>
 
                       <Button
@@ -1313,10 +1318,10 @@ export function CreateActivityForm({
                         size="sm"
                         variant="outline"
                         onClick={() => excelInputRef.current?.click()}
-                        className="text-xs font-medium gap-1 border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 h-7"
+                        className="text-xs font-semibold gap-1.5 border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 h-8 w-full sm:w-auto justify-center truncate"
                         title="Import soal langsung dari file Excel atau CSV"
                       >
-                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" /> Import Excel
+                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Import Excel
                       </Button>
 
                       <Button
@@ -1324,10 +1329,10 @@ export function CreateActivityForm({
                         size="sm"
                         variant="outline"
                         onClick={handleOpenCbtPicker}
-                        className="text-xs font-medium gap-1 border-blue-500/50 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 h-7"
+                        className="text-xs font-semibold gap-1.5 border-blue-500/50 bg-blue-50/60 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 h-8 w-full sm:w-auto justify-center truncate"
                         title="Impor butir soal dari Bank Soal CBT Madrasah"
                       >
-                        <Database className="h-3.5 w-3.5 text-blue-600" /> Impor Bank Soal CBT
+                        <Database className="h-3.5 w-3.5 text-blue-600 shrink-0" /> Bank Soal CBT
                       </Button>
 
                       <Button
@@ -1335,60 +1340,59 @@ export function CreateActivityForm({
                         size="sm"
                         variant={forceArabicQuizMode ? "default" : "outline"}
                         onClick={() => setForceArabicQuizMode(!forceArabicQuizMode)}
-                        className={`text-xs font-semibold gap-1 h-7 ${
+                        className={`text-xs font-semibold gap-1.5 h-8 w-full sm:w-auto justify-center truncate ${
                           forceArabicQuizMode
                             ? "bg-amber-600 hover:bg-amber-700 text-white"
                             : "border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
                         }`}
                         title="Aktifkan tipografi Bahasa Arab (Khat Naskh / Amiri) dan arah teks kanan-ke-kiri"
                       >
-                        🇸🇦 {forceArabicQuizMode ? "Mode Arab Aktif" : "Mode Arab (Khat Naskh)"}
+                        🇸🇦 {forceArabicQuizMode ? "Mode Arab Aktif" : "Mode Arab (Naskh)"}
                       </Button>
                     </div>
                   </div>
 
-                  {/* Dropdown Tambah Butir Soal Baru (Ringkas & Tidak Sesak) */}
-                  <div className="p-3 rounded-lg bg-card border border-purple-200 dark:border-purple-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                    <div className="space-y-0.5">
-                      <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                        <Plus className="h-3.5 w-3.5 text-purple-600" /> Tambah Butir Soal Baru:
-                      </span>
-                      <p className="text-[11px] text-muted-foreground"></p>
-                    </div>
+                  {/* Dropdown & Tombol Tambah Butir Soal Baru (Responsif & Anti-Potong) */}
+                  <div className="p-3 rounded-xl bg-card border border-purple-200 dark:border-purple-900/60 space-y-2 shadow-2xs">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Plus className="h-3.5 w-3.5 text-purple-600 shrink-0" /> Tambah Butir Soal Baru:
+                    </span>
 
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={selectedQuestionTypeToAdd}
-                        onChange={(e) => setSelectedQuestionTypeToAdd(e.target.value as QuizQuestionType)}
-                        className="h-8 rounded-lg border border-purple-300 dark:border-purple-800 bg-background px-2.5 text-xs font-semibold text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-purple-500"
-                      >
-                        <option value="PG">🔘 Pilihan Ganda (A-D)</option>
-                        <option value="PG_KOMPLEKS">☑️ Pilihan Ganda Kompleks (Multi Jawaban)</option>
-                        <option value="MERANGKAI_KALIMAT">🔤 Merangkai Kalimat (Bahasa)</option>
-                        <option value="MENJODOHKAN">🔗 Menjodohkan</option>
-                        <option value="BENAR_SALAH">⚖️ Benar / Salah</option>
-                        <option value="ISIAN_SINGKAT">✍️ Teks Singkat</option>
-                        <option value="ESAI">📝 Esai / Paragraf</option>
-                        <option value="NUMERIK">🔢 Numerik</option>
-                        <option value="MELENGKAPI">🔲 Melengkapi Kalimat</option>
-                      </select>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+                      <div className="flex-1 min-w-0">
+                        <select
+                          value={selectedQuestionTypeToAdd}
+                          onChange={(e) => setSelectedQuestionTypeToAdd(e.target.value as QuizQuestionType)}
+                          className="h-9 w-full rounded-lg border border-purple-300 dark:border-purple-800 bg-background px-3 text-xs font-semibold text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-purple-500 truncate"
+                        >
+                          <option value="PG">🔘 Pilihan Ganda (A-D)</option>
+                          <option value="PG_KOMPLEKS">☑️ Pilihan Ganda Kompleks (Multi Jawaban)</option>
+                          <option value="MERANGKAI_KALIMAT">🔤 Merangkai Kalimat (Bahasa)</option>
+                          <option value="MENJODOHKAN">🔗 Menjodohkan Pasangan</option>
+                          <option value="BENAR_SALAH">⚖️ Benar / Salah</option>
+                          <option value="ISIAN_SINGKAT">✍️ Teks Singkat (Isian)</option>
+                          <option value="ESAI">📝 Esai / Paragraf</option>
+                          <option value="NUMERIK">🔢 Numerik (Angka)</option>
+                          <option value="MELENGKAPI">🔲 Melengkapi Kalimat</option>
+                        </select>
+                      </div>
 
                       <Button
                         type="button"
                         size="sm"
                         onClick={() => handleAddQuizQuestion(selectedQuestionTypeToAdd)}
-                        className="h-8 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1 px-3 shadow-2xs cursor-pointer shrink-0"
+                        className="h-9 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5 px-4 shadow-2xs cursor-pointer shrink-0 justify-center w-full sm:w-auto"
                       >
-                        <Plus className="h-3.5 w-3.5" /> + Tambah Soal
+                        <Plus className="h-4 w-4 shrink-0" /> Tambah Soal
                       </Button>
                     </div>
                   </div>
 
                   {quizQuestions.length === 0 ? (
-                    <div className="text-center py-6 border border-dashed border-purple-500/25 rounded-lg text-muted-foreground text-xs font-medium space-y-1">
-                      <p>Belum ada butir soal yang ditambahkan.</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Pilih jenis soal dari dropdown di atas lalu klik "+ Tambah Soal" atau gunakan tombol Import Excel.
+                    <div className="text-center py-6 px-4 border border-dashed border-purple-400/35 rounded-xl text-muted-foreground text-xs font-medium space-y-1.5 bg-purple-50/20 dark:bg-purple-950/20">
+                      <p className="font-bold text-foreground text-xs">Belum ada butir soal yang ditambahkan</p>
+                      <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+                        Pilih jenis soal dari menu di atas lalu klik <strong>"Tambah Soal"</strong> atau gunakan tombol <strong>"Import Excel"</strong>.
                       </p>
                     </div>
                   ) : (
@@ -1929,21 +1933,21 @@ export function CreateActivityForm({
               );
             })()}
 
-            <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-              <Button type="button" variant="outline" size="sm" className="text-xs font-medium px-4" onClick={onCancel}>
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2 border-t border-border pt-4">
+              <Button type="button" variant="outline" size="sm" className="text-xs font-medium px-4 w-full sm:w-auto" onClick={onCancel}>
                 Batal
               </Button>
               <Button
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="text-xs font-medium gap-1.5 px-4 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                className="text-xs font-medium gap-1.5 px-4 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer w-full sm:w-auto justify-center"
                 onClick={() => handleSaveActivity(true)}
               >
                 <Bookmark className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
                 {isEditing ? "Perbarui Draf" : "Simpan Draf"}
               </Button>
-              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 px-5 shadow-xs cursor-pointer">
+              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 px-5 shadow-xs cursor-pointer w-full sm:w-auto justify-center">
                 <CheckCircle2 className="h-4 w-4" />
                 {isEditing ? "Perbarui & Terbitkan Sekarang" : "Terbitkan Aktivitas Ke Siswa"}
               </Button>

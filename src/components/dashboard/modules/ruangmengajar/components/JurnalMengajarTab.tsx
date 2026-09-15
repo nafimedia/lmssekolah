@@ -1,4 +1,4 @@
-import { Plus, BookOpen, Trash2, Target } from "lucide-react";
+import { Plus, BookOpen, Trash2, Target, FileText, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ interface JurnalMengajarTabProps {
   onDeleteJurnal: (id: string, title: string) => void;
   activeRombel: string;
   activeMapel: string;
+  onNavigateToAktivitas?: () => void;
 }
 
 export function JurnalMengajarTab({
@@ -18,6 +19,7 @@ export function JurnalMengajarTab({
   onDeleteJurnal,
   activeRombel,
   activeMapel,
+  onNavigateToAktivitas,
 }: JurnalMengajarTabProps) {
   return (
     <div className="space-y-4">
@@ -44,16 +46,31 @@ export function JurnalMengajarTab({
             </div>
           </div>
 
-          <Button
-            size="sm"
-            className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-            onClick={onOpenAddModal}
-            title="Tulis Jurnal KBM Baru"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Tulis Jurnal</span>
-            <span className="sm:hidden">+ Jurnal</span>
-          </Button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {onNavigateToAktivitas && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                onClick={onNavigateToAktivitas}
+                title="Buka Tugas & Lembar LKPD Pembelajaran"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Buka Aktivitas & LKPD</span>
+                <span className="sm:hidden">Aktivitas</span>
+              </Button>
+            )}
+            <Button
+              size="sm"
+              className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+              onClick={onOpenAddModal}
+              title="Tulis Jurnal KBM Baru"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Tulis Jurnal</span>
+              <span className="sm:hidden">+ Jurnal</span>
+            </Button>
+          </div>
         </div>
 
         <CardContent className="p-3 sm:p-4 space-y-3">
@@ -118,6 +135,22 @@ export function JurnalMengajarTab({
                 )}
               </div>
             ))
+          )}
+
+          {journalList.length > 0 && onNavigateToAktivitas && (
+            <div className="pt-2.5 mt-2 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-border/60 text-xs bg-muted/20 -mx-3 -mb-3 sm:-mx-4 sm:-mb-4 p-3 rounded-b-xl">
+              <span className="text-muted-foreground text-[11px]">
+                💡 Jurnal KBM terisi rapi. Ingin langsung menugaskan lembar kerja atau kuis LKPD ke siswa?
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onNavigateToAktivitas}
+                className="h-7 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 border-blue-500/30 gap-1 shrink-0"
+              >
+                Buka Tugas & LKPD {activeRombel} <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

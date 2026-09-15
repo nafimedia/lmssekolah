@@ -38,8 +38,8 @@ export function TambahJurnalDialog({
   // Update default notes/title whenever dialog opens
   useEffect(() => {
     if (isOpen) {
-      if (!title && defaultTitle) setTitle(defaultTitle);
-      if (!notes && defaultNotes) setNotes(defaultNotes);
+      if (defaultTitle) setTitle(defaultTitle);
+      if (defaultNotes) setNotes(defaultNotes);
     }
   }, [isOpen, defaultNotes, defaultTitle]);
 

@@ -66,6 +66,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
   const [journalList, setJournalList] = useState<any[]>([]);
 
   const [isAddJurnalOpen, setIsAddJurnalOpen] = useState(false);
+  const [customJurnalNotes, setCustomJurnalNotes] = useState<string>("");
   const [kbmProgress, setKbmProgress] = useState({ isPresensiDone: false, isJurnalDone: false, presensiCountStr: "" });
 
   useEffect(() => {
@@ -303,11 +304,20 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
           onDeleteJurnal={handleDeleteJurnal}
           activeRombel={activeRombel}
           activeMapel={activeMapel}
+          onNavigateToAktivitas={() => setActiveTab("aktivitas")}
         />
       )}
 
       {activeTab === "presensi" && (
-        <PresensiTab activeRombel={activeRombel} activeMapel={activeMapel} />
+        <PresensiTab
+          activeRombel={activeRombel}
+          activeMapel={activeMapel}
+          onProceedToJurnal={(summary) => {
+            setCustomJurnalNotes(summary);
+            setActiveTab("jurnal");
+            setIsAddJurnalOpen(true);
+          }}
+        />
       )}
 
       {activeTab === "materi" && (
@@ -325,14 +335,21 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       {/* Modal Dialog Tambah Jurnal dengan Ringkasan Presensi Otomatis */}
       <TambahJurnalDialog
         isOpen={isAddJurnalOpen}
-        onOpenChange={setIsAddJurnalOpen}
-        onAddJurnal={handleAddJurnal}
+        onOpenChange={(open) => {
+          setIsAddJurnalOpen(open);
+          if (!open) setCustomJurnalNotes("");
+        }}
+        onAddJurnal={(data) => {
+          handleAddJurnal(data);
+          setCustomJurnalNotes("");
+        }}
         activeRombel={activeRombel}
         activeMapel={activeMapel}
         defaultNotes={
-          kbmProgress.presensiCountStr
+          customJurnalNotes ||
+          (kbmProgress.presensiCountStr
             ? `Kehadiran KBM: ${kbmProgress.presensiCountStr}. Pembelajaran tatap muka terlaksana dengan baik dan tertib.`
-            : "Pembelajaran tatap muka terlaksana dengan baik dan tertib."
+            : "Pembelajaran tatap muka terlaksana dengan baik dan tertib.")
         }
       />
     </div>

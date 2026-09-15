@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
-import { UserCheck, CheckCircle2, AlertCircle, Clock, Save, MessageSquare, Inbox, Loader2 } from "lucide-react";
+import { UserCheck, CheckCircle2, AlertCircle, Clock, Save, MessageSquare, Inbox, Loader2, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,13 +28,16 @@ export interface StudentAttendance {
 interface PresensiTabProps {
   activeRombel: string;
   activeMapel: string;
+  onProceedToJurnal?: (presensiSummary: string) => void;
 }
 
-export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
+export function PresensiTab({ activeRombel, activeMapel, onProceedToJurnal }: PresensiTabProps) {
   // Initialize strictly with empty array - NO hardcoded dummy students
   const [students, setStudents] = useState<StudentAttendance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showPromptJurnal, setShowPromptJurnal] = useState(false);
+  const [savedSummary, setSavedSummary] = useState("");
 
   const dateToday = new Date().toISOString().split("T")[0];
 
@@ -119,6 +130,11 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
 
       const success = await MysqlDataService.saveKbmPresensiBatch(activeRombel, activeMapel, dateToday, records as any);
       if (success) {
+        const notHadir = students.filter((s) => s.status !== "HADIR");
+        const summary = `Presensi KBM: Hadir ${countHadir}, Sakit ${countSakit}, Izin ${countIzin}, Alpa ${countAlpa}.${notHadir.length > 0 ? ` Catatan siswa: ${notHadir.map((s) => `${s.name} (${s.status}${s.notes ? `: ${s.notes}` : ""})`).join(", ")}.` : " Seluruh siswa hadir lengkap dan tertib."}`;
+        setSavedSummary(summary);
+        setShowPromptJurnal(true);
+
         toast.success(`✅ Rekap Presensi KBM ${activeRombel} (${activeMapel}) berhasil disimpan!`, {
           id: toastId,
           description: `${students.length} Siswa Terproses (Hadir: ${countHadir}, Sakit: ${countSakit}, Izin: ${countIzin}, Alpa: ${countAlpa})`,
@@ -338,6 +354,51 @@ export function PresensiTab({ activeRombel, activeMapel }: PresensiTabProps) {
           </>
         )}
       </CardContent>
+
+      {/* Dialog Konfirmasi Transisi Berantai ke Jurnal Mengajar */}
+      <Dialog open={showPromptJurnal} onOpenChange={setShowPromptJurnal}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-5 w-5" /> Presensi KBM Berhasil Disimpan!
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Presensi kelas <strong>{activeRombel}</strong> ({activeMapel}) telah tersimpan rapi.
+              Apakah Anda ingin langsung melangkah mengisi <strong>Jurnal Mengajar</strong> untuk kelas ini?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-3 bg-muted/40 rounded-lg text-xs space-y-1.5 border border-border/60">
+            <span className="font-semibold text-foreground text-[11px] block">
+              Ringkasan Kehadiran yang Akan Masuk ke Jurnal:
+            </span>
+            <p className="text-muted-foreground text-[11px] leading-relaxed italic bg-background/60 p-2 rounded border border-border/40">
+              "{savedSummary}"
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPromptJurnal(false)}
+              className="text-xs"
+            >
+              Tetap di Presensi
+            </Button>
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5 shadow-xs"
+              onClick={() => {
+                setShowPromptJurnal(false);
+                onProceedToJurnal?.(savedSummary);
+              }}
+            >
+              Lanjut Isi Jurnal Mengajar <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

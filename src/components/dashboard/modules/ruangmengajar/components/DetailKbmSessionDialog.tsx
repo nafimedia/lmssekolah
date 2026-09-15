@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Calendar, Clock, CheckCircle2, UserCheck, Edit, Save, FileText } from "lucide-react";
+import { CheckCircle2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { KbmHistoryItem } from "./RiwayatKbmSection";
 
@@ -13,7 +13,15 @@ interface DetailKbmSessionDialogProps {
   onOpenChange: (open: boolean) => void;
   sessionItem: KbmHistoryItem | null;
   isEditMode?: boolean;
-  onSaveUpdatedTopic?: (id: string, newTopic: string) => void;
+  onSaveUpdatedTopic?: (
+    id: string,
+    updatedData: {
+      topic: string;
+      tujuan?: string;
+      kegiatan?: string;
+      kendala?: string;
+    }
+  ) => void;
 }
 
 export function DetailKbmSessionDialog({
@@ -25,16 +33,30 @@ export function DetailKbmSessionDialog({
 }: DetailKbmSessionDialogProps) {
   if (!sessionItem) return null;
 
-  const [topic, setTopic] = useState(sessionItem.topic);
-  const [tujuan, setTujuan] = useState("Siswa memahami norma agama, kesusilaan, kesopanan, dan hukum dalam kehidupan bermasyarakat.");
-  const [kegiatan, setKegiatan] = useState("1. Presensi & apersepsi (10m)\n2. Diskusi studi kasus (40m)\n3. Refleksi & penutupan (20m)");
-  const [kendala, setKendala] = useState("Seluruh siswa aktif berdiskusi. 2 siswa izin ke UKS.");
+  const [topic, setTopic] = useState(sessionItem.topic || "");
+  const [tujuan, setTujuan] = useState(sessionItem.tujuan_pembelajaran || "");
+  const [kegiatan, setKegiatan] = useState(sessionItem.kegiatan || "");
+  const [kendala, setKendala] = useState(sessionItem.kendala || sessionItem.catatan || "");
+
+  useEffect(() => {
+    if (sessionItem) {
+      setTopic(sessionItem.topic || "");
+      setTujuan(sessionItem.tujuan_pembelajaran || "");
+      setKegiatan(sessionItem.kegiatan || "");
+      setKendala(sessionItem.kendala || sessionItem.catatan || "");
+    }
+  }, [sessionItem]);
 
   const handleSave = () => {
     if (onSaveUpdatedTopic) {
-      onSaveUpdatedTopic(sessionItem.id, topic);
+      onSaveUpdatedTopic(sessionItem.id, {
+        topic,
+        tujuan,
+        kegiatan,
+        kendala,
+      });
     }
-    toast.success(`✅ Jurnal KBM Tanggal ${sessionItem.date} berhasil diperbarui di Database!`);
+    toast.success(`✅ Jurnal KBM Tanggal ${sessionItem.date} berhasil disimpan!`);
     onOpenChange(false);
   };
 
@@ -64,13 +86,14 @@ export function DetailKbmSessionDialog({
             <label className="font-semibold text-foreground block">Materi / Pokok Bahasan:</label>
             {isEditMode ? (
               <Input
+                placeholder="Materi pokok pembelajaran..."
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 className="text-xs font-normal"
               />
             ) : (
               <div className="p-3 rounded-lg bg-muted/50 border border-border font-semibold text-foreground">
-                {topic}
+                {topic || "-"}
               </div>
             )}
           </div>
@@ -79,13 +102,14 @@ export function DetailKbmSessionDialog({
             <label className="font-semibold text-foreground block">Tujuan Pembelajaran (TP):</label>
             {isEditMode ? (
               <Textarea
+                placeholder="Tuliskan tujuan pembelajaran (TP)..."
                 value={tujuan}
                 onChange={(e) => setTujuan(e.target.value)}
                 className="text-xs min-h-[70px] font-normal"
               />
             ) : (
               <div className="p-3 rounded-lg bg-muted/40 border border-border/80 text-muted-foreground">
-                {tujuan}
+                {tujuan || <span className="italic text-muted-foreground/60">(Belum diisi oleh guru)</span>}
               </div>
             )}
           </div>
@@ -94,13 +118,14 @@ export function DetailKbmSessionDialog({
             <label className="font-semibold text-foreground block">Alur Kegiatan KBM & Pembuka Sesi:</label>
             {isEditMode ? (
               <Textarea
+                placeholder="Tuliskan alur kegiatan KBM..."
                 value={kegiatan}
                 onChange={(e) => setKegiatan(e.target.value)}
                 className="text-xs min-h-[80px] font-mono font-normal"
               />
             ) : (
               <pre className="p-3 rounded-lg bg-muted/40 border border-border/80 text-slate-700 dark:text-slate-300 font-sans whitespace-pre-wrap">
-                {kegiatan}
+                {kegiatan || <span className="italic text-muted-foreground/60">(Belum diisi oleh guru)</span>}
               </pre>
             )}
           </div>
@@ -109,13 +134,14 @@ export function DetailKbmSessionDialog({
             <label className="font-semibold text-foreground block">Catatan Kendala & Solusi Guru:</label>
             {isEditMode ? (
               <Input
+                placeholder="Catatan kendala atau solusi jika ada..."
                 value={kendala}
                 onChange={(e) => setKendala(e.target.value)}
                 className="text-xs font-normal"
               />
             ) : (
-              <div className="p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300">
-                {kendala}
+              <div className="p-3 rounded-lg bg-muted/30 border border-border text-foreground">
+                {kendala || <span className="italic text-muted-foreground/60">(Tidak ada kendala / belum diisi)</span>}
               </div>
             )}
           </div>

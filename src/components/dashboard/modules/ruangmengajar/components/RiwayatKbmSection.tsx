@@ -17,6 +17,12 @@ export interface KbmHistoryItem {
   topic: string;
   attendance: string;
   hasJournal: boolean;
+  tujuan_pembelajaran?: string;
+  kegiatan?: string;
+  catatan?: string;
+  kendala?: string;
+  tindak_lanjut?: string;
+  guru_name?: string;
 }
 
 export function RiwayatKbmSection() {
@@ -32,16 +38,22 @@ export function RiwayatKbmSection() {
     let isMounted = true;
     MysqlDataService.getJournals().then((dbRows: any[]) => {
       if (!isMounted) return;
-      if (dbRows) {
+      if (dbRows && dbRows.length > 0) {
         setHistoryList(
           dbRows.map((r: any, idx: number) => ({
             id: String(r.id || `db_h_${idx}`),
-            date: r.tanggal || "24 Agustus 2026",
-            rombel: r.rombel || "Kelas VII A",
-            mapel: r.mapel || "Pendidikan Kewarganegaraan",
-            topic: r.materi || "Pokok Bahasan KBM",
-            attendance: "30 / 30 Siswa",
+            date: r.tanggal || "-",
+            rombel: r.rombel || "-",
+            mapel: r.mapel || "-",
+            topic: r.materi || "-",
+            attendance: r.attendance || (r.catatan?.includes("Hadir") ? r.catatan : "-"),
             hasJournal: true,
+            tujuan_pembelajaran: r.tujuan_pembelajaran || "",
+            kegiatan: r.kegiatan || "",
+            catatan: r.catatan || "",
+            kendala: r.kendala || "",
+            tindak_lanjut: r.tindak_lanjut || "",
+            guru_name: r.guru_name || "",
           }))
         );
       } else {
@@ -60,10 +72,40 @@ export function RiwayatKbmSection() {
     setIsDetailOpen(true);
   };
 
-  const handleSaveUpdatedTopic = (id: string, newTopic: string) => {
+  const handleSaveUpdatedTopic = async (
+    id: string,
+    updatedData: {
+      topic: string;
+      tujuan?: string;
+      kegiatan?: string;
+      kendala?: string;
+    }
+  ) => {
     setHistoryList((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, topic: newTopic } : item))
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              topic: updatedData.topic,
+              tujuan_pembelajaran: updatedData.tujuan,
+              kegiatan: updatedData.kegiatan,
+              kendala: updatedData.kendala,
+            }
+          : item
+      )
     );
+    try {
+      await MysqlDataService.updateJournal({
+        id,
+        materi: updatedData.topic,
+        tujuan_pembelajaran: updatedData.tujuan,
+        kegiatan: updatedData.kegiatan,
+        kendala: updatedData.kendala,
+      });
+      toast.success("✅ Perubahan rincian jurnal berhasil disimpan ke database!");
+    } catch (error) {
+      toast.error("Gagal memperbarui rincian jurnal di database.");
+    }
   };
 
   const handleDeleteHistoryItem = async (id: string, topic: string) => {

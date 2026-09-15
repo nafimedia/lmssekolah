@@ -67,6 +67,7 @@ import {
   saveP5SubmissionFn,
   getJournalsFn,
   saveJournalFn,
+  updateJournalFn,
   deleteJournalFn,
   getCbtResultsFn,
   saveCbtResultFn,
@@ -1037,6 +1038,9 @@ export class MysqlDataService {
         tujuan_pembelajaran: r.tujuan_pembelajaran || "",
         kegiatan: r.kegiatan || "",
         catatan: r.catatan || "",
+        kendala: r.kendala || "",
+        tindak_lanjut: r.tindak_lanjut || "",
+        created_at: r.created_at,
       }));
     } catch (e) {
       console.warn("getJournalsFn failed:", e);
@@ -1049,16 +1053,33 @@ export class MysqlDataService {
       return await saveJournalFn({
         data: {
           ...data,
-          tujuan_pembelajaran: "",
-          kegiatan: "",
+          tujuan_pembelajaran: data.tujuan_pembelajaran || "",
+          kegiatan: data.kegiatan || "",
           catatan: data.catatan || "",
-          kendala: "",
-          tindak_lanjut: "",
+          kendala: data.kendala || "",
+          tindak_lanjut: data.tindak_lanjut || "",
         },
       });
     } catch (e) {
       console.warn("saveJournalFn failed:", e);
       return { success: false };
+    }
+  }
+
+  static async updateJournal(data: {
+    id: string;
+    materi?: string;
+    tujuan_pembelajaran?: string;
+    kegiatan?: string;
+    kendala?: string;
+    catatan?: string;
+  }): Promise<boolean> {
+    try {
+      const res = await updateJournalFn({ data });
+      return res.success;
+    } catch (e) {
+      console.warn("updateJournalFn failed:", e);
+      return false;
     }
   }
 

@@ -1,8 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Printer, FileText, Download, CheckCircle2 } from "lucide-react";
+import { Printer } from "lucide-react";
 import { toast } from "sonner";
+import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { KbmHistoryItem } from "./RiwayatKbmSection";
 
 interface PrintKbmReportDialogProps {
@@ -25,6 +25,11 @@ export function PrintKbmReportDialog({
     toast.success("Memproses dokumen cetak Rekap Jurnal KBM...");
   };
 
+  const me = MysqlAuthService.getActiveUser();
+  const activeGuruName = historyList[0]?.guru_name || me?.full_name || "Guru Pengampu";
+  const activeGuruNip = me?.nis_nip || "-";
+  const currentPrintDate = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -44,24 +49,24 @@ export function PrintKbmReportDialog({
             <h3 className="font-bold text-sm uppercase tracking-wider text-slate-800">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>
             <h2 className="font-bold text-lg text-emerald-800 uppercase tracking-wide">KANTOR KEMENTERIAN AGAMA KABUPATEN CILACAP</h2>
             <h1 className="font-bold text-xl text-slate-900 uppercase">MADRASAH TSANAWIYAH NEGERI 2 CILACAP</h1>
-            <p className="text-[11px] text-slate-600">Jl. KH. Ahmad Dahlan No. 12, Cilacap · Telp/Fax: (0282) 534123 · Website: mtsn2cilacap.sch.id</p>
+            <p className="text-[11px] text-slate-600">Jl. Kemerdekaan Barat No. 1 Kesugihan, Cilacap, Jawa Tengah 53274 · Website: mtsn2cilacap.sch.id</p>
           </div>
 
           {/* Report Title */}
           <div className="text-center space-y-1 py-2">
             <h3 className="font-bold text-base uppercase underline text-slate-900">LAPORAN REKAPITULASI JURNAL & PRESENSI KBM DIGITAL</h3>
-            <p className="text-xs font-semibold text-slate-600">Semester Ganjil · Tahun Ajaran 2026/2027</p>
+            <p className="text-xs font-semibold text-slate-600">Tahun Ajaran 2026/2027</p>
           </div>
 
           {/* Metadata Block */}
           <div className="grid grid-cols-2 gap-4 text-xs font-semibold p-3 bg-slate-50 rounded-lg border border-slate-200">
             <div>
-              <p><span className="text-slate-500">Mata Pelajaran:</span> {activeMapel || "Pendidikan Kewarganegaraan"}</p>
+              <p><span className="text-slate-500">Mata Pelajaran:</span> {activeMapel || "Semua Mata Pelajaran"}</p>
               <p><span className="text-slate-500">Kelas / Rombel:</span> {activeRombel || "Semua Rombel Diampu"}</p>
             </div>
             <div className="text-right">
-              <p><span className="text-slate-500">Guru Pengampu:</span> ANGGUN NOVTALIA BERLIANI, S.Pd.</p>
-              <p><span className="text-slate-500">Tanggal Cetak:</span> 24 Agustus 2026</p>
+              <p><span className="text-slate-500">Guru Pengampu:</span> {activeGuruName}</p>
+              <p><span className="text-slate-500">Tanggal Cetak:</span> {currentPrintDate}</p>
             </div>
           </div>
 
@@ -78,34 +83,42 @@ export function PrintKbmReportDialog({
               </tr>
             </thead>
             <tbody>
-              {historyList.map((item, idx) => (
-                <tr key={item.id} className="border-b border-slate-200">
-                  <td className="border border-slate-300 p-2 text-center font-mono font-bold">{idx + 1}</td>
-                  <td className="border border-slate-300 p-2 font-mono font-semibold">{item.date}</td>
-                  <td className="border border-slate-300 p-2 font-bold">{item.rombel}</td>
-                  <td className="border border-slate-300 p-2 font-medium">{item.topic}</td>
-                  <td className="border border-slate-300 p-2 text-center font-mono font-bold text-emerald-700">{item.attendance}</td>
-                  <td className="border border-slate-300 p-2 text-center font-bold text-emerald-600">Terisi ✓</td>
+              {historyList.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-4 text-center text-slate-500 italic">
+                    Belum ada riwayat catatan jurnal KBM yang tersimpan.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                historyList.map((item, idx) => (
+                  <tr key={item.id} className="border-b border-slate-200">
+                    <td className="border border-slate-300 p-2 text-center font-mono font-bold">{idx + 1}</td>
+                    <td className="border border-slate-300 p-2 font-mono font-semibold">{item.date}</td>
+                    <td className="border border-slate-300 p-2 font-bold">{item.rombel}</td>
+                    <td className="border border-slate-300 p-2 font-medium">{item.topic}</td>
+                    <td className="border border-slate-300 p-2 text-center font-mono font-bold text-emerald-700">{item.attendance}</td>
+                    <td className="border border-slate-300 p-2 text-center font-bold text-emerald-600">Terisi ✓</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
 
           {/* Signature Block */}
           <div className="pt-8 grid grid-cols-2 text-xs font-semibold text-center">
             <div className="space-y-12">
-              <p>Mengetahui,<br />Kepala MTsN 2 Cilacap</p>
+              <p>Mengetahui,<br />Kepala MTs Negeri 2 Cilacap</p>
               <div>
-                <p className="font-bold underline">Drs. Hj. Umi Solikhatun, M.Pd.</p>
-                <p className="text-[10px] text-slate-500">NIP. 196805121994032001</p>
+                <p className="font-bold underline">H. DRS. SUGENG WARDOYO, M.Pd.I</p>
+                <p className="text-[10px] text-slate-500">NIP. 197005121997031002</p>
               </div>
             </div>
 
             <div className="space-y-12">
-              <p>Cilacap, 24 Agustus 2026<br />Guru Mata Pelajaran</p>
+              <p>Cilacap, {currentPrintDate}<br />Guru Mata Pelajaran</p>
               <div>
-                <p className="font-bold underline">ANGGUN NOVTALIA BERLIANI, S.Pd.</p>
-                <p className="text-[10px] text-slate-500">NIP. 198511042010012009</p>
+                <p className="font-bold underline">{activeGuruName}</p>
+                <p className="text-[10px] text-slate-500">NIP. {activeGuruNip}</p>
               </div>
             </div>
           </div>

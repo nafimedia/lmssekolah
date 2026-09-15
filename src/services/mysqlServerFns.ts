@@ -60,7 +60,11 @@ export interface JournalRow {
   tanggal: string;
   jam_ke: string;
   materi: string;
+  tujuan_pembelajaran?: string;
+  kegiatan?: string;
   catatan?: string;
+  kendala?: string;
+  tindak_lanjut?: string;
   created_at?: string;
 }
 
@@ -4247,6 +4251,44 @@ export const deleteJournalFn = createServerFn({ method: "POST" })
       return { success: true };
     } catch (e) {
       console.error("[deleteJournalFn Error]:", e);
+      return { success: false };
+    }
+  });
+
+export const updateJournalFn = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      materi?: string;
+      tujuan_pembelajaran?: string;
+      kegiatan?: string;
+      kendala?: string;
+      catatan?: string;
+    }) => data
+  )
+  .handler(async ({ data }): Promise<{ success: boolean }> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute(
+        `UPDATE jurnal_mengajar 
+         SET materi = COALESCE(?, materi),
+             tujuan_pembelajaran = COALESCE(?, tujuan_pembelajaran),
+             kegiatan = COALESCE(?, kegiatan),
+             kendala = COALESCE(?, kendala),
+             catatan = COALESCE(?, catatan)
+         WHERE id = ?`,
+        [
+          data.materi ?? null,
+          data.tujuan_pembelajaran ?? null,
+          data.kegiatan ?? null,
+          data.kendala ?? null,
+          data.catatan ?? null,
+          data.id,
+        ]
+      );
+      return { success: true };
+    } catch (e) {
+      console.error("[updateJournalFn Error]:", e);
       return { success: false };
     }
   });

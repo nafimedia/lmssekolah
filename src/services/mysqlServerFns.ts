@@ -883,7 +883,15 @@ export const updateStudentParentContactFn = createServerFn({ method: "POST" })
 export const getSubjectsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<SubjectRow[]> => {
     try {
-      const { query } = await import("@/lib/db");
+      const { query, execute } = await import("@/lib/db");
+      // Pastikan entri resmi Informatika (TIK) terdaftar di tabel subjects database
+      await execute(`
+        INSERT INTO subjects (code, name, teacher_name, grade_level, created_at)
+        SELECT 'UMM-09', 'Informatika (TIK)', 'MITA MUNAWAROH, S.Kom', 'Semua Tingkat', NOW()
+        FROM DUAL
+        WHERE NOT EXISTS (SELECT 1 FROM subjects WHERE code = 'UMM-09')
+      `).catch(() => {});
+
       return await query<SubjectRow[]>("SELECT * FROM subjects ORDER BY code ASC");
     } catch {
       return [];

@@ -175,6 +175,12 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Production Concurrency & Reverse Proxy (Nginx/Cloudflare) Tuning
+// Prevents ECONNRESET and 502/504 Gateway Timeout during mass class access
+server.keepAliveTimeout = 65000; // 65 seconds (must be higher than Nginx keepalive_timeout)
+server.headersTimeout = 66000;   // 66 seconds (must be higher than keepAliveTimeout)
+server.maxConnections = 1000;    // Max concurrent sockets for mass classroom access
+
 server.listen(PORT, HOST, () => {
   console.log(`🚀 LMS Production Server running at http://${HOST}:${PORT}`);
 });

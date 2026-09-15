@@ -15,8 +15,11 @@ if (typeof window === 'undefined') {
       password: process.env.DATABASE_PASSWORD || '',
       database: process.env.DATABASE_NAME || 'db_lms',
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit: Number(process.env.DATABASE_CONNECTION_LIMIT) || 50,
       queueLimit: 0,
+      maxIdle: 15,
+      idleTimeout: 60000,
+      connectTimeout: 10000,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
     });
@@ -61,10 +64,25 @@ export async function queryOne<T = any>(sql: string, params?: any[]): Promise<T 
   return null;
 }
 
+const verifiedTables = new Set<string>();
+
 export async function execute(sql: string, params?: any[]): Promise<any> {
   if (!pool) return { affectedRows: 0 };
+
+  // Optimasi Konkurensi: Hindari DDL Metadata Lock berulang jika CREATE TABLE IF NOT EXISTS sudah diverifikasi
+  const createTableMatch = sql.match(/^\s*CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+`?([a-zA-Z0-9_]+)`?/i);
+  if (createTableMatch) {
+    const tableName = createTableMatch[1].toLowerCase();
+    if (verifiedTables.has(tableName)) {
+      return { affectedRows: 0 };
+    }
+  }
+
   try {
     const [result] = await pool.execute(sql, params);
+    if (createTableMatch) {
+      verifiedTables.add(createTableMatch[1].toLowerCase());
+    }
     return result;
   } catch (err: any) {
     const isDuplicateFieldOrKey =

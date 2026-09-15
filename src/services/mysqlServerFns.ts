@@ -910,22 +910,25 @@ export const updateStudentParentContactFn = createServerFn({ method: "POST" })
 export const getSubjectsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<SubjectRow[]> => {
     try {
-      const { query, execute } = await import("@/lib/db");
-      // Pastikan entri resmi TIK (Teknologi Informasi dan Komunikasi) terdaftar di tabel subjects database
-      await execute(`
-        INSERT INTO subjects (code, name, teacher_name, grade_level, created_at)
-        SELECT 'UMM-09', 'TIK (Teknologi Informasi dan Komunikasi)', 'MITA MUNAWAROH, S.Kom', 'Semua Tingkat', NOW()
-        FROM DUAL
-        WHERE NOT EXISTS (SELECT 1 FROM subjects WHERE code = 'UMM-09')
-      `).catch(() => {});
+      const { ServerCache } = await import("@/lib/serverCache");
+      return await ServerCache.getOrSet("subjects_list", async () => {
+        const { query, execute } = await import("@/lib/db");
+        // Pastikan entri resmi TIK (Teknologi Informasi dan Komunikasi) terdaftar di tabel subjects database
+        await execute(`
+          INSERT INTO subjects (code, name, teacher_name, grade_level, created_at)
+          SELECT 'UMM-09', 'TIK (Teknologi Informasi dan Komunikasi)', 'MITA MUNAWAROH, S.Kom', 'Semua Tingkat', NOW()
+          FROM DUAL
+          WHERE NOT EXISTS (SELECT 1 FROM subjects WHERE code = 'UMM-09')
+        `).catch(() => {});
 
-      await execute(`
-        UPDATE subjects 
-        SET name = 'TIK (Teknologi Informasi dan Komunikasi)', teacher_name = 'MITA MUNAWAROH, S.Kom'
-        WHERE code = 'UMM-09' AND name != 'TIK (Teknologi Informasi dan Komunikasi)'
-      `).catch(() => {});
+        await execute(`
+          UPDATE subjects 
+          SET name = 'TIK (Teknologi Informasi dan Komunikasi)', teacher_name = 'MITA MUNAWAROH, S.Kom'
+          WHERE code = 'UMM-09' AND name != 'TIK (Teknologi Informasi dan Komunikasi)'
+        `).catch(() => {});
 
-      return await query<SubjectRow[]>("SELECT * FROM subjects ORDER BY code ASC");
+        return await query<SubjectRow[]>("SELECT * FROM subjects ORDER BY code ASC");
+      }, 30000);
     } catch {
       return [];
     }
@@ -956,6 +959,8 @@ export const saveSubjectFn = createServerFn({ method: "POST" })
           [data.code, data.name, category, teacherName, jp, kkm, status, icon, gradeLevel]
         );
       }
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("subjects_list");
       return true;
     } catch (e) {
       console.error("[saveSubjectFn Error]:", e);
@@ -969,6 +974,8 @@ export const deleteSubjectFn = createServerFn({ method: "POST" })
     try {
       const { execute } = await import("@/lib/db");
       await execute("DELETE FROM subjects WHERE code=?", [data.code]);
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("subjects_list");
       return true;
     } catch {
       return false;
@@ -997,10 +1004,13 @@ export async function createPengampuTableIfNotExists() {
 export const getPengampuFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<PengampuRow[]> => {
     try {
-      await createPengampuTableIfNotExists();
-      const { query } = await import("@/lib/db");
-      const rows = await query<PengampuRow[]>("SELECT id, guru, mapel, rombel, jam FROM matriks_pengampu ORDER BY id DESC");
-      return (rows || []).map(r => ({ ...r, id: String(r.id) }));
+      const { ServerCache } = await import("@/lib/serverCache");
+      return await ServerCache.getOrSet("pengampu_list", async () => {
+        await createPengampuTableIfNotExists();
+        const { query } = await import("@/lib/db");
+        const rows = await query<PengampuRow[]>("SELECT id, guru, mapel, rombel, jam FROM matriks_pengampu ORDER BY id DESC");
+        return (rows || []).map(r => ({ ...r, id: String(r.id) }));
+      }, 30000);
     } catch (e) {
       console.warn("[getPengampuFn error]:", e);
       return [];
@@ -1014,19 +1024,23 @@ export const savePengampuFn = createServerFn({ method: "POST" })
     try {
       await createPengampuTableIfNotExists();
       const { execute } = await import("@/lib/db");
+      let retId = "";
       if (data.id) {
         await execute(
           "UPDATE matriks_pengampu SET guru=?, mapel=?, rombel=?, jam=? WHERE id=?",
           [data.guru, data.mapel, data.rombel, data.jam || "2 JP / mgg", data.id]
         );
-        return { success: true, id: String(data.id) };
+        retId = String(data.id);
       } else {
         const res: any = await execute(
           "INSERT INTO matriks_pengampu (guru, mapel, rombel, jam) VALUES (?, ?, ?, ?)",
           [data.guru, data.mapel, data.rombel, data.jam || "2 JP / mgg"]
         );
-        return { success: true, id: String(res?.insertId || Date.now()) };
+        retId = String(res?.insertId || Date.now());
       }
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("pengampu_list");
+      return { success: true, id: retId };
     } catch (e) {
       console.error("[savePengampuFn Error]:", e);
       return { success: false };
@@ -1040,6 +1054,8 @@ export const deletePengampuFn = createServerFn({ method: "POST" })
       await createPengampuTableIfNotExists();
       const { execute } = await import("@/lib/db");
       await execute("DELETE FROM matriks_pengampu WHERE id=?", [data.id]);
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("pengampu_list");
       return { success: true };
     } catch (e) {
       console.error("[deletePengampuFn Error]:", e);
@@ -1094,9 +1110,12 @@ export async function createMasterJamTableIfNotExists() {
 export const getMasterJamListFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<MasterJamRow[]> => {
     try {
-      await createMasterJamTableIfNotExists();
-      const { query } = await import("@/lib/db");
-      return await query<MasterJamRow[]>("SELECT * FROM master_jam_pelajaran ORDER BY id ASC");
+      const { ServerCache } = await import("@/lib/serverCache");
+      return await ServerCache.getOrSet("master_jam_list", async () => {
+        await createMasterJamTableIfNotExists();
+        const { query } = await import("@/lib/db");
+        return await query<MasterJamRow[]>("SELECT * FROM master_jam_pelajaran ORDER BY id ASC");
+      }, 30000);
     } catch (e) {
       console.warn("[getMasterJamListFn error]:", e);
       return [];
@@ -1121,6 +1140,8 @@ export const saveMasterJamFn = createServerFn({ method: "POST" })
           [data.jam_ke, data.jam_mulai, data.jam_selesai, data.kategori_hari, data.tipe || "KBM", data.status || "AKTIF"]
         );
       }
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("master_jam_list");
       return true;
     } catch (e) {
       console.error("[saveMasterJamFn Error]:", e);
@@ -1134,6 +1155,8 @@ export const deleteMasterJamFn = createServerFn({ method: "POST" })
     try {
       const { execute } = await import("@/lib/db");
       await execute("DELETE FROM master_jam_pelajaran WHERE id=?", [data.id]);
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("master_jam_list");
       return true;
     } catch (e) {
       console.error("[deleteMasterJamFn error]:", e);
@@ -1166,9 +1189,12 @@ export async function createMasterEkstraTableIfNotExists() {
 export const getMasterEkstraListFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<MasterEkstraRow[]> => {
     try {
-      await createMasterEkstraTableIfNotExists();
-      const { query } = await import("@/lib/db");
-      return await query<MasterEkstraRow[]>("SELECT * FROM master_ekstrakurikuler ORDER BY id ASC");
+      const { ServerCache } = await import("@/lib/serverCache");
+      return await ServerCache.getOrSet("master_ekstra_list", async () => {
+        await createMasterEkstraTableIfNotExists();
+        const { query } = await import("@/lib/db");
+        return await query<MasterEkstraRow[]>("SELECT * FROM master_ekstrakurikuler ORDER BY id ASC");
+      }, 30000);
     } catch (e) {
       console.warn("[getMasterEkstraListFn error]:", e);
       return [];
@@ -1193,6 +1219,8 @@ export const saveMasterEkstraFn = createServerFn({ method: "POST" })
           [data.kode, data.nama, data.kategori || "Pilihan", data.pembina || "", data.hari_kegiatan || "Jumat", data.tempat || "Madrasah", data.status || "AKTIF"]
         );
       }
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("master_ekstra_list");
       return true;
     } catch (e) {
       console.error("[saveMasterEkstraFn Error]:", e);
@@ -1206,6 +1234,8 @@ export const deleteMasterEkstraFn = createServerFn({ method: "POST" })
     try {
       const { execute } = await import("@/lib/db");
       await execute("DELETE FROM master_ekstrakurikuler WHERE id=?", [data.id]);
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("master_ekstra_list");
       return true;
     } catch (e) {
       console.error("[deleteMasterEkstraFn error]:", e);
@@ -1310,10 +1340,13 @@ export async function createJadwalTableIfNotExists() {
 export const getJadwalFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<JadwalRow[]> => {
     try {
-      await createJadwalTableIfNotExists();
-      const { query } = await import("@/lib/db");
-      const rows = await query<JadwalRow[]>("SELECT id, hari, jam, mapel, tingkat, rombel, guru FROM jadwal_pelajaran ORDER BY id ASC");
-      return (rows || []).map(r => ({ ...r, id: String(r.id) }));
+      const { ServerCache } = await import("@/lib/serverCache");
+      return await ServerCache.getOrSet("jadwal_list", async () => {
+        await createJadwalTableIfNotExists();
+        const { query } = await import("@/lib/db");
+        const rows = await query<JadwalRow[]>("SELECT id, hari, jam, mapel, tingkat, rombel, guru FROM jadwal_pelajaran ORDER BY id ASC");
+        return (rows || []).map(r => ({ ...r, id: String(r.id) }));
+      }, 30000);
     } catch (e) {
       console.warn("[getJadwalFn error]:", e);
       return [];
@@ -1327,19 +1360,23 @@ export const saveJadwalFn = createServerFn({ method: "POST" })
     try {
       await createJadwalTableIfNotExists();
       const { execute } = await import("@/lib/db");
+      let retId = "";
       if (data.id && !isNaN(Number(data.id))) {
         await execute(
           "UPDATE jadwal_pelajaran SET hari=?, jam=?, mapel=?, tingkat=?, rombel=?, guru=? WHERE id=?",
           [data.hari, data.jam, data.mapel, data.tingkat, data.rombel, data.guru || "", data.id]
         );
-        return { success: true, id: String(data.id) };
+        retId = String(data.id);
       } else {
         const res: any = await execute(
           "INSERT INTO jadwal_pelajaran (hari, jam, mapel, tingkat, rombel, guru) VALUES (?, ?, ?, ?, ?, ?)",
           [data.hari, data.jam, data.mapel, data.tingkat, data.rombel, data.guru || ""]
         );
-        return { success: true, id: String(res?.insertId || Date.now()) };
+        retId = String(res?.insertId || Date.now());
       }
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("jadwal_list");
+      return { success: true, id: retId };
     } catch (e) {
       console.error("[saveJadwalFn Error]:", e);
       return { success: false };
@@ -1353,6 +1390,8 @@ export const deleteJadwalFn = createServerFn({ method: "POST" })
       await createJadwalTableIfNotExists();
       const { execute } = await import("@/lib/db");
       await execute("DELETE FROM jadwal_pelajaran WHERE id=?", [data.id]);
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("jadwal_list");
       return { success: true };
     } catch (e) {
       console.error("[deleteJadwalFn Error]:", e);
@@ -3752,22 +3791,25 @@ export const saveGtkDocumentFn = createServerFn({ method: "POST" })
 export const getMasterRombelsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<MasterRombelRow[]> => {
     try {
-      const { query, execute } = await import("@/lib/db");
-      await execute(`
-        CREATE TABLE IF NOT EXISTS master_rombels (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          code VARCHAR(50) NOT NULL UNIQUE,
-          name VARCHAR(100) NOT NULL,
-          grade VARCHAR(10) NOT NULL,
-          wali_kelas VARCHAR(255) NOT NULL,
-          room VARCHAR(100) NOT NULL,
-          siswa_count INT DEFAULT 0,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
+      const { ServerCache } = await import("@/lib/serverCache");
+      return await ServerCache.getOrSet("master_rombels_list", async () => {
+        const { query, execute } = await import("@/lib/db");
+        await execute(`
+          CREATE TABLE IF NOT EXISTS master_rombels (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(50) NOT NULL UNIQUE,
+            name VARCHAR(100) NOT NULL,
+            grade VARCHAR(10) NOT NULL,
+            wali_kelas VARCHAR(255) NOT NULL,
+            room VARCHAR(100) NOT NULL,
+            siswa_count INT DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
 
-      const rows = await query<MasterRombelRow[]>("SELECT * FROM master_rombels ORDER BY code ASC");
-      return rows || [];
+        const rows = await query<MasterRombelRow[]>("SELECT * FROM master_rombels ORDER BY code ASC");
+        return rows || [];
+      }, 30000);
     } catch (e) {
       console.error("[getMasterRombelsFn Error]:", e);
       return [];
@@ -3798,6 +3840,8 @@ export const saveMasterRombelFn = createServerFn({ method: "POST" })
          ON DUPLICATE KEY UPDATE name=VALUES(name), grade=VALUES(grade), wali_kelas=VALUES(wali_kelas), room=VALUES(room), siswa_count=VALUES(siswa_count)`,
         [data.code, data.name, data.grade, data.wali_kelas, data.room, data.siswa_count || 0]
       );
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("master_rombels_list");
       return { success: true, id: String(res.insertId || "") };
     } catch (e) {
       console.error("[saveMasterRombelFn Error]:", e);
@@ -3811,6 +3855,8 @@ export const deleteMasterRombelFn = createServerFn({ method: "POST" })
     try {
       const { execute } = await import("@/lib/db");
       await execute("DELETE FROM master_rombels WHERE code = ?", [data.code]);
+      const { ServerCache } = await import("@/lib/serverCache");
+      ServerCache.invalidate("master_rombels_list");
       return { success: true };
     } catch (e) {
       console.error("[deleteMasterRombelFn Error]:", e);

@@ -51,7 +51,7 @@ export function JurnalMengajarTab({
             title="Tulis Jurnal KBM Baru"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">+ Tulis Jurnal</span>
+            <span className="hidden sm:inline">Tulis Jurnal</span>
             <span className="sm:hidden">+ Jurnal</span>
           </Button>
         </div>

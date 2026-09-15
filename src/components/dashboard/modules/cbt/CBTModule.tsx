@@ -74,25 +74,36 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         }
 
         if (dbQuestions && dbQuestions.length > 0) {
-          const mappedQ: CBTQuestion[] = dbQuestions.map((q: any) => ({
-            id: String(q.id),
-            examId: String(q.exam_id || "1"),
-            questionType: (q.question_type || "pg") as any,
-            questionText: q.question_text || "",
-            imageUrl: q.image_url || undefined,
-            audioUrl: q.audio_url || undefined,
-            options: {
-              A: q.option_a || "",
-              B: q.option_b || "",
-              C: q.option_c || "",
-              D: q.option_d || "",
-            },
-            correctOption: q.correct_option || "A",
-            points: Number(q.points) || 5,
-            difficulty: "Sedang",
-            author: me?.full_name || "Guru Pengampu",
-            mapel: "Umum",
-          }));
+          const mappedQ: CBTQuestion[] = dbQuestions.map((q: any) => {
+            let extraData;
+            if (q.extra_data) {
+              try {
+                extraData = typeof q.extra_data === "string" ? JSON.parse(q.extra_data) : q.extra_data;
+              } catch (e) {
+                console.error("Failed to parse extra_data:", e);
+              }
+            }
+            return {
+              id: String(q.id),
+              examId: String(q.exam_id || "1"),
+              questionType: (q.question_type || "pg") as any,
+              questionText: q.question_text || "",
+              imageUrl: q.image_url || undefined,
+              audioUrl: q.audio_url || undefined,
+              options: {
+                A: q.option_a || "",
+                B: q.option_b || "",
+                C: q.option_c || "",
+                D: q.option_d || "",
+              },
+              correctOption: q.correct_option || "A",
+              points: Number(q.points) || 5,
+              extraData,
+              difficulty: "Sedang",
+              author: me?.full_name || "Guru Pengampu",
+              mapel: "Umum",
+            };
+          });
           setQuestions(mappedQ);
         } else {
           setQuestions([]);
@@ -256,9 +267,11 @@ export const CBTModule: React.FC<CBTModuleProps> = ({
         option_d: newQ.options.D || "",
         correct_option: newQ.correctOption,
         points: newQ.points,
+        extra_data: newQ.extraData ? JSON.stringify(newQ.extraData) : undefined,
       });
       const savedQ = { ...newQ, id: String(res.id || newQ.id) };
       setQuestions((prev) => [savedQ, ...prev]);
+      toast.success("Butir soal berhasil ditambahkan ke Bank Soal CBT!");
     } catch (err) {
       console.warn("Gagal menyimpan butir soal CBT ke MySQL:", err);
     }

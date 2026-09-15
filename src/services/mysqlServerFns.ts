@@ -1775,6 +1775,7 @@ async function ensureCbtSchemaMigrated() {
     await execute("ALTER TABLE cbt_questions ADD COLUMN question_type VARCHAR(20) DEFAULT 'pg'").catch(() => {});
     await execute("ALTER TABLE cbt_questions ADD COLUMN image_url VARCHAR(255) DEFAULT NULL").catch(() => {});
     await execute("ALTER TABLE cbt_questions ADD COLUMN audio_url VARCHAR(500) DEFAULT NULL").catch(() => {});
+    await execute("ALTER TABLE cbt_questions ADD COLUMN extra_data LONGTEXT DEFAULT NULL").catch(() => {});
     await execute("ALTER TABLE cbt_exam_results ADD COLUMN essay_score DECIMAL(5,2) DEFAULT 0").catch(() => {});
     await execute("ALTER TABLE cbt_exam_results ADD COLUMN student_answers LONGTEXT").catch(() => {});
     await execute("ALTER TABLE cbt_exam_results ADD COLUMN violations_count INT DEFAULT 0").catch(() => {});
@@ -1843,7 +1844,7 @@ export const deleteCbtExamFn = createServerFn({ method: "POST" })
 export interface CbtQuestionDbRow {
   id?: number | string;
   exam_id?: number | string;
-  question_type?: "pg" | "benar_salah" | "essay" | "isian" | string;
+  question_type?: "pg" | "pg_kompleks" | "menjodohkan" | "benar_salah" | "isian" | "essay" | "numerik" | "melengkapi" | "merangkai_kalimat" | string;
   question_text: string;
   image_url?: string;
   audio_url?: string;
@@ -1853,6 +1854,7 @@ export interface CbtQuestionDbRow {
   option_d?: string;
   correct_option: string;
   points?: number;
+  extra_data?: string;
 }
 
 export const getCbtQuestionsFn = createServerFn({ method: "GET" }).handler(
@@ -1877,8 +1879,8 @@ export const saveCbtQuestionFn = createServerFn({ method: "POST" })
 
       const examId = data.exam_id || 1;
       const res = await execute(
-        `INSERT INTO cbt_questions (exam_id, question_text, question_type, image_url, audio_url, option_a, option_b, option_c, option_d, correct_option, points) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO cbt_questions (exam_id, question_text, question_type, image_url, audio_url, option_a, option_b, option_c, option_d, correct_option, points, extra_data) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           examId,
           data.question_text,
@@ -1891,6 +1893,7 @@ export const saveCbtQuestionFn = createServerFn({ method: "POST" })
           data.option_d || "",
           data.correct_option || "A",
           data.points || 5,
+          data.extra_data || null,
         ]
       );
       return { success: true, id: (res as any)?.insertId };
@@ -1911,8 +1914,8 @@ export const batchInsertCbtQuestionsFn = createServerFn({ method: "POST" })
       for (const q of data.questions) {
         if (!q.question_text || !q.question_text.trim()) continue;
         await execute(
-          `INSERT INTO cbt_questions (exam_id, question_text, question_type, image_url, audio_url, option_a, option_b, option_c, option_d, correct_option, points) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO cbt_questions (exam_id, question_text, question_type, image_url, audio_url, option_a, option_b, option_c, option_d, correct_option, points, extra_data) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             data.examId || 1,
             q.question_text.trim(),
@@ -1925,6 +1928,7 @@ export const batchInsertCbtQuestionsFn = createServerFn({ method: "POST" })
             q.option_d || "",
             q.correct_option || "A",
             q.points || 5,
+            q.extra_data || null,
           ]
         );
         count++;

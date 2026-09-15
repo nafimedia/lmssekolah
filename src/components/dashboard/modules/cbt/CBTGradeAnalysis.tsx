@@ -383,7 +383,24 @@ export const CBTGradeAnalysis: React.FC<CBTGradeAnalysisProps> = ({
         no: idx + 1,
         id: q.id,
         pertanyaan: q.questionText || (q as any).question || `Butir Soal #${idx + 1}`,
-        tipe: q.questionType === "essay" ? "Essay" : q.questionType === "benar_salah" ? "Benar/Salah" : "Pilihan Ganda",
+        tipe:
+          q.questionType === "pg_kompleks"
+            ? "PG Kompleks"
+            : q.questionType === "merangkai_kalimat"
+            ? "Rangkai Kalimat"
+            : q.questionType === "menjodohkan"
+            ? "Menjodohkan"
+            : q.questionType === "benar_salah"
+            ? "Benar/Salah"
+            : q.questionType === "isian"
+            ? "Isian Singkat"
+            : q.questionType === "essay"
+            ? "Esai/Uraian"
+            : q.questionType === "numerik"
+            ? "Numerik"
+            : q.questionType === "melengkapi"
+            ? "Melengkapi"
+            : "PG Tunggal",
         kunci: q.correctOption || "A",
         totalPeserta,
         correctCount,

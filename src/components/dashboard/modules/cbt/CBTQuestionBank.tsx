@@ -28,6 +28,7 @@ import {
   FileCheck,
   X,
   Volume2,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CBTQuestion, QuestionType } from "@/types/cbt";
@@ -35,6 +36,66 @@ import { filterSubjectsForUser, ALL_SCHOOL_SUBJECTS } from "@/services/teacherSu
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { isArabicText } from "@/utils/arabicHelper";
+
+export const CBT_QUESTION_TYPES_CONFIG: Record<
+  QuestionType,
+  { label: string; shortLabel: string; badgeColor: string; icon: string }
+> = {
+  pg: {
+    label: "Pilihan Ganda Tunggal (A-D)",
+    shortLabel: "PG Tunggal",
+    badgeColor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+    icon: "🔘",
+  },
+  pg_kompleks: {
+    label: "Pilihan Ganda Kompleks (Multi Jawaban)",
+    shortLabel: "PG Kompleks",
+    badgeColor: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30",
+    icon: "☑️",
+  },
+  merangkai_kalimat: {
+    label: "Merangkai Kalimat (Bahasa)",
+    shortLabel: "Rangkai Kalimat",
+    badgeColor: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30",
+    icon: "🔤",
+  },
+  menjodohkan: {
+    label: "Menjodohkan (Matching Pairs)",
+    shortLabel: "Menjodohkan",
+    badgeColor: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30",
+    icon: "🔗",
+  },
+  benar_salah: {
+    label: "Benar / Salah",
+    shortLabel: "Benar / Salah",
+    badgeColor: "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/30",
+    icon: "⚖️",
+  },
+  isian: {
+    label: "Teks Singkat (Isian)",
+    shortLabel: "Isian Singkat",
+    badgeColor: "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30",
+    icon: "✍️",
+  },
+  essay: {
+    label: "Esai / Uraian (Koreksi Guru)",
+    shortLabel: "Esai / Uraian",
+    badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
+    icon: "📝",
+  },
+  numerik: {
+    label: "Numerik (Angka & Toleransi)",
+    shortLabel: "Numerik",
+    badgeColor: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
+    icon: "🔢",
+  },
+  melengkapi: {
+    label: "Melengkapi Kalimat Rumpang",
+    shortLabel: "Melengkapi",
+    badgeColor: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30",
+    icon: "🔲",
+  },
+};
 
 interface CBTQuestionBankProps {
   questions: CBTQuestion[];
@@ -71,6 +132,40 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
   const [qAudioUrl, setQAudioUrl] = useState("");
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [forceArabicMode, setForceArabicMode] = useState(false);
+
+  // Extra state for AKM 9 Types
+  const [pgKompleksKeys, setPgKompleksKeys] = useState<string[]>(["A"]);
+  const [pgKompleksScores, setPgKompleksScores] = useState<Record<string, number>>({ A: 5, B: 5, C: 0, D: 0 });
+  const [targetSentence, setTargetSentence] = useState("");
+  const [matchingPairs, setMatchingPairs] = useState<Array<{ left: string; right: string }>>([
+    { left: "", right: "" },
+    { left: "", right: "" },
+  ]);
+  const [isianAnswer, setIsianAnswer] = useState("");
+  const [numericKey, setNumericKey] = useState("");
+  const [numericTolerance, setNumericTolerance] = useState(0);
+
+  const resetForm = () => {
+    setQText("");
+    setOptA("");
+    setOptB("");
+    setOptC("");
+    setOptD("");
+    setQImageUrl("");
+    setQAudioUrl("");
+    setForceArabicMode(false);
+    setCorrectKey("A");
+    setPgKompleksKeys(["A"]);
+    setPgKompleksScores({ A: 5, B: 5, C: 0, D: 0 });
+    setTargetSentence("");
+    setMatchingPairs([
+      { left: "", right: "" },
+      { left: "", right: "" },
+    ]);
+    setIsianAnswer("");
+    setNumericKey("");
+    setNumericTolerance(0);
+  };
 
   const isCurrentArabic = forceArabicMode || isArabicText(qText) || qMapel.toLowerCase().includes("arab");
 
@@ -152,19 +247,84 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
       return toast.error("Teks butir soal tidak boleh kosong!");
     }
 
-    if (qType === "pg" && (!optA.trim() || !optB.trim() || !optC.trim() || !optD.trim())) {
-      return toast.error("Semua opsi pilihan jawaban (A, B, C, D) harus diisi!");
-    }
-
     let finalOptions = { A: optA.trim(), B: optB.trim(), C: optC.trim(), D: optD.trim() };
     let finalKey = correctKey;
+    let extraData: CBTQuestion["extraData"] = undefined;
 
-    if (qType === "benar_salah") {
+    if (qType === "pg") {
+      if (!optA.trim() || !optB.trim() || !optC.trim() || !optD.trim()) {
+        return toast.error("Semua opsi pilihan jawaban (A, B, C, D) harus diisi!");
+      }
+    } else if (qType === "pg_kompleks") {
+      if (!optA.trim() || !optB.trim()) {
+        return toast.error("Minimal opsi A dan B harus diisi untuk PG Kompleks!");
+      }
+      if (pgKompleksKeys.length === 0) {
+        return toast.error("Pilih minimal 1 kunci jawaban yang benar untuk PG Kompleks!");
+      }
+      finalKey = pgKompleksKeys.join(",");
+      extraData = {
+        keyAnswers: pgKompleksKeys,
+        optionScores: pgKompleksScores,
+      };
+    } else if (qType === "merangkai_kalimat") {
+      if (!targetSentence.trim()) {
+        return toast.error("Kalimat target yang benar harus diisi!");
+      }
+      const words = targetSentence.trim().split(/\s+/).filter(Boolean);
+      if (words.length < 2) {
+        return toast.error("Kalimat target harus memiliki minimal 2 kata!");
+      }
+      finalOptions = { A: "", B: "", C: "", D: "" };
+      finalKey = targetSentence.trim();
+      extraData = {
+        targetSentence: targetSentence.trim(),
+        scrambledWords: words,
+      };
+    } else if (qType === "menjodohkan") {
+      if (matchingPairs.length < 2) {
+        return toast.error("Minimal harus ada 2 pasang premis dan jawaban untuk soal menjodohkan!");
+      }
+      for (const p of matchingPairs) {
+        if (!p.left.trim() || !p.right.trim()) {
+          return toast.error("Semua baris premis kiri dan pasangan kanan harus diisi!");
+        }
+      }
+      finalOptions = { A: "", B: "", C: "", D: "" };
+      finalKey = JSON.stringify(matchingPairs.map((p) => p.right));
+      extraData = {
+        pairs: matchingPairs,
+      };
+    } else if (qType === "benar_salah") {
       finalOptions = { A: "Benar", B: "Salah", C: "", D: "" };
       finalKey = correctKey === "Salah" ? "Salah" : "Benar";
+    } else if (qType === "isian") {
+      if (!isianAnswer.trim()) {
+        return toast.error("Kunci jawaban teks singkat harus diisi!");
+      }
+      finalOptions = { A: "", B: "", C: "", D: "" };
+      finalKey = isianAnswer.trim();
     } else if (qType === "essay") {
       finalOptions = { A: "", B: "", C: "", D: "" };
       finalKey = "Koreksi Manual Guru";
+    } else if (qType === "numerik") {
+      if (!numericKey.trim()) {
+        return toast.error("Nilai angka kunci jawaban harus diisi!");
+      }
+      finalOptions = { A: "", B: "", C: "", D: "" };
+      finalKey = numericKey.trim();
+      extraData = {
+        tolerance: numericTolerance,
+      };
+    } else if (qType === "melengkapi") {
+      if (!isianAnswer.trim()) {
+        return toast.error("Kunci kata/frasa pengisi bagian rumpang harus diisi!");
+      }
+      finalOptions = { A: "", B: "", C: "", D: "" };
+      finalKey = isianAnswer.trim();
+      extraData = {
+        clozeAnswer: isianAnswer.trim(),
+      };
     }
 
     const activeUser = MysqlAuthService.getActiveUser();
@@ -180,22 +340,13 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
       difficulty: qDifficulty,
       mapel: qMapel || allowedMapels[0] || "Matematika",
       author: activeUser?.full_name || "Guru Pengampu",
+      extraData,
     };
 
     onAddQuestion?.(newQuestion);
     toast.success("✅ Butir Soal CBT Baru Berhasil Ditambahkan!");
     setIsAddModalOpen(false);
-
-    // Reset Form
-    setQText("");
-    setOptA("");
-    setOptB("");
-    setOptC("");
-    setOptD("");
-    setQImageUrl("");
-    setQAudioUrl("");
-    setForceArabicMode(false);
-    setCorrectKey("A");
+    resetForm();
   };
 
   const [selectedExcelFile, setSelectedExcelFile] = useState<File | null>(null);
@@ -287,10 +438,16 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
             onChange={(e) => setSelectedType(e.target.value)}
             className="h-9 px-3 rounded-md border border-input bg-background text-xs font-semibold focus:outline-none"
           >
-            <option value="all">Semua Tipe Soal</option>
-            <option value="pg">Pilihan Ganda</option>
-            <option value="benar_salah">Benar / Salah</option>
-            <option value="essay">Essay / Uraian</option>
+            <option value="all">Semua Tipe Soal (9 Ragam AKM)</option>
+            <option value="pg">🔘 Pilihan Ganda Tunggal (A-D)</option>
+            <option value="pg_kompleks">☑️ PG Kompleks (Multi Jawaban)</option>
+            <option value="merangkai_kalimat">🔤 Merangkai Kalimat (Bahasa)</option>
+            <option value="menjodohkan">🔗 Menjodohkan (Matching)</option>
+            <option value="benar_salah">⚖️ Benar / Salah</option>
+            <option value="isian">✍️ Teks Singkat (Isian)</option>
+            <option value="essay">📝 Esai / Uraian</option>
+            <option value="numerik">🔢 Numerik</option>
+            <option value="melengkapi">🔲 Melengkapi Kalimat</option>
           </select>
         </div>
 
@@ -320,6 +477,8 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
       <div className="space-y-3">
         {filteredQuestions.map((q, idx) => {
           const isQArabic = isArabicText(q.questionText);
+          const typeCfg = CBT_QUESTION_TYPES_CONFIG[q.questionType] || CBT_QUESTION_TYPES_CONFIG.pg;
+
           return (
             <Card key={q.id} className="border-border bg-card hover:border-emerald-500/50 transition-all shadow-xs">
               <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start justify-between gap-4">
@@ -330,13 +489,9 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                     </Badge>
                     <Badge
                       variant="secondary"
-                      className="text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:border-emerald-800"
+                      className={`text-[11px] font-semibold ${typeCfg.badgeColor}`}
                     >
-                      {q.questionType === "pg"
-                        ? "Pilihan Ganda"
-                        : q.questionType === "benar_salah"
-                        ? "Benar / Salah"
-                        : "Essay / Uraian"}
+                      {typeCfg.icon} {typeCfg.shortLabel}
                     </Badge>
                     {isQArabic && (
                       <Badge variant="outline" className="text-[10px] font-semibold border-amber-500/40 text-amber-600 dark:text-amber-400">
@@ -377,16 +532,15 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
 
                   <div
                     dir={isQArabic ? "rtl" : "ltr"}
-                    className={`pt-1 text-foreground ${
-                      isQArabic
-                        ? "font-arabic text-xl leading-loose font-bold"
-                        : "text-sm sm:text-base font-semibold leading-relaxed"
-                    }`}
+                    className={`pt-1 text-foreground ${isQArabic
+                      ? "font-arabic text-xl leading-loose font-bold"
+                      : "text-sm sm:text-base font-semibold leading-relaxed"
+                      }`}
                   >
                     {q.questionText}
                   </div>
 
-                  {/* Display Options for Multiple Choice */}
+                  {/* 1. Display Options for Pilihan Ganda Tunggal */}
                   {q.questionType === "pg" && q.options && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs">
                       {(["A", "B", "C", "D"] as const).map((key) => {
@@ -397,16 +551,14 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                           <div
                             key={key}
                             dir={isOptArabic ? "rtl" : "ltr"}
-                            className={`p-2.5 rounded-lg border flex items-center gap-2 ${
-                              isCorrect
-                                ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-700 dark:text-emerald-300 font-medium"
-                                : "bg-muted/30 border-border text-muted-foreground"
-                            }`}
+                            className={`p-2.5 rounded-lg border flex items-center gap-2 ${isCorrect
+                              ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-700 dark:text-emerald-300 font-medium"
+                              : "bg-muted/30 border-border text-muted-foreground"
+                              }`}
                           >
                             <span
-                              className={`h-5 w-5 rounded font-bold text-[11px] flex items-center justify-center shrink-0 ${
-                                isCorrect ? "bg-emerald-600 text-white" : "bg-muted border"
-                              }`}
+                              className={`h-5 w-5 rounded font-bold text-[11px] flex items-center justify-center shrink-0 ${isCorrect ? "bg-emerald-600 text-white" : "bg-muted border"
+                                }`}
                             >
                               {key}
                             </span>
@@ -417,7 +569,94 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                     </div>
                   )}
 
-                  {/* Display for Benar / Salah */}
+                  {/* 2. Display for PG Kompleks */}
+                  {q.questionType === "pg_kompleks" && (
+                    <div className="space-y-1.5 pt-2 text-xs">
+                      <span className="text-[11px] font-semibold text-muted-foreground block">
+                        Opsi PG Kompleks & Kunci Terpilih:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {(["A", "B", "C", "D"] as const).map((key) => {
+                          const optText = q.options?.[key] || "";
+                          if (!optText) return null;
+                          const keys = q.extraData?.keyAnswers || q.correctOption?.split(",") || [];
+                          const isKey = keys.includes(key);
+                          const score = q.extraData?.optionScores?.[key];
+                          const isOptArabic = isArabicText(optText);
+                          return (
+                            <div
+                              key={key}
+                              dir={isOptArabic ? "rtl" : "ltr"}
+                              className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 ${isKey
+                                ? "bg-sky-500/10 border-sky-500/50 text-sky-800 dark:text-sky-200 font-medium"
+                                : "bg-muted/30 border-border text-muted-foreground"
+                                }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span
+                                  className={`h-5 w-5 rounded font-bold text-[11px] flex items-center justify-center shrink-0 ${isKey ? "bg-sky-600 text-white" : "bg-muted border"
+                                    }`}
+                                >
+                                  {key}
+                                </span>
+                                <span className={`truncate ${isOptArabic ? "font-arabic text-sm" : ""}`}>{optText}</span>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                {score !== undefined && score > 0 && (
+                                  <Badge variant="outline" className="text-[10px] py-0 px-1 border-sky-500/40 text-sky-600">
+                                    +{score} pt
+                                  </Badge>
+                                )}
+                                {isKey && <Check className="h-3.5 w-3.5 text-sky-600" />}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. Display for Merangkai Kalimat */}
+                  {q.questionType === "merangkai_kalimat" && (
+                    <div className="space-y-1.5 pt-2 text-xs">
+                      <span className="text-[11px] font-semibold text-orange-700 dark:text-orange-300 block">
+                        Kalimat Lengkap (Kunci Tepat):
+                      </span>
+                      <div className="p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-foreground font-semibold">
+                        "{q.extraData?.targetSentence || q.correctOption}"
+                      </div>
+                      {Array.isArray(q.extraData?.scrambledWords) && q.extraData.scrambledWords.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <span className="text-[11px] text-muted-foreground font-medium">Potongan Kata:</span>
+                          {q.extraData.scrambledWords.map((w: string, wIdx: number) => (
+                            <Badge key={wIdx} variant="secondary" className="text-[10px] py-0 px-1.5 font-normal">
+                              {w}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 4. Display for Menjodohkan */}
+                  {q.questionType === "menjodohkan" && Array.isArray(q.extraData?.pairs) && (
+                    <div className="space-y-1.5 pt-2 text-xs">
+                      <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 block">
+                        Daftar Pasangan Menjodohkan:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {q.extraData.pairs.map((p, pIdx) => (
+                          <div key={pIdx} className="flex items-center gap-2 bg-muted/40 p-2 rounded-lg border border-border/60">
+                            <span className="font-semibold text-foreground">{p.left}</span>
+                            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">{p.right}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5. Display for Benar / Salah */}
                   {q.questionType === "benar_salah" && (
                     <div className="flex items-center gap-2 pt-2 text-xs">
                       {["Benar", "Salah"].map((val) => {
@@ -425,13 +664,12 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                         return (
                           <div
                             key={val}
-                            className={`px-3 py-1.5 rounded-lg border font-semibold flex items-center gap-1.5 ${
-                              isCorrect
-                                ? "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-300"
-                                : "bg-muted/20 border-border text-muted-foreground"
-                            }`}
+                            className={`px-3 py-1.5 rounded-lg border font-semibold flex items-center gap-1.5 ${isCorrect
+                              ? "bg-teal-500/10 border-teal-500 text-teal-700 dark:text-teal-300"
+                              : "bg-muted/20 border-border text-muted-foreground"
+                              }`}
                           >
-                            {isCorrect && <Check className="h-3.5 w-3.5 text-emerald-600" />}
+                            {isCorrect && <Check className="h-3.5 w-3.5 text-teal-600" />}
                             <span>{val}</span>
                           </div>
                         );
@@ -439,13 +677,43 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                     </div>
                   )}
 
-                  {/* Display for Essay */}
+                  {/* 6. Display for Isian Singkat */}
+                  {q.questionType === "isian" && (
+                    <div className="flex items-center gap-2 pt-2 text-xs">
+                      <span className="text-muted-foreground font-medium">Kunci Jawaban Singkat:</span>
+                      <Badge variant="outline" className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30 font-mono font-bold text-xs px-2.5 py-0.5">
+                        {q.correctOption}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* 7. Display for Essay */}
                   {q.questionType === "essay" && (
                     <div className="pt-2 text-xs text-muted-foreground flex items-center gap-2">
                       <Badge variant="outline" className="text-[10px] border-blue-500/40 text-blue-600 dark:text-blue-400">
                         ✍️ Koreksi Manual Guru
                       </Badge>
                       <span>Jawaban siswa akan dikoreksi dan dinilai secara manual oleh guru pengampu.</span>
+                    </div>
+                  )}
+
+                  {/* 8. Display for Numerik */}
+                  {q.questionType === "numerik" && (
+                    <div className="flex items-center gap-2 pt-2 text-xs">
+                      <span className="text-muted-foreground font-medium">Kunci Nilai Angka:</span>
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 font-mono font-bold text-xs px-2.5 py-0.5">
+                        {q.correctOption} {q.extraData?.tolerance ? `(± Toleransi ${q.extraData.tolerance})` : "(Nilai Tepat)"}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* 9. Display for Melengkapi Kalimat */}
+                  {q.questionType === "melengkapi" && (
+                    <div className="flex items-center gap-2 pt-2 text-xs">
+                      <span className="text-muted-foreground font-medium">Kunci Kata/Frasa Rumpang:</span>
+                      <Badge variant="outline" className="bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30 font-bold text-xs px-2.5 py-0.5">
+                        {q.extraData?.clozeAnswer || q.correctOption}
+                      </Badge>
                     </div>
                   )}
                 </div>
@@ -485,15 +753,14 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                 variant={forceArabicMode ? "default" : "outline"}
                 size="sm"
                 onClick={() => setForceArabicMode(!forceArabicMode)}
-                className={`h-7 px-2.5 text-[11px] font-semibold gap-1 ${
-                  forceArabicMode ? "bg-amber-600 hover:bg-amber-700 text-white" : "border-amber-500/40 text-amber-600"
-                }`}
+                className={`h-7 px-2.5 text-[11px] font-semibold gap-1 ${forceArabicMode ? "bg-amber-600 hover:bg-amber-700 text-white" : "border-amber-500/40 text-amber-600"
+                  }`}
               >
                 🇸🇦 {forceArabicMode ? "Mode Arab Aktif" : "Mode Arab (Khat Naskh)"}
               </Button>
             </div>
             <DialogDescription className="text-xs text-muted-foreground pt-1">
-              Mendukung soal Pilihan Ganda, Benar/Salah, Essay, dan penulisan teks Bahasa Arab dengan harakat rapi.
+
             </DialogDescription>
           </DialogHeader>
 
@@ -513,9 +780,8 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                 placeholder={isCurrentArabic ? "اكتب السؤال هنا بالتفصيل..." : "Tuliskan butir soal secara lengkap dan jelas..."}
                 value={qText}
                 onChange={(e) => setQText(e.target.value)}
-                className={`w-full p-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
-                  isCurrentArabic ? "font-arabic text-base leading-loose text-right" : "text-xs"
-                }`}
+                className={`w-full p-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${isCurrentArabic ? "font-arabic text-base leading-loose text-right" : "text-xs"
+                  }`}
               />
             </div>
 
@@ -523,7 +789,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
             <div className="space-y-1.5 p-3 rounded-lg border border-border bg-muted/20">
               <Label className="text-xs font-semibold flex items-center justify-between">
                 <span>Gambar / Ilustrasi Pendukung Soal (Opsional)</span>
-                <span className="text-[10px] text-muted-foreground">Disimpan di Disk Server</span>
+                <span className="text-[10px] text-muted-foreground"></span>
               </Label>
               {qImageUrl ? (
                 <div className="relative inline-block mt-2">
@@ -604,15 +870,21 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Tipe Soal</Label>
+                <Label className="text-xs font-semibold">Tipe Soal (AKM)</Label>
                 <select
                   value={qType}
                   onChange={(e) => setQType(e.target.value as QuestionType)}
-                  className="w-full h-9 px-3 rounded-md border border-input bg-background text-xs"
+                  className="w-full h-9 px-3 rounded-md border border-input bg-background text-xs font-semibold"
                 >
-                  <option value="pg">Pilihan Ganda</option>
-                  <option value="benar_salah">Benar / Salah</option>
-                  <option value="essay">Essay / Uraian</option>
+                  <option value="pg">🔘 Pilihan Ganda Tunggal (A-D)</option>
+                  <option value="pg_kompleks">☑️ PG Kompleks (Multi Jawaban)</option>
+                  <option value="merangkai_kalimat">🔤 Merangkai Kalimat (Bahasa)</option>
+                  <option value="menjodohkan">🔗 Menjodohkan</option>
+                  <option value="benar_salah">⚖️ Benar / Salah</option>
+                  <option value="isian">✍️ Teks Singkat (Isian)</option>
+                  <option value="essay">📝 Esai / Uraian</option>
+                  <option value="numerik">🔢 Numerik</option>
+                  <option value="melengkapi">🔲 Melengkapi Kalimat</option>
                 </select>
               </div>
 
@@ -640,7 +912,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               </div>
             </div>
 
-            {/* Options Input for Pilihan Ganda */}
+            {/* 1. Options Input for Pilihan Ganda Tunggal */}
             {qType === "pg" && (
               <div className="space-y-3 pt-2 border-t border-border">
                 <div className="flex items-center justify-between">
@@ -657,11 +929,10 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                       <button
                         type="button"
                         onClick={() => setCorrectKey(key)}
-                        className={`h-9 w-9 rounded-lg font-bold text-xs flex items-center justify-center transition-colors shrink-0 ${
-                          correctKey === key
-                            ? "bg-emerald-600 text-white ring-2 ring-emerald-500 shadow-xs"
-                            : "bg-muted text-muted-foreground border hover:bg-accent"
-                        }`}
+                        className={`h-9 w-9 rounded-lg font-bold text-xs flex items-center justify-center transition-colors shrink-0 ${correctKey === key
+                          ? "bg-emerald-600 text-white ring-2 ring-emerald-500 shadow-xs"
+                          : "bg-muted text-muted-foreground border hover:bg-accent"
+                          }`}
                       >
                         {key}
                       </button>
@@ -678,7 +949,174 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               </div>
             )}
 
-            {/* Options Input for Benar / Salah */}
+            {/* 2. Options Input for PG Kompleks */}
+            {qType === "pg_kompleks" && (
+              <div className="space-y-3 pt-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-foreground">Opsi Jawaban & Centang Kunci Benar (Multi)</Label>
+                  <span className="text-[11px] text-sky-600 dark:text-sky-400 font-bold">
+                    {pgKompleksKeys.length} Kunci Benar Terpilih
+                  </span>
+                </div>
+                {(["A", "B", "C", "D"] as const).map((key) => {
+                  const stateVal = key === "A" ? optA : key === "B" ? optB : key === "C" ? optC : optD;
+                  const setStateFn = key === "A" ? setOptA : key === "B" ? setOptB : key === "C" ? setOptC : setOptD;
+                  const isChecked = pgKompleksKeys.includes(key);
+                  const score = pgKompleksScores[key] ?? 5;
+                  const isOptAr = isArabicText(stateVal) || isCurrentArabic;
+
+                  return (
+                    <div
+                      key={key}
+                      className={`p-2 rounded-lg border flex items-center gap-2 text-xs transition ${isChecked ? "border-sky-500/60 bg-sky-500/10 dark:bg-sky-950/20" : "border-border bg-background"
+                        }`}
+                    >
+                      <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            if (isChecked) {
+                              setPgKompleksKeys((prev) => prev.filter((k) => k !== key));
+                            } else {
+                              setPgKompleksKeys((prev) => [...prev, key]);
+                            }
+                          }}
+                          className="rounded border-border text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer"
+                        />
+                        <span className={`font-bold w-4 text-center ${isChecked ? "text-sky-700 dark:text-sky-300 font-extrabold" : "text-muted-foreground"}`}>
+                          {key}.
+                        </span>
+                      </label>
+                      <Input
+                        dir={isOptAr ? "rtl" : "ltr"}
+                        placeholder={`Teks pilihan opsi ${key}...`}
+                        value={stateVal}
+                        onChange={(e) => setStateFn(e.target.value)}
+                        className={`text-xs h-8 flex-1 ${isOptAr ? "font-arabic text-sm text-right" : ""}`}
+                      />
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-[10px] text-muted-foreground font-medium">Skor:</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={score}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10) || 0;
+                            setPgKompleksScores((prev) => ({ ...prev, [key]: val }));
+                          }}
+                          className="h-8 w-14 text-center text-xs font-mono font-bold text-sky-700 dark:text-sky-300"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-muted-foreground italic">
+                  * Siswa dapat mencentang lebih dari 1 pilihan jawaban. Skor terakumulasi sesuai opsi benar yang dipilih siswa.
+                </p>
+              </div>
+            )}
+
+            {/* 3. Merangkai Kalimat */}
+            {qType === "merangkai_kalimat" && (() => {
+              const words = targetSentence.trim().split(/\s+/).filter(Boolean);
+              return (
+                <div className="space-y-2.5 pt-2 border-t border-border">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-foreground">
+                      Kalimat Target Yang Benar (Urutan Lengkap):
+                    </Label>
+                    <Input
+                      dir={isCurrentArabic ? "rtl" : "ltr"}
+                      placeholder="Contoh: Siswa madrasah belajar giat setiap hari / العلم نور يهتدي به الإنسان"
+                      value={targetSentence}
+                      onChange={(e) => setTargetSentence(e.target.value)}
+                      className={`text-xs ${isCurrentArabic ? "font-arabic text-base text-right leading-loose" : ""}`}
+                    />
+                  </div>
+                  {words.length > 0 && (
+                    <div className="p-2.5 rounded-lg bg-orange-500/10 border border-orange-300 dark:border-orange-900/50 space-y-1">
+                      <span className="text-[11px] font-semibold text-orange-800 dark:text-orange-300 block">
+                        Pratinjau {words.length} Potongan Kata (Otomatis Diacak untuk Siswa):
+                      </span>
+                      <div className="flex flex-wrap gap-1.5" dir={isCurrentArabic ? "rtl" : "ltr"}>
+                        {words.map((w, wIdx) => (
+                          <Badge key={wIdx} variant="secondary" className={`bg-background border border-orange-400 font-normal px-2 py-0.5 ${isCurrentArabic ? "font-arabic text-sm" : "text-xs"}`}>
+                            {w}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground italic">
+                    * Kata-kata di atas akan disajikan dalam susunan acak di layar CBT. Siswa mengklik kata untuk menyusun kalimat.
+                  </p>
+                </div>
+              );
+            })()}
+
+            {/* 4. Menjodohkan */}
+            {qType === "menjodohkan" && (
+              <div className="space-y-2.5 pt-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-foreground">
+                    Daftar Pasangan Premis Kiri ↔ Pasangan Kanan
+                  </Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setMatchingPairs((prev) => [...prev, { left: "", right: "" }])}
+                    className="text-[11px] font-medium gap-1 h-7 px-2 border-indigo-400 text-indigo-700 dark:text-indigo-300"
+                  >
+                    <Plus className="h-3 w-3" /> Tambah Pasangan
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {matchingPairs.map((pair, pIdx) => (
+                    <div key={pIdx} className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-muted-foreground w-4 text-center">{pIdx + 1}.</span>
+                      <Input
+                        dir={isCurrentArabic ? "rtl" : "ltr"}
+                        placeholder="Premis / Istilah Kiri..."
+                        value={pair.left}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setMatchingPairs((prev) => prev.map((p, i) => (i === pIdx ? { ...p, left: val } : p)));
+                        }}
+                        className={`text-xs flex-1 ${isCurrentArabic ? "font-arabic text-sm text-right" : ""}`}
+                      />
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <Input
+                        dir={isCurrentArabic ? "rtl" : "ltr"}
+                        placeholder="Jawaban Tepat Kanan..."
+                        value={pair.right}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setMatchingPairs((prev) => prev.map((p, i) => (i === pIdx ? { ...p, right: val } : p)));
+                        }}
+                        className={`text-xs flex-1 border-indigo-300 dark:border-indigo-800 ${isCurrentArabic ? "font-arabic text-sm text-right" : ""}`}
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={matchingPairs.length <= 2}
+                        onClick={() => setMatchingPairs((prev) => prev.filter((_, i) => i !== pIdx))}
+                        className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 shrink-0"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground italic">
+                  * Pada lembar ujian CBT siswa, pilihan kanan otomatis diacak dalam dropdown untuk dijodohkan.
+                </p>
+              </div>
+            )}
+
+            {/* 5. Options Input for Benar / Salah */}
             {qType === "benar_salah" && (
               <div className="space-y-2 pt-2 border-t border-border">
                 <Label className="text-xs font-semibold text-foreground">Kunci Jawaban Yang Benar:</Label>
@@ -689,9 +1127,8 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                       type="button"
                       variant={correctKey === val ? "default" : "outline"}
                       onClick={() => setCorrectKey(val)}
-                      className={`flex-1 font-bold text-xs h-10 ${
-                        correctKey === val ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
-                      }`}
+                      className={`flex-1 font-bold text-xs h-10 ${correctKey === val ? "bg-teal-600 hover:bg-teal-700 text-white" : ""
+                        }`}
                     >
                       {val}
                     </Button>
@@ -700,10 +1137,79 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               </div>
             )}
 
-            {/* Essay Info */}
+            {/* 6. Teks Singkat (Isian) */}
+            {qType === "isian" && (
+              <div className="space-y-1.5 pt-2 border-t border-border">
+                <Label className="text-xs font-semibold text-foreground">Kunci Jawaban Teks Singkat:</Label>
+                <Input
+                  dir={isCurrentArabic ? "rtl" : "ltr"}
+                  placeholder="Ketikkan kata / frasa jawaban singkat yang tepat..."
+                  value={isianAnswer}
+                  onChange={(e) => setIsianAnswer(e.target.value)}
+                  className={`text-xs font-medium ${isCurrentArabic ? "font-arabic text-sm text-right" : ""}`}
+                />
+                <p className="text-[10px] text-muted-foreground italic">
+                  * Koreksi otomatis bersifat case-insensitive (mengabaikan huruf besar/kecil dan spasi berlebih).
+                </p>
+              </div>
+            )}
+
+            {/* 7. Essay Info */}
             {qType === "essay" && (
               <div className="p-3 rounded-lg border border-blue-500/30 bg-blue-50/20 dark:bg-blue-950/20 text-xs text-blue-700 dark:text-blue-300">
                 💡 <strong>Catatan Soal Uraian:</strong> Jawaban essay siswa akan tersimpan ke database dan muncul di halaman <strong>Analisis Nilai & Koreksi Essay</strong> untuk diberi nilai manual oleh guru.
+              </div>
+            )}
+
+            {/* 8. Numerik */}
+            {qType === "numerik" && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-foreground">Nilai Kunci Jawaban (Angka):</Label>
+                    <Input
+                      type="text"
+                      placeholder="Contoh: 100 atau 3.14"
+                      value={numericKey}
+                      onChange={(e) => setNumericKey(e.target.value)}
+                      className="text-xs font-mono font-medium border-amber-300 dark:border-amber-800"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-foreground">Toleransi Nilai (± Margin):</Label>
+                    <Input
+                      type="number"
+                      step="any"
+                      min={0}
+                      placeholder="0 (isi 0 jika harus angka persis)"
+                      value={numericTolerance}
+                      onChange={(e) => setNumericTolerance(parseFloat(e.target.value) || 0)}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground italic">
+                  * Jawaban siswa dinilai benar jika nilai angka berada dalam rentang [Kunci - Toleransi, Kunci + Toleransi].
+                </p>
+              </div>
+            )}
+
+            {/* 9. Melengkapi Kalimat */}
+            {qType === "melengkapi" && (
+              <div className="space-y-1.5 pt-2 border-t border-border">
+                <Label className="text-xs font-semibold text-foreground">
+                  Kunci Kata / Frasa Pengisi Bagian Rumpang [...]:
+                </Label>
+                <Input
+                  dir={isCurrentArabic ? "rtl" : "ltr"}
+                  placeholder="Ketikkan kata/frasa pengisi bagian kosong..."
+                  value={isianAnswer}
+                  onChange={(e) => setIsianAnswer(e.target.value)}
+                  className={`text-xs font-medium border-cyan-300 dark:border-cyan-800 ${isCurrentArabic ? "font-arabic text-sm text-right" : ""}`}
+                />
+                <p className="text-[10px] text-muted-foreground italic">
+                  * Pada teks soal gunakan tanda [...] untuk menandai bagian kalimat yang harus diisi oleh siswa.
+                </p>
               </div>
             )}
 

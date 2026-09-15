@@ -1,4 +1,13 @@
-export type QuestionType = "pg" | "benar_salah" | "essay" | "isian";
+export type QuestionType =
+  | "pg"
+  | "pg_kompleks"
+  | "menjodohkan"
+  | "benar_salah"
+  | "isian"
+  | "essay"
+  | "numerik"
+  | "melengkapi"
+  | "merangkai_kalimat";
 export type ExamStatus = "Draft" | "Terjadwal" | "Dibuka" | "Selesai";
 export type StudentExamStatus = "Sedang Mengerjakan" | "Selesai" | "Dikunci System";
 export type QuestionDifficulty = "Mudah" | "Sedang" | "Sukar";
@@ -36,11 +45,21 @@ export interface CBTQuestion {
     C?: string;
     D?: string;
   };
-  correctOption: string; // "A" | "B" | "C" | "D" | "Benar" | "Salah"
+  correctOption: string; // "A" | "B" | "C" | "D" | "Benar" | "Salah" | string
   points: number;
   difficulty: QuestionDifficulty;
   author?: string;
   mapel?: string;
+  extraData?: {
+    pairs?: Array<{ left: string; right: string }>;
+    keyAnswers?: string[];
+    optionScores?: { A?: number; B?: number; C?: number; D?: number };
+    scrambledWords?: string[];
+    targetSentence?: string;
+    tolerance?: number;
+    clozeAnswer?: string;
+    [key: string]: any;
+  };
 }
 
 export interface CBTStudentExam {

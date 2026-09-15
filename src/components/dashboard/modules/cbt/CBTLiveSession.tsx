@@ -203,31 +203,31 @@ export const CBTLiveSession: React.FC<CBTLiveSessionProps> = ({
   return (
     <div className="space-y-6">
       {/* Header & Filter Controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Cari judul ujian, mata pelajaran, atau token..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 text-xs"
+            className="pl-9 text-xs h-9"
           />
         </div>
 
         {isTeacherOrAdmin && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col xs:flex-row sm:flex-row items-stretch sm:items-center gap-2">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setIsResetModalOpen(true)}
-              className="gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 border-amber-400/40 hover:bg-amber-500/10"
+              className="gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 border-amber-400/40 hover:bg-amber-500/10 flex-1 sm:flex-none justify-center h-9"
             >
               <RotateCcw className="h-3.5 w-3.5" /> Reset Sesi Terkunci Siswa
             </Button>
             <Button
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
-              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none justify-center h-9"
             >
               <Plus className="h-4 w-4" /> Terbitkan Sesi CBT Baru
             </Button>

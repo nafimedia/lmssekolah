@@ -423,21 +423,21 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
   return (
     <div className="space-y-6">
       {/* Action Header */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-2 max-w-lg">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row flex-1 items-stretch sm:items-center gap-2 max-w-2xl">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari kata kunci soal..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 text-xs"
+              className="pl-9 text-xs h-9"
             />
           </div>
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="h-9 px-3 rounded-md border border-input bg-background text-xs font-semibold focus:outline-none"
+            className="h-9 px-3 rounded-md border border-input bg-background text-xs font-semibold focus:outline-none shrink-0"
           >
             <option value="all">Semua Tipe Soal (9 Ragam AKM)</option>
             <option value="pg">🔘 Pilihan Ganda Tunggal (A-D)</option>
@@ -453,12 +453,12 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
         </div>
 
         {canManageBank && (
-          <div className="flex gap-2">
+          <div className="flex flex-col xs:flex-row sm:flex-row gap-2">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setIsImportModalOpen(true)}
-              className="gap-1.5 font-semibold text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+              className="gap-1.5 font-semibold text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 flex-1 sm:flex-none justify-center h-9"
             >
               <Upload className="h-4 w-4" /> Import Template Excel
             </Button>
@@ -466,7 +466,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
             <Button
               size="sm"
               onClick={() => setIsAddModalOpen(true)}
-              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+              className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex-1 sm:flex-none justify-center h-9"
             >
               <Plus className="h-4 w-4" /> Tambah Soal Manual
             </Button>
@@ -743,9 +743,9 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
 
       {/* Add Question Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background border-border">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background border-border p-4 sm:p-6">
           <DialogHeader>
-            <div className="flex items-center justify-between gap-2 pr-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pr-6">
               <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
                 <Brain className="h-5 w-5 text-emerald-600" /> Tambah Butir Soal CBT
               </DialogTitle>
@@ -760,8 +760,8 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                 🇸🇦 {forceArabicMode ? "Mode Arab Aktif" : "Mode Arab (Khat Naskh)"}
               </Button>
             </div>
-            <DialogDescription className="text-xs text-muted-foreground pt-1">
-
+            <DialogDescription className="text-xs text-muted-foreground pt-0.5">
+              Inputkan butir soal evaluasi madrasah untuk 9 ragam AKM literasi & numerasi.
             </DialogDescription>
           </DialogHeader>
 
@@ -853,7 +853,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Mata Pelajaran</Label>
                 <select
@@ -969,44 +969,47 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                   return (
                     <div
                       key={key}
-                      className={`p-2 rounded-lg border flex items-center gap-2 text-xs transition ${isChecked ? "border-sky-500/60 bg-sky-500/10 dark:bg-sky-950/20" : "border-border bg-background"
+                      className={`p-2.5 rounded-lg border flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs transition ${isChecked ? "border-sky-500/60 bg-sky-500/10 dark:bg-sky-950/20" : "border-border bg-background"
                         }`}
                     >
-                      <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => {
-                            if (isChecked) {
-                              setPgKompleksKeys((prev) => prev.filter((k) => k !== key));
-                            } else {
-                              setPgKompleksKeys((prev) => [...prev, key]);
-                            }
-                          }}
-                          className="rounded border-border text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer"
+                      <div className="flex items-center gap-2 flex-1">
+                        <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              if (isChecked) {
+                                setPgKompleksKeys((prev) => prev.filter((k) => k !== key));
+                              } else {
+                                setPgKompleksKeys((prev) => [...prev, key]);
+                              }
+                            }}
+                            className="rounded border-border text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer"
+                          />
+                          <span className={`font-bold w-4 text-center ${isChecked ? "text-sky-700 dark:text-sky-300 font-extrabold" : "text-muted-foreground"}`}>
+                            {key}.
+                          </span>
+                        </label>
+                        <Input
+                          dir={isOptAr ? "rtl" : "ltr"}
+                          placeholder={`Teks pilihan opsi ${key}...`}
+                          value={stateVal}
+                          onChange={(e) => setStateFn(e.target.value)}
+                          className={`text-xs h-8 flex-1 ${isOptAr ? "font-arabic text-sm text-right" : ""}`}
                         />
-                        <span className={`font-bold w-4 text-center ${isChecked ? "text-sky-700 dark:text-sky-300 font-extrabold" : "text-muted-foreground"}`}>
-                          {key}.
-                        </span>
-                      </label>
-                      <Input
-                        dir={isOptAr ? "rtl" : "ltr"}
-                        placeholder={`Teks pilihan opsi ${key}...`}
-                        value={stateVal}
-                        onChange={(e) => setStateFn(e.target.value)}
-                        className={`text-xs h-8 flex-1 ${isOptAr ? "font-arabic text-sm text-right" : ""}`}
-                      />
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-[10px] text-muted-foreground font-medium">Skor:</span>
+                      </div>
+                      <div className="flex items-center justify-end gap-1.5 pl-6 sm:pl-0 shrink-0">
+                        <span className="text-[10px] text-muted-foreground font-medium">Skor Poin:</span>
                         <Input
                           type="number"
                           min={0}
                           value={score}
+                          disabled={!isChecked}
                           onChange={(e) => {
                             const val = parseInt(e.target.value, 10) || 0;
                             setPgKompleksScores((prev) => ({ ...prev, [key]: val }));
                           }}
-                          className="h-8 w-14 text-center text-xs font-mono font-bold text-sky-700 dark:text-sky-300"
+                          className="h-8 w-16 text-center text-xs font-mono font-bold text-sky-700 dark:text-sky-300"
                         />
                       </div>
                     </div>
@@ -1075,39 +1078,43 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
                 </div>
                 <div className="space-y-2">
                   {matchingPairs.map((pair, pIdx) => (
-                    <div key={pIdx} className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-muted-foreground w-4 text-center">{pIdx + 1}.</span>
-                      <Input
-                        dir={isCurrentArabic ? "rtl" : "ltr"}
-                        placeholder="Premis / Istilah Kiri..."
-                        value={pair.left}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setMatchingPairs((prev) => prev.map((p, i) => (i === pIdx ? { ...p, left: val } : p)));
-                        }}
-                        className={`text-xs flex-1 ${isCurrentArabic ? "font-arabic text-sm text-right" : ""}`}
-                      />
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <Input
-                        dir={isCurrentArabic ? "rtl" : "ltr"}
-                        placeholder="Jawaban Tepat Kanan..."
-                        value={pair.right}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setMatchingPairs((prev) => prev.map((p, i) => (i === pIdx ? { ...p, right: val } : p)));
-                        }}
-                        className={`text-xs flex-1 border-indigo-300 dark:border-indigo-800 ${isCurrentArabic ? "font-arabic text-sm text-right" : ""}`}
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        disabled={matchingPairs.length <= 2}
-                        onClick={() => setMatchingPairs((prev) => prev.filter((_, i) => i !== pIdx))}
-                        className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 shrink-0"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                    <div key={pIdx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 rounded-lg bg-muted/20 border border-border/60">
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="text-[11px] font-bold text-muted-foreground w-4 text-center shrink-0">{pIdx + 1}.</span>
+                        <Input
+                          dir={isCurrentArabic ? "rtl" : "ltr"}
+                          placeholder="Premis / Istilah Kiri..."
+                          value={pair.left}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setMatchingPairs((prev) => prev.map((p, i) => (i === pIdx ? { ...p, left: val } : p)));
+                          }}
+                          className={`text-xs flex-1 ${isCurrentArabic ? "font-arabic text-sm text-right" : ""}`}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 flex-1 pl-6 sm:pl-0">
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
+                        <Input
+                          dir={isCurrentArabic ? "rtl" : "ltr"}
+                          placeholder="Jawaban Tepat Kanan..."
+                          value={pair.right}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setMatchingPairs((prev) => prev.map((p, i) => (i === pIdx ? { ...p, right: val } : p)));
+                          }}
+                          className={`text-xs flex-1 border-indigo-300 dark:border-indigo-800 ${isCurrentArabic ? "font-arabic text-sm text-right" : ""}`}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={matchingPairs.length <= 2}
+                          onClick={() => setMatchingPairs((prev) => prev.filter((_, i) => i !== pIdx))}
+                          className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 shrink-0"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1214,11 +1221,11 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               </div>
             )}
 
-            <DialogFooter className="gap-2 pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddModalOpen(false)} className="text-xs">
+            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddModalOpen(false)} className="text-xs flex-1 sm:flex-none">
                 Batal
               </Button>
-              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs">
+              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs flex-1 sm:flex-none">
                 <Save className="h-4 w-4" /> Simpan Ke Bank Soal
               </Button>
             </DialogFooter>

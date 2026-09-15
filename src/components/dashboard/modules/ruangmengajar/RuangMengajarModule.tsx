@@ -322,13 +322,18 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
         <RiwayatKbmSection />
       )}
 
-      {/* Modal Dialog Tambah Jurnal */}
+      {/* Modal Dialog Tambah Jurnal dengan Ringkasan Presensi Otomatis */}
       <TambahJurnalDialog
         isOpen={isAddJurnalOpen}
         onOpenChange={setIsAddJurnalOpen}
         onAddJurnal={handleAddJurnal}
         activeRombel={activeRombel}
         activeMapel={activeMapel}
+        defaultNotes={
+          kbmProgress.presensiCountStr
+            ? `Kehadiran KBM: ${kbmProgress.presensiCountStr}. Pembelajaran tatap muka terlaksana dengan baik dan tertib.`
+            : "Pembelajaran tatap muka terlaksana dengan baik dan tertib."
+        }
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +18,30 @@ interface TambahJurnalDialogProps {
   onAddJurnal: (newJurnal: { title: string; rombel: string; mapel: string; meeting: string; notes: string }) => void;
   activeRombel: string;
   activeMapel: string;
+  defaultNotes?: string;
+  defaultTitle?: string;
 }
 
-export function TambahJurnalDialog({ isOpen, onOpenChange, onAddJurnal, activeRombel, activeMapel }: TambahJurnalDialogProps) {
-  const [title, setTitle] = useState("");
-  const [meeting, setMeeting] = useState("Pertemuan 16");
-  const [notes, setNotes] = useState("");
+export function TambahJurnalDialog({
+  isOpen,
+  onOpenChange,
+  onAddJurnal,
+  activeRombel,
+  activeMapel,
+  defaultNotes,
+  defaultTitle,
+}: TambahJurnalDialogProps) {
+  const [title, setTitle] = useState(defaultTitle || "");
+  const [meeting, setMeeting] = useState("Pertemuan KBM");
+  const [notes, setNotes] = useState(defaultNotes || "");
+
+  // Update default notes/title whenever dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      if (!title && defaultTitle) setTitle(defaultTitle);
+      if (!notes && defaultNotes) setNotes(defaultNotes);
+    }
+  }, [isOpen, defaultNotes, defaultTitle]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

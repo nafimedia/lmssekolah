@@ -65,44 +65,20 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [allExams, allResults, dbLkpd] = await Promise.all([
+      const [allExams, allResults] = await Promise.all([
         MysqlDataService.getCbtExams(),
         MysqlDataService.getCbtResults(),
-        MysqlDataService.getLkpdActivities(studentRombel, "ALL", true),
       ]);
 
-      const quizLkpdExams: CbtExamRow[] = (dbLkpd || [])
-        .filter((l: any) => (l.status || "").toUpperCase() !== "DRAF" && (l.type === "QUIZ" || l.type === "REFLEKSI" || l.quiz_data))
-        .filter((l: any) => !l.rombel || l.rombel === "ALL" || isSameClass(l.rombel, studentRombel))
-        .map((l: any) => {
-          let parsedQuestions: any[] = [];
-          if (l.quiz_data) {
-            try {
-              parsedQuestions = JSON.parse(l.quiz_data);
-            } catch (e) {}
-          }
-          const isRefleksi = l.type === "REFLEKSI";
-          return {
-            id: Number(l.id) || Date.now(),
-            title: l.title,
-            subject_name: l.mapel || "Mata Pelajaran",
-            class_name: l.rombel || studentRombel,
-            type: isRefleksi ? "REFLEKSI" : "QUIZ_FORMATIF",
-            status: "LIVE",
-            duration_minutes: isRefleksi ? 15 : 30,
-            total_questions: parsedQuestions.length || 5,
-            questions_data: l.quiz_data || "",
-            created_by: l.teacher_name || "Guru Pengampu",
-            token: isRefleksi ? "REFLEKSI" : "QUIZ",
-            passing_score: isRefleksi ? 0 : 75,
-          };
-        });
+      // Murni Ujian Resmi CBT Madrasah (PTS, PAS, Asesmen Madrasah, Tryout)
+      const officialExams = (allExams || []).filter(
+        (e: any) => !e.class_name || e.class_name === "ALL" || isSameClass(e.class_name, studentRombel)
+      );
 
-      const combined = [...quizLkpdExams, ...(allExams || [])];
-      setExams(combined);
+      setExams(officialExams);
       setResults(allResults || []);
     } catch (e) {
-      console.warn("Gagal memuat data kuis dari MySQL:", e);
+      console.warn("Gagal memuat data ujian CBT dari MySQL:", e);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Plus, CheckCircle2, Trophy, PencilLine, Pencil, Brain, Users, PenTool, FlaskConical, Target, BookCheck, Trash2 } from "lucide-react";
+import { FileText, Plus, CheckCircle2, Trophy, PencilLine, Pencil, Brain, Users, PenTool, FlaskConical, Target, BookCheck, Trash2, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
   const [selectedActivityForView, setSelectedActivityForView] = useState<ActivityDetail | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createType, setCreateType] = useState<ActivityTypeOption>("LKPD");
   const [editingActivity, setEditingActivity] = useState<LearningActivityItem | null>(null);
 
   useEffect(() => {
@@ -124,6 +125,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
         activeRombel={activeRombel}
         activeMapel={activeMapel}
         initialData={editingActivity}
+        initialType={createType}
         onCancel={() => {
           setIsCreateOpen(false);
           setEditingActivity(null);
@@ -144,7 +146,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
     <>
       <Card className="border-border shadow-xs bg-card overflow-hidden">
         {/* Header Bersih & Ringkas (Clean UI Mobile-First) */}
-        <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between gap-2 bg-muted/15">
+        <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between gap-2 bg-muted/15 flex-wrap">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <FileText className="h-4 w-4" />
@@ -164,16 +166,36 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
             </div>
           </div>
 
-          <Button
-            size="sm"
-            className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-            onClick={() => setIsCreateOpen(true)}
-            title="Buat LKPD / Aktivitas Baru"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">+ Buat LKPD</span>
-            <span className="sm:hidden">+ LKPD</span>
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              className="h-8 px-2.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+              onClick={() => {
+                setCreateType("LKPD");
+                setIsCreateOpen(true);
+              }}
+              title="Buat Lembar Kerja Siswa (LKPD / Berkas / Tugas)"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">+ Buat LKPD</span>
+              <span className="sm:hidden">+ LKPD</span>
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-2.5 text-xs font-semibold gap-1.5 border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 shadow-xs"
+              onClick={() => {
+                setCreateType("QUIZ");
+                setIsCreateOpen(true);
+              }}
+              title="Buat Kuis Interaktif Formatif (Pilihan Ganda / Isian)"
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+              <span className="hidden sm:inline">+ Kuis Interaktif</span>
+              <span className="sm:hidden">+ Kuis</span>
+            </Button>
+          </div>
         </div>
 
         <CardContent className="p-3 sm:p-4 space-y-3">
@@ -184,14 +206,29 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
               <p className="text-[11px] text-muted-foreground mt-1 max-w-sm mx-auto font-medium">
                 Belum ada aktivitas pembelajaran untuk <strong>{activeRombel}</strong> ({activeMapel}).
               </p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs font-semibold mt-2"
-                onClick={() => setIsCreateOpen(true)}
-              >
-                <Plus className="h-3.5 w-3.5 mr-1" /> Buat LKPD Sekarang
-              </Button>
+              <div className="flex items-center justify-center gap-2 mt-3">
+                <Button
+                  size="sm"
+                  className="text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                  onClick={() => {
+                    setCreateType("LKPD");
+                    setIsCreateOpen(true);
+                  }}
+                >
+                  <FileText className="h-3.5 w-3.5" /> Buat LKPD
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs font-semibold border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 gap-1"
+                  onClick={() => {
+                    setCreateType("QUIZ");
+                    setIsCreateOpen(true);
+                  }}
+                >
+                  <Zap className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /> Kuis Interaktif
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">

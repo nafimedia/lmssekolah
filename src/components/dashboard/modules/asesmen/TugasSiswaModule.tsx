@@ -339,6 +339,23 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
     }
   });
 
+  // Autosave jawaban kuis ke localStorage perangkat siswa secara realtime
+  useEffect(() => {
+    if (!selectedAssignment) return;
+    const existingSub = mySubmissionsMap.get(String(selectedAssignment.id));
+    // Jangan timpa jika kuis sudah berstatus dikumpulkan / final
+    if (existingSub && existingSub.notes?.includes("[QUIZ]")) return;
+
+    if (Object.keys(studentQuizAnswers).length > 0) {
+      try {
+        const cacheKey = `lkpd_quiz_${selectedAssignment.id}_${studentEmail}`;
+        localStorage.setItem(cacheKey, JSON.stringify(studentQuizAnswers));
+      } catch (err) {
+        console.warn("[Autosave Quiz Error]:", err);
+      }
+    }
+  }, [studentQuizAnswers, selectedAssignment, studentEmail, mySubmissionsMap]);
+
   // Calculate Status & Badge for an assignment
   const getTaskStatus = (assignment: AssignmentRow) => {
     const sub = mySubmissionsMap.get(String(assignment.id));
@@ -524,7 +541,25 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       setUploadFileSize("");
       setUploadMode("FILE");
       setIsDraft(false);
-      setStudentQuizAnswers({});
+
+      // Pulihkan autosave jawaban kuis dari localStorage jika ada
+      try {
+        const cacheKey = `lkpd_quiz_${assignment.id}_${studentEmail}`;
+        const savedOffline = localStorage.getItem(cacheKey);
+        if (savedOffline) {
+          const parsed = JSON.parse(savedOffline);
+          if (parsed && Object.keys(parsed).length > 0) {
+            setStudentQuizAnswers(parsed);
+            toast.info("💡 Draf jawaban kuis sebelumnya dipulihkan dari memori perangkat.");
+          } else {
+            setStudentQuizAnswers({});
+          }
+        } else {
+          setStudentQuizAnswers({});
+        }
+      } catch {
+        setStudentQuizAnswers({});
+      }
     }
   };
 
@@ -738,6 +773,29 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
       });
 
       if (res.success) {
+        // Hapus autosave offline setelah kuis berhasil terkirim
+        try {
+          const cacheKey = `lkpd_quiz_${selectedAssignment.id}_${studentEmail}`;
+          localStorage.removeItem(cacheKey);
+        } catch {}
+
+        // Sinkronisasi otomatis ke lkpd_grades agar guru langsung melihat skor kuis di Ruang Mengajar
+        try {
+          await MysqlDataService.saveLkpdGradesBatch(String(selectedAssignment.id), [
+            {
+              activity_id: String(selectedAssignment.id),
+              student_id: studentEmail,
+              student_nisn: studentNisn || studentEmail,
+              student_name: studentName,
+              status: "SUDAH_DINILAI",
+              score: String(calculatedScore),
+              feedback: feedbackText,
+            }
+          ]);
+        } catch (syncErr) {
+          console.warn("[saveLkpdGradesBatch sync warning]:", syncErr);
+        }
+
         toast.success(`🎉 Kuis Selesai! Skor Anda: ${calculatedScore} / 100 (${correctCount}/${questions.length} Benar)`);
         await loadData();
         setSelectedAssignment(null);
@@ -1562,9 +1620,14 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                         return true;
                       }).length;
                       return (
-                        <Badge variant="outline" className="text-[10px] font-mono border-purple-400 text-purple-700 dark:text-purple-300 font-bold">
-                          {answeredQuizCount}/{parsedQuizQuestions.length} Terjawab
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 font-medium gap-1">
+                            <Save className="h-3 w-3 text-emerald-600" /> Auto-Save
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] font-mono border-purple-400 text-purple-700 dark:text-purple-300 font-bold">
+                            {answeredQuizCount}/{parsedQuizQuestions.length} Terjawab
+                          </Badge>
+                        </div>
                       );
                     })()}
                   </div>

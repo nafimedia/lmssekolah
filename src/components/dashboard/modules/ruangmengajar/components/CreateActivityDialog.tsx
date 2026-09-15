@@ -79,6 +79,7 @@ export interface CreateActivityFormProps {
   }) => void;
   initialData?: any | null;
   onActivityUpdated?: (updatedAct: any) => void;
+  initialType?: ActivityTypeOption;
 }
 
 export interface CreateActivityDialogProps {
@@ -219,10 +220,11 @@ export function CreateActivityForm({
   onActivityCreated,
   initialData,
   onActivityUpdated,
+  initialType,
 }: CreateActivityFormProps) {
   const isEditing = Boolean(initialData?.id);
   const [title, setTitle] = useState(initialData?.title || "");
-  const [type, setType] = useState<ActivityTypeOption>(initialData?.type || "LKPD");
+  const [type, setType] = useState<ActivityTypeOption>(initialType || initialData?.type || "LKPD");
   const currentConfig = categoryConfig[type] || categoryConfig.LKPD;
   const [instructions, setInstructions] = useState(initialData?.instructions || "");
   const [dueDateDate, setDueDateDate] = useState("");

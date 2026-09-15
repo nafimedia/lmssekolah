@@ -25,6 +25,7 @@ import {
   Volume2,
   Image as ImageIcon,
   Sparkles,
+  Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService, LkpdDiscussionRow, PeerAssessmentRow } from "@/services/mysqlDataService";
@@ -77,6 +78,7 @@ export function ViewActivityDialog({
   const [discussions, setDiscussions] = useState<LkpdDiscussionRow[]>([]);
   const [peerAssessments, setPeerAssessments] = useState<PeerAssessmentRow[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isExportingToCbt, setIsExportingToCbt] = useState(false);
   const isAllowed = isSubjectAllowedForUser(activeMapel);
 
   const activeUser = MysqlAuthService.getActiveUser();
@@ -218,6 +220,97 @@ export function ViewActivityDialog({
       parsedQuizQuestions = [];
     }
   }
+
+  const handleExportToCbtBank = async () => {
+    if (!parsedQuizQuestions || parsedQuizQuestions.length === 0) {
+      toast.error("Tidak ada butir soal kuis untuk disalin!");
+      return;
+    }
+
+    setIsExportingToCbt(true);
+    try {
+      const quizToCbtType: Record<string, string> = {
+        PG: "pg",
+        PG_KOMPLEKS: "pg_kompleks",
+        MERANGKAI_KALIMAT: "merangkai_kalimat",
+        MENJODOHKAN: "menjodohkan",
+        BENAR_SALAH: "benar_salah",
+        ISIAN_SINGKAT: "isian",
+        ESAI: "essay",
+        NUMERIK: "numerik",
+        MELENGKAPI: "melengkapi",
+      };
+
+      // Pastikan paket ujian CBT untuk mapel ini tersedia
+      let targetExamId: number | string = 1;
+      try {
+        const exams = await MysqlDataService.getCbtExams();
+        const existingExam = exams.find(
+          (e: any) => e.title === activity.title || (e.subject_name === activeMapel && e.class_name === activeRombel)
+        );
+        if (existingExam && existingExam.id) {
+          targetExamId = existingExam.id;
+        } else {
+          const createExamRes = await MysqlDataService.saveCbtExam({
+            title: activity.title || `Kuis ${activeMapel}`,
+            subject_name: activeMapel || "Umum",
+            token: Math.random().toString(36).substring(2, 8).toUpperCase(),
+            duration_minutes: 60,
+            passing_score: 75,
+            class_name: activeRombel || "Semua Kelas",
+            randomize_questions: 0,
+            randomize_options: 0,
+            question_limit: 0,
+          });
+          if (createExamRes.id) {
+            targetExamId = createExamRes.id;
+          }
+        }
+      } catch (examErr) {
+        console.warn("Auto-create CBT exam skipped, using default exam_id:", examErr);
+      }
+
+      let successCount = 0;
+      for (const q of parsedQuizQuestions) {
+        const cbtType = quizToCbtType[q.type] || "pg";
+        const extraObj = {
+          keyAnswers: q.keyAnswers,
+          optionScores: q.optionScores,
+          targetSentence: q.targetSentence,
+          scrambledWords: q.scrambledWords,
+          pairs: q.pairs,
+          tolerance: q.tolerance,
+          clozeAnswer: q.clozeAnswer,
+        };
+
+        const res = await MysqlDataService.saveCbtQuestion({
+          exam_id: targetExamId,
+          question_text: q.question || "",
+          question_type: cbtType,
+          image_url: q.imageUrl || q.image_url || undefined,
+          audio_url: q.audioUrl || q.audio_url || undefined,
+          option_a: q.optionA || "",
+          option_b: q.optionB || "",
+          option_c: q.optionC || "",
+          option_d: q.optionD || "",
+          correct_option: q.keyAnswer || "A",
+          points: Number(q.points) || 10,
+          extra_data: JSON.stringify(extraObj),
+        });
+
+        if (res && res.success) {
+          successCount++;
+        }
+      }
+
+      toast.success(`🎉 Berhasil menyalin ${successCount} dari ${parsedQuizQuestions.length} butir soal ke Bank Soal CBT!`);
+    } catch (e) {
+      console.error("Export to CBT failed:", e);
+      toast.error("Terjadi kendala saat menyalin soal ke Bank Soal CBT.");
+    } finally {
+      setIsExportingToCbt(false);
+    }
+  };
 
   // Parse LKPD Questions if available
   let parsedLkpdQuestions: any[] = [];
@@ -385,14 +478,30 @@ export function ViewActivityDialog({
           {/* Tampilan Soal Kuis Formatif & Refleksi Pembelajaran */}
           {(activity.type === "QUIZ" || activity.type === "REFLEKSI") && parsedQuizQuestions.length > 0 && (
             <div className="p-4 rounded-xl border border-purple-200 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-950/20 space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="font-bold text-xs text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
                   {activity.type === "REFLEKSI" ? <Sparkles className="h-4 w-4 text-amber-500" /> : <Brain className="h-4 w-4 text-purple-600" />}
                   {activity.type === "REFLEKSI" ? "Butir Instrumen Refleksi & Umpan Balik" : "Butir Soal Kuis Formatif"} ({parsedQuizQuestions.length} Butir)
                 </h4>
-                <Badge variant="outline" className="text-[10px] font-bold border-purple-400 text-purple-700 dark:text-purple-300">
-                  {activity.type === "REFLEKSI" ? "Non-Graded (Survei Respon)" : `Total ${parsedQuizQuestions.reduce((acc: number, q: any) => acc + (Number(q.points) || 10), 0)} Poin`}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {activity.type === "QUIZ" && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={isExportingToCbt || !isAllowed}
+                      onClick={handleExportToCbtBank}
+                      className="h-7 text-xs font-semibold gap-1.5 border-blue-400/60 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+                      title="Salin seluruh butir soal kuis ini ke Bank Soal CBT Madrasah"
+                    >
+                      <Database className="h-3.5 w-3.5 text-blue-600" />
+                      {isExportingToCbt ? "Menyalin ke CBT..." : "Salin ke Bank Soal CBT"}
+                    </Button>
+                  )}
+                  <Badge variant="outline" className="text-[10px] font-bold border-purple-400 text-purple-700 dark:text-purple-300">
+                    {activity.type === "REFLEKSI" ? "Non-Graded (Survei Respon)" : `Total ${parsedQuizQuestions.reduce((acc: number, q: any) => acc + (Number(q.points) || 10), 0)} Poin`}
+                  </Badge>
+                </div>
               </div>
 
               <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">

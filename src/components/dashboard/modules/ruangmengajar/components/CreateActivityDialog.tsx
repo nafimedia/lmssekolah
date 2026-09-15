@@ -34,7 +34,17 @@ import {
   Music,
   CheckSquare,
   MessageSquare,
+  Search,
+  Database,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
@@ -289,6 +299,84 @@ export function CreateActivityForm({
 
   const [selectedQuestionTypeToAdd, setSelectedQuestionTypeToAdd] = useState<QuizQuestionType>("PG");
   const [forceArabicQuizMode, setForceArabicQuizMode] = useState(false);
+
+  // State for Import from CBT Bank Soal Modal
+  const [isCbtPickerOpen, setIsCbtPickerOpen] = useState(false);
+  const [cbtQuestionsList, setCbtQuestionsList] = useState<any[]>([]);
+  const [isLoadingCbt, setIsLoadingCbt] = useState(false);
+  const [cbtSearch, setCbtSearch] = useState("");
+  const [cbtTypeFilter, setCbtTypeFilter] = useState("all");
+  const [selectedCbtIds, setSelectedCbtIds] = useState<string[]>([]);
+
+  const handleOpenCbtPicker = async () => {
+    setIsCbtPickerOpen(true);
+    setIsLoadingCbt(true);
+    setSelectedCbtIds([]);
+    try {
+      const qList = await MysqlDataService.getCbtQuestions();
+      setCbtQuestionsList(qList || []);
+    } catch (e) {
+      console.warn("Gagal mengambil data Bank Soal CBT:", e);
+      toast.error("Gagal memuat butir soal dari Bank Soal CBT.");
+    } finally {
+      setIsLoadingCbt(false);
+    }
+  };
+
+  const handleApplyCbtQuestions = () => {
+    const selected = cbtQuestionsList.filter((q) => selectedCbtIds.includes(String(q.id)));
+    if (selected.length === 0) {
+      return toast.error("Pilih minimal 1 butir soal untuk diimpor ke kuis!");
+    }
+
+    const typeMap: Record<string, QuizQuestionType> = {
+      pg: "PG",
+      pg_kompleks: "PG_KOMPLEKS",
+      merangkai_kalimat: "MERANGKAI_KALIMAT",
+      menjodohkan: "MENJODOHKAN",
+      benar_salah: "BENAR_SALAH",
+      isian: "ISIAN_SINGKAT",
+      essay: "ESAI",
+      numerik: "NUMERIK",
+      melengkapi: "MELENGKAPI",
+    };
+
+    const newQuestions: FormativeQuizQuestion[] = selected.map((q, idx) => {
+      let extraData: any = undefined;
+      if (q.extra_data) {
+        try {
+          extraData = typeof q.extra_data === "string" ? JSON.parse(q.extra_data) : q.extra_data;
+        } catch {}
+      }
+
+      const qType: QuizQuestionType = typeMap[q.question_type || "pg"] || "PG";
+
+      return {
+        id: Date.now() + idx,
+        type: qType,
+        question: q.question_text || "",
+        points: Number(q.points) || 10,
+        imageUrl: q.image_url || undefined,
+        audioUrl: q.audio_url || undefined,
+        optionA: q.option_a || "",
+        optionB: q.option_b || "",
+        optionC: q.option_c || "",
+        optionD: q.option_d || "",
+        keyAnswer: q.correct_option || "A",
+        keyAnswers: extraData?.keyAnswers,
+        optionScores: extraData?.optionScores,
+        targetSentence: extraData?.targetSentence,
+        scrambledWords: extraData?.scrambledWords,
+        pairs: extraData?.pairs,
+        tolerance: extraData?.tolerance,
+        clozeAnswer: extraData?.clozeAnswer,
+      };
+    });
+
+    setQuizQuestions((prev) => [...prev, ...newQuestions]);
+    toast.success(`🎉 Berhasil mengimpor ${newQuestions.length} butir soal dari Bank Soal CBT!`);
+    setIsCbtPickerOpen(false);
+  };
 
   const activityOptions: { id: ActivityTypeOption; label: string; color: string; disabled?: boolean }[] = [
     {
@@ -1226,6 +1314,17 @@ export function CreateActivityForm({
                       <Button
                         type="button"
                         size="sm"
+                        variant="outline"
+                        onClick={handleOpenCbtPicker}
+                        className="text-xs font-medium gap-1 border-blue-500/50 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 h-7"
+                        title="Impor butir soal dari Bank Soal CBT Madrasah"
+                      >
+                        <Database className="h-3.5 w-3.5 text-blue-600" /> Impor Bank Soal CBT
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
                         variant={forceArabicQuizMode ? "default" : "outline"}
                         onClick={() => setForceArabicQuizMode(!forceArabicQuizMode)}
                         className={`text-xs font-semibold gap-1 h-7 ${
@@ -1844,6 +1943,203 @@ export function CreateActivityForm({
           </form>
         </CardContent>
       </Card>
+
+      {/* Modal Dialog: Picker Bank Soal CBT */}
+      <Dialog open={isCbtPickerOpen} onOpenChange={setIsCbtPickerOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0">
+          <DialogHeader className="p-5 pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-base font-bold flex items-center gap-2">
+                  <Database className="h-5 w-5 text-blue-600" />
+                  Bank Soal CBT Madrasah
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Pilih butir-butir soal CBT yang telah ada untuk disalin langsung ke instrumen kuis LKPD ini.
+                </DialogDescription>
+              </div>
+              <Badge variant="outline" className="border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 text-xs">
+                {cbtQuestionsList.length} Soal Tersedia
+              </Badge>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className="flex flex-col sm:flex-row gap-2 mt-3 pt-2 border-t">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari teks soal, materi, atau kata kunci..."
+                  value={cbtSearch}
+                  onChange={(e) => setCbtSearch(e.target.value)}
+                  className="pl-8 text-xs h-9"
+                />
+              </div>
+              <select
+                value={cbtTypeFilter}
+                onChange={(e) => setCbtTypeFilter(e.target.value)}
+                aria-label="Filter Tipe Soal CBT"
+                className="text-xs border rounded-md px-2.5 py-1.5 bg-background text-foreground h-9"
+              >
+                <option value="all">Semua Ragam Soal</option>
+                <option value="pg">Pilihan Ganda (PG)</option>
+                <option value="pg_kompleks">PG Kompleks (Multi Jawaban)</option>
+                <option value="merangkai_kalimat">Merangkai Kata / Kalimat</option>
+                <option value="menjodohkan">Menjodohkan (Matching)</option>
+                <option value="benar_salah">Benar / Salah (B/S)</option>
+                <option value="isian">Isian Singkat</option>
+                <option value="essay">Uraian / Esai Terbuka</option>
+                <option value="numerik">Jawaban Numerik / Angka</option>
+                <option value="melengkapi">Melengkapi Kalimat Rumpang</option>
+              </select>
+            </div>
+          </DialogHeader>
+
+          {/* Question List Scroll Area */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-3">
+            {isLoadingCbt ? (
+              <div className="py-12 text-center text-xs text-muted-foreground">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2"></div>
+                <p>Memuat butir soal dari Bank Soal CBT...</p>
+              </div>
+            ) : (() => {
+              const filtered = cbtQuestionsList.filter((q) => {
+                const matchSearch = !cbtSearch || (q.question_text || "").toLowerCase().includes(cbtSearch.toLowerCase());
+                const matchType = cbtTypeFilter === "all" || (q.question_type || "pg") === cbtTypeFilter;
+                return matchSearch && matchType;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="py-12 text-center text-xs text-muted-foreground border-2 border-dashed rounded-lg">
+                    <Database className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                    <p className="font-semibold">Tidak ada butir soal CBT yang cocok.</p>
+                    <p className="text-[11px] mt-0.5">Coba ubah kata kunci pencarian atau filter tipe soal.</p>
+                  </div>
+                );
+              }
+
+              const allSelected = filtered.length > 0 && filtered.every((q) => selectedCbtIds.includes(String(q.id)));
+
+              return (
+                <>
+                  <div className="flex items-center justify-between pb-2 border-b text-xs text-muted-foreground">
+                    <label className="flex items-center gap-2 font-medium cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const newIds = Array.from(new Set([...selectedCbtIds, ...filtered.map((q) => String(q.id))]));
+                            setSelectedCbtIds(newIds);
+                          } else {
+                            const removeIds = new Set(filtered.map((q) => String(q.id)));
+                            setSelectedCbtIds(selectedCbtIds.filter((id) => !removeIds.has(id)));
+                          }
+                        }}
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                      />
+                      <span>Pilih Semua yang Tampil ({filtered.length} soal)</span>
+                    </label>
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">
+                      {selectedCbtIds.length} butir dipilih
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {filtered.map((q, idx) => {
+                      const isChecked = selectedCbtIds.includes(String(q.id));
+                      const rawType = q.question_type || "pg";
+                      const typeLabelMap: Record<string, string> = {
+                        pg: "Pilihan Ganda",
+                        pg_kompleks: "PG Kompleks",
+                        merangkai_kalimat: "Merangkai Kalimat",
+                        menjodohkan: "Menjodohkan",
+                        benar_salah: "Benar / Salah",
+                        isian: "Isian Singkat",
+                        essay: "Esai Terbuka",
+                        numerik: "Numerik",
+                        melengkapi: "Melengkapi Rumpang",
+                      };
+
+                      return (
+                        <div
+                          key={q.id || idx}
+                          onClick={() => {
+                            if (isChecked) {
+                              setSelectedCbtIds(selectedCbtIds.filter((id) => id !== String(q.id)));
+                            } else {
+                              setSelectedCbtIds([...selectedCbtIds, String(q.id)]);
+                            }
+                          }}
+                          className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${
+                            isChecked
+                              ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 shadow-xs"
+                              : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-card"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}} // Handled by outer card onClick
+                              className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="secondary" className="text-[10px] font-semibold py-0 px-1.5">
+                                  {typeLabelMap[rawType] || rawType.toUpperCase()}
+                                </Badge>
+                                <span className="text-[11px] font-mono text-muted-foreground">
+                                  {Number(q.points) || 10} Poin
+                                </span>
+                                {q.image_url && (
+                                  <Badge variant="outline" className="text-[10px] py-0 px-1 text-emerald-600 border-emerald-300">
+                                    + Gambar
+                                  </Badge>
+                                )}
+                                {q.audio_url && (
+                                  <Badge variant="outline" className="text-[10px] py-0 px-1 text-purple-600 border-purple-300">
+                                    + Audio
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-foreground font-medium line-clamp-2 mt-1">
+                                {q.question_text || "(Tidak ada teks soal)"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
+          <DialogFooter className="p-3 px-5 border-t bg-muted/20 flex items-center justify-between sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCbtPickerOpen(false)}
+              className="text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={selectedCbtIds.length === 0}
+              onClick={handleApplyCbtQuestions}
+              className="text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Impor {selectedCbtIds.length > 0 ? `(${selectedCbtIds.length}) Soal Terpilih` : "Soal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <PickElibraryDialog
         isOpen={isPickElibOpen}

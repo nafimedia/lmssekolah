@@ -408,10 +408,10 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     const calcSize = isUrl
       ? "Link Web"
       : isTeks
-      ? `${data.content_text?.length || 0} Karakter`
-      : data.file
-      ? `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`
-      : "2.5 MB";
+        ? `${data.content_text?.length || 0} Karakter`
+        : data.file
+          ? `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`
+          : "2.5 MB";
     const fileUrlToSave = isUrl || (isVideo && data.externalUrl) ? (data.externalUrl || "") : isTeks ? "" : (data.dataUrl || "");
     const newId = "mod_" + Date.now();
 
@@ -475,11 +475,11 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
             {isSiswa
               ? "Bahan Ajar & Materi Belajar KBM"
               : isGuru
-              ? "Pustaka Bahan Ajar Guru"
-              : "Pustaka Bahan Ajar & Modul Kurikulum"}
+                ? "Pustaka Bahan Ajar Guru"
+                : "Pustaka Bahan Ajar & Modul Kurikulum"}
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Wadah kurikulum bahan ajar berjenjang: Pilih Tingkat Kelas → Pilih Bab → Buka Materi Pembelajaran.
+
           </p>
         </div>
 
@@ -570,9 +570,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                 key={j}
                 size="sm"
                 variant={selectedJenjang === j ? "default" : "ghost"}
-                className={`text-xs font-bold h-7 px-3 rounded-lg ${
-                  selectedJenjang === j ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`text-xs font-bold h-7 px-3 rounded-lg ${selectedJenjang === j ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
                 onClick={() => {
                   setSelectedJenjang(j);
                   setSelectedTopic(null); // Reset ke daftar bab saat ganti kelas
@@ -585,9 +584,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
               <Button
                 size="sm"
                 variant={selectedJenjang === "semua" ? "default" : "ghost"}
-                className={`text-xs font-bold h-7 px-3 rounded-lg ${
-                  selectedJenjang === "semua" ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`text-xs font-bold h-7 px-3 rounded-lg ${selectedJenjang === "semua" ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
                 onClick={() => {
                   setSelectedJenjang("semua");
                   setSelectedTopic(null);
@@ -716,8 +714,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                 {isLoading
                   ? "Sedang memuat berkas Bahan Ajar..."
                   : isSiswa
-                  ? "Guru pengampu belum mengunggah materi pembelajaran untuk bab ini."
-                  : "Bab ini belum memiliki berkas materi. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk melengkapi materi pembelajaran."}
+                    ? "Guru pengampu belum mengunggah materi pembelajaran untuk bab ini."
+                    : "Bab ini belum memiliki berkas materi. Silakan klik tombol '+ Unggah Bahan Ajar' di atas untuk melengkapi materi pembelajaran."}
               </p>
               {!isSiswa && (
                 <div className="mt-4">
@@ -746,31 +744,29 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                 return (
                   <Card
                     key={m.id}
-                    className={`border-border transition shadow-xs flex flex-col justify-between ${
-                      isLocked
+                    className={`border-border transition shadow-xs flex flex-col justify-between ${isLocked
                         ? "opacity-70 bg-muted/40 border-dashed"
                         : m.isCompleted
-                        ? "border-emerald-500/40 bg-emerald-50/15 dark:bg-emerald-950/15"
-                        : "hover:border-emerald-500/50"
-                    }`}
+                          ? "border-emerald-500/40 bg-emerald-50/15 dark:bg-emerald-950/15"
+                          : "hover:border-emerald-500/50"
+                      }`}
                   >
                     <CardContent className="p-4 flex items-start gap-3">
                       <div
-                        className={`h-12 w-12 rounded-xl grid place-items-center shrink-0 font-bold text-xl ${
-                          isLocked
+                        className={`h-12 w-12 rounded-xl grid place-items-center shrink-0 font-bold text-xl ${isLocked
                             ? "bg-muted text-muted-foreground"
                             : isAudio
-                            ? "bg-amber-500/15 text-amber-600"
-                            : isTeks
-                            ? "bg-purple-500/15 text-purple-600"
-                            : isVideo
-                            ? "bg-blue-500/15 text-blue-600"
-                            : isImage
-                            ? "bg-rose-500/15 text-rose-600"
-                            : isUrl
-                            ? "bg-sky-500/15 text-sky-600"
-                            : "bg-emerald-500/15 text-emerald-600"
-                        }`}
+                              ? "bg-amber-500/15 text-amber-600"
+                              : isTeks
+                                ? "bg-purple-500/15 text-purple-600"
+                                : isVideo
+                                  ? "bg-blue-500/15 text-blue-600"
+                                  : isImage
+                                    ? "bg-rose-500/15 text-rose-600"
+                                    : isUrl
+                                      ? "bg-sky-500/15 text-sky-600"
+                                      : "bg-emerald-500/15 text-emerald-600"
+                          }`}
                       >
                         {isLocked ? "🔒" : isTeks ? "📝" : isVideo ? "🎥" : isAudio ? "🎵" : isImage ? "🖼️" : isUrl ? "🔗" : "📄"}
                       </div>
@@ -782,11 +778,10 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                             </Badge>
                             <Badge
                               variant="secondary"
-                              className={`text-[9px] px-1.5 py-0 font-medium ${
-                                m.access_mode === "SISWA_MANDIRI"
+                              className={`text-[9px] px-1.5 py-0 font-medium ${m.access_mode === "SISWA_MANDIRI"
                                   ? "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
                                   : "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
-                              }`}
+                                }`}
                             >
                               {m.access_mode === "SISWA_MANDIRI" ? "📚 Mandiri" : "🏫 Kendali Guru"}
                             </Badge>
@@ -836,11 +831,10 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                           size="sm"
                           variant="outline"
                           disabled={isLocked}
-                          className={`h-7 text-xs font-bold px-2.5 gap-1 ${
-                            isLocked
+                          className={`h-7 text-xs font-bold px-2.5 gap-1 ${isLocked
                               ? "opacity-50 cursor-not-allowed"
                               : "border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50"
-                          }`}
+                            }`}
                           onClick={() => {
                             if (isLocked) {
                               toast.warning(m.lockReason || "Materi ini belum dapat dibuka.");
@@ -856,11 +850,10 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                           <Button
                             size="sm"
                             variant="outline"
-                            className={`h-7 text-xs font-semibold px-2.5 ${
-                              m.status === "Terverifikasi Waka"
+                            className={`h-7 text-xs font-semibold px-2.5 ${m.status === "Terverifikasi Waka"
                                 ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50"
                                 : "bg-emerald-600 text-white hover:bg-emerald-700 font-semibold shadow-xs"
-                            }`}
+                              }`}
                             onClick={() => handleToggleVerification(m.id, m.status, m.title)}
                           >
                             {m.status === "Terverifikasi Waka" ? "✓ Sah" : "✅ Sahkan"}
@@ -871,9 +864,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                           <Button
                             size="sm"
                             variant="ghost"
-                            className={`h-7 text-xs font-bold px-2.5 gap-1 ${
-                              isUrl ? "text-sky-600 hover:bg-sky-500/10" : "text-emerald-600 hover:bg-emerald-500/10"
-                            }`}
+                            className={`h-7 text-xs font-bold px-2.5 gap-1 ${isUrl ? "text-sky-600 hover:bg-sky-500/10" : "text-emerald-600 hover:bg-emerald-500/10"
+                              }`}
                             onClick={() => handleDownloadModulPdf(m)}
                           >
                             {isUrl ? (
@@ -931,8 +923,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                 {isLoading
                   ? "Sedang memuat data Bab..."
                   : isSiswa
-                  ? "Belum ada Bab pembelajaran yang diterbitkan untuk tingkat kelas dan mapel ini."
-                  : `Belum ada Bab pembelajaran untuk ${selectedJenjang} ${selectedMapel !== "semua" ? `pada mapel ${selectedMapel}` : ""}. Silakan buat Bab baru untuk mengelompokkan bahan ajar.`}
+                    ? "Belum ada Bab pembelajaran yang diterbitkan untuk tingkat kelas dan mapel ini."
+                    : `Belum ada Bab pembelajaran untuk ${selectedJenjang} ${selectedMapel !== "semua" ? `pada mapel ${selectedMapel}` : ""}. Silakan buat Bab baru untuk mengelompokkan bahan ajar.`}
               </p>
               {!isSiswa && (
                 <div className="mt-4">
@@ -1017,11 +1009,10 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
                         </span>
                         <Badge
                           variant="secondary"
-                          className={`text-[10px] font-semibold ${
-                            countMaterials > 0
+                          className={`text-[10px] font-semibold ${countMaterials > 0
                               ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
                               : "bg-muted text-muted-foreground"
-                          }`}
+                            }`}
                         >
                           {countMaterials} Bahan Ajar
                         </Badge>

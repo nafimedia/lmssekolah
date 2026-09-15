@@ -914,15 +914,23 @@ export const saveSubjectFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<boolean> => {
     try {
       const { execute } = await import("@/lib/db");
+      const category = data.category || "Umum";
+      const teacherName = data.teacher_name || "-";
+      const jp = Number(data.jp) || 2;
+      const kkm = Number(data.kkm) || 75;
+      const status = data.status || "AKTIF";
+      const icon = data.icon || "📖";
+      const gradeLevel = data.grade_level || "Semua Tingkat";
+
       if (data.id) {
         await execute(
-          "UPDATE subjects SET code=?, name=?, category=?, teacher_name=?, jp=?, kkm=?, status=?, icon=? WHERE id=?",
-          [data.code, data.name, data.category, data.teacher_name, data.jp, data.kkm, data.status, data.icon || "📖", data.id]
+          "UPDATE subjects SET code=?, name=?, category=?, teacher_name=?, jp=?, kkm=?, status=?, icon=?, grade_level=? WHERE id=?",
+          [data.code, data.name, category, teacherName, jp, kkm, status, icon, gradeLevel, data.id]
         );
       } else {
         await execute(
-          "INSERT INTO subjects (code, name, category, teacher_name, jp, kkm, status, icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          [data.code, data.name, data.category, data.teacher_name, data.jp, data.kkm, data.status, data.icon || "📖"]
+          "INSERT INTO subjects (code, name, category, teacher_name, jp, kkm, status, icon, grade_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [data.code, data.name, category, teacherName, jp, kkm, status, icon, gradeLevel]
         );
       }
       return true;

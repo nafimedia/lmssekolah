@@ -11,6 +11,7 @@ import { MysqlDataService, PengampuRow } from "@/services/mysqlDataService";
 import { EditWaliKelasDialog } from "./components/EditWaliKelasDialog";
 import { TahunAjaranTab } from "./components/TahunAjaranTab";
 import { KktpSkemaTab } from "./components/KktpSkemaTab";
+import { MasterMapelTab } from "./components/MasterMapelTab";
 
 import { isSameClass, formatClassName } from "@/utils/classNormalization";
 
@@ -228,6 +229,7 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
       <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80 w-fit flex-wrap">
         {[
           { id: "pengampu", label: "Daftar Kelas & Wali Kelas", icon: Users },
+          { id: "master_mapel", label: "Master Mata Pelajaran", icon: BookOpen },
           { id: "tahun_ajaran", label: "Tahun Ajaran & Semester", icon: Calendar },
           { id: "kktp_skema", label: "Kriteria Ketuntasan (KKTP)", icon: ShieldCheck },
         ].map((t) => (
@@ -331,10 +333,15 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         </div>
       )}
 
-      {/* Tab 2: Tahun Ajaran */}
+      {/* Tab 2: Master Mata Pelajaran */}
+      {activeTab === "master_mapel" && (
+        <MasterMapelTab isKamad={isKamad} teachersList={dbTeachersList} />
+      )}
+
+      {/* Tab 3: Tahun Ajaran */}
       {activeTab === "tahun_ajaran" && <TahunAjaranTab isKamad={isKamad} />}
 
-      {/* Tab 3: KKTP Skema */}
+      {/* Tab 4: KKTP Skema */}
       {activeTab === "kktp_skema" && <KktpSkemaTab isKamad={isKamad} />}
 
       {/* Modal Tambah Kelas Baru */}

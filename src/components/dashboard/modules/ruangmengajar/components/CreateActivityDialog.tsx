@@ -45,6 +45,7 @@ import {
   QUIZ_QUESTION_TYPE_CONFIG,
   createNewQuizQuestion,
 } from "@/types/quiz";
+import { isArabicText } from "@/utils/arabicHelper";
 
 export type ActivityTypeOption =
   | "LKPD"
@@ -287,6 +288,7 @@ export function CreateActivityForm({
   });
 
   const [selectedQuestionTypeToAdd, setSelectedQuestionTypeToAdd] = useState<QuizQuestionType>("PG");
+  const [forceArabicQuizMode, setForceArabicQuizMode] = useState(false);
 
   const activityOptions: { id: ActivityTypeOption; label: string; color: string; disabled?: boolean }[] = [
     {
@@ -1178,7 +1180,7 @@ export function CreateActivityForm({
                       <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
                         {type === "REFLEKSI"
                           ? "Instrumen umpan balik, refleksi materi KBM, dan angket pemahaman siswa (tanpa penilaian skor)."
-                          : "Mendukung 9 variasi jenis soal (Pilihan Ganda, PG Kompleks, Merangkai Kalimat, Menjodohkan, Benar/Salah, Isian, Esai, Numerik, Melengkapi)."}
+                          : ""}
                       </p>
                     </div>
 
@@ -1220,6 +1222,21 @@ export function CreateActivityForm({
                       >
                         <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" /> Import Excel
                       </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={forceArabicQuizMode ? "default" : "outline"}
+                        onClick={() => setForceArabicQuizMode(!forceArabicQuizMode)}
+                        className={`text-xs font-semibold gap-1 h-7 ${
+                          forceArabicQuizMode
+                            ? "bg-amber-600 hover:bg-amber-700 text-white"
+                            : "border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+                        }`}
+                        title="Aktifkan tipografi Bahasa Arab (Khat Naskh / Amiri) dan arah teks kanan-ke-kiri"
+                      >
+                        🇸🇦 {forceArabicQuizMode ? "Mode Arab Aktif" : "Mode Arab (Khat Naskh)"}
+                      </Button>
                     </div>
                   </div>
 
@@ -1229,7 +1246,7 @@ export function CreateActivityForm({
                       <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                         <Plus className="h-3.5 w-3.5 text-purple-600" /> Tambah Butir Soal Baru:
                       </span>
-                      <p className="text-[11px] text-muted-foreground">Pilih jenis soal atau instrumen refleksi:</p>
+                      <p className="text-[11px] text-muted-foreground"></p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -1338,28 +1355,42 @@ export function CreateActivityForm({
 
                             {/* Pertanyaan / Teks Soal */}
                             <div className="space-y-1.5">
-                              <label className="text-[11px] font-semibold text-muted-foreground">
-                                {qType === "BENAR_SALAH"
-                                  ? "Pernyataan / Teks Evaluasi:"
-                                  : qType === "MELENGKAPI"
-                                  ? "Teks Kalimat Rumpang (gunakan tanda [...] untuk bagian rumpang):"
-                                  : qType === "MERANGKAI_KALIMAT"
-                                  ? "Petunjuk / Instruksi Merangkai Kalimat:"
-                                  : "Pertanyaan / Instruksi Soal:"}
-                              </label>
+                              <div className="flex items-center justify-between">
+                                <label className="text-[11px] font-semibold text-muted-foreground">
+                                  {qType === "BENAR_SALAH"
+                                    ? "Pernyataan / Teks Evaluasi:"
+                                    : qType === "MELENGKAPI"
+                                      ? "Teks Kalimat Rumpang (gunakan tanda [...] untuk bagian rumpang):"
+                                      : qType === "MERANGKAI_KALIMAT"
+                                        ? "Petunjuk / Instruksi Merangkai Kalimat:"
+                                        : "Pertanyaan / Instruksi Soal:"}
+                                </label>
+                                {(forceArabicQuizMode || isArabicText(q.question)) && (
+                                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold font-arabic">
+                                    الخط العربي (Khat Naskh) • Rata Kanan
+                                  </span>
+                                )}
+                              </div>
                               <Textarea
+                                dir={forceArabicQuizMode || isArabicText(q.question) ? "rtl" : "ltr"}
                                 placeholder={
-                                  qType === "MELENGKAPI"
-                                    ? "Contoh: Ibu kota Republik Indonesia berada di wilayah [...]."
-                                    : qType === "BENAR_SALAH"
-                                    ? "Tuliskan pernyataan yang perlu dinilai kebenarannya..."
-                                    : qType === "MERANGKAI_KALIMAT"
-                                    ? "Contoh: Susunlah potongan kata acak berikut agar membentuk kalimat yang padu dan benar!"
-                                    : `Tuliskan pertanyaan soal #${idx + 1}...`
+                                  forceArabicQuizMode || isArabicText(q.question)
+                                    ? "اكتب نص السؤال هنا بالخط العربي والتفصيل..."
+                                    : qType === "MELENGKAPI"
+                                      ? "Contoh: Ibu kota Republik Indonesia berada di wilayah [...]."
+                                      : qType === "BENAR_SALAH"
+                                        ? "Tuliskan pernyataan yang perlu dinilai kebenarannya..."
+                                        : qType === "MERANGKAI_KALIMAT"
+                                          ? "Contoh: Susunlah potongan kata acak berikut agar membentuk kalimat yang padu dan benar!"
+                                          : `Tuliskan pertanyaan soal #${idx + 1}...`
                                 }
                                 value={q.question}
                                 onChange={(e) => handleQuizQuestionChange(idx, "question", e.target.value)}
-                                className="text-xs font-normal min-h-[50px]"
+                                className={`text-xs font-normal min-h-[50px] ${
+                                  forceArabicQuizMode || isArabicText(q.question)
+                                    ? "font-arabic text-base leading-loose text-right"
+                                    : ""
+                                }`}
                               />
 
                               {/* Toolbar Sisipkan Gambar & Audio MP3 */}
@@ -1461,11 +1492,10 @@ export function CreateActivityForm({
                                       return (
                                         <div
                                           key={opt.key}
-                                          className={`p-2 rounded-lg border transition flex items-center gap-2 text-xs ${
-                                            isCorrect
-                                              ? "border-sky-500/60 bg-sky-500/10 dark:bg-sky-950/20"
-                                              : "border-border bg-background"
-                                          }`}
+                                          className={`p-2 rounded-lg border transition flex items-center gap-2 text-xs ${isCorrect
+                                            ? "border-sky-500/60 bg-sky-500/10 dark:bg-sky-950/20"
+                                            : "border-border bg-background"
+                                            }`}
                                         >
                                           <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
                                             <input
@@ -1518,14 +1548,24 @@ export function CreateActivityForm({
                               return (
                                 <div className="space-y-2.5 pt-1 border-t border-border/50">
                                   <div className="space-y-1">
-                                    <label className="text-[11px] font-semibold text-muted-foreground">
-                                      Kalimat Target yang Benar (Sesuai Urutan Tepat):
-                                    </label>
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-[11px] font-semibold text-muted-foreground">
+                                        Kalimat Target yang Benar (Sesuai Urutan Tepat):
+                                      </label>
+                                      {(forceArabicQuizMode || isArabicText(q.targetSentence)) && (
+                                        <span className="text-[10px] text-amber-600 font-semibold font-arabic">
+                                          الخط العربي (Khat Naskh)
+                                        </span>
+                                      )}
+                                    </div>
                                     <Input
-                                      placeholder="Contoh: Siswa madrasah belajar giat setiap hari / Al-ilmu nurun yahtadi bihil insan"
+                                      dir={forceArabicQuizMode || isArabicText(q.targetSentence) ? "rtl" : "ltr"}
+                                      placeholder="Contoh: Siswa madrasah belajar giat setiap hari / العلم نور يهتدي به الإنسان"
                                       value={q.targetSentence || ""}
                                       onChange={(e) => handleTargetSentenceChange(idx, e.target.value)}
-                                      className="text-xs font-medium border-orange-300 dark:border-orange-800"
+                                      className={`text-xs font-medium border-orange-300 dark:border-orange-800 ${
+                                        forceArabicQuizMode || isArabicText(q.targetSentence) ? "font-arabic text-sm text-right leading-loose" : ""
+                                      }`}
                                     />
                                   </div>
 
@@ -1534,12 +1574,15 @@ export function CreateActivityForm({
                                       <span className="text-[11px] font-semibold text-orange-800 dark:text-orange-300 block">
                                         Pratinjau Potongan Kata ({words.length} Kata yang Akan Diacak untuk Siswa):
                                       </span>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {words.map((w, wIdx) => (
-                                          <Badge key={wIdx} variant="secondary" className="bg-background text-foreground border border-orange-400 font-normal text-xs px-2 py-0.5">
-                                            {w}
-                                          </Badge>
-                                        ))}
+                                      <div className="flex flex-wrap gap-1.5" dir={forceArabicQuizMode || isArabicText(q.targetSentence) ? "rtl" : "ltr"}>
+                                        {words.map((w, wIdx) => {
+                                          const isWAr = forceArabicQuizMode || isArabicText(w);
+                                          return (
+                                            <Badge key={wIdx} variant="secondary" className={`bg-background text-foreground border border-orange-400 font-normal px-2 py-0.5 ${isWAr ? "font-arabic text-sm" : "text-xs"}`}>
+                                              {w}
+                                            </Badge>
+                                          );
+                                        })}
                                       </div>
                                     </div>
                                   )}
@@ -1570,42 +1613,23 @@ export function CreateActivityForm({
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`w-5 text-center font-bold ${q.keyAnswer === "A" ? "text-emerald-600" : "text-muted-foreground"}`}>A.</span>
-                                    <Input
-                                      placeholder="Pilihan A"
-                                      value={q.optionA || ""}
-                                      onChange={(e) => handleQuizQuestionChange(idx, "optionA", e.target.value)}
-                                      className={`text-xs ${q.keyAnswer === "A" ? "border-emerald-500 bg-emerald-50/20" : ""}`}
-                                    />
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`w-5 text-center font-bold ${q.keyAnswer === "B" ? "text-emerald-600" : "text-muted-foreground"}`}>B.</span>
-                                    <Input
-                                      placeholder="Pilihan B"
-                                      value={q.optionB || ""}
-                                      onChange={(e) => handleQuizQuestionChange(idx, "optionB", e.target.value)}
-                                      className={`text-xs ${q.keyAnswer === "B" ? "border-emerald-500 bg-emerald-50/20" : ""}`}
-                                    />
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`w-5 text-center font-bold ${q.keyAnswer === "C" ? "text-emerald-600" : "text-muted-foreground"}`}>C.</span>
-                                    <Input
-                                      placeholder="Pilihan C"
-                                      value={q.optionC || ""}
-                                      onChange={(e) => handleQuizQuestionChange(idx, "optionC", e.target.value)}
-                                      className={`text-xs ${q.keyAnswer === "C" ? "border-emerald-500 bg-emerald-50/20" : ""}`}
-                                    />
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`w-5 text-center font-bold ${q.keyAnswer === "D" ? "text-emerald-600" : "text-muted-foreground"}`}>D.</span>
-                                    <Input
-                                      placeholder="Pilihan D"
-                                      value={q.optionD || ""}
-                                      onChange={(e) => handleQuizQuestionChange(idx, "optionD", e.target.value)}
-                                      className={`text-xs ${q.keyAnswer === "D" ? "border-emerald-500 bg-emerald-50/20" : ""}`}
-                                    />
-                                  </div>
+                                  {(["A", "B", "C", "D"] as const).map((optKey) => {
+                                    const propName = `option${optKey}` as "optionA" | "optionB" | "optionC" | "optionD";
+                                    const optVal = q[propName] || "";
+                                    const isOptAr = forceArabicQuizMode || isArabicText(optVal);
+                                    return (
+                                      <div key={optKey} className="flex items-center gap-1.5">
+                                        <span className={`w-5 text-center font-bold ${q.keyAnswer === optKey ? "text-emerald-600" : "text-muted-foreground"}`}>{optKey}.</span>
+                                        <Input
+                                          dir={isOptAr ? "rtl" : "ltr"}
+                                          placeholder={isOptAr ? `الخيار ${optKey}...` : `Pilihan ${optKey}`}
+                                          value={optVal}
+                                          onChange={(e) => handleQuizQuestionChange(idx, propName, e.target.value)}
+                                          className={`text-xs ${q.keyAnswer === optKey ? "border-emerald-500 bg-emerald-50/20" : ""} ${isOptAr ? "font-arabic text-sm text-right leading-loose" : ""}`}
+                                        />
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             )}
@@ -1635,17 +1659,19 @@ export function CreateActivityForm({
                                         {pIdx + 1}.
                                       </span>
                                       <Input
+                                        dir={forceArabicQuizMode || isArabicText(pair.left) ? "rtl" : "ltr"}
                                         placeholder="Premis / Istilah Kiri..."
                                         value={pair.left}
                                         onChange={(e) => handleMatchingPairChange(idx, pIdx, "left", e.target.value)}
-                                        className="text-xs flex-1"
+                                        className={`text-xs flex-1 ${forceArabicQuizMode || isArabicText(pair.left) ? "font-arabic text-sm text-right leading-loose" : ""}`}
                                       />
                                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                       <Input
+                                        dir={forceArabicQuizMode || isArabicText(pair.right) ? "rtl" : "ltr"}
                                         placeholder="Pasangan Jawaban Tepat Kanan..."
                                         value={pair.right}
                                         onChange={(e) => handleMatchingPairChange(idx, pIdx, "right", e.target.value)}
-                                        className="text-xs flex-1 border-emerald-300 dark:border-emerald-800"
+                                        className={`text-xs flex-1 border-emerald-300 dark:border-emerald-800 ${forceArabicQuizMode || isArabicText(pair.right) ? "font-arabic text-sm text-right leading-loose" : ""}`}
                                       />
                                       <Button
                                         type="button"
@@ -1677,11 +1703,10 @@ export function CreateActivityForm({
                                     size="sm"
                                     onClick={() => handleQuizQuestionChange(idx, "keyAnswer", "BENAR")}
                                     variant={q.keyAnswer === "BENAR" ? "default" : "outline"}
-                                    className={`text-xs font-bold gap-1.5 h-8 px-4 cursor-pointer ${
-                                      q.keyAnswer === "BENAR"
-                                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                                        : "border-border text-foreground hover:bg-muted"
-                                    }`}
+                                    className={`text-xs font-bold gap-1.5 h-8 px-4 cursor-pointer ${q.keyAnswer === "BENAR"
+                                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                      : "border-border text-foreground hover:bg-muted"
+                                      }`}
                                   >
                                     ✓ BENAR
                                   </Button>
@@ -1690,11 +1715,10 @@ export function CreateActivityForm({
                                     size="sm"
                                     onClick={() => handleQuizQuestionChange(idx, "keyAnswer", "SALAH")}
                                     variant={q.keyAnswer === "SALAH" ? "default" : "outline"}
-                                    className={`text-xs font-bold gap-1.5 h-8 px-4 cursor-pointer ${
-                                      q.keyAnswer === "SALAH"
-                                        ? "bg-rose-600 hover:bg-rose-700 text-white"
-                                        : "border-border text-foreground hover:bg-muted"
-                                    }`}
+                                    className={`text-xs font-bold gap-1.5 h-8 px-4 cursor-pointer ${q.keyAnswer === "SALAH"
+                                      ? "bg-rose-600 hover:bg-rose-700 text-white"
+                                      : "border-border text-foreground hover:bg-muted"
+                                      }`}
                                   >
                                     ✗ SALAH
                                   </Button>

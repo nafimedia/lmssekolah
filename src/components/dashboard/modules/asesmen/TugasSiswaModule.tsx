@@ -39,6 +39,7 @@ import {
   TextCursorInput,
 } from "lucide-react";
 import { QuizQuestionType, QUIZ_QUESTION_TYPE_CONFIG } from "@/types/quiz";
+import { isArabicText } from "@/utils/arabicHelper";
 
 export interface PeerRatingEntry {
   evaluatee_nisn: string;
@@ -198,6 +199,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
   };
   const [submitting, setSubmitting] = useState(false);
   const [studentQuizAnswers, setStudentQuizAnswers] = useState<Record<number, any>>({});
+  const [forceArabicQuizMode, setForceArabicQuizMode] = useState(false);
 
   const me = MysqlAuthService.getActiveUser();
   const studentName = me?.full_name || userProfile?.name || "Siswa MTsN 2 Cilacap";
@@ -1620,7 +1622,21 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                         return true;
                       }).length;
                       return (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={forceArabicQuizMode ? "default" : "outline"}
+                            onClick={() => setForceArabicQuizMode(!forceArabicQuizMode)}
+                            className={`text-[10px] font-semibold gap-1 h-6 px-2 ${
+                              forceArabicQuizMode
+                                ? "bg-amber-600 hover:bg-amber-700 text-white"
+                                : "border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+                            }`}
+                            title="Aktifkan Mode Khat Naskh Bahasa Arab"
+                          >
+                            🇸🇦 {forceArabicQuizMode ? "Mode Arab Aktif" : "Mode Arab (Khat Naskh)"}
+                          </Button>
                           <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 font-medium gap-1">
                             <Save className="h-3 w-3 text-emerald-600" /> Auto-Save
                           </Badge>
@@ -1655,6 +1671,7 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                       const qType: QuizQuestionType = q.type || "PG";
                       const cfg = QUIZ_QUESTION_TYPE_CONFIG[qType] || QUIZ_QUESTION_TYPE_CONFIG.PG;
                       const selectedAns = studentQuizAnswers[qIdx];
+                      const isQArabic = forceArabicQuizMode || isArabicText(q.question);
                       const isAnswered =
                         selectedAns !== undefined &&
                         selectedAns !== null &&
@@ -1677,6 +1694,11 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                               <Badge variant="outline" className={`text-[9px] font-semibold ${cfg.badgeColor}`}>
                                 {cfg.shortLabel}
                               </Badge>
+                              {isQArabic && (
+                                <Badge variant="outline" className="text-[9px] font-semibold border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10 font-arabic">
+                                  الخط العربي
+                                </Badge>
+                              )}
                               <span className="text-[10px] text-muted-foreground font-mono">
                                 ({q.points || 10} Poin)
                               </span>
@@ -1689,7 +1711,14 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                             )}
                           </div>
 
-                          <p className="font-semibold text-foreground leading-relaxed whitespace-pre-wrap">
+                          <p
+                            dir={isQArabic ? "rtl" : "ltr"}
+                            className={`whitespace-pre-wrap ${
+                              isQArabic
+                                ? "font-arabic text-lg sm:text-xl leading-loose font-bold text-right text-foreground"
+                                : "font-semibold text-foreground leading-relaxed"
+                            }`}
+                          >
                             {q.question}
                           </p>
 
@@ -1703,9 +1732,10 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                             ].filter((opt) => Boolean(opt.text));
 
                             return (
-                              <div className="grid grid-cols-1 gap-1.5 pt-1">
+                              <div className="grid grid-cols-1 gap-1.5 pt-1" dir={isQArabic ? "rtl" : "ltr"}>
                                 {options.map((opt) => {
                                   const isSelected = selectedAns === opt.key;
+                                  const isOptAr = forceArabicQuizMode || isArabicText(opt.text);
                                   return (
                                     <button
                                       key={opt.key}
@@ -1731,7 +1761,16 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                                       >
                                         {opt.key}
                                       </span>
-                                      <span className="leading-snug">{opt.text}</span>
+                                      <span
+                                        dir={isOptAr ? "rtl" : "ltr"}
+                                        className={`flex-1 ${
+                                          isOptAr
+                                            ? "font-arabic text-sm sm:text-base text-right leading-loose"
+                                            : "leading-snug"
+                                        }`}
+                                      >
+                                        {opt.text}
+                                      </span>
                                     </button>
                                   );
                                 })}
@@ -1834,34 +1873,56 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                           )}
 
                           {/* 4. TEKS SINGKAT (ISIAN) */}
-                          {qType === "ISIAN_SINGKAT" && (
-                            <div className="space-y-1 pt-1">
-                              <span className="text-[11px] font-medium text-muted-foreground block">
-                                Tuliskan jawaban singkat Anda:
-                              </span>
-                              <Input
-                                placeholder="Ketik jawaban singkat di sini..."
-                                value={typeof selectedAns === "string" ? selectedAns : ""}
-                                onChange={(e) => setStudentQuizAnswers((prev) => ({ ...prev, [qIdx]: e.target.value }))}
-                                className="text-xs font-medium"
-                              />
-                            </div>
-                          )}
+                          {qType === "ISIAN_SINGKAT" && (() => {
+                            const isAnsAr = forceArabicQuizMode || isArabicText(typeof selectedAns === "string" ? selectedAns : "");
+                            return (
+                              <div className="space-y-1 pt-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-medium text-muted-foreground block">
+                                    Tuliskan jawaban singkat Anda:
+                                  </span>
+                                  {isAnsAr && (
+                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold font-arabic">
+                                      الخط العربي (Khat Naskh)
+                                    </span>
+                                  )}
+                                </div>
+                                <Input
+                                  dir={isAnsAr ? "rtl" : "ltr"}
+                                  placeholder={isAnsAr ? "اكتب الإجابة القصيرة هنا..." : "Ketik jawaban singkat di sini..."}
+                                  value={typeof selectedAns === "string" ? selectedAns : ""}
+                                  onChange={(e) => setStudentQuizAnswers((prev) => ({ ...prev, [qIdx]: e.target.value }))}
+                                  className={`text-xs font-medium ${isAnsAr ? "font-arabic text-sm text-right leading-loose" : ""}`}
+                                />
+                              </div>
+                            );
+                          })()}
 
                           {/* 5. ESAI / PARAGRAF */}
-                          {qType === "ESAI" && (
-                            <div className="space-y-1 pt-1">
-                              <span className="text-[11px] font-medium text-muted-foreground block">
-                                Tuliskan uraian atau penjelasan lengkap jawaban Anda:
-                              </span>
-                              <Textarea
-                                placeholder="Tuliskan jawaban esai Anda secara lengkap di sini..."
-                                value={typeof selectedAns === "string" ? selectedAns : ""}
-                                onChange={(e) => setStudentQuizAnswers((prev) => ({ ...prev, [qIdx]: e.target.value }))}
-                                className="text-xs min-h-[90px] leading-relaxed"
-                              />
-                            </div>
-                          )}
+                          {qType === "ESAI" && (() => {
+                            const isAnsAr = forceArabicQuizMode || isArabicText(typeof selectedAns === "string" ? selectedAns : "");
+                            return (
+                              <div className="space-y-1 pt-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-medium text-muted-foreground block">
+                                    Tuliskan uraian atau penjelasan lengkap jawaban Anda:
+                                  </span>
+                                  {isAnsAr && (
+                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold font-arabic">
+                                      الخط العربي (Khat Naskh) • Rata Kanan
+                                    </span>
+                                  )}
+                                </div>
+                                <Textarea
+                                  dir={isAnsAr ? "rtl" : "ltr"}
+                                  placeholder={isAnsAr ? "اكتب الإجابة المقالية بالتفصيل هنا..." : "Tuliskan jawaban esai Anda secara lengkap di sini..."}
+                                  value={typeof selectedAns === "string" ? selectedAns : ""}
+                                  onChange={(e) => setStudentQuizAnswers((prev) => ({ ...prev, [qIdx]: e.target.value }))}
+                                  className={`text-xs min-h-[90px] leading-relaxed ${isAnsAr ? "font-arabic text-base text-right leading-loose" : ""}`}
+                                />
+                              </div>
+                            );
+                          })()}
 
                           {/* 6. NUMERIK */}
                           {qType === "NUMERIK" && (
@@ -1880,19 +1941,23 @@ export function TugasSiswaModule({ userProfile }: TugasSiswaModuleProps) {
                           )}
 
                           {/* 7. MELENGKAPI KALIMAT */}
-                          {qType === "MELENGKAPI" && (
-                            <div className="space-y-1 pt-1">
-                              <span className="text-[11px] font-medium text-muted-foreground block">
-                                Ketik kata / frasa untuk melengkapi bagian rumpang [...]:
-                              </span>
-                              <Input
-                                placeholder="Ketik kata / frasa pelengkap di sini..."
-                                value={typeof selectedAns === "string" ? selectedAns : ""}
-                                onChange={(e) => setStudentQuizAnswers((prev) => ({ ...prev, [qIdx]: e.target.value }))}
-                                className="text-xs font-medium"
-                              />
-                            </div>
-                          )}
+                          {qType === "MELENGKAPI" && (() => {
+                            const isAnsAr = forceArabicQuizMode || isArabicText(typeof selectedAns === "string" ? selectedAns : "");
+                            return (
+                              <div className="space-y-1 pt-1">
+                                <span className="text-[11px] font-medium text-muted-foreground block">
+                                  Ketik kata / frasa untuk melengkapi bagian rumpang [...]:
+                                </span>
+                                <Input
+                                  dir={isAnsAr ? "rtl" : "ltr"}
+                                  placeholder={isAnsAr ? "اكتب الكلمة المناسبة هنا..." : "Ketik kata / frasa pelengkap di sini..."}
+                                  value={typeof selectedAns === "string" ? selectedAns : ""}
+                                  onChange={(e) => setStudentQuizAnswers((prev) => ({ ...prev, [qIdx]: e.target.value }))}
+                                  className={`text-xs font-medium ${isAnsAr ? "font-arabic text-sm text-right leading-loose" : ""}`}
+                                />
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })}

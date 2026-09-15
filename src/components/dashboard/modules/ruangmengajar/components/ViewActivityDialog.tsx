@@ -31,6 +31,7 @@ import { MysqlDataService, LkpdDiscussionRow, PeerAssessmentRow } from "@/servic
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
 import { QuizQuestionType, QUIZ_QUESTION_TYPE_CONFIG } from "@/types/quiz";
+import { isArabicText } from "@/utils/arabicHelper";
 
 export interface ActivityDetail {
   id: string;
@@ -445,25 +446,42 @@ export function ViewActivityDialog({
                         </div>
                       )}
 
-                      <div className="font-medium text-foreground whitespace-pre-wrap leading-relaxed">
-                        {q.question}
-                      </div>
+                      {(() => {
+                        const isQAr = isArabicText(q.question);
+                        return (
+                          <div
+                            dir={isQAr ? "rtl" : "ltr"}
+                            className={`font-medium whitespace-pre-wrap ${
+                              isQAr
+                                ? "font-arabic text-base sm:text-lg leading-loose font-bold text-right text-foreground"
+                                : "text-foreground leading-relaxed"
+                            }`}
+                          >
+                            {q.question}
+                          </div>
+                        );
+                      })()}
 
                       {/* Detail per jenis soal */}
                       {qType === "PG" && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-muted-foreground pt-1 border-t border-border/50">
-                          <span className={q.keyAnswer === "A" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
-                            A. {q.optionA} {q.keyAnswer === "A" && "✓ (Kunci)"}
-                          </span>
-                          <span className={q.keyAnswer === "B" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
-                            B. {q.optionB} {q.keyAnswer === "B" && "✓ (Kunci)"}
-                          </span>
-                          <span className={q.keyAnswer === "C" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
-                            C. {q.optionC} {q.keyAnswer === "C" && "✓ (Kunci)"}
-                          </span>
-                          <span className={q.keyAnswer === "D" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
-                            D. {q.optionD} {q.keyAnswer === "D" && "✓ (Kunci)"}
-                          </span>
+                          {(["A", "B", "C", "D"] as const).map((optKey) => {
+                            const propName = `option${optKey}` as "optionA" | "optionB" | "optionC" | "optionD";
+                            const optVal = q[propName] || "";
+                            const isOptAr = isArabicText(optVal);
+                            const isKey = q.keyAnswer === optKey;
+                            return (
+                              <span
+                                key={optKey}
+                                dir={isOptAr ? "rtl" : "ltr"}
+                                className={`p-1 rounded ${
+                                  isKey ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" : ""
+                                } ${isOptAr ? "font-arabic text-sm text-right leading-loose" : ""}`}
+                              >
+                                {optKey}. {optVal} {isKey && "✓ (Kunci)"}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
 

@@ -177,7 +177,7 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
               title="Buat Aktivitas Pembelajaran Baru (LKPD, Kuis, Hafalan, Kokurikuler, Praktikum, Diskusi Kelompok, Tugas Mandiri)"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>+ Buat Aktivitas Pembelajaran</span>
+              <span>Buat Aktivitas Pembelajaran</span>
             </Button>
           </div>
         </div>
@@ -221,11 +221,10 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                       )}
                     </Badge>
                     <Badge
-                      className={`text-white font-semibold text-[9px] py-0 px-1.5 ${
-                        act.status === "DRAF"
+                      className={`text-white font-semibold text-[9px] py-0 px-1.5 ${act.status === "DRAF"
                           ? "bg-amber-500 hover:bg-amber-600"
                           : "bg-emerald-600 hover:bg-emerald-700"
-                      }`}
+                        }`}
                     >
                       {act.status === "DRAF" ? "DRAF" : act.status}
                     </Badge>
@@ -263,12 +262,12 @@ export function AktivitasTab({ activeRombel, activeMapel }: AktivitasTabProps) {
                           {act.type === "TUGAS_KELOMPOK" || act.type === "PROYEK_P5"
                             ? "Kelola"
                             : act.type === "QUIZ"
-                            ? "Nilai Kuis"
-                            : act.type === "HAFALAN"
-                            ? "Nilai Hafalan"
-                            : act.type === "PRAKTIKUM"
-                            ? "Nilai Praktikum"
-                            : "Nilai LKPD"}
+                              ? "Nilai Kuis"
+                              : act.type === "HAFALAN"
+                                ? "Nilai Hafalan"
+                                : act.type === "PRAKTIKUM"
+                                  ? "Nilai Praktikum"
+                                  : "Nilai LKPD"}
                         </Button>
                         <Button
                           size="sm"

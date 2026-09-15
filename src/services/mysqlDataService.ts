@@ -9,6 +9,12 @@ import {
   getSubjectsFn,
   saveSubjectFn,
   deleteSubjectFn,
+  getMasterJamListFn,
+  saveMasterJamFn,
+  deleteMasterJamFn,
+  getMasterEkstraListFn,
+  saveMasterEkstraFn,
+  deleteMasterEkstraFn,
   getPengampuFn,
   savePengampuFn,
   deletePengampuFn,
@@ -162,6 +168,8 @@ import {
   ElibraryBookRow,
   P5ProjectRow,
   P5SubmissionRow,
+  MasterJamRow,
+  MasterEkstraRow,
   PaginatedParams,
   PaginatedResult,
   HealthStatusResponse,
@@ -171,6 +179,8 @@ export type {
   DatabaseStats,
   UserRow,
   SubjectRow,
+  MasterJamRow,
+  MasterEkstraRow,
   PengampuRow,
   RuangRow,
   JadwalRow,
@@ -424,6 +434,62 @@ export class MysqlDataService {
       return await deleteSubjectFn({ data: { code } });
     } catch (e) {
       console.warn("deleteSubjectFn failed:", e);
+      return false;
+    }
+  }
+
+  // Master Jam Pelajaran
+  static async getMasterJamList(): Promise<MasterJamRow[]> {
+    try {
+      return await getMasterJamListFn();
+    } catch (e) {
+      console.warn("getMasterJamListFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveMasterJam(data: MasterJamRow): Promise<boolean> {
+    try {
+      return await saveMasterJamFn({ data });
+    } catch (e) {
+      console.warn("saveMasterJamFn failed:", e);
+      return false;
+    }
+  }
+
+  static async deleteMasterJam(id: number): Promise<boolean> {
+    try {
+      return await deleteMasterJamFn({ data: { id } });
+    } catch (e) {
+      console.warn("deleteMasterJamFn failed:", e);
+      return false;
+    }
+  }
+
+  // Master Ekstrakurikuler
+  static async getMasterEkstraList(): Promise<MasterEkstraRow[]> {
+    try {
+      return await getMasterEkstraListFn();
+    } catch (e) {
+      console.warn("getMasterEkstraListFn failed:", e);
+      return [];
+    }
+  }
+
+  static async saveMasterEkstra(data: MasterEkstraRow): Promise<boolean> {
+    try {
+      return await saveMasterEkstraFn({ data });
+    } catch (e) {
+      console.warn("saveMasterEkstraFn failed:", e);
+      return false;
+    }
+  }
+
+  static async deleteMasterEkstra(id: number): Promise<boolean> {
+    try {
+      return await deleteMasterEkstraFn({ data: { id } });
+    } catch (e) {
+      console.warn("deleteMasterEkstraFn failed:", e);
       return false;
     }
   }

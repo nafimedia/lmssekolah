@@ -505,6 +505,29 @@ export interface CbtQuestionRow {
   points: number;
 }
 
+export interface MasterJamRow {
+  id?: number;
+  jam_ke: string;
+  jam_mulai: string;
+  jam_selesai: string;
+  kategori_hari: string;
+  tipe: string;
+  status: string;
+  created_at?: string;
+}
+
+export interface MasterEkstraRow {
+  id?: number;
+  kode: string;
+  nama: string;
+  kategori: string;
+  pembina: string;
+  hari_kegiatan: string;
+  tempat: string;
+  status: string;
+  created_at?: string;
+}
+
 export interface MaterialRow {
   id: string;
   title: string;
@@ -1021,6 +1044,172 @@ export const deletePengampuFn = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[deletePengampuFn Error]:", e);
       return { success: false };
+    }
+  });
+
+// 2B-2. MASTER JAM PELAJARAN (TIME SLOTS)
+export async function createMasterJamTableIfNotExists() {
+  try {
+    const { execute, query } = await import("@/lib/db");
+    await execute(`
+      CREATE TABLE IF NOT EXISTS master_jam_pelajaran (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        jam_ke VARCHAR(50) NOT NULL,
+        jam_mulai VARCHAR(20) NOT NULL,
+        jam_selesai VARCHAR(20) NOT NULL,
+        kategori_hari VARCHAR(100) DEFAULT 'Reguler (Selasa - Kamis)',
+        tipe VARCHAR(50) DEFAULT 'KBM',
+        status VARCHAR(50) DEFAULT 'AKTIF',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Inisialisasi awal murni dari data unik yang sudah ada di tabel jadwal_pelajaran
+    const countRows = await query<any[]>("SELECT COUNT(*) as cnt FROM master_jam_pelajaran");
+    if (!countRows || countRows[0]?.cnt === 0) {
+      const distinctJadwal = await query<{ jam: string }[]>("SELECT DISTINCT jam FROM jadwal_pelajaran");
+      if (distinctJadwal && distinctJadwal.length > 0) {
+        for (const item of distinctJadwal) {
+          const raw = (item.jam || "").trim();
+          const match = raw.match(/^(Jam\s+\d+)\s*\(([\d\.]+)\s*-\s*([\d\.]+)\)/i);
+          if (match) {
+            const jamKe = match[1];
+            const jamMulai = match[2];
+            const jamSelesai = match[3];
+            const isSenin = jamMulai.startsWith("08.00") || jamMulai.startsWith("08.40") || jamMulai.startsWith("09.20") || jamMulai.startsWith("10.20") || jamMulai.startsWith("11.00") || jamMulai.startsWith("11.40") || jamMulai.startsWith("12.50") || jamMulai.startsWith("13.30");
+            const kat = isSenin ? "Senin / Upacara" : "Reguler (Selasa - Kamis)";
+            await execute(
+              "INSERT INTO master_jam_pelajaran (jam_ke, jam_mulai, jam_selesai, kategori_hari, tipe, status) VALUES (?, ?, ?, ?, 'KBM', 'AKTIF')",
+              [jamKe, jamMulai, jamSelesai, kat]
+            );
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[master_jam_pelajaran init error]:", e);
+  }
+}
+
+export const getMasterJamListFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<MasterJamRow[]> => {
+    try {
+      await createMasterJamTableIfNotExists();
+      const { query } = await import("@/lib/db");
+      return await query<MasterJamRow[]>("SELECT * FROM master_jam_pelajaran ORDER BY id ASC");
+    } catch (e) {
+      console.warn("[getMasterJamListFn error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveMasterJamFn = createServerFn({ method: "POST" })
+  .validator((data: MasterJamRow) => data)
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      await createMasterJamTableIfNotExists();
+      const { execute } = await import("@/lib/db");
+      if (data.id) {
+        await execute(
+          "UPDATE master_jam_pelajaran SET jam_ke=?, jam_mulai=?, jam_selesai=?, kategori_hari=?, tipe=?, status=? WHERE id=?",
+          [data.jam_ke, data.jam_mulai, data.jam_selesai, data.kategori_hari, data.tipe || "KBM", data.status || "AKTIF", data.id]
+        );
+      } else {
+        await execute(
+          "INSERT INTO master_jam_pelajaran (jam_ke, jam_mulai, jam_selesai, kategori_hari, tipe, status) VALUES (?, ?, ?, ?, ?, ?)",
+          [data.jam_ke, data.jam_mulai, data.jam_selesai, data.kategori_hari, data.tipe || "KBM", data.status || "AKTIF"]
+        );
+      }
+      return true;
+    } catch (e) {
+      console.error("[saveMasterJamFn Error]:", e);
+      return false;
+    }
+  });
+
+export const deleteMasterJamFn = createServerFn({ method: "POST" })
+  .validator((data: { id: number }) => data)
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM master_jam_pelajaran WHERE id=?", [data.id]);
+      return true;
+    } catch (e) {
+      console.error("[deleteMasterJamFn error]:", e);
+      return false;
+    }
+  });
+
+// 2B-3. MASTER EKSTRAKURIKULER
+export async function createMasterEkstraTableIfNotExists() {
+  try {
+    const { execute } = await import("@/lib/db");
+    await execute(`
+      CREATE TABLE IF NOT EXISTS master_ekstrakurikuler (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        kode VARCHAR(50) UNIQUE NOT NULL,
+        nama VARCHAR(191) NOT NULL,
+        kategori VARCHAR(100) DEFAULT 'Pilihan',
+        pembina VARCHAR(191) DEFAULT '',
+        hari_kegiatan VARCHAR(50) DEFAULT 'Jumat',
+        tempat VARCHAR(100) DEFAULT 'Madrasah',
+        status VARCHAR(50) DEFAULT 'AKTIF',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+  } catch (e) {
+    console.warn("[master_ekstrakurikuler init error]:", e);
+  }
+}
+
+export const getMasterEkstraListFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<MasterEkstraRow[]> => {
+    try {
+      await createMasterEkstraTableIfNotExists();
+      const { query } = await import("@/lib/db");
+      return await query<MasterEkstraRow[]>("SELECT * FROM master_ekstrakurikuler ORDER BY id ASC");
+    } catch (e) {
+      console.warn("[getMasterEkstraListFn error]:", e);
+      return [];
+    }
+  }
+);
+
+export const saveMasterEkstraFn = createServerFn({ method: "POST" })
+  .validator((data: MasterEkstraRow) => data)
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      await createMasterEkstraTableIfNotExists();
+      const { execute } = await import("@/lib/db");
+      if (data.id) {
+        await execute(
+          "UPDATE master_ekstrakurikuler SET kode=?, nama=?, kategori=?, pembina=?, hari_kegiatan=?, tempat=?, status=? WHERE id=?",
+          [data.kode, data.nama, data.kategori || "Pilihan", data.pembina || "", data.hari_kegiatan || "Jumat", data.tempat || "Madrasah", data.status || "AKTIF", data.id]
+        );
+      } else {
+        await execute(
+          "INSERT INTO master_ekstrakurikuler (kode, nama, kategori, pembina, hari_kegiatan, tempat, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          [data.kode, data.nama, data.kategori || "Pilihan", data.pembina || "", data.hari_kegiatan || "Jumat", data.tempat || "Madrasah", data.status || "AKTIF"]
+        );
+      }
+      return true;
+    } catch (e) {
+      console.error("[saveMasterEkstraFn Error]:", e);
+      return false;
+    }
+  });
+
+export const deleteMasterEkstraFn = createServerFn({ method: "POST" })
+  .validator((data: { id: number }) => data)
+  .handler(async ({ data }): Promise<boolean> => {
+    try {
+      const { execute } = await import("@/lib/db");
+      await execute("DELETE FROM master_ekstrakurikuler WHERE id=?", [data.id]);
+      return true;
+    } catch (e) {
+      console.error("[deleteMasterEkstraFn error]:", e);
+      return false;
     }
   });
 

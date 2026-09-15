@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Database, Users, Calendar, ShieldCheck, CheckCircle2, Plus, Edit, Trash2, ArrowUpDown, BookOpen, Layers, Inbox, Download } from "lucide-react";
+import { Database, Users, Calendar, ShieldCheck, CheckCircle2, Plus, Edit, Trash2, ArrowUpDown, BookOpen, Layers, Inbox, Download, Clock, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,14 @@ import { EditWaliKelasDialog } from "./components/EditWaliKelasDialog";
 import { TahunAjaranTab } from "./components/TahunAjaranTab";
 import { KktpSkemaTab } from "./components/KktpSkemaTab";
 import { MasterMapelTab } from "./components/MasterMapelTab";
+import { MasterJamTab } from "./components/MasterJamTab";
+import { MasterEkstraTab } from "./components/MasterEkstraTab";
 
 import { isSameClass, formatClassName } from "@/utils/classNormalization";
 
 export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any } = {}) {
   const isKamad = activeRole === "kamad";
-  const [activeTab, setActiveTab] = useState<string>("pengampu");
+  const [activeTab, setActiveTab] = useState<string>("tahun_ajaran");
   const [dbTeachersList, setDbTeachersList] = useState<string[]>([]);
   const [pengampuList, setPengampuList] = useState<PengampuRow[]>([]);
 
@@ -225,13 +227,15 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         </Button>
       </div>
 
-      {/* Tabs Selector */}
+      {/* Tabs Selector (Diurutkan dari Core ke Spesifik) */}
       <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-xl border border-border/80 w-fit flex-wrap">
         {[
+          { id: "tahun_ajaran", label: "Tahun Ajaran & Semester", icon: Calendar },
           { id: "pengampu", label: "Daftar Kelas & Wali Kelas", icon: Users },
           { id: "master_mapel", label: "Master Mata Pelajaran", icon: BookOpen },
-          { id: "tahun_ajaran", label: "Tahun Ajaran & Semester", icon: Calendar },
+          { id: "master_jam", label: "Master Jam Pelajaran", icon: Clock },
           { id: "kktp_skema", label: "Kriteria Ketuntasan (KKTP)", icon: ShieldCheck },
+          { id: "master_ekstra", label: "Master Ekstrakurikuler", icon: Trophy },
         ].map((t) => (
           <button
             key={t.id}
@@ -248,7 +252,10 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         ))}
       </div>
 
-      {/* Tab 1: Daftar Kelas & Wali Kelas */}
+      {/* Tab 1: Tahun Ajaran & Semester */}
+      {activeTab === "tahun_ajaran" && <TahunAjaranTab isKamad={isKamad} />}
+
+      {/* Tab 2: Daftar Kelas & Wali Kelas */}
       {activeTab === "pengampu" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -333,16 +340,23 @@ export function SiakadMasterDataModule({ activeRole, userProfile }: { activeRole
         </div>
       )}
 
-      {/* Tab 2: Master Mata Pelajaran */}
+      {/* Tab 3: Master Mata Pelajaran */}
       {activeTab === "master_mapel" && (
         <MasterMapelTab isKamad={isKamad} />
       )}
 
-      {/* Tab 3: Tahun Ajaran */}
-      {activeTab === "tahun_ajaran" && <TahunAjaranTab isKamad={isKamad} />}
+      {/* Tab 4: Master Jam Pelajaran */}
+      {activeTab === "master_jam" && (
+        <MasterJamTab isKamad={isKamad} />
+      )}
 
-      {/* Tab 4: KKTP Skema */}
+      {/* Tab 5: KKTP Skema */}
       {activeTab === "kktp_skema" && <KktpSkemaTab isKamad={isKamad} />}
+
+      {/* Tab 6: Master Ekstrakurikuler */}
+      {activeTab === "master_ekstra" && (
+        <MasterEkstraTab isKamad={isKamad} teachersList={dbTeachersList} />
+      )}
 
       {/* Modal Tambah Kelas Baru */}
       <Dialog open={isAddRombelOpen} onOpenChange={setIsAddRombelOpen}>

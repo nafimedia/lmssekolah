@@ -337,30 +337,65 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
     return found?.teacher || "Belum Ada Guru Pengampu";
   }, [selectedMapel, mapelsStateList]);
 
+  // Dokumen Administrasi / Perangkat Pembelajaran Resmi Guru (RPP, Prota, Promes, ATP, KKTP, Silabus, Rubrik)
+  // Memastikan materi KBM / bahan ajar siswa dari Ruang Mengajar (video, audio, teks, slide bab) TIDAK masuk ke sini
+  const perangkatMaterials = useMemo(() => {
+    return realMaterials.filter((m) => {
+      // 1. Jika memiliki topic_id, ini adalah bahan ajar bab/topik siswa dari Ruang Mengajar
+      if (m.topic_id) return false;
+
+      const typeLower = (m.type || "").toLowerCase().trim();
+
+      // 2. Bukan media bahan ajar siswa murni
+      if (
+        typeLower === "video" ||
+        typeLower === "audio" ||
+        typeLower === "gambar" ||
+        typeLower === "url" ||
+        typeLower === "teks" ||
+        typeLower === "ebook"
+      ) {
+        return false;
+      }
+
+      // 3. Harus berupa dokumen perangkat kurikulum / administrasi mengajar
+      const isPerangkatAdmin =
+        typeLower.includes("rpp") ||
+        typeLower.includes("modul ajar") ||
+        typeLower.includes("atp") ||
+        typeLower.includes("cp") ||
+        typeLower.includes("prota") ||
+        typeLower.includes("program tahunan") ||
+        typeLower.includes("promes") ||
+        typeLower.includes("program semester") ||
+        typeLower.includes("kktp") ||
+        typeLower.includes("silabus") ||
+        typeLower.includes("rubrik") ||
+        typeLower.includes("kisi") ||
+        typeLower.includes("perangkat");
+
+      return isPerangkatAdmin;
+    });
+  }, [realMaterials]);
+
   // Filtered Perangkat Materials (Separating Student Reading vs Teacher Admin Documents)
   const filteredMaterials = useMemo(() => {
-    return realMaterials.filter((m) => {
-      if (isSiswa) {
-        const typeLower = (m.type || "").toLowerCase();
-        const isTeacherAdmin =
-          typeLower.includes("prota") ||
-          typeLower.includes("promes") ||
-          typeLower.includes("kktp") ||
-          typeLower.includes("atp") ||
-          typeLower.includes("silabus") ||
-          typeLower.includes("kisi");
-        if (isTeacherAdmin) return false;
-      }
-      const matchJenis = jenisFilter === "semua" || (m.type || "").toLowerCase().includes(jenisFilter.toLowerCase());
+    return perangkatMaterials.filter((m) => {
+      const typeLower = (m.type || "").toLowerCase();
+      const matchJenis = jenisFilter === "semua" || typeLower.includes(jenisFilter.toLowerCase());
+      const isVerified = (m.status || "").toLowerCase().includes("terverifikasi") || (m.status || "").toLowerCase().includes("disahkan");
+      const isRevisi = m.status === "Perlu Revisi";
+      const isPending = !isVerified && !isRevisi;
+
       const matchStatus =
-        isSiswa ||
         statusFilter === "semua" ||
-        (statusFilter === "verified" && m.status === "Terverifikasi Waka") ||
-        (statusFilter === "pending" && m.status !== "Terverifikasi Waka" && m.status !== "Perlu Revisi") ||
-        (statusFilter === "revisi" && m.status === "Perlu Revisi");
+        (statusFilter === "verified" && isVerified) ||
+        (statusFilter === "pending" && isPending) ||
+        (statusFilter === "revisi" && isRevisi);
+
       return matchJenis && matchStatus;
     });
-  }, [realMaterials, jenisFilter, statusFilter, isSiswa]);
+  }, [perangkatMaterials, jenisFilter, statusFilter]);
 
   return (
     <div className="space-y-4">
@@ -371,7 +406,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
             <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             {isSiswa
               ? `Materi & Buku Pelajaran Siswa — Tingkat ${kelas}`
-              : "Perangkat Pembelajaran & Modul Ajar"}
+              : "Perangkat Pembelajaran & Administrasi Guru"}
           </h1>
           {isSiswa && (
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -439,7 +474,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
           <div className="min-w-0">
             <p className="text-[10px] text-muted-foreground font-medium leading-none">Terverifikasi</p>
             <p className="text-sm font-bold text-foreground leading-tight mt-0.5">
-              {realMaterials.filter((m: any) => (m.status || "").includes("Terverifikasi")).length} Dokumen
+              {perangkatMaterials.filter((m: any) => (m.status || "").toLowerCase().includes("terverifikasi") || (m.status || "").toLowerCase().includes("disahkan")).length} Dokumen
             </p>
           </div>
         </div>
@@ -572,7 +607,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                         className={`h-7 text-[11px] font-bold ${statusFilter === "semua" ? "bg-emerald-600 text-white" : ""}`}
                         onClick={() => setStatusFilter("semua")}
                       >
-                        Semua ({realMaterials.length})
+                        Semua ({perangkatMaterials.length})
                       </Button>
                       <Button
                         size="sm"
@@ -580,7 +615,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                         className={`h-7 text-[11px] font-bold ${statusFilter === "pending" ? "bg-amber-600 text-white" : ""}`}
                         onClick={() => setStatusFilter("pending")}
                       >
-                        ⏳ Menunggu ({realMaterials.filter((m) => m.status !== "Terverifikasi Waka" && m.status !== "Perlu Revisi").length})
+                        ⏳ Menunggu ({perangkatMaterials.filter((m) => !(m.status || "").toLowerCase().includes("terverifikasi") && !(m.status || "").toLowerCase().includes("disahkan") && m.status !== "Perlu Revisi").length})
                       </Button>
                       <Button
                         size="sm"
@@ -588,7 +623,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
                         className={`h-7 text-[11px] font-bold ${statusFilter === "verified" ? "bg-emerald-600 text-white" : ""}`}
                         onClick={() => setStatusFilter("verified")}
                       >
-                        ✅ Disetujui ({realMaterials.filter((m) => m.status === "Terverifikasi Waka").length})
+                        ✅ Disetujui ({perangkatMaterials.filter((m) => (m.status || "").toLowerCase().includes("terverifikasi") || (m.status || "").toLowerCase().includes("disahkan")).length})
                       </Button>
                     </div>
 

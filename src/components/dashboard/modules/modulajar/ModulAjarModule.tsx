@@ -58,7 +58,23 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
       ]);
       setCompletions(compList || []);
       if (items && items.length > 0) {
-        const dbFormatted = items.map((m) => ({
+        // Hanya ambil materi bahan ajar belajar (bukan dokumen perangkat kurikulum prota/promes/silabus/atp/kktp)
+        const learningMaterialsOnly = items.filter((m) => {
+          const typeLower = (m.type || "").toLowerCase().trim();
+          const isTeacherAdmin =
+            typeLower.includes("prota") ||
+            typeLower.includes("program tahunan") ||
+            typeLower.includes("promes") ||
+            typeLower.includes("program semester") ||
+            typeLower.includes("kktp") ||
+            typeLower.includes("atp") ||
+            typeLower.includes("silabus") ||
+            typeLower.includes("rubrik") ||
+            typeLower.includes("kisi");
+          return !isTeacherAdmin;
+        });
+
+        const dbFormatted = learningMaterialsOnly.map((m) => ({
           id: String(m.id),
           title: m.title,
           mapel: m.subject_name || "Mata Pelajaran",
@@ -234,14 +250,27 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     }
   };
 
-  const filteredModul = modulList.filter((m) => {
-    const matchJenjang = selectedJenjang === "semua" || m.jenjang === selectedJenjang;
-    const matchStatus =
-      selectedStatusFilter === "semua" ||
-      (selectedStatusFilter === "verified" && m.status === "Terverifikasi Waka") ||
-      (selectedStatusFilter === "pending" && m.status !== "Terverifikasi Waka");
-    return matchJenjang && matchStatus;
-  });
+  // Filter bahan ajar yang dapat diakses:
+  // Guru hanya mengelola bahan ajar miliknya (Opsi B: Isolasi per akun guru), sedangkan Pimpinan (Waka/Kamad/Admin) melihat semua
+  const availableModulList = useMemo(() => {
+    if (!isGuru) return modulList;
+    return modulList.filter((m) => {
+      const uploader = (m.teacher || "").toLowerCase().trim();
+      const myName = currentTeacherName.toLowerCase().trim();
+      return !uploader || uploader === "guru pengampu" || uploader === myName || uploader.includes(myName) || myName.includes(uploader);
+    });
+  }, [modulList, isGuru, currentTeacherName]);
+
+  const filteredModul = useMemo(() => {
+    return availableModulList.filter((m) => {
+      const matchJenjang = selectedJenjang === "semua" || m.jenjang === selectedJenjang;
+      const matchStatus =
+        selectedStatusFilter === "semua" ||
+        (selectedStatusFilter === "verified" && m.status === "Terverifikasi Waka") ||
+        (selectedStatusFilter === "pending" && m.status !== "Terverifikasi Waka");
+      return matchJenjang && matchStatus;
+    });
+  }, [availableModulList, selectedJenjang, selectedStatusFilter]);
 
   // Calculate student gating / sequence lock
   const materialsWithLockState = useMemo(() => {
@@ -291,8 +320,8 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
     return result.sort((a, b) => (a.sequence_order || 1) - (b.sequence_order || 1));
   }, [filteredModul, isSiswa, completedMaterialIds]);
 
-  const verifiedCount = modulList.filter((m) => m.status === "Terverifikasi Waka").length;
-  const pendingCount = modulList.length - verifiedCount;
+  const verifiedCount = availableModulList.filter((m) => m.status === "Terverifikasi Waka").length;
+  const pendingCount = availableModulList.length - verifiedCount;
 
   return (
     <div className="space-y-4">
@@ -301,7 +330,11 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            {isSiswa ? "Bahan Ajar & Materi Belajar KBM" : "Pustaka Bahan Ajar & Modul Kurikulum"}
+            {isSiswa
+              ? "Bahan Ajar & Materi Belajar KBM"
+              : isGuru
+              ? "Pustaka Bahan Ajar Saya"
+              : "Pustaka Bahan Ajar & Modul Kurikulum"}
           </h1>
         </div>
 
@@ -324,7 +357,7 @@ export function ModulAjarModule({ activeRole, userProfile }: { activeRole?: stri
           </div>
           <div className="min-w-0">
             <p className="text-[10px] text-muted-foreground font-medium leading-none">Total Bahan Ajar</p>
-            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{modulList.length} Berkas</p>
+            <p className="text-sm font-bold text-foreground leading-tight mt-0.5">{availableModulList.length} Berkas</p>
           </div>
         </div>
 

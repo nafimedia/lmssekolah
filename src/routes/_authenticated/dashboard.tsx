@@ -369,6 +369,7 @@ const ROLE_PERMISSIONS: Record<
     allowedMenus: [
       { key: "beranda", label: "Dashboard Guru", group: "Ruang Mengajar" },
       { key: "ruang_mengajar", label: "Ruang Mengajar", group: "Ruang Mengajar" },
+      { key: "modul_ajar", label: "Bahan Ajar", group: "Ruang Mengajar" },
       { key: "asisten_ai", label: "Asisten AI Pembelajaran", group: "Ruang Mengajar" },
       { key: "cbt", label: "CBT & Bank Soal", group: "Evaluasi & Penilaian" },
       { key: "nilai", label: "Laporan Hasil Belajar", group: "Evaluasi & Penilaian" },

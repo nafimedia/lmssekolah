@@ -28,6 +28,7 @@ import { RiwayatKbmSection } from "./components/RiwayatKbmSection";
 import { TambahJurnalDialog } from "./components/TambahJurnalDialog";
 
 import { isSameClass } from "@/utils/classNormalization";
+import { isSameTeacher } from "@/utils/teacherNameResolver";
 
 export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
   const isKamad = activeRole === "kamad";
@@ -85,6 +86,7 @@ export function RuangMengajarModule({ activeRole, userProfile }: { activeRole?: 
       const raw = (targetGuruRaw || "").trim();
       if (!raw) return false;
       if (myNip && raw.includes(myNip)) return true;
+      if (isSameTeacher(raw, currentTeacherName)) return true;
 
       const cleanTarget = cleanName(raw);
       if (!cleanTarget || !myCleanName) return false;

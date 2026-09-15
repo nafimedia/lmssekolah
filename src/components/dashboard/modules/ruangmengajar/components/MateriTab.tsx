@@ -45,6 +45,7 @@ import { MysqlDataService, LearningTopicRow } from "@/services/mysqlDataService"
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { isSameSubject } from "@/utils/subjectNormalization";
 import { isSameClass } from "@/utils/classNormalization";
+import { isSameTeacher } from "@/utils/teacherNameResolver";
 import { ViewMaterialDialog, MaterialDetail } from "./ViewMaterialDialog";
 import { UploadModulDialog, UploadModulPayload } from "@/components/dashboard/modules/modulajar/components/UploadModulDialog";
 import { PickElibraryDialog, ElibraryBookItem } from "./PickElibraryDialog";
@@ -93,6 +94,7 @@ export function MateriTab({ activeRombel, activeMapel, activeRole }: MateriTabPr
     const raw = (targetGuruRaw || "").trim();
     if (!raw) return true;
     if (myNip && raw.includes(myNip)) return true;
+    if (isSameTeacher(raw, currentTeacherName)) return true;
 
     const cleanTarget = cleanTeacherName(raw);
     if (!cleanTarget || !myCleanName) return true;

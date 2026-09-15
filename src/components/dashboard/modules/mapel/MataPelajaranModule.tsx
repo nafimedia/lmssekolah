@@ -24,6 +24,7 @@ import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { INITIAL_MASTER_MAPEL } from "@/services/masterMapelService";
 import { isSubjectAllowedForUser } from "@/services/teacherSubjectAccess";
+import { resolveCanonicalTeacherName } from "@/utils/teacherNameResolver";
 import { UploadPerangkatDialog } from "./components/UploadPerangkatDialog";
 
 export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: string; userProfile?: any }) {
@@ -114,6 +115,22 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
     if (!s1 || !s2) return false;
     if (s1 === s2) return true;
 
+    // ISOLASI KETAT: TIK vs MATEMATIKA
+    // 1. Cek dulu apakah Matematika
+    const isS1Mtk = s1.includes("matematika") || s1 === "mtk";
+    const isS2Mtk = s2.includes("matematika") || s2 === "mtk";
+
+    // 2. Cek apakah TIK / Informatika (TIDAK BOLEH jika itu Matematika)
+    const isS1Tik = !isS1Mtk && (s1 === "tik" || s1.includes("informatika") || s1.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(schedMapel));
+    const isS2Tik = !isS2Mtk && (s2 === "tik" || s2.includes("informatika") || s2.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(targetMapel));
+
+    if (isS1Tik || isS2Tik) {
+      return isS1Tik && isS2Tik;
+    }
+    if (isS1Mtk || isS2Mtk) {
+      return isS1Mtk && isS2Mtk;
+    }
+
     // Standard school subject aliases
     if ((s1 === "ipa" || s1 === "ilmupendidikanalam") && (s2 === "ipa" || s2 === "ilmupendidikanalam")) return true;
     if ((s1 === "ips" || s1 === "ilmupendidikansosial") && (s2 === "ips" || s2 === "ilmupendidikansosial")) return true;
@@ -125,8 +142,14 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
     if ((s1.includes("akidah") || s1.includes("akhlak")) && (s2.includes("akidah") || s2.includes("akhlak"))) return true;
     if ((s1.includes("sejarah") || s1.includes("ski")) && (s2.includes("sejarah") || s2.includes("ski"))) return true;
     if ((s1.includes("kewarganegaraan") || s1.includes("pkn")) && (s2.includes("kewarganegaraan") || s2.includes("pkn"))) return true;
+    if (s1.includes("arab") && s2.includes("arab")) return true;
 
-    return s1.includes(s2) || s2.includes(s1);
+    // Substring umum hanya jika kedua kata cukup panjang (>= 4 karakter) agar aman dari collision singkatan
+    if (s1.length >= 4 && s2.length >= 4) {
+      return s1.includes(s2) || s2.includes(s1);
+    }
+
+    return false;
   };
 
   // Smart teacher name deduplication (normalizes honorifics, degrees, and typo tolerance)
@@ -142,12 +165,32 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
 
   // Dynamic Mapel list computed for the selected Grade (Kelas VII, VIII, IX)
   const mapelsStateList = useMemo(() => {
-    const baseList = (rawSubjects && rawSubjects.length >= 5) ? rawSubjects : INITIAL_MASTER_MAPEL;
+    let baseList = (rawSubjects && rawSubjects.length >= 5) ? [...rawSubjects] : [...INITIAL_MASTER_MAPEL];
+
+    // Pastikan Informatika / TIK selalu hadir di daftar mapel
+    const hasTik = baseList.some((r: any) => {
+      const name = (r.subject_name || r.name || "").toLowerCase();
+      return name.includes("tik") || name.includes("informatika");
+    });
+    if (!hasTik) {
+      const tikMaster = INITIAL_MASTER_MAPEL.find((m) => m.name.toLowerCase().includes("tik"));
+      if (tikMaster) {
+        baseList.push({
+          id: 999,
+          code: tikMaster.code,
+          subject_name: tikMaster.name,
+          name: tikMaster.name,
+          category: tikMaster.category,
+          jp_per_week: 2,
+          teacher: tikMaster.teacher,
+        });
+      }
+    }
 
     return baseList.map((r: any) => {
       const subjectName = r.subject_name || r.name || "Mata Pelajaran";
       const masterMatch = INITIAL_MASTER_MAPEL.find(
-        (m) => m.name.toLowerCase() === subjectName.toLowerCase()
+        (m) => isSubjectNameMatch(m.name, subjectName)
       );
 
       // 1. First priority: Real schedule matching the current grade (Tingkat VII/VIII/IX)
@@ -166,10 +209,10 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
         // Use ONLY teachers assigned to this grade schedule
         const uniqueGradeMap = new Map<string, string>();
         gradeSchedules.forEach((s: any) => {
-          const gName = s.guru.trim();
-          const k = normalizeTeacherKey(gName);
+          const canonical = resolveCanonicalTeacherName(s.guru);
+          const k = normalizeTeacherKey(canonical);
           if (!uniqueGradeMap.has(k)) {
-            uniqueGradeMap.set(k, gName);
+            uniqueGradeMap.set(k, canonical);
           }
         });
         foundTeachers = Array.from(uniqueGradeMap.values());
@@ -182,7 +225,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
               ((u.subject_specialty && isSubjectNameMatch(u.subject_specialty, subjectName)) ||
                 (u.assignedSubject && isSubjectNameMatch(u.assignedSubject, subjectName)))
           )
-          .map((u: any) => (u.full_name || u.name).trim());
+          .map((u: any) => resolveCanonicalTeacherName(u.full_name || u.name));
 
         const uniqueUsersMap = new Map<string, string>();
         matchingFromUsers.forEach((uName: string) => {
@@ -194,11 +237,15 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
         foundTeachers = Array.from(uniqueUsersMap.values());
       }
 
-      // Final teacher string
+      // Final teacher string with canonical standard
+      const defaultTeacher = masterMatch?.teacher
+        ? resolveCanonicalTeacherName(masterMatch.teacher)
+        : (r.teacher ? resolveCanonicalTeacherName(r.teacher) : "Tim Guru Pengampu");
+
       const assignedTeacher =
         foundTeachers.length > 0
           ? foundTeachers.join(", ")
-          : (r.teacher || masterMatch?.teacher || "Tim Guru Pengampu");
+          : defaultTeacher;
 
       return {
         code: r.code || masterMatch?.code || `MP-${r.id || Math.random()}`,
@@ -333,7 +380,7 @@ export function MataPelajaranModule({ activeRole, userProfile }: { activeRole?: 
 
   const selectedMapelTeacher = useMemo(() => {
     if (!selectedMapel) return "Belum Ada Guru Pengampu";
-    const found = mapelsStateList.find((m) => m.name.toLowerCase() === selectedMapel.toLowerCase());
+    const found = mapelsStateList.find((m) => isSubjectNameMatch(m.name, selectedMapel));
     return found?.teacher || "Belum Ada Guru Pengampu";
   }, [selectedMapel, mapelsStateList]);
 

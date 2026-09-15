@@ -17,6 +17,7 @@ import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { CardStatsSkeleton } from "@/components/dashboard/components/ModuleSkeleton";
 import { normalizeRombelName } from "@/utils/classNormalization";
+import { isSameTeacher } from "@/utils/teacherNameResolver";
 
 interface GuruDashboardViewProps {
   userName: string;
@@ -67,6 +68,7 @@ export function GuruDashboardView({ userName, currentDayName, formattedTime, set
           const raw = (targetGuruRaw || "").trim();
           if (!raw) return false;
           if (myNip && raw.includes(myNip)) return true;
+          if (isSameTeacher(raw, myRawName)) return true;
 
           const cleanTarget = cleanName(raw);
           if (!cleanTarget || !myCleanName) return false;

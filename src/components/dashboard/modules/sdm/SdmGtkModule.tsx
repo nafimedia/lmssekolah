@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { exportToExcelXml } from "@/utils/excelExporter";
+import { resolveCanonicalTeacherName, isSameTeacher } from "@/utils/teacherNameResolver";
 
 import { AddGtkDialog } from "./components/AddGtkDialog";
 import { EditGtkDialog } from "./components/EditGtkDialog";
@@ -112,19 +113,18 @@ export function SdmGtkModule({
 
           if (teachers.length > 0) {
             const formatted = teachers.map((u: any) => {
-              const uNameLower = (u.full_name || "").toLowerCase().trim();
+              const uName = u.full_name || "";
+              const canonicalName = resolveCanonicalTeacherName(uName);
 
               // Sesi tatap muka dari jadwal pelajaran real (1 sesi = 1 JP)
               const scheduledJp = (schedules || []).filter((s: any) => {
-                const guru = (s.guru || "").toLowerCase().trim();
-                return guru && (guru.includes(uNameLower) || uNameLower.includes(guru));
+                return s.guru && isSameTeacher(s.guru, uName);
               }).length;
 
               // Jam dari matriks pengampu
               const matriksJp = (pengampuList || [])
                 .filter((p: any) => {
-                  const guru = (p.guru || "").toLowerCase().trim();
-                  return guru && (guru.includes(uNameLower) || uNameLower.includes(guru));
+                  return p.guru && isSameTeacher(p.guru, uName);
                 })
                 .reduce((sum: number, p: any) => {
                   const jpVal = parseInt(p.jam || "0", 10) || 0;
@@ -155,7 +155,7 @@ export function SdmGtkModule({
                 id: String(u.id || u.email),
                 nip: u.nis_nip || "-",
                 npk: u.nis_nip ? u.nis_nip.substring(0, 11) : "-",
-                name: u.full_name,
+                name: canonicalName,
                 role: u.role || "guru",
                 golongan: "-",
                 statusKepegawaian: "PNS" as any,

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
 import { isSameClass } from "@/utils/classNormalization";
+import { isSameTeacher } from "@/utils/teacherNameResolver";
 
 interface KbmHeaderBannerProps {
   activeRombel: string;
@@ -50,6 +51,7 @@ export function KbmHeaderBanner({ activeRombel, activeMapel, activeTab, onSelect
       const raw = (targetGuruRaw || "").trim();
       if (!raw) return false;
       if (myNip && raw.includes(myNip)) return true;
+      if (isSameTeacher(raw, me?.full_name)) return true;
       const cleanTarget = cleanName(raw);
       if (!cleanTarget || !myCleanName) return false;
       if (cleanTarget === myCleanName) return true;

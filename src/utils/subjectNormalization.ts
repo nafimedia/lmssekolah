@@ -29,8 +29,26 @@ export function isSameSubject(subA: string, subB: string): boolean {
   if (!subA || !subB) return false;
   const normA = normalizeSubjectName(subA);
   const normB = normalizeSubjectName(subB);
-  if (normA && normB && normA.toLowerCase() === normB.toLowerCase()) return true;
+  if (normA && normB) {
+    return normA.toLowerCase() === normB.toLowerCase();
+  }
+
   const a = subA.toLowerCase().trim();
   const b = subB.toLowerCase().trim();
-  return a.includes(b) || b.includes(a);
+  if (a === b) return true;
+
+  // Isolasi ketat TIK vs Matematika agar kata "matematika" tidak menabrak substring "tik"
+  const isAMtk = a.includes("matematika") || a === "mtk";
+  const isBMtk = b.includes("matematika") || b === "mtk";
+
+  const isATik = !isAMtk && (a === "tik" || a.includes("informatika") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(subA));
+  const isBTik = !isBMtk && (b === "tik" || b.includes("informatika") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(subB));
+
+  if (isATik || isBTik) return isATik && isBTik;
+  if (isAMtk || isBMtk) return isAMtk && isBMtk;
+
+  if (a.length >= 4 && b.length >= 4) {
+    return a.includes(b) || b.includes(a);
+  }
+  return false;
 }

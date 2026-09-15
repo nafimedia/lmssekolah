@@ -141,10 +141,33 @@ export function isSubjectAllowedForUser(subjectName: string, user?: UserSession 
   const assigned = getTeacherAssignedSubjects(user);
   if (assigned === null) return true; // Akses penuh (Admin/Semua Mapel)
 
-  const cleanTarget = subjectName.toLowerCase().trim();
-  return assigned.some(
-    (s) => s.toLowerCase().trim() === cleanTarget || cleanTarget.includes(s.toLowerCase().trim()) || s.toLowerCase().trim().includes(cleanTarget)
-  );
+  const s2 = subjectName.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+  if (!s2) return false;
+
+  return assigned.some((rawS) => {
+    const s1 = rawS.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+    if (!s1) return false;
+    if (s1 === s2) return true;
+
+    // Isolasi ketat TIK vs Matematika agar kata "matematika" tidak mencocokkan "tik"
+    const isS1Mtk = s1.includes("matematika") || s1 === "mtk";
+    const isS2Mtk = s2.includes("matematika") || s2 === "mtk";
+
+    const isS1Tik = !isS1Mtk && (s1 === "tik" || s1.includes("informatika") || s1.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(rawS));
+    const isS2Tik = !isS2Mtk && (s2 === "tik" || s2.includes("informatika") || s2.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(subjectName));
+
+    if (isS1Tik || isS2Tik) {
+      return isS1Tik && isS2Tik;
+    }
+    if (isS1Mtk || isS2Mtk) {
+      return isS1Mtk && isS2Mtk;
+    }
+
+    if (s1.length >= 4 && s2.length >= 4) {
+      return s1.includes(s2) || s2.includes(s1);
+    }
+    return false;
+  });
 }
 
 /**

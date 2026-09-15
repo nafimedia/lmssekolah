@@ -23,7 +23,7 @@ export const INITIAL_MASTER_MAPEL: MasterMapelItem[] = [
   { code: "UMM-06", name: "Pendidikan Kewarganegaraan", category: "Umum", jp: "2 JP", target: "Semua Tingkat", teacher: "ANGGUN NOVTALIA BERLIAN, S.Pd", icon: "🇮🇩" },
   { code: "UMM-07", name: "Pendidikan Jasmani, Olahraga dan Kesehatan", category: "Umum", jp: "2 JP", target: "Semua Tingkat", teacher: "NUR ROCHMAN SHODIQ, S.Pd.I", icon: "⚽" },
   { code: "UMM-08", name: "Prakarya dan Seni Budaya", category: "Umum", jp: "2 JP", target: "Semua Tingkat", teacher: "ISNAENI HASANAH, S.Pd.I", icon: "🎨" },
-  { code: "UMM-09", name: "Informatika (TIK)", category: "Umum", jp: "2 JP", target: "Semua Tingkat", teacher: "MITA MUNAWAROH, S.Kom", icon: "💻" },
+  { code: "UMM-09", name: "TIK (Teknologi Informasi dan Komunikasi)", category: "Umum", jp: "2 JP", target: "Semua Tingkat", teacher: "MITA MUNAWAROH, S.Kom", icon: "💻" },
   { code: "MLK-01", name: "Bahasa Jawa", category: "Muatan Lokal", jp: "2 JP", target: "Semua Tingkat", teacher: "RINDANG FARIHA IDANA, S.Pd", icon: "📜" },
   { code: "PGB-01", name: "Bimbingan dan Konseling", category: "Pengembangan Diri", jp: "1 JP", target: "Semua Tingkat", teacher: "ASROR HIDAYAT, S.Pd", icon: "🤝" },
 ];

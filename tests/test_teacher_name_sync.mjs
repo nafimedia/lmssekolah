@@ -10,9 +10,9 @@ function isSubjectNameMatch(schedMapel, targetMapel) {
   const isS1Mtk = s1.includes("matematika") || s1 === "mtk";
   const isS2Mtk = s2.includes("matematika") || s2 === "mtk";
 
-  // 2. Cek apakah TIK / Informatika (TIDAK BOLEH jika itu Matematika)
-  const isS1Tik = !isS1Mtk && (s1 === "tik" || s1.includes("informatika") || s1.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(schedMapel));
-  const isS2Tik = !isS2Mtk && (s2 === "tik" || s2.includes("informatika") || s2.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(targetMapel));
+  // 2. Cek apakah TIK / Teknologi Informasi dan Komunikasi (TIDAK BOLEH jika itu Matematika)
+  const isS1Tik = !isS1Mtk && (s1 === "tik" || s1.includes("teknologiinformasi") || s1.includes("komunikasi") || s1.includes("informatika") || s1.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(schedMapel));
+  const isS2Tik = !isS2Mtk && (s2 === "tik" || s2.includes("teknologiinformasi") || s2.includes("komunikasi") || s2.includes("informatika") || s2.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(targetMapel));
 
   if (isS1Tik || isS2Tik) {
     return isS1Tik && isS2Tik;
@@ -56,8 +56,8 @@ console.log("✅ [PASS] Canonical Teacher Name Resolver passed!");
 console.log("👉 [TEST 2] isSubjectNameMatch Strict Isolation...");
 assert.equal(isSubjectNameMatch("TIK", "Matematika"), false);
 assert.equal(isSubjectNameMatch("Matematika", "TIK"), false);
-assert.equal(isSubjectNameMatch("Informatika", "Informatika (TIK)"), true);
-assert.equal(isSubjectNameMatch("TIK", "Informatika (TIK)"), true);
+assert.equal(isSubjectNameMatch("TIK", "TIK (Teknologi Informasi dan Komunikasi)"), true);
+assert.equal(isSubjectNameMatch("Teknologi Informasi dan Komunikasi", "TIK (Teknologi Informasi dan Komunikasi)"), true);
 assert.equal(isSubjectNameMatch("Matematika", "Matematika"), true);
 assert.equal(isSubjectNameMatch("MTK", "Matematika"), true);
 console.log("✅ [PASS] isSubjectNameMatch Strict Isolation passed!");

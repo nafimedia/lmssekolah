@@ -19,7 +19,7 @@ export function normalizeSubjectName(raw: string): string {
   if (s.includes("pancasila") || s.includes("kewarganegaraan") || s.includes("ppkn") || s.includes("pkn")) return "Pendidikan Kewarganegaraan";
   if (s.includes("jasmani") || s.includes("pjok") || s.includes("penjas") || s.includes("olahraga")) return "Pendidikan Jasmani, Olahraga dan Kesehatan";
   if (s.includes("seni") || s.includes("prakarya") || s.includes("sbk")) return "Prakarya dan Seni Budaya";
-  if (s.includes("informatika") || s.includes("tik") || s.includes("komputer")) return "Informatika";
+  if (!s.includes("matematika") && (s.includes("teknologi informasi") || s.includes("tik") || s.includes("komputer") || s.includes("informatika"))) return "TIK (Teknologi Informasi dan Komunikasi)";
   if (s.includes("jawa")) return "Bahasa Jawa";
   if (s.includes("konseling") || s.includes("bk")) return "Bimbingan dan Konseling";
   return raw.trim();

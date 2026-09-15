@@ -15,7 +15,7 @@ export const ALL_SCHOOL_SUBJECTS = [
   "Pendidikan Kewarganegaraan",
   "Pendidikan Jasmani, Olahraga dan Kesehatan",
   "Seni Budaya",
-  "Informatika",
+  "TIK (Teknologi Informasi dan Komunikasi)",
   "Bahasa Jawa",
   "Bimbingan dan Konseling",
 ];
@@ -153,8 +153,8 @@ export function isSubjectAllowedForUser(subjectName: string, user?: UserSession 
     const isS1Mtk = s1.includes("matematika") || s1 === "mtk";
     const isS2Mtk = s2.includes("matematika") || s2 === "mtk";
 
-    const isS1Tik = !isS1Mtk && (s1 === "tik" || s1.includes("informatika") || s1.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(rawS));
-    const isS2Tik = !isS2Mtk && (s2 === "tik" || s2.includes("informatika") || s2.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(subjectName));
+    const isS1Tik = !isS1Mtk && (s1 === "tik" || s1.includes("teknologiinformasi") || s1.includes("komunikasi") || s1.includes("informatika") || s1.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(rawS));
+    const isS2Tik = !isS2Mtk && (s2 === "tik" || s2.includes("teknologiinformasi") || s2.includes("komunikasi") || s2.includes("informatika") || s2.includes("komputer") || /(^|[^a-z0-9])tik([^a-z0-9]|$)/i.test(subjectName));
 
     if (isS1Tik || isS2Tik) {
       return isS1Tik && isS2Tik;

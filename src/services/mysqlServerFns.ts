@@ -884,12 +884,18 @@ export const getSubjectsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<SubjectRow[]> => {
     try {
       const { query, execute } = await import("@/lib/db");
-      // Pastikan entri resmi Informatika (TIK) terdaftar di tabel subjects database
+      // Pastikan entri resmi TIK (Teknologi Informasi dan Komunikasi) terdaftar di tabel subjects database
       await execute(`
         INSERT INTO subjects (code, name, teacher_name, grade_level, created_at)
-        SELECT 'UMM-09', 'Informatika (TIK)', 'MITA MUNAWAROH, S.Kom', 'Semua Tingkat', NOW()
+        SELECT 'UMM-09', 'TIK (Teknologi Informasi dan Komunikasi)', 'MITA MUNAWAROH, S.Kom', 'Semua Tingkat', NOW()
         FROM DUAL
         WHERE NOT EXISTS (SELECT 1 FROM subjects WHERE code = 'UMM-09')
+      `).catch(() => {});
+
+      await execute(`
+        UPDATE subjects 
+        SET name = 'TIK (Teknologi Informasi dan Komunikasi)', teacher_name = 'MITA MUNAWAROH, S.Kom'
+        WHERE code = 'UMM-09' AND name != 'TIK (Teknologi Informasi dan Komunikasi)'
       `).catch(() => {});
 
       return await query<SubjectRow[]>("SELECT * FROM subjects ORDER BY code ASC");

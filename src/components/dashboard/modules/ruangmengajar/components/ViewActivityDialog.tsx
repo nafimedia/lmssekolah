@@ -3,7 +3,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Users, Brain, CheckCircle2, Save, Check, Lock, ExternalLink, MessageSquare, Send, Star, ChevronDown, ChevronUp, FlaskConical, BookOpen, Target, PenTool, ArrowRight } from "lucide-react";
+import {
+  FileText,
+  Users,
+  Brain,
+  CheckCircle2,
+  Save,
+  Check,
+  Lock,
+  ExternalLink,
+  MessageSquare,
+  Send,
+  Star,
+  ChevronDown,
+  ChevronUp,
+  FlaskConical,
+  BookOpen,
+  Target,
+  PenTool,
+  ArrowRight,
+  Volume2,
+  Image as ImageIcon,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService, LkpdDiscussionRow, PeerAssessmentRow } from "@/services/mysqlDataService";
 import { MysqlAuthService } from "@/services/mysqlAuthService";
@@ -13,7 +35,7 @@ import { QuizQuestionType, QUIZ_QUESTION_TYPE_CONFIG } from "@/types/quiz";
 export interface ActivityDetail {
   id: string;
   title: string;
-  type: "LKPD" | "TUGAS_KELOMPOK" | "QUIZ" | string;
+  type: "LKPD" | "TUGAS_KELOMPOK" | "QUIZ" | "REFLEKSI" | string;
   instructions?: string;
   dueDate: string;
   status: string;
@@ -258,6 +280,7 @@ export function ViewActivityDialog({
                 {activity.type === "TUGAS_KELOMPOK" && <Users className="h-3 w-3 text-blue-600" />}
                 {activity.type === "TUGAS_MANDIRI" && <PenTool className="h-3 w-3 text-emerald-600" />}
                 {activity.type === "QUIZ" && <Brain className="h-3 w-3 text-purple-600" />}
+                {activity.type === "REFLEKSI" && <Sparkles className="h-3 w-3 text-amber-500" />}
                 {activity.type === "PRAKTIKUM" && <FlaskConical className="h-3 w-3 text-teal-600" />}
                 {activity.type === "PROYEK_P5" && <Target className="h-3 w-3 text-rose-600" />}
                 {activity.type === "HAFALAN" && <BookOpen className="h-3 w-3 text-indigo-600" />}
@@ -269,6 +292,8 @@ export function ViewActivityDialog({
                   ? "✍️ Tugas Mandiri"
                   : activity.type === "QUIZ"
                   ? "⚡ Kuis Formatif"
+                  : activity.type === "REFLEKSI"
+                  ? "✨ Refleksi & Umpan Balik"
                   : activity.type === "PRAKTIKUM"
                   ? "🔬 Praktikum & Lab"
                   : activity.type === "PROYEK_P5"
@@ -356,25 +381,26 @@ export function ViewActivityDialog({
             </div>
           )}
 
-          {/* Tampilan Soal Kuis Formatif (Multi-Type / Campuran) */}
-          {activity.type === "QUIZ" && parsedQuizQuestions.length > 0 && (
+          {/* Tampilan Soal Kuis Formatif & Refleksi Pembelajaran */}
+          {(activity.type === "QUIZ" || activity.type === "REFLEKSI") && parsedQuizQuestions.length > 0 && (
             <div className="p-4 rounded-xl border border-purple-200 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-950/20 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-xs text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
-                  <Brain className="h-4 w-4 text-purple-600" /> Butir Soal Kuis Formatif ({parsedQuizQuestions.length} Butir Soal)
+                  {activity.type === "REFLEKSI" ? <Sparkles className="h-4 w-4 text-amber-500" /> : <Brain className="h-4 w-4 text-purple-600" />}
+                  {activity.type === "REFLEKSI" ? "Butir Instrumen Refleksi & Umpan Balik" : "Butir Soal Kuis Formatif"} ({parsedQuizQuestions.length} Butir)
                 </h4>
                 <Badge variant="outline" className="text-[10px] font-bold border-purple-400 text-purple-700 dark:text-purple-300">
-                  Total {parsedQuizQuestions.reduce((acc: number, q: any) => acc + (Number(q.points) || 10), 0)} Poin
+                  {activity.type === "REFLEKSI" ? "Non-Graded (Survei Respon)" : `Total ${parsedQuizQuestions.reduce((acc: number, q: any) => acc + (Number(q.points) || 10), 0)} Poin`}
                 </Badge>
               </div>
 
-              <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+              <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
                 {parsedQuizQuestions.map((q: any, idx: number) => {
                   const qType = (q.type as QuizQuestionType) || "PG";
                   const cfg = QUIZ_QUESTION_TYPE_CONFIG[qType] || QUIZ_QUESTION_TYPE_CONFIG.PG;
 
                   return (
-                    <div key={idx} className="p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-card text-xs space-y-2 shadow-2xs">
+                    <div key={idx} className="p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-card text-xs space-y-2.5 shadow-2xs">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-purple-700 dark:text-purple-300">
@@ -388,6 +414,36 @@ export function ViewActivityDialog({
                           {q.points || 10} Poin
                         </Badge>
                       </div>
+
+                      {/* Media Lampiran Soal (Audio & Gambar) */}
+                      {(q.audio_url || q.image_url) && (
+                        <div className="flex flex-wrap items-center gap-3 p-2 rounded-lg bg-muted/30 border border-border/60">
+                          {q.audio_url && (
+                            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                              <Volume2 className="h-4 w-4 text-purple-600 shrink-0" />
+                              <audio controls src={q.audio_url} className="h-7 w-full max-w-xs" />
+                            </div>
+                          )}
+                          {q.image_url && (
+                            <div className="flex items-center gap-2">
+                              <ImageIcon className="h-4 w-4 text-purple-600 shrink-0" />
+                              <a
+                                href={q.image_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative block"
+                              >
+                                <img
+                                  src={q.image_url}
+                                  alt="Gambar Soal"
+                                  className="h-14 w-auto rounded border border-border object-contain group-hover:opacity-80 transition"
+                                />
+                                <span className="text-[9px] text-primary underline block mt-0.5">Buka Gambar</span>
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="font-medium text-foreground whitespace-pre-wrap leading-relaxed">
                         {q.question}
@@ -408,6 +464,78 @@ export function ViewActivityDialog({
                           <span className={q.keyAnswer === "D" ? "font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-1 rounded" : "p-1"}>
                             D. {q.optionD} {q.keyAnswer === "D" && "✓ (Kunci)"}
                           </span>
+                        </div>
+                      )}
+
+                      {qType === "PG_KOMPLEKS" && (() => {
+                        const keyAns = (q.keyAnswers && q.keyAnswers.length > 0
+                          ? q.keyAnswers
+                          : q.keyAnswer
+                          ? [q.keyAnswer]
+                          : ["A"]
+                        ).map((k: string) => k.toUpperCase());
+
+                        const optScores = q.optionScores || {};
+
+                        const opts = [
+                          { key: "A", text: q.optionA, score: optScores.A },
+                          { key: "B", text: q.optionB, score: optScores.B },
+                          { key: "C", text: q.optionC, score: optScores.C },
+                          { key: "D", text: q.optionD, score: optScores.D },
+                        ].filter((o) => Boolean(o.text));
+
+                        return (
+                          <div className="space-y-1.5 pt-1 border-t border-border/50 text-[11px]">
+                            <span className="font-semibold text-purple-700 dark:text-purple-300 block text-[10px]">
+                              Opsi Pilihan Ganda Kompleks & Kunci Benar:
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                              {opts.map((opt) => {
+                                const isKey = keyAns.includes(opt.key);
+                                return (
+                                  <div
+                                    key={opt.key}
+                                    className={`p-1.5 rounded flex items-center justify-between gap-1.5 ${
+                                      isKey ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold" : "bg-muted/30 text-muted-foreground"
+                                    }`}
+                                  >
+                                    <span className="leading-snug">
+                                      {opt.key}. {opt.text}
+                                    </span>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {opt.score !== undefined && opt.score > 0 && (
+                                        <Badge variant="outline" className="text-[9px] py-0 px-1 border-emerald-500/40 text-emerald-600">
+                                          +{opt.score} pt
+                                        </Badge>
+                                      )}
+                                      {isKey && <Check className="h-3 w-3 text-emerald-600" />}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {qType === "MERANGKAI_KALIMAT" && (
+                        <div className="space-y-1.5 pt-1 border-t border-border/50 text-[11px]">
+                          <span className="font-semibold text-purple-700 dark:text-purple-300 block text-[10px]">
+                            Kunci Kalimat Lengkap:
+                          </span>
+                          <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 font-bold">
+                            "{q.targetSentence || q.question}"
+                          </div>
+                          {Array.isArray(q.scrambledWords) && q.scrambledWords.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1 text-[10px]">
+                              <span className="text-muted-foreground font-semibold">Kata Acak:</span>
+                              {q.scrambledWords.map((w: string, wIdx: number) => (
+                                <Badge key={wIdx} variant="secondary" className="text-[9px] py-0 px-1.5 font-normal">
+                                  {w}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
 

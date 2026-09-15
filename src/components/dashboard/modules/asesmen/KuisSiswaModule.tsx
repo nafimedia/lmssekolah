@@ -19,6 +19,10 @@ import {
   AlignLeft,
   Hash,
   TextCursorInput,
+  Volume2,
+  Image as ImageIcon,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +72,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
       ]);
 
       const quizLkpdExams: CbtExamRow[] = (dbLkpd || [])
-        .filter((l: any) => (l.status || "").toUpperCase() !== "DRAF" && (l.type === "QUIZ" || l.quiz_data))
+        .filter((l: any) => (l.status || "").toUpperCase() !== "DRAF" && (l.type === "QUIZ" || l.type === "REFLEKSI" || l.quiz_data))
         .filter((l: any) => !l.rombel || l.rombel === "ALL" || isSameClass(l.rombel, studentRombel))
         .map((l: any) => {
           let parsedQuestions: any[] = [];
@@ -77,19 +81,20 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
               parsedQuestions = JSON.parse(l.quiz_data);
             } catch (e) {}
           }
+          const isRefleksi = l.type === "REFLEKSI";
           return {
             id: Number(l.id) || Date.now(),
             title: l.title,
             subject_name: l.mapel || "Mata Pelajaran",
             class_name: l.rombel || studentRombel,
-            type: "QUIZ_FORMATIF",
+            type: isRefleksi ? "REFLEKSI" : "QUIZ_FORMATIF",
             status: "LIVE",
-            duration_minutes: 30,
+            duration_minutes: isRefleksi ? 15 : 30,
             total_questions: parsedQuestions.length || 5,
             questions_data: l.quiz_data || "",
             created_by: l.teacher_name || "Guru Pengampu",
-            token: "QUIZ",
-            passing_score: 75,
+            token: isRefleksi ? "REFLEKSI" : "QUIZ",
+            passing_score: isRefleksi ? 0 : 75,
           };
         });
 
@@ -174,6 +179,7 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
       return toast.error("Tidak ada butir soal kuis untuk dinilai.");
     }
 
+    const isRefleksi = activeQuiz.type === "REFLEKSI";
     let totalMaxPoints = 0;
     let totalEarnedPoints = 0;
     let correctCount = 0;
@@ -184,10 +190,66 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
       const qType: QuizQuestionType = q.type || "PG";
       const studentAns = quizAnswers[idx];
 
+      if (isRefleksi) {
+        // Refleksi merupakan survei/umpan balik pembelajaran (non-graded)
+        if (studentAns !== undefined && studentAns !== "") {
+          totalEarnedPoints += qPoints;
+          correctCount++;
+        }
+        return;
+      }
+
       if (qType === "PG") {
         const studentChoice = (studentAns || "").toString().trim().toUpperCase();
         const correctChoice = (q.keyAnswer || "A").toString().trim().toUpperCase();
         if (studentChoice && studentChoice === correctChoice) {
+          totalEarnedPoints += qPoints;
+          correctCount++;
+        }
+      } else if (qType === "PG_KOMPLEKS") {
+        const selectedKeys: string[] = Array.isArray(studentAns)
+          ? studentAns.map((s: any) => String(s).trim().toUpperCase())
+          : typeof studentAns === "object" && studentAns !== null
+          ? Object.keys(studentAns).filter((k) => studentAns[k]).map((k) => k.trim().toUpperCase())
+          : [];
+
+        const keyAnswers = (q.keyAnswers && q.keyAnswers.length > 0
+          ? q.keyAnswers
+          : q.keyAnswer
+          ? [q.keyAnswer]
+          : ["A"]
+        ).map((k: string) => k.trim().toUpperCase());
+
+        const optScores = q.optionScores || {};
+        let qScore = 0;
+
+        selectedKeys.forEach((k) => {
+          if (keyAnswers.includes(k)) {
+            const scoreVal = optScores[k as keyof typeof optScores];
+            if (scoreVal !== undefined && Number(scoreVal) > 0) {
+              qScore += Number(scoreVal);
+            } else {
+              qScore += qPoints / (keyAnswers.length || 1);
+            }
+          }
+        });
+
+        qScore = Math.min(qPoints, Math.round(qScore));
+        totalEarnedPoints += qScore;
+        const allCorrectSelected = keyAnswers.every((k) => selectedKeys.includes(k));
+        const noWrongSelected = selectedKeys.every((k) => keyAnswers.includes(k));
+        if (allCorrectSelected && noWrongSelected && selectedKeys.length > 0) {
+          correctCount++;
+        }
+      } else if (qType === "MERANGKAI_KALIMAT") {
+        const studentArr = Array.isArray(studentAns)
+          ? studentAns
+          : typeof studentAns === "string"
+          ? studentAns.trim().split(/\s+/)
+          : [];
+        const studentSentence = studentArr.join(" ").trim().toLowerCase();
+        const target = (q.targetSentence || q.question || "").trim().toLowerCase();
+        if (studentSentence && target && studentSentence === target) {
           totalEarnedPoints += qPoints;
           correctCount++;
         }
@@ -234,11 +296,16 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
           }
         }
       } else if (qType === "ESAI") {
-        // Jawaban esai disimpan
+        if (studentAns && String(studentAns).trim().length > 0) {
+          totalEarnedPoints += qPoints;
+          correctCount++;
+        }
       }
     });
 
-    const calculatedScore = totalMaxPoints > 0
+    const calculatedScore = isRefleksi
+      ? 100
+      : totalMaxPoints > 0
       ? Math.min(100, Math.round((totalEarnedPoints / totalMaxPoints) * 100))
       : 100;
 
@@ -257,7 +324,11 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
       });
 
       setQuizFinishedResult({ score: calculatedScore, correct: correctCount, total: questions.length });
-      toast.success(`🎉 Kuis Selesai! Skor Anda: ${calculatedScore}/100`);
+      if (isRefleksi) {
+        toast.success(`🎉 Refleksi Pembelajaran Terkirim! Terima kasih atas partisipasi Anda.`);
+      } else {
+        toast.success(`🎉 Kuis Selesai! Skor Anda: ${calculatedScore}/100`);
+      }
       loadData();
     } catch (e) {
       toast.error("Gagal menyimpan hasil kuis.");
@@ -588,8 +659,34 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
                         </div>
                       </div>
 
-                      {/* Pertanyaan */}
-                      <div className="p-4 rounded-xl border border-border bg-card space-y-3 shadow-2xs">
+                      {/* Pertanyaan & Media */}
+                      <div className="p-4 rounded-xl border border-border bg-card space-y-3.5 shadow-2xs">
+                        {/* Audio / Voice Media */}
+                        {q.audio_url && (
+                          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center gap-3">
+                            <div className="p-2 rounded-full bg-amber-500 text-slate-950 shrink-0">
+                              <Volume2 className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-[11px] font-bold text-amber-900 dark:text-amber-200 mb-1">
+                                Dengarkan Berkas Suara / Listening:
+                              </div>
+                              <audio controls src={q.audio_url} className="w-full h-8" />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Image Media */}
+                        {q.image_url && (
+                          <div className="rounded-lg overflow-hidden border border-border bg-muted/30 p-2 max-w-md mx-auto sm:mx-0">
+                            <img
+                              src={q.image_url}
+                              alt="Lampiran Soal"
+                              className="max-h-60 w-auto rounded object-contain mx-auto"
+                            />
+                          </div>
+                        )}
+
                         <p className="font-bold text-sm text-foreground leading-relaxed whitespace-pre-wrap">
                           {q.question}
                         </p>
@@ -629,6 +726,177 @@ export function KuisSiswaModule({ userProfile }: KuisSiswaModuleProps) {
                                   </button>
                                 );
                               })}
+                            </div>
+                          );
+                        })()}
+
+                        {qType === "PG_KOMPLEKS" && (() => {
+                          const options = [
+                            { key: "A", text: q.optionA, score: q.optionScores?.A },
+                            { key: "B", text: q.optionB, score: q.optionScores?.B },
+                            { key: "C", text: q.optionC, score: q.optionScores?.C },
+                            { key: "D", text: q.optionD, score: q.optionScores?.D },
+                          ].filter((opt) => Boolean(opt.text));
+
+                          const selectedList: string[] = Array.isArray(currentAnswer)
+                            ? currentAnswer
+                            : typeof currentAnswer === "object" && currentAnswer !== null
+                            ? Object.keys(currentAnswer).filter((k) => currentAnswer[k])
+                            : [];
+
+                          const toggleOption = (key: string) => {
+                            const exists = selectedList.includes(key);
+                            const next = exists ? selectedList.filter((k) => k !== key) : [...selectedList, key];
+                            setQuizAnswers((prev) => ({ ...prev, [currentQuestionIdx]: next }));
+                          };
+
+                          return (
+                            <div className="space-y-2 pt-1">
+                              <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 block">
+                                💡 Petunjuk: Anda dapat mencentang lebih dari satu pilihan jawaban yang benar.
+                              </span>
+                              <div className="grid grid-cols-1 gap-2">
+                                {options.map((opt) => {
+                                  const isChecked = selectedList.includes(opt.key);
+                                  return (
+                                    <button
+                                      key={opt.key}
+                                      type="button"
+                                      onClick={() => toggleOption(opt.key)}
+                                      className={`p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition cursor-pointer text-xs ${
+                                        isChecked
+                                          ? "border-amber-500 bg-amber-500/15 text-amber-950 dark:text-amber-100 font-bold ring-1 ring-amber-500"
+                                          : "border-border hover:bg-muted/40 text-foreground"
+                                      }`}
+                                    >
+                                      <div
+                                        className={`h-5 w-5 rounded-md flex items-center justify-center font-bold text-[11px] shrink-0 border ${
+                                          isChecked
+                                            ? "bg-amber-500 text-slate-950 border-amber-600"
+                                            : "bg-background border-muted-foreground/30 text-transparent"
+                                        }`}
+                                      >
+                                        {isChecked ? "✓" : ""}
+                                      </div>
+                                      <div className="flex-1">
+                                        <span className="font-mono font-bold mr-1.5">{opt.key}.</span>
+                                        <span className="leading-snug">{opt.text}</span>
+                                        {opt.score !== undefined && opt.score > 0 && (
+                                          <Badge variant="outline" className="ml-2 text-[9px] py-0 px-1 text-emerald-600 border-emerald-500/30">
+                                            +{opt.score} Poin
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {qType === "MERANGKAI_KALIMAT" && (() => {
+                          const rawTarget = q.targetSentence || q.question || "";
+                          const defaultWords: string[] = (q.scrambledWords && q.scrambledWords.length > 0)
+                            ? q.scrambledWords
+                            : rawTarget.split(/\s+/).filter(Boolean);
+
+                          const arrangedWords: string[] = Array.isArray(currentAnswer)
+                            ? currentAnswer
+                            : typeof currentAnswer === "string" && currentAnswer.trim()
+                            ? currentAnswer.trim().split(/\s+/)
+                            : [];
+
+                          const addWord = (word: string) => {
+                            setQuizAnswers((prev) => ({
+                              ...prev,
+                              [currentQuestionIdx]: [...arrangedWords, word],
+                            }));
+                          };
+
+                          const removeWordAt = (index: number) => {
+                            const next = [...arrangedWords];
+                            next.splice(index, 1);
+                            setQuizAnswers((prev) => ({
+                              ...prev,
+                              [currentQuestionIdx]: next,
+                            }));
+                          };
+
+                          const resetWords = () => {
+                            setQuizAnswers((prev) => ({
+                              ...prev,
+                              [currentQuestionIdx]: [],
+                            }));
+                          };
+
+                          return (
+                            <div className="space-y-3 pt-1">
+                              <div className="text-[11px] text-muted-foreground flex items-center justify-between">
+                                <span>Susun potongan kata berikut menjadi satu kalimat utuh:</span>
+                                {arrangedWords.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={resetWords}
+                                    className="text-[11px] font-bold text-rose-500 hover:underline flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <RotateCcw className="h-3 w-3" /> Reset Urutan
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Kotak Kalimat Tersusun */}
+                              <div className="min-h-[52px] p-3 rounded-xl border-2 border-dashed border-amber-500/40 bg-amber-500/5 flex flex-wrap gap-1.5 items-center">
+                                {arrangedWords.length === 0 ? (
+                                  <span className="text-xs text-muted-foreground italic">
+                                    Klik kata-kata acak di bawah untuk menyusun kalimat di sini...
+                                  </span>
+                                ) : (
+                                  arrangedWords.map((word, wIdx) => (
+                                    <button
+                                      key={wIdx}
+                                      type="button"
+                                      onClick={() => removeWordAt(wIdx)}
+                                      className="px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 font-bold text-xs shadow-xs hover:bg-rose-500 hover:text-white transition cursor-pointer flex items-center gap-1 group"
+                                      title="Klik untuk kembalikan kata"
+                                    >
+                                      <span>{word}</span>
+                                      <span className="text-[9px] opacity-70 group-hover:opacity-100">✕</span>
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+
+                              {/* Kumpulan Kata Acak yang Tersedia */}
+                              <div className="space-y-1.5">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase">Kata Tersedia:</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {defaultWords.map((word, idx) => {
+                                    let usedCountBeforeThis = 0;
+                                    for (let i = 0; i < idx; i++) {
+                                      if (defaultWords[i] === word) usedCountBeforeThis++;
+                                    }
+                                    const totalUsed = arrangedWords.filter((w) => w === word).length;
+                                    const isUsed = usedCountBeforeThis < totalUsed;
+
+                                    return (
+                                      <button
+                                        key={idx}
+                                        type="button"
+                                        disabled={isUsed}
+                                        onClick={() => addWord(word)}
+                                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                                          isUsed
+                                            ? "bg-muted text-muted-foreground/30 border-dashed border-border cursor-not-allowed line-through"
+                                            : "bg-card hover:bg-muted text-foreground border-border shadow-2xs hover:border-amber-500 active:scale-95"
+                                        }`}
+                                      >
+                                        {word}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             </div>
                           );
                         })()}

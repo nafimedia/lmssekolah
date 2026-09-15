@@ -732,6 +732,10 @@ export class MysqlDataService {
     }
   }
 
+  static async uploadQuizImage(filename: string, dataUrl: string): Promise<{ success: boolean; imageUrl: string }> {
+    return this.uploadCbtImage(filename, dataUrl);
+  }
+
   static async uploadCbtAudio(filename: string, dataUrl: string): Promise<{ success: boolean; audioUrl: string }> {
     try {
       return await uploadCbtAudioFn({ data: { filename, dataUrl } });
@@ -739,6 +743,10 @@ export class MysqlDataService {
       console.warn("uploadCbtAudioFn failed:", e);
       return { success: false, audioUrl: "" };
     }
+  }
+
+  static async uploadQuizAudio(filename: string, dataUrl: string): Promise<{ success: boolean; audioUrl: string }> {
+    return this.uploadCbtAudio(filename, dataUrl);
   }
 
   static async batchInsertCbtQuestions(examId: number | string, questions: CbtQuestionDbRow[]): Promise<{ success: boolean; insertedCount: number }> {

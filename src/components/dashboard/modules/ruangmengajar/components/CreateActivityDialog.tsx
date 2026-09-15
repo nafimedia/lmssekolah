@@ -30,6 +30,10 @@ import {
   Hash,
   TextCursorInput,
   Sparkles,
+  Image as ImageIcon,
+  Music,
+  CheckSquare,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MysqlDataService } from "@/services/mysqlDataService";
@@ -49,7 +53,8 @@ export type ActivityTypeOption =
   | "TUGAS_MANDIRI"
   | "PRAKTIKUM"
   | "PROYEK_P5"
-  | "HAFALAN";
+  | "HAFALAN"
+  | "REFLEKSI";
 
 export interface LkpdQuestionItem {
   id: number;
@@ -194,6 +199,17 @@ const categoryConfig: Record<
       { value: "TEXT_AND_FILE", label: "Kombinasi (Teks Digital & Unggah Berkas)" },
     ],
   },
+  REFLEKSI: {
+    titleLabel: "Nama Survei / Refleksi Pembelajaran:",
+    titlePlaceholder: "Contoh: Survei Refleksi Pemahaman Siswa Bab 2",
+    instructionPlaceholder: "Tuliskan pengantar angket atau survei refleksi siswa...",
+    showFileUpload: false,
+    showStructuredQuestions: false,
+    structuredQuestionsLabel: "Daftar Pertanyaan Refleksi",
+    submissionMethods: [
+      { value: "QUIZ_ONLINE", label: "Pengisian Refleksi Interaktif di Aplikasi (Tanpa Skor)" },
+    ],
+  },
 };
 
 export function CreateActivityForm({
@@ -268,41 +284,55 @@ export function CreateActivityForm({
     return [];
   });
 
+  const [selectedQuestionTypeToAdd, setSelectedQuestionTypeToAdd] = useState<QuizQuestionType>("PG");
+
   const activityOptions: { id: ActivityTypeOption; label: string; color: string; disabled?: boolean }[] = [
     {
       id: "LKPD",
-      label: "📄 LKPD Digital",
+      label: "📄 LKPD Digital (Lembar Kerja Peserta Didik)",
       color: "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
       disabled: false,
     },
     {
-      id: "TUGAS_KELOMPOK",
-      label: "👥 Diskusi & Kelompok",
-      color: "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
-      disabled: false,
-    },
-    {
-      id: "TUGAS_MANDIRI",
-      label: "✍️ Tugas Mandiri",
-      color: "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
-      disabled: false,
-    },
-    {
       id: "QUIZ",
-      label: "⚡ Kuis Formatif",
+      label: "⚡ Kuis Formatif Interaktif (9 Variasi Soal)",
       color: "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300",
       disabled: false,
     },
     {
+      id: "REFLEKSI",
+      label: "💬 Umpan Balik & Refleksi Pembelajaran (Non-Graded)",
+      color: "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
+      disabled: false,
+    },
+    {
+      id: "TUGAS_MANDIRI",
+      label: "✍️ Tugas Mandiri Siswa",
+      color: "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
+      disabled: false,
+    },
+    {
+      id: "TUGAS_KELOMPOK",
+      label: "👥 Diskusi & Tugas Kelompok",
+      color: "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
+      disabled: false,
+    },
+    {
       id: "PRAKTIKUM",
-      label: "🔬 Praktikum & Lab",
+      label: "🔬 Praktikum & Observasi Lapangan",
       color: "border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-950/30 dark:text-teal-300",
       disabled: false,
     },
     {
       id: "HAFALAN",
-      label: "📖 Setoran Hafalan",
+      label: "📖 Setoran Hafalan / Tahfidz",
       color: "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300",
+      disabled: false,
+    },
+    {
+      id: "PROYEK_P5",
+      label: "🌱 Proyek P5-PPRA Madrasah",
+      color: "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
       disabled: false,
     },
   ];
@@ -444,6 +474,95 @@ export function CreateActivityForm({
     );
   };
 
+  const handleUploadMediaForQuestion = (qIndex: number, mediaType: "image" | "audio") => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept =
+      mediaType === "image"
+        ? "image/png,image/jpeg,image/jpg,image/webp"
+        : "audio/mp3,audio/wav,audio/m4a,audio/ogg";
+    input.onchange = async (e: any) => {
+      const file = e.target?.files?.[0];
+      if (!file) return;
+      toast.info(`Mengunggah berkas ${mediaType === "image" ? "gambar" : "suara"}...`);
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const dataUrl = evt.target?.result as string;
+        if (!dataUrl) return;
+        try {
+          if (mediaType === "image") {
+            const res = await MysqlDataService.uploadQuizImage(file.name, dataUrl);
+            if (res.success && res.imageUrl) {
+              handleQuizQuestionChange(qIndex, "image_url", res.imageUrl);
+              toast.success("Gambar soal berhasil disisipkan!");
+            } else {
+              toast.error("Gagal mengunggah gambar soal.");
+            }
+          } else {
+            const res = await MysqlDataService.uploadQuizAudio(file.name, dataUrl);
+            if (res.success && res.audioUrl) {
+              handleQuizQuestionChange(qIndex, "audio_url", res.audioUrl);
+              toast.success("Audio soal berhasil disisipkan!");
+            } else {
+              toast.error("Gagal mengunggah audio soal.");
+            }
+          }
+        } catch (err) {
+          toast.error("Gagal memproses berkas media.");
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
+  const handleTogglePgKompleksKey = (qIndex: number, optionKey: string) => {
+    setQuizQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qIndex) return q;
+        const currentKeys = q.keyAnswers ? [...q.keyAnswers] : [q.keyAnswer || "A"];
+        const exists = currentKeys.includes(optionKey);
+        const updatedKeys = exists ? currentKeys.filter((k) => k !== optionKey) : [...currentKeys, optionKey];
+        if (updatedKeys.length === 0) return q;
+        return {
+          ...q,
+          keyAnswers: updatedKeys,
+        };
+      })
+    );
+  };
+
+  const handlePgKompleksScoreChange = (qIndex: number, optionKey: "A" | "B" | "C" | "D", scoreVal: number) => {
+    setQuizQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qIndex) return q;
+        const currentScores = q.optionScores ? { ...q.optionScores } : { A: 0, B: 0, C: 0, D: 0 };
+        currentScores[optionKey] = scoreVal;
+        const sumPoints =
+          (currentScores.A || 0) + (currentScores.B || 0) + (currentScores.C || 0) + (currentScores.D || 0);
+        return {
+          ...q,
+          optionScores: currentScores,
+          points: sumPoints > 0 ? sumPoints : q.points,
+        };
+      })
+    );
+  };
+
+  const handleTargetSentenceChange = (qIndex: number, text: string) => {
+    setQuizQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qIndex) return q;
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        return {
+          ...q,
+          targetSentence: text,
+          scrambledWords: words,
+        };
+      })
+    );
+  };
+
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -485,9 +604,9 @@ export function CreateActivityForm({
       return toast.error("Mohon lengkapi petunjuk / instruksi aktivitas sebelum menerbitkan!");
     }
 
-    if (!isDraft && type === "QUIZ") {
+    if (!isDraft && (type === "QUIZ" || type === "REFLEKSI")) {
       if (quizQuestions.length === 0) {
-        return toast.error("Kuis Formatif membutuhkan minimal 1 butir soal sebelum diterbitkan!");
+        return toast.error("Kuis Formatif / Refleksi membutuhkan minimal 1 butir pertanyaan sebelum diterbitkan!");
       }
       for (let i = 0; i < quizQuestions.length; i++) {
         const q = quizQuestions[i];
@@ -496,6 +615,9 @@ export function CreateActivityForm({
         }
         if (q.type === "MENJODOHKAN" && (!q.pairs || q.pairs.some((p) => !p.left.trim() || !p.right.trim()))) {
           return toast.error(`Mohon lengkapi semua pasangan premis & respon pada butir soal #${i + 1}!`);
+        }
+        if (q.type === "MERANGKAI_KALIMAT" && (!q.targetSentence || !q.targetSentence.trim())) {
+          return toast.error(`Mohon tuliskan kalimat target pada butir soal #${i + 1}!`);
         }
       }
     }
@@ -529,11 +651,11 @@ export function CreateActivityForm({
       type: type,
       instructions: instructions.trim() || "(Belum ada petunjuk tugas)",
       due_date: resolvedDueDate,
-      max_score: maxScore || "100",
+      max_score: type === "REFLEKSI" ? "0" : (maxScore || "100"),
       status: targetStatus,
       attachment_url: finalAttachment,
       submission_type: submissionType,
-      quiz_data: type === "QUIZ" ? JSON.stringify(quizQuestions) : "",
+      quiz_data: (type === "QUIZ" || type === "REFLEKSI") ? JSON.stringify(quizQuestions) : "",
       questions_data: questionsDataStr,
       peer_assessment_enabled: type === "TUGAS_KELOMPOK" && peerAssessmentEnabled ? 1 : 0,
     };
@@ -650,27 +772,30 @@ export function CreateActivityForm({
 
         <CardContent className="p-4 sm:p-6">
           <form id="create-activity-form" onSubmit={handleSubmit} className="space-y-5">
-            {/* Pilihan Kategori Aktivitas */}
-            <div className="space-y-2">
+            {/* Pilihan Kategori Aktivitas (Dropdown Ringkas Hemat Tempat) */}
+            <div className="space-y-1.5 p-2.5 rounded-xl bg-muted/40 border border-border">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground block">Kategori Aktivitas:</label>
-                <span className="text-[11px] text-muted-foreground"></span>
+                <label className="text-xs font-semibold text-foreground block">
+                  Kategori Aktivitas Pembelajaran:
+                </label>
+                <Badge variant="outline" className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border-emerald-500/40 bg-background">
+                  {activityOptions.find((o) => o.id === type)?.label || type}
+                </Badge>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={type}
+                onChange={(e) => {
+                  const selectedOpt = activityOptions.find((o) => o.id === e.target.value);
+                  if (selectedOpt) handleSelectType(selectedOpt);
+                }}
+                className="h-9 w-full rounded-lg border border-input bg-background px-3 text-xs font-semibold text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs hover:border-emerald-500/50 transition"
+              >
                 {activityOptions.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => handleSelectType(opt)}
-                    className={`px-3 py-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${type === opt.id
-                      ? "bg-emerald-600 text-white border-emerald-600 font-semibold shadow-2xs"
-                      : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
-                      }`}
-                  >
-                    <span>{opt.label}</span>
-                  </button>
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
 
             {/* Sakelar Penilaian Antarteman (Peer Assessment) - Khusus Diskusi & Tugas Kelompok */}
@@ -1016,8 +1141,8 @@ export function CreateActivityForm({
               </div>
             )}
 
-            {/* Builder Soal Kuis Formatif (Multi-Type / Campuran) */}
-            {type === "QUIZ" && (() => {
+            {/* Builder Soal Kuis Formatif & Refleksi Siswa (Multi-Type) */}
+            {(type === "QUIZ" || type === "REFLEKSI") && (() => {
               const totalQuizPoints = quizQuestions.reduce((acc, q) => acc + (Number(q.points) || 0), 0);
               return (
                 <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-3.5">
@@ -1025,17 +1150,33 @@ export function CreateActivityForm({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
-                          <Brain className="h-4 w-4 text-purple-600" /> Pembuat Soal Kuis Formatif
+                          {type === "REFLEKSI" ? (
+                            <>
+                              <MessageSquare className="h-4 w-4 text-rose-600" /> Instrumen Refleksi & Umpan Balik
+                            </>
+                          ) : (
+                            <>
+                              <Brain className="h-4 w-4 text-purple-600" /> Pembuat Soal Kuis Formatif
+                            </>
+                          )}
                         </span>
                         <Badge variant="outline" className="text-[10px] font-bold border-purple-400 text-purple-700 dark:text-purple-300">
-                          {quizQuestions.length} Butir Soal
+                          {quizQuestions.length} Butir Pertanyaan
                         </Badge>
-                        <Badge className="bg-purple-600 text-white font-mono text-[10px]">
-                          Total {totalQuizPoints} Poin
-                        </Badge>
+                        {type === "REFLEKSI" ? (
+                          <Badge className="bg-rose-600 text-white font-sans text-[10px]">
+                            Non-Graded (Refleksi)
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-purple-600 text-white font-mono text-[10px]">
+                            Total {totalQuizPoints} Poin
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-                        Mendukung 7 variasi jenis soal (Pilihan Ganda, Menjodohkan, Benar/Salah, Isian Singkat, Esai, Numerik, dan Melengkapi).
+                        {type === "REFLEKSI"
+                          ? "Instrumen umpan balik, refleksi materi KBM, dan angket pemahaman siswa (tanpa penilaian skor)."
+                          : "Mendukung 9 variasi jenis soal (Pilihan Ganda, PG Kompleks, Merangkai Kalimat, Menjodohkan, Benar/Salah, Isian, Esai, Numerik, Melengkapi)."}
                       </p>
                     </div>
 
@@ -1080,83 +1221,48 @@ export function CreateActivityForm({
                     </div>
                   </div>
 
-                  {/* Tombol Tambah Soal per Jenis (7 Variasi) */}
-                  <div className="p-2.5 rounded-lg bg-card border border-purple-200 dark:border-purple-900/50 space-y-1.5">
-                    <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-                      <Plus className="h-3 w-3 text-purple-600" /> Tambah Butir Soal Baru:
+                  {/* Dropdown Tambah Butir Soal Baru (Ringkas & Tidak Sesak) */}
+                  <div className="p-3 rounded-lg bg-card border border-purple-200 dark:border-purple-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Plus className="h-3.5 w-3.5 text-purple-600" /> Tambah Butir Soal Baru:
+                      </span>
+                      <p className="text-[11px] text-muted-foreground">Pilih jenis soal atau instrumen refleksi:</p>
                     </div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
+
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={selectedQuestionTypeToAdd}
+                        onChange={(e) => setSelectedQuestionTypeToAdd(e.target.value as QuizQuestionType)}
+                        className="h-8 rounded-lg border border-purple-300 dark:border-purple-800 bg-background px-2.5 text-xs font-semibold text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      >
+                        <option value="PG">🔘 Pilihan Ganda (A-D)</option>
+                        <option value="PG_KOMPLEKS">☑️ Pilihan Ganda Kompleks (Multi Jawaban)</option>
+                        <option value="MERANGKAI_KALIMAT">🔤 Merangkai Kalimat (Bahasa)</option>
+                        <option value="MENJODOHKAN">🔗 Menjodohkan</option>
+                        <option value="BENAR_SALAH">⚖️ Benar / Salah</option>
+                        <option value="ISIAN_SINGKAT">✍️ Teks Singkat</option>
+                        <option value="ESAI">📝 Esai / Paragraf</option>
+                        <option value="NUMERIK">🔢 Numerik</option>
+                        <option value="MELENGKAPI">🔲 Melengkapi Kalimat</option>
+                      </select>
+
                       <Button
                         type="button"
                         size="sm"
-                        variant="outline"
-                        onClick={() => handleAddQuizQuestion("PG")}
-                        className="text-[11px] font-medium gap-1 h-7 border-blue-400/40 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 cursor-pointer"
+                        onClick={() => handleAddQuizQuestion(selectedQuestionTypeToAdd)}
+                        className="h-8 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1 px-3 shadow-2xs cursor-pointer shrink-0"
                       >
-                        <CheckCircle2 className="h-3 w-3 text-blue-600" /> + Pilihan Ganda (A-D)
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAddQuizQuestion("MENJODOHKAN")}
-                        className="text-[11px] font-medium gap-1 h-7 border-emerald-400/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 cursor-pointer"
-                      >
-                        <GitCompare className="h-3 w-3 text-emerald-600" /> + Menjodohkan
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAddQuizQuestion("BENAR_SALAH")}
-                        className="text-[11px] font-medium gap-1 h-7 border-amber-400/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 cursor-pointer"
-                      >
-                        <ToggleLeft className="h-3 w-3 text-amber-600" /> + Benar / Salah
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAddQuizQuestion("ISIAN_SINGKAT")}
-                        className="text-[11px] font-medium gap-1 h-7 border-purple-400/40 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 cursor-pointer"
-                      >
-                        <CaseSensitive className="h-3 w-3 text-purple-600" /> + Teks Singkat
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAddQuizQuestion("ESAI")}
-                        className="text-[11px] font-medium gap-1 h-7 border-rose-400/40 text-rose-700 dark:text-rose-300 hover:bg-rose-500/10 cursor-pointer"
-                      >
-                        <AlignLeft className="h-3 w-3 text-rose-600" /> + Esai / Paragraf
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAddQuizQuestion("NUMERIK")}
-                        className="text-[11px] font-medium gap-1 h-7 border-indigo-400/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10 cursor-pointer"
-                      >
-                        <Hash className="h-3 w-3 text-indigo-600" /> + Numerik
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAddQuizQuestion("MELENGKAPI")}
-                        className="text-[11px] font-medium gap-1 h-7 border-teal-400/40 text-teal-700 dark:text-teal-300 hover:bg-teal-500/10 cursor-pointer"
-                      >
-                        <TextCursorInput className="h-3 w-3 text-teal-600" /> + Melengkapi Kalimat
+                        <Plus className="h-3.5 w-3.5" /> + Tambah Soal
                       </Button>
                     </div>
                   </div>
 
                   {quizQuestions.length === 0 ? (
                     <div className="text-center py-6 border border-dashed border-purple-500/25 rounded-lg text-muted-foreground text-xs font-medium space-y-1">
-                      <p>Belum ada butir soal kuis formatif.</p>
+                      <p>Belum ada butir soal yang ditambahkan.</p>
                       <p className="text-[11px] text-muted-foreground">
-                        Pilih salah satu tombol jenis soal di atas atau gunakan import Excel untuk menambahkan pertanyaan.
+                        Pilih jenis soal dari dropdown di atas lalu klik "+ Tambah Soal" atau gunakan tombol Import Excel.
                       </p>
                     </div>
                   ) : (
@@ -1190,6 +1296,8 @@ export function CreateActivityForm({
                                     className="h-7 px-2 rounded border border-purple-300 dark:border-purple-800 text-[11px] font-medium text-foreground bg-background cursor-pointer"
                                   >
                                     <option value="PG">Pilihan Ganda (A-D)</option>
+                                    <option value="PG_KOMPLEKS">PG Kompleks (Multi Jawaban)</option>
+                                    <option value="MERANGKAI_KALIMAT">Merangkai Kalimat (Bahasa)</option>
                                     <option value="MENJODOHKAN">Menjodohkan</option>
                                     <option value="BENAR_SALAH">Benar / Salah</option>
                                     <option value="ISIAN_SINGKAT">Teks Singkat</option>
@@ -1199,17 +1307,19 @@ export function CreateActivityForm({
                                   </select>
                                 </div>
 
-                                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                                  <span>Bobot:</span>
-                                  <Input
-                                    type="number"
-                                    min={1}
-                                    value={q.points ?? 10}
-                                    onChange={(e) => handleQuizQuestionChange(idx, "points", parseInt(e.target.value, 10) || 0)}
-                                    className="h-7 w-16 text-center text-xs font-mono font-medium text-purple-700 dark:text-purple-300"
-                                  />
-                                  <span className="font-mono text-[10px]">Poin</span>
-                                </div>
+                                {type !== "REFLEKSI" && (
+                                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                    <span>Bobot:</span>
+                                    <Input
+                                      type="number"
+                                      min={1}
+                                      value={q.points ?? 10}
+                                      onChange={(e) => handleQuizQuestionChange(idx, "points", parseInt(e.target.value, 10) || 0)}
+                                      className="h-7 w-16 text-center text-xs font-mono font-medium text-purple-700 dark:text-purple-300"
+                                    />
+                                    <span className="font-mono text-[10px]">Poin</span>
+                                  </div>
+                                )}
 
                                 <Button
                                   type="button"
@@ -1225,12 +1335,14 @@ export function CreateActivityForm({
                             </div>
 
                             {/* Pertanyaan / Teks Soal */}
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                               <label className="text-[11px] font-semibold text-muted-foreground">
                                 {qType === "BENAR_SALAH"
                                   ? "Pernyataan / Teks Evaluasi:"
                                   : qType === "MELENGKAPI"
                                   ? "Teks Kalimat Rumpang (gunakan tanda [...] untuk bagian rumpang):"
+                                  : qType === "MERANGKAI_KALIMAT"
+                                  ? "Petunjuk / Instruksi Merangkai Kalimat:"
                                   : "Pertanyaan / Instruksi Soal:"}
                               </label>
                               <Textarea
@@ -1239,16 +1351,204 @@ export function CreateActivityForm({
                                     ? "Contoh: Ibu kota Republik Indonesia berada di wilayah [...]."
                                     : qType === "BENAR_SALAH"
                                     ? "Tuliskan pernyataan yang perlu dinilai kebenarannya..."
+                                    : qType === "MERANGKAI_KALIMAT"
+                                    ? "Contoh: Susunlah potongan kata acak berikut agar membentuk kalimat yang padu dan benar!"
                                     : `Tuliskan pertanyaan soal #${idx + 1}...`
                                 }
                                 value={q.question}
                                 onChange={(e) => handleQuizQuestionChange(idx, "question", e.target.value)}
                                 className="text-xs font-normal min-h-[50px]"
                               />
+
+                              {/* Toolbar Sisipkan Gambar & Audio MP3 */}
+                              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUploadMediaForQuestion(idx, "image")}
+                                  className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground border-border hover:border-blue-400"
+                                >
+                                  <ImageIcon className="h-3 w-3 text-blue-500" />
+                                  {q.image_url ? "Ganti Gambar Soal" : "+ Sisipkan Gambar (PNG/JPEG)"}
+                                </Button>
+
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUploadMediaForQuestion(idx, "audio")}
+                                  className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground border-border hover:border-amber-400"
+                                >
+                                  <Music className="h-3 w-3 text-amber-500" />
+                                  {q.audio_url ? "Ganti Voice / Audio" : "+ Sisipkan Voice / Listening (MP3)"}
+                                </Button>
+                              </div>
+
+                              {/* Pratinjau Media Gambar & Audio Terpasang */}
+                              {(q.image_url || q.audio_url) && (
+                                <div className="p-2.5 rounded-lg bg-muted/40 border border-border/80 flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-1.5">
+                                  {q.image_url && (
+                                    <div className="relative group shrink-0">
+                                      <img
+                                        src={q.image_url}
+                                        alt="Lampiran Soal"
+                                        className="h-16 w-24 object-contain rounded-md border border-border bg-background"
+                                      />
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleQuizQuestionChange(idx, "image_url", "")}
+                                        className="h-4 w-4 p-0 absolute -top-1.5 -right-1.5 rounded-full shadow-xs text-[10px]"
+                                        title="Hapus Gambar"
+                                      >
+                                        <X className="h-2.5 w-2.5" />
+                                      </Button>
+                                    </div>
+                                  )}
+
+                                  {q.audio_url && (
+                                    <div className="flex-1 flex items-center gap-2 w-full max-w-sm">
+                                      <audio controls src={q.audio_url} className="h-8 w-full" />
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleQuizQuestionChange(idx, "audio_url", "")}
+                                        className="h-7 w-7 p-0 text-red-500 hover:bg-red-500/10 shrink-0"
+                                        title="Hapus Audio"
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
                             {/* Form Khusus Sesuai Jenis Soal */}
-                            {/* 1. PILIHAN GANDA */}
+
+                            {/* 1.0 PILIHAN GANDA KOMPLEKS (Multi Jawaban) */}
+                            {qType === "PG_KOMPLEKS" && (() => {
+                              const currentKeys = q.keyAnswers || ["A"];
+                              const scores = q.optionScores || { A: 5, B: 5, C: 0, D: 0 };
+                              const options: { key: "A" | "B" | "C" | "D"; prop: "optionA" | "optionB" | "optionC" | "optionD" }[] = [
+                                { key: "A", prop: "optionA" },
+                                { key: "B", prop: "optionB" },
+                                { key: "C", prop: "optionC" },
+                                { key: "D", prop: "optionD" },
+                              ];
+
+                              return (
+                                <div className="space-y-2.5 pt-1 border-t border-border/50">
+                                  <div className="flex items-center justify-between">
+                                    <label className="text-[11px] font-semibold text-muted-foreground">
+                                      Opsi Jawaban (Centang opsi yang benar & tentukan skornya):
+                                    </label>
+                                    <span className="text-[10px] text-sky-600 dark:text-sky-400 font-bold">
+                                      {currentKeys.length} Kunci Benar Terpilih
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {options.map((opt) => {
+                                      const isCorrect = currentKeys.includes(opt.key);
+                                      const score = scores[opt.key] ?? 0;
+
+                                      return (
+                                        <div
+                                          key={opt.key}
+                                          className={`p-2 rounded-lg border transition flex items-center gap-2 text-xs ${
+                                            isCorrect
+                                              ? "border-sky-500/60 bg-sky-500/10 dark:bg-sky-950/20"
+                                              : "border-border bg-background"
+                                          }`}
+                                        >
+                                          <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                                            <input
+                                              type="checkbox"
+                                              checked={isCorrect}
+                                              onChange={() => handleTogglePgKompleksKey(idx, opt.key)}
+                                              className="rounded border-border text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer"
+                                            />
+                                            <span className={`font-bold w-4 text-center ${isCorrect ? "text-sky-700 dark:text-sky-300 font-extrabold" : "text-muted-foreground"}`}>
+                                              {opt.key}.
+                                            </span>
+                                          </label>
+
+                                          <Input
+                                            placeholder={`Teks Opsi ${opt.key}...`}
+                                            value={q[opt.prop] || ""}
+                                            onChange={(e) => handleQuizQuestionChange(idx, opt.prop, e.target.value)}
+                                            className="text-xs flex-1 h-8"
+                                          />
+
+                                          {type !== "REFLEKSI" && (
+                                            <div className="flex items-center gap-1 shrink-0">
+                                              <span className="text-[10px] text-muted-foreground font-medium">Skor:</span>
+                                              <Input
+                                                type="number"
+                                                min={0}
+                                                value={score}
+                                                onChange={(e) => handlePgKompleksScoreChange(idx, opt.key, parseInt(e.target.value, 10) || 0)}
+                                                className="h-8 w-14 text-center text-xs font-mono font-bold text-sky-700 dark:text-sky-300"
+                                              />
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  <p className="text-[10px] text-muted-foreground italic">
+                                    * Siswa dapat memilih lebih dari satu jawaban (checkbox). Skor kuis otomatis mengakumulasi bobot opsi benar yang dipilih.
+                                  </p>
+                                </div>
+                              );
+                            })()}
+
+                            {/* 1.1 MERANGKAI KALIMAT (BAHASA) */}
+                            {qType === "MERANGKAI_KALIMAT" && (() => {
+                              const words = q.scrambledWords && q.scrambledWords.length > 0
+                                ? q.scrambledWords
+                                : (q.targetSentence || "").trim().split(/\s+/).filter(Boolean);
+
+                              return (
+                                <div className="space-y-2.5 pt-1 border-t border-border/50">
+                                  <div className="space-y-1">
+                                    <label className="text-[11px] font-semibold text-muted-foreground">
+                                      Kalimat Target yang Benar (Sesuai Urutan Tepat):
+                                    </label>
+                                    <Input
+                                      placeholder="Contoh: Siswa madrasah belajar giat setiap hari / Al-ilmu nurun yahtadi bihil insan"
+                                      value={q.targetSentence || ""}
+                                      onChange={(e) => handleTargetSentenceChange(idx, e.target.value)}
+                                      className="text-xs font-medium border-orange-300 dark:border-orange-800"
+                                    />
+                                  </div>
+
+                                  {words.length > 0 && (
+                                    <div className="p-2.5 rounded-lg bg-orange-500/10 border border-orange-300 dark:border-orange-900/50 space-y-1.5">
+                                      <span className="text-[11px] font-semibold text-orange-800 dark:text-orange-300 block">
+                                        Pratinjau Potongan Kata ({words.length} Kata yang Akan Diacak untuk Siswa):
+                                      </span>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {words.map((w, wIdx) => (
+                                          <Badge key={wIdx} variant="secondary" className="bg-background text-foreground border border-orange-400 font-normal text-xs px-2 py-0.5">
+                                            {w}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  <p className="text-[10px] text-muted-foreground italic">
+                                    * Pada lembar pengerjaan siswa, kata-kata di atas otomatis diacak. Siswa mengklik kata untuk merangkai kalimat kembali.
+                                  </p>
+                                </div>
+                              );
+                            })()}
+
+                            {/* 1.2 PILIHAN GANDA TUNGGAL */}
                             {qType === "PG" && (
                               <div className="space-y-2 pt-1 border-t border-border/50">
                                 <div className="flex items-center justify-between">

@@ -1,11 +1,13 @@
 export type QuizQuestionType =
   | "PG"
+  | "PG_KOMPLEKS"
   | "MENJODOHKAN"
   | "BENAR_SALAH"
   | "ISIAN_SINGKAT"
   | "ESAI"
   | "NUMERIK"
-  | "MELENGKAPI";
+  | "MELENGKAPI"
+  | "MERANGKAI_KALIMAT";
 
 export interface MatchingPair {
   id?: string;
@@ -18,12 +20,21 @@ export interface FormativeQuizQuestion {
   type: QuizQuestionType;
   question: string;
   points: number;
-  // Pilihan Ganda (PG)
+  // Media Soal (Gambar & Audio MP3)
+  image_url?: string;
+  audio_url?: string;
+  // Pilihan Ganda (PG Tunggal)
   optionA?: string;
   optionB?: string;
   optionC?: string;
   optionD?: string;
   keyAnswer?: string; // "A" | "B" | "C" | "D" | "BENAR" | "SALAH" | text | number
+  // Pilihan Ganda Kompleks (PG_KOMPLEKS)
+  keyAnswers?: string[]; // Kunci jawaban benar lebih dari 1 (contoh: ["A", "C"])
+  optionScores?: { A?: number; B?: number; C?: number; D?: number }; // Bobot skor masing-masing opsi
+  // Merangkai Kalimat (Word Reordering)
+  targetSentence?: string; // Kalimat utuh yang benar
+  scrambledWords?: string[]; // Potongan kata-kata yang diacak
   // Menjodohkan (Matching)
   pairs?: MatchingPair[];
   // Numerik
@@ -43,6 +54,12 @@ export const QUIZ_QUESTION_TYPE_CONFIG: Record<
     shortLabel: "Pilihan Ganda",
     badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
     description: "Pertanyaan dengan 4 opsi pilihan jawaban (A, B, C, D) dan 1 kunci jawaban pasti.",
+  },
+  PG_KOMPLEKS: {
+    label: "Pilihan Ganda Kompleks (Multi Jawaban)",
+    shortLabel: "PG Kompleks",
+    badgeColor: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30",
+    description: "Pertanyaan dengan opsi A-D di mana jawaban benar lebih dari 1 dengan bobot skor tiap opsi.",
   },
   MENJODOHKAN: {
     label: "Menjodohkan",
@@ -80,6 +97,12 @@ export const QUIZ_QUESTION_TYPE_CONFIG: Record<
     badgeColor: "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/30",
     description: "Melengkapi bagian kata yang rumpang atau kosong pada suatu kalimat.",
   },
+  MERANGKAI_KALIMAT: {
+    label: "Merangkai Kalimat (Bahasa)",
+    shortLabel: "Rangkai Kalimat",
+    badgeColor: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30",
+    description: "Menyusun potongan kata acak menjadi kalimat yang padu dan benar (cocok untuk mapel bahasa).",
+  },
 };
 
 export function createNewQuizQuestion(type: QuizQuestionType, nextId: number): FormativeQuizQuestion {
@@ -94,6 +117,19 @@ export function createNewQuizQuestion(type: QuizQuestionType, nextId: number): F
         optionC: "",
         optionD: "",
         keyAnswer: "A",
+        points: 10,
+      };
+    case "PG_KOMPLEKS":
+      return {
+        id: nextId,
+        type: "PG_KOMPLEKS",
+        question: "",
+        optionA: "",
+        optionB: "",
+        optionC: "",
+        optionD: "",
+        keyAnswers: ["A"],
+        optionScores: { A: 5, B: 5, C: 0, D: 0 },
         points: 10,
       };
     case "MENJODOHKAN":
@@ -146,6 +182,15 @@ export function createNewQuizQuestion(type: QuizQuestionType, nextId: number): F
         type: "MELENGKAPI",
         question: "",
         clozeAnswer: "",
+        points: 10,
+      };
+    case "MERANGKAI_KALIMAT":
+      return {
+        id: nextId,
+        type: "MERANGKAI_KALIMAT",
+        question: "Susunlah potongan kata-kata acak berikut agar membentuk kalimat yang benar:",
+        targetSentence: "",
+        scrambledWords: [],
         points: 10,
       };
   }

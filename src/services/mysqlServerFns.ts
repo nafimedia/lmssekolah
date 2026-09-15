@@ -476,6 +476,10 @@ export interface CbtExamRow {
   duration_minutes: number;
   passing_score: number;
   class_name?: string;
+  type?: string;
+  status?: string;
+  total_questions?: number;
+  created_by?: string;
   randomize_questions?: number;
   randomize_options?: number;
   question_limit?: number;

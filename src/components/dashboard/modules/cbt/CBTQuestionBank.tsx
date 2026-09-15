@@ -382,6 +382,7 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
           points: item.points || 5,
           difficulty: "Sedang",
           author: activeUser?.full_name || "Guru Pengampu",
+          extraData: item.extraData,
         };
         onAddQuestion?.(newQuestion);
       });
@@ -1288,14 +1289,14 @@ export const CBTQuestionBank: React.FC<CBTQuestionBankProps> = ({
               onClick={async () => {
                 try {
                   const { downloadCbtTemplateExcel } = await import("@/utils/quizExcelHelper");
-                  downloadCbtTemplateExcel("Template_Bank_Soal_CBT_MTsN2.xlsx");
+                  downloadCbtTemplateExcel("Template_Bank_Soal_CBT_AKM_MTsN2.xlsx");
                 } catch (err) {
                   toast.error("Gagal mengunduh template Excel CBT");
                 }
               }}
               className="w-full text-xs gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10"
             >
-              <Download className="h-3.5 w-3.5" /> Unduh Format Template Excel Bank Soal (.xlsx)
+              <Download className="h-3.5 w-3.5" /> Unduh Format Template Excel Resmi CBT (9 Ragam AKM)
             </Button>
           </div>
 
